@@ -1,7 +1,7 @@
 /* Base styles */
 .freash-item-section {
   width: 100%;
-  padding: 20px 0;
+  
   box-sizing: border-box;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -10,7 +10,7 @@
   display: flex;
   flex-direction: row;
   width: 100%;
-  max-width: 1400px;
+ 
   margin: 0 auto;
   gap: 0; /* Set gap if needed, or 0 to match full width split */
   overflow: hidden;

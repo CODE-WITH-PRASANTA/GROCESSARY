@@ -16,7 +16,7 @@ import {
   Menu, 
   X 
 } from 'lucide-react';
-import logo from '../../assets/Grocessary Sathi logo.png';
+import logo from '../../assets/Grocessary Sathi Png.png';
 import './Navbar.css';
 
 const NAV_PATHS = {
