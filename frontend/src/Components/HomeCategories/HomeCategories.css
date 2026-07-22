@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+.HomeCategories {
+  padding: 40px 20px;
+  background-color: #ffffff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.HomeCategories__container {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.HomeCategories__title {
+  font-size: 2.75rem;
+  font-weight: 800;
+  color: #102a27;
+  margin-bottom: 28px;
+  letter-spacing: -0.5px;
+}
+
+.HomeCategories__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+/* Card Container */
+.HomeCategories__card {
+  position: relative;
+  height: 380px;
+  border-radius: 16px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.HomeCategories__card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+/* Dark Gradient Overlay to match design */
+.HomeCategories__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg, 
+    rgba(16, 42, 39, 0.2) 0%, 
+    rgba(16, 42, 39, 0.75) 55%, 
+    rgba(16, 42, 39, 0.92) 100%
+  );
+  z-index: 1;
+}
+
+/* Card Inner Content */
+.HomeCategories__card-content {
+  position: relative;
+  z-index: 2;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.HomeCategories__card-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #ffc107;
+  margin: 0 0 10px 0;
+}
+
+.HomeCategories__card-description {
+  font-size: 0.875rem;
+  color: #ffffff;
+  line-height: 1.45;
+  margin: 0 0 20px 0;
+  font-weight: 500;
+  opacity: 0.95;
+}
+
+/* Button Styling */
+.HomeCategories__card-button {
+  background-color: #ffc107;
+  color: #102a27;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.HomeCategories__card-button:hover {
+  background-color: #e5ac00;
+}
+
+.HomeCategories__card-button-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* Responsive Layout */
+@media (max-width: 1024px) {
+  .HomeCategories__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  
+  .HomeCategories__card {
+    height: 360px;
+  }
+}
+
+@media (max-width: 640px) {
+  .HomeCategories__grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .HomeCategories__title {
+    font-size: 2rem;
+    margin-bottom: 20px;
+  }
+
+  .HomeCategories__card {
+    height: 340px;
+  }
+}

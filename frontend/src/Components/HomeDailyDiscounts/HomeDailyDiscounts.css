@@ -1,0 +1,195 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap');
+
+.home-daily-discounts {
+  width: 100%;
+  padding: 60px 20px;
+  background-color: #ffffff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.daily-discounts-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+/* Left Section */
+.daily-discounts-content {
+  flex: 1;
+  max-width: 480px;
+}
+
+.badge-yellow {
+  display: inline-block;
+  background-color: #f7ca18;
+  color: #121212;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.main-title {
+  font-size: 56px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #1a2e2b;
+  margin: 0 0 24px 0;
+  letter-spacing: -1px;
+}
+
+.description {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #556061;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Right Visual Section */
+.daily-discounts-visual {
+  flex: 1.2;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.main-image {
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  object-fit: contain;
+  z-index: 1;
+}
+
+/* Floating Review Cards (Glassmorphism effect) */
+.review-card {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.review-card:hover {
+  transform: translateY(-3px);
+}
+
+.avatar-group {
+  display: flex;
+  align-items: center;
+}
+
+.avatar-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  margin-left: -8px;
+  object-fit: cover;
+}
+
+.avatar-img:first-child {
+  margin-left: 0;
+}
+
+.review-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.review-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a2e2b;
+  line-height: 1.2;
+}
+
+.rating-score {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a2e2b;
+  text-align: right;
+  margin-top: 2px;
+}
+
+.highlight-yellow {
+  color: #f1b400;
+}
+
+/* Precise Positions based on design */
+.badge-top-left {
+  top: 5%;
+  left: 2%;
+}
+
+.badge-middle-right {
+  top: 38%;
+  right: -2%;
+}
+
+.badge-bottom-left {
+  bottom: 5%;
+  left: 12%;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 992px) {
+  .daily-discounts-container {
+    flex-direction: column;
+    text-align: left;
+  }
+
+  .daily-discounts-content {
+    max-width: 100%;
+  }
+
+  .main-title {
+    font-size: 42px;
+  }
+
+  .daily-discounts-visual {
+    width: 100%;
+    margin-top: 30px;
+  }
+}
+
+@media (max-width: 600px) {
+  .main-title {
+    font-size: 32px;
+  }
+
+  .review-card {
+    position: static;
+    margin-top: 12px;
+    width: 100%;
+    justify-content: space-between;
+    box-sizing: border-box;
+  }
+
+  .daily-discounts-visual {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .rating-score {
+    text-align: left;
+  }
+}

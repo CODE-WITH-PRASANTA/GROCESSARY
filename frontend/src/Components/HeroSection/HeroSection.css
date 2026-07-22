@@ -1,0 +1,210 @@
+/* Base Reset Guard for Content Bounds */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Parent Container - Full Screen Desktop Height */
+.hero-container {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-height: 100vh; /* Takes full viewport height on desktop */
+  display: flex;
+  align-items: center; /* Vertically centers the content */
+  justify-content: flex-start;
+  overflow: hidden; /* Clips horizontal overflow */
+}
+
+/* Background Image Layer */
+.hero-background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%; /* Prevents 100vw horizontal scrollbar bug */
+  height: 100%;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  z-index: 1;
+}
+
+/* Optional Overlay to increase text contrast on bright background images */
+.hero-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg, 
+    rgba(255, 255, 255, 0.85) 0%, 
+    rgba(255, 255, 255, 0.5) 50%, 
+    rgba(255, 255, 255, 0) 100%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Main Content Wrapper */
+.hero-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1400px; /* Widened for large desktop screens */
+  margin: 0 auto;
+  padding: 4rem 3rem; /* Generous padding for desktop viewports */
+}
+
+.hero-main-slider {
+  width: 100%;
+  max-width: 680px; /* Restricts hero card width for optimal readability */
+}
+
+.slider-content-wrapper {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Badges Header */
+.badge-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  padding: 0.45rem 1rem;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.discount-badge {
+  background-color: #d32f2f;
+  color: #ffffff;
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.discount-text {
+  white-space: pre-line;
+}
+
+/* Typography */
+.hero-title {
+  /* Scales dynamically from 2.5rem up to 4.25rem on large monitors */
+  font-size: clamp(2.5rem, 4.5vw, 4.25rem); 
+  font-weight: 800;
+  line-height: 1.1;
+  color: #1a1a1a;
+  margin: 0 0 1.25rem 0;
+  white-space: pre-line;
+}
+
+.hero-description {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: #333333;
+  margin: 0 0 2.25rem 0;
+  max-width: 100%;
+}
+
+/* Action Button */
+.btn-show-products {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: #2e7d32;
+  color: #ffffff;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
+}
+
+.btn-show-products:hover {
+  background-color: #1b5e20;
+  transform: translateY(-2px);
+}
+
+.btn-show-products:active {
+  transform: translateY(0);
+}
+
+.btn-grid-icon,
+.btn-arrow {
+  font-size: 1rem;
+}
+
+/* Navigation Controls */
+.slider-navigation {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid #cccccc;
+  background-color: #ffffff;
+  color: #333333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.nav-btn:hover {
+  background-color: #2e7d32;
+  color: #ffffff;
+  border-color: #2e7d32;
+}
+
+.nav-btn:focus-visible {
+  outline: 2px solid #2e7d32;
+  outline-offset: 2px;
+}
+
+/* Responsive Scaling for Laptops & Mobile */
+@media (max-width: 1024px) {
+  .hero-container {
+    min-height: 80vh;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-container {
+    min-height: auto;
+  }
+
+  .hero-content {
+    padding: 3rem 1.25rem;
+  }
+}
