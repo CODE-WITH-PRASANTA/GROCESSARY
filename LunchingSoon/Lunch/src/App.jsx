@@ -4,10 +4,11 @@ import "./App.css";
 import logo from "./assets/Grocessary Sathi.png";
 
 function App() {
-  // Target date set to exactly 7 days from current execution
+  // Target date set dynamically to 7 days from today (31st at 23:59:59)
   const [launchDate] = useState(() => {
     const target = new Date();
     target.setDate(target.getDate() + 7);
+    target.setHours(23, 59, 59, 999); // End of the 31st
     return target.getTime();
   });
 
@@ -59,7 +60,7 @@ function App() {
       return;
     }
 
-    // Basic Indian mobile phone validation standard
+    // Standard 10-digit mobile number validation
     const mobileRegex = /^[6-9]\d{9}$/;
     if (!mobileRegex.test(mobile.trim())) {
       Swal.fire({
@@ -108,7 +109,7 @@ function App() {
         </div>
 
         <h1>Your Daily Grocery Partner</h1>
-        <h2 className="glitch-text">LAUNCHING IN 7 DAYS</h2>
+        <h2 className="glitch-text">LAUNCHING ON</h2>
 
         <p className="subtitle">
           Fresh Fruits <span className="dot">•</span> Vegetables{" "}
