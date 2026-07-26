@@ -1,0 +1,270 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+/* Page Wrapper */
+.shipping-and-delivery-page {
+  width: 100%;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #102a27;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   BREADCRUMB / HERO BANNER SECTION
+   ========================================================================== */
+.shipping-and-delivery-breadcrumb {
+  background-color: #f2f3f5;
+  width: 100%;
+  padding: 80px 20px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.shipping-and-delivery-breadcrumb-container {
+  max-width: 1220px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Back Link & Hover Effect */
+.shipping-and-delivery-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  margin-bottom: 24px;
+}
+
+.shipping-and-delivery-arrow-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #102a27;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #102a27;
+  transition: all 0.3s ease;
+}
+
+.shipping-and-delivery-arrow-icon {
+  display: block;
+}
+
+.shipping-and-delivery-back-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #102a27;
+  transition: color 0.3s ease;
+}
+
+/* Hover States for Arrow Button and Text */
+.shipping-and-delivery-back-link:hover .shipping-and-delivery-arrow-circle {
+  background-color: #102a27;
+  color: #ffffff;
+  transform: translateX(-3px);
+}
+
+.shipping-and-delivery-back-link:hover .shipping-and-delivery-back-text {
+  color: #0b1c1a;
+}
+
+/* Breadcrumb Heading */
+.shipping-and-delivery-breadcrumb-title {
+  font-size: 42px;
+  font-weight: 900;
+  color: #102a27;
+  margin: 0 0 20px 0;
+  letter-spacing: -1px;
+  line-height: 1.1;
+}
+
+/* Paragraph Description */
+.shipping-and-delivery-breadcrumb-description {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #2c3e3b;
+  max-width: 580px;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   MAIN CONTENT SECTION
+   ========================================================================== */
+.shipping-and-delivery-main {
+  width: 100%;
+  background: #ffffff;
+  padding: 70px 20px;
+  box-sizing: border-box;
+}
+
+.shipping-and-delivery-container {
+  max-width: 1220px;
+  margin: auto;
+}
+
+/* Typography */
+.shipping-and-delivery-header h2 {
+  font-size: 42px;
+  font-weight: 800;
+  color: #102a27;
+  line-height: 1.2;
+  margin-bottom: 28px;
+  letter-spacing: -.3px;
+}
+
+.shipping-and-delivery-section h3 {
+  font-size: 28px;
+  font-weight: 800;
+  color: #102a27;
+  margin-top: 55px;
+  margin-bottom: 20px;
+  line-height: 1.3;
+}
+
+.shipping-and-delivery-section h4 {
+  font-size: 21px;
+  font-weight: 700;
+  color: #102a27;
+  margin-top: 28px;
+  margin-bottom: 16px;
+}
+
+.shipping-and-delivery-main p,
+.shipping-and-delivery-main li {
+  font-size: 16px;
+  line-height: 1.95;
+  color: #555555;
+  font-weight: 400;
+  margin-bottom: 16px;
+}
+
+/* Lists */
+.shipping-and-delivery-main ul {
+  padding-left: 28px;
+  margin: 18px 0;
+  list-style-type: disc;
+}
+
+.shipping-and-delivery-main li {
+  margin-bottom: 10px;
+}
+
+.shipping-and-delivery-main li::marker {
+  color: #102a27;
+}
+
+.shipping-and-delivery-list-wrapper {
+  margin: 24px 0;
+}
+
+.shipping-and-delivery-bold-label {
+  font-weight: 600;
+  color: #102a27;
+}
+
+.shipping-and-delivery-main strong {
+  color: #102a27;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (All Devices)
+   ========================================================================== */
+@media (max-width: 992px) {
+  .shipping-and-delivery-breadcrumb,
+  .shipping-and-delivery-main {
+    padding: 60px 20px;
+  }
+
+  .shipping-and-delivery-breadcrumb-title,
+  .shipping-and-delivery-header h2 {
+    font-size: 36px;
+  }
+
+  .shipping-and-delivery-section h3 {
+    font-size: 26px;
+  }
+
+  .shipping-and-delivery-main p,
+  .shipping-and-delivery-main li {
+    font-size: 15px;
+    line-height: 1.9;
+  }
+}
+
+@media (max-width: 768px) {
+  .shipping-and-delivery-breadcrumb,
+  .shipping-and-delivery-main {
+    padding: 50px 18px;
+  }
+
+  .shipping-and-delivery-breadcrumb-title,
+  .shipping-and-delivery-header h2 {
+    font-size: 32px;
+    margin-bottom: 22px;
+  }
+
+  .shipping-and-delivery-section h3 {
+    font-size: 24px;
+    margin-top: 45px;
+  }
+
+  .shipping-and-delivery-section h4 {
+    font-size: 20px;
+  }
+
+  .shipping-and-delivery-breadcrumb-description {
+    font-size: 15px;
+    max-width: 100%;
+  }
+
+  .shipping-and-delivery-main p,
+  .shipping-and-delivery-main li {
+    font-size: 15px;
+    line-height: 1.85;
+  }
+
+  .shipping-and-delivery-main ul {
+    padding-left: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .shipping-and-delivery-breadcrumb,
+  .shipping-and-delivery-main {
+    padding: 36px 16px;
+  }
+
+  .shipping-and-delivery-breadcrumb-title,
+  .shipping-and-delivery-header h2 {
+    font-size: 28px;
+  }
+
+  .shipping-and-delivery-section h3 {
+    font-size: 22px;
+  }
+
+  .shipping-and-delivery-section h4 {
+    font-size: 18px;
+  }
+
+  .shipping-and-delivery-main p,
+  .shipping-and-delivery-main li {
+    font-size: 14px;
+    line-height: 1.8;
+    margin-bottom: 14px;
+  }
+
+  .shipping-and-delivery-arrow-circle {
+    width: 32px;
+    height: 32px;
+  }
+
+  .shipping-and-delivery-back-text {
+    font-size: 13px;
+  }
+}

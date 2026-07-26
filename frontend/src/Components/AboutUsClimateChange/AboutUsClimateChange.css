@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* Base Container */
+.climate-change-container {
+  width: 100%;
+  background-color: #ffffff;
+  padding: 60px 24px;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #102a27;
+}
+
+.climate-change-wrapper {
+  max-width: 1300px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 70px;
+}
+
+/* Headings Styling */
+.section-title {
+  font-size: 45px;
+  font-weight: 1000;
+  font-family:Georgia, 'Times New Roman', Times, serif;
+  color: #102a27;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  margin: 0 0 24px 0;
+}
+
+.banner-heading {
+  font-size: 46px;
+  font-weight: 800;
+  color: #102a27;
+  text-align: center;
+  max-width: 920px;
+  margin: 0 auto;
+  line-height: 1.15;
+  letter-spacing: -0.8px;
+}
+
+/* Section 1: Two Column Paragraphs */
+.two-column-text {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.two-column-text p,
+.text-paragraph {
+  font-size: 15px;
+  line-height: 1.65;
+  color: #0d1f1c;
+  margin: 0 0 16px 0;
+  font-weight: 500;
+}
+
+.text-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+/* Grid Layouts for Image + Content */
+.grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+/* Image Containers & Rounded Borders */
+.image-wrapper {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.section-img {
+  width: 100%;
+  height: 100%;
+  min-height: 380px;
+  max-height: 460px;
+  object-fit: cover;
+  display: block;
+  border-radius: 16px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+  .banner-heading {
+    font-size: 36px;
+  }
+
+  .section-title {
+    font-size: 32px;
+  }
+
+  .grid-layout {
+    gap: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .climate-change-container {
+    padding: 40px 16px;
+  }
+
+  .climate-change-wrapper {
+    gap: 50px;
+  }
+
+  .two-column-text {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .grid-layout {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  /* Keep sequential reading order on mobile */
+  .grid-layout.image-left {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+
+  .banner-heading {
+    font-size: 28px;
+    text-align: left;
+  }
+
+  .section-title {
+    font-size: 26px;
+    margin-bottom: 16px;
+  }
+
+  .section-img {
+    min-height: 280px;
+    max-height: 350px;
+  }
+}

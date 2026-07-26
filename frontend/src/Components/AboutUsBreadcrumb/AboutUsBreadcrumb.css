@@ -1,0 +1,114 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+
+/* Main Wrapper Background */
+.breadcrumb-container {
+  background-color: #f2f3f5;
+  width: 100%;
+  padding: 80px 20px;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* Content Container */
+.breadcrumb-content {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Back Link & Hover Effect */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  margin-bottom: 24px;
+}
+
+.arrow-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #102a27;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #102a27;
+  transition: all 0.3s ease;
+}
+
+.back-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #102a27;
+  transition: color 0.3s ease;
+}
+
+/* Hover States for Arrow Button and Text */
+.back-link:hover .arrow-circle {
+  background-color: #102a27;
+  color: #ffffff;
+  transform: translateX(-3px);
+}
+
+.back-link:hover .back-text {
+  color: #0b1c1a;
+}
+
+/* Main Heading */
+.breadcrumb-title {
+  font-size: 56px;
+  font-weight: 800;
+  color: #102a27;
+  margin: 0 0 20px 0;
+  letter-spacing: -1px;
+  line-height: 1.1;
+}
+
+/* Paragraph Description */
+.breadcrumb-description {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #2c3e3b;
+  max-width: 540px;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .breadcrumb-container {
+    padding: 50px 20px;
+  }
+
+  .breadcrumb-title {
+    font-size: 40px;
+  }
+
+  .breadcrumb-description {
+    font-size: 15px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .breadcrumb-container {
+    padding: 36px 16px;
+  }
+
+  .breadcrumb-title {
+    font-size: 32px;
+  }
+
+  .arrow-circle {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .back-text {
+    font-size: 13px;
+  }
+}
