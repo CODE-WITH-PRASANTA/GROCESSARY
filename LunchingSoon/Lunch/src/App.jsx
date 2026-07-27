@@ -4,11 +4,11 @@ import "./App.css";
 import logo from "./assets/Grocessary Sathi.png";
 
 function App() {
-  // Target date set dynamically to 7 days from today (31st at 23:59:59)
+  // Target date set dynamically to the 31st of the current month at 23:59:59
   const [launchDate] = useState(() => {
     const target = new Date();
-    target.setDate(target.getDate() + 7);
-    target.setHours(23, 59, 59, 999); // End of the 31st
+    target.setDate(31);
+    target.setHours(23, 59, 59, 999);
     return target.getTime();
   });
 
