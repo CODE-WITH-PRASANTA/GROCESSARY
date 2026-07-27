@@ -106,11 +106,7 @@ const categoriesData = [
     title: 'Blogs',
     path: '/blogs',
     icon: BookOpen,
-    subCategories: [
-      { id: 'healthy-recipes', title: 'Healthy Recipes', path: '/blogs/recipes' },
-      { id: 'diet-tips', title: 'Diet Tips', path: '/blogs/diet-tips' },
-      { id: 'lifestyle', title: 'Lifestyle', path: '/blogs/lifestyle' },
-    ],
+    
   },
 ];
 
@@ -272,6 +268,7 @@ const Navbar = () => {
 
           {/* Quick Nav Links */}
           <nav className="navbar-nav-links" aria-label="Quick Links">
+              <a href={NAV_PATHS.HOME}>Home</a>
             <a href={NAV_PATHS.FAQ}>Faq</a>
             <a href={NAV_PATHS.SUPPORT}>Support</a>
             <a href={NAV_PATHS.CONTACT}>Contact</a>

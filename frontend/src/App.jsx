@@ -29,16 +29,16 @@ const App = () => {
 
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/AboutUs" element={<AboutUs/>} />
+        <Route path="/about-us" element={<AboutUs/>} />
         <Route path="/AboutUsOurService" element={<AboutUsOurService/>} />
-        <Route path="/ContactUs" element={<ContactUs/>} />
-        <Route path="/FaqSection" element={<FaqSection/>} />
+        <Route path="/contact-us" element={<ContactUs/>} />
+        <Route path="/faq" element={<FaqSection/>} />
 
 
-        <Route path="/TermAndCondition" element={<TermAndCondition/>} />
-        <Route path="/PrivacyPolicy" element={<PrivacyPolicy/>} />
+        <Route path="/pages/terms-of-service" element={<TermAndCondition/>} />
+        <Route path="/pages/privacy-policy" element={<PrivacyPolicy/>} />
         <Route path="/ShippingAndDelivery" element={<ShippingAndDelivery/>} />
-        <Route path="/BlogGrid" element={<BlogGrid/>} />
+        <Route path="/blogs" element={<BlogGrid/>} />
         <Route path="/BlogReadmoreOne" element={<BlogReadmoreOne/>} />
         <Route path="/BlogReadmoreTwo" element={<BlogReadmoreTwo/>} />
         <Route path="/BlogReadmoreThree" element={<BlogReadmoreThree/>} />
