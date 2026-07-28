@@ -1,0 +1,300 @@
+/* ==========================================================================
+   Step 11, 12, 13, 14: Topbar & Controls
+   ========================================================================== */
+.Topbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 70px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color, #E5E7EB);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 80;
+  transition: left 300ms ease;
+}
+
+/* Adjust Topbar position depending on desktop sidebar expansion */
+@media (min-width: 1024px) {
+  .MainContent-wrapper.expanded .Topbar {
+    left: 260px;
+  }
+
+  .MainContent-wrapper.collapsed .Topbar {
+    left: 80px;
+  }
+}
+
+.Topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.Topbar-toggleBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--radius-btn, 12px);
+  color: var(--text-main, #1E293B);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.Topbar-toggleBtn:hover {
+  background: #F1F5F9;
+}
+
+/* Step 12: Search Bar */
+.SearchBar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 280px;
+}
+
+.SearchBar-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-secondary, #64748B);
+  pointer-events: none;
+}
+
+.SearchBar-input {
+  width: 100%;
+  padding: 10px 16px 10px 40px;
+  border-radius: var(--radius-input, 12px);
+  border: 1px solid var(--border-color, #E5E7EB);
+  background: var(--bg-main, #F5F7FA);
+  outline: none;
+  font-family: inherit;
+  font-size: 0.88rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+
+.SearchBar-input:focus {
+  border-color: var(--primary-green, #22C55E);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+.Topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Step 13: Notification Center */
+.Notification {
+  position: relative;
+}
+
+.Notification-btn {
+  position: relative;
+  background: var(--bg-main, #F5F7FA);
+  border: 1px solid var(--border-color, #E5E7EB);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-main, #1E293B);
+  transition: all 0.2s ease;
+}
+
+.Notification-btn:hover {
+  background: #E2E8F0;
+}
+
+.Notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: var(--danger, #EF4444);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #FFFFFF;
+}
+
+.NotificationItem-popup {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: 300px;
+  background: var(--card-bg, #FFFFFF);
+  border-radius: var(--radius-popup, 16px);
+  box-shadow: var(--shadow-popup, 0 15px 45px rgba(0, 0, 0, 0.15));
+  border: 1px solid var(--border-color, #E5E7EB);
+  overflow: hidden;
+  z-index: 100;
+}
+
+.NotificationItem-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-color, #E5E7EB);
+}
+
+.NotificationItem-header h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.NotificationItem-list {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.NotificationItem-single {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #F1F5F9;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.NotificationItem-single:hover {
+  background: var(--bg-main, #F5F7FA);
+}
+
+.NotificationItem-iconWrapper {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.NotificationItem-title {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-main, #1E293B);
+}
+
+.NotificationItem-time {
+  font-size: 0.7rem;
+  color: var(--text-secondary, #64748B);
+}
+
+.NotificationItem-footer button {
+  width: 100%;
+  padding: 10px;
+  background: none;
+  border: none;
+  color: var(--primary-green, #22C55E);
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.NotificationItem-footer button:hover {
+  background: var(--bg-main, #F5F7FA);
+}
+
+/* Step 14: Profile Dropdown */
+.ProfileMenu {
+  position: relative;
+}
+
+.ProfileMenu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-btn, 12px);
+  transition: background 0.2s;
+}
+
+.ProfileMenu-trigger:hover {
+  background: #F1F5F9;
+}
+
+.ProfileMenu-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary-green, #22C55E);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.ProfileMenu-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-main, #1E293B);
+}
+
+.ProfileMenu-dropdown {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: 200px;
+  background: var(--card-bg, #FFFFFF);
+  border-radius: var(--radius-popup, 16px);
+  box-shadow: var(--shadow-popup, 0 15px 45px rgba(0, 0, 0, 0.15));
+  border: 1px solid var(--border-color, #E5E7EB);
+  padding: 8px;
+  z-index: 100;
+}
+
+.ProfileMenu-divider {
+  height: 1px;
+  background: var(--border-color, #E5E7EB);
+  margin: 6px 0;
+}
+
+.ProfileMenu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-main, #1E293B);
+  font-size: 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ProfileMenu-item:hover {
+  background: var(--bg-main, #F5F7FA);
+}
+
+.ProfileMenu-item.danger {
+  color: var(--danger, #EF4444);
+}
+
+@media (max-width: 640px) {
+  .SearchBar {
+    width: 150px;
+  }
+  .ProfileMenu-name {
+    display: none;
+  }
+}
