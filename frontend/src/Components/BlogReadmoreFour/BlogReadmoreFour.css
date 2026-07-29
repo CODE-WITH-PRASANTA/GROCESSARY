@@ -111,7 +111,7 @@
 }
 
 .blog-readmore-four-meta-pill:hover {
-  color: #0e0d0d;
+  color: #102a27;
   background-color: rgba(241, 199, 33, 0.947);
   border-radius: 20px;
 }
@@ -163,6 +163,7 @@
   justify-content: space-between;
   padding-bottom: 24px;
   margin-bottom: 24px;
+  border-bottom: 1px solid #eaeaea;
 }
 
 .blog-readmore-four-meta-group {
@@ -170,6 +171,7 @@
   align-items: center;
   gap: 20px;
   font-size: 14px;
+  flex-wrap: wrap;
 }
 
 .blog-readmore-four-author {
@@ -280,6 +282,8 @@
   margin-top: 35px;
   font-size: 14px;
   color: #102a27;
+  padding-top: 20px;
+  border-top: 1px solid #eaeaea;
 }
 
 .blog-readmore-four-tags strong {
@@ -309,12 +313,11 @@
 
 /* Sidebar Titles */
 .blog-readmore-four-sidebar-title {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 900;
   color: #102a27;
   margin: 0 0 20px 0;
   letter-spacing: -0.5px;
-  margin-top: 85px;
 }
 
 /* Related Article Cards */
@@ -324,6 +327,12 @@
   border: 1px solid #eaeaea;
   overflow: hidden;
   margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  transition: transform 0.2s ease;
+}
+
+.blog-readmore-four-related-card:hover {
+  transform: translateY(-2px);
 }
 
 .blog-readmore-four-card-img-wrapper {
@@ -349,6 +358,7 @@
   font-weight: 700;
   padding: 4px 12px;
   border-radius: 6px;
+  text-transform: uppercase;
 }
 
 .blog-readmore-four-card-body {
@@ -419,7 +429,7 @@
    LEAVE A COMMENT FORM
    ========================================================================== */
 .blog-readmore-four-comment-box {
-  background-color: #ffffff;
+  background-color: #fafbfc;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
   padding: 28px;
@@ -428,7 +438,7 @@
 }
 
 .blog-readmore-four-comment-title {
-  font-size: 30px;
+  font-size: 26px;
   font-weight: 900;
   color: #102a27;
   margin: 0 0 24px 0;

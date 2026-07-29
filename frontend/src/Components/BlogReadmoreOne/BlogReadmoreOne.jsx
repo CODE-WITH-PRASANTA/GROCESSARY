@@ -21,7 +21,7 @@ const BlogReadmoreOne = () => {
 
   const handleCommentSubmit = (e) => {
     e.preventDefault();
-    alert('Thank you for your comment!');
+    alert('Thank you for your comment! Your feedback is valued at Grocery Sathi.');
     setCommentForm({ name: '', email: '', message: '' });
   };
 
@@ -29,26 +29,67 @@ const BlogReadmoreOne = () => {
     if (navigator.share) {
       navigator
         .share({
-          title: 'Fruit is an essential food for our life',
+          title: 'Fruit is an Essential Part of a Healthy Diet | Grocery Sathi',
           url: window.location.href
         })
         .catch(() => {});
     } else {
-      alert('Link copied to clipboard!');
+      navigator.clipboard.writeText(window.location.href);
+      alert('Article link copied to clipboard!');
     }
   };
 
-  // Structured Data (JSON-LD) for SEO schema
+  // Advanced Structured Data (JSON-LD) for SEO and Google Rich Results
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
-    headline: 'Fruit is an essential food for our life',
-    author: {
+    'headline': 'Fruit is an essential food for our life',
+    'description': 'Explore why fresh fruits are essential for your daily diet, immune support, and long-term health with Grocery Sathi.',
+    'image': 'https://www.grocerysathi.com/assets/blogfruit1.webp',
+    'author': {
       '@type': 'Organization',
-      name: 'WorkDo'
+      'name': 'Grocery Sathi'
     },
-    datePublished: '2022-12-05',
-    keywords: ['Food', 'Fruits', 'Orange']
+    'publisher': {
+      '@type': 'Organization',
+      'name': 'Grocery Sathi',
+      'logo': {
+        '@type': 'ImageObject',
+        'url': 'https://www.grocerysathi.com/logo.png'
+      }
+    },
+    'datePublished': '2022-12-05',
+    'dateModified': '2026-07-29',
+    'mainEntityOfPage': {
+      '@type': 'WebPage',
+      '@id': 'https://www.grocerysathi.com/blog/fruit-essential-food'
+    },
+    'keywords': ['Grocery Sathi', 'Fresh Fruits', 'Healthy Diet', 'Nutrition', 'Organic Produce']
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+      {
+        '@type': 'ListItem',
+        'position': 1,
+        'name': 'Home',
+        'item': 'https://www.grocerysathi.com/'
+      },
+      {
+        '@type': 'ListItem',
+        'position': 2,
+        'name': 'Blog',
+        'item': 'https://www.grocerysathi.com/blog'
+      },
+      {
+        '@type': 'ListItem',
+        'position': 3,
+        'name': 'Fruit is an essential food',
+        'item': 'https://www.grocerysathi.com/blog/fruit-essential-food'
+      }
+    ]
   };
 
   // Related articles array utilizing imported images
@@ -57,54 +98,58 @@ const BlogReadmoreOne = () => {
       id: 1,
       image: blogfruit2,
       tag: 'news',
-      title: 'Keeping Your Fruits and Ve...',
+      title: 'Keeping Your Fresh Fruit Longer at Home',
       description:
-        'Different fruits and vegetables have different storage requirements. Some can be stored at room temperature, while others need refrigeration. For example, bananas, apples, citrus fruits, tomatoes,...',
-      author: 'WorkDo,',
+        'Different fruits and vegetables have unique storage requirements. Some can be stored at room temperature, while others need refrigeration to stay crisp and fresh...',
+      author: 'Grocery Sathi',
       date: 'December 5, 2022'
     },
     {
       id: 2,
       image: blogfruit3,
       tag: 'health',
-      title: 'Organic vs Conventional Fruit',
+      title: 'Tasty Berries & Their Amazing Benefits',
       description:
-        'Understanding the nutritional benefits and differences in sustainable farming practice when selecting fresh fruits for your daily health routine...',
-      author: 'WorkDo,',
+        'Strawberries, blueberries, raspberries, and blackberries are not only delicious but also packed with antioxidants and vitamins for your daily health routine...',
+      author: 'Grocery Sathi',
       date: 'December 6, 2022'
     },
     {
       id: 3,
       image: blogfruit4,
       tag: 'recipes',
-      title: 'Delicious Citrus Juices & Smoothies',
+      title: 'Healthy Green Smoothies for Energy',
       description:
-        'Easy-to-make refreshing summer juice recipes packed with antioxidants and natural vitamin C boosts to energize your daily routines...',
-      author: 'WorkDo,',
+        'Blend your way to wellness with easy-to-make refreshing green juice recipes packed with natural vitamins and nutrients to energize your mornings...',
+      author: 'Grocery Sathi',
       date: 'December 8, 2022'
     }
   ];
 
   return (
     <div className="blog-readmore-one-page">
-      {/* SEO Schema Injection */}
+      {/* SEO Schemas Injection */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
 
-      {/* --- HERO / BREADCRUMB BANNER --- */}
+      {/* --- HERO / BREADCRUMB SECTION --- */}
       <section
         className="blog-readmore-one-hero"
         style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url(${blogfruit1})`
+          backgroundImage: `linear-gradient(rgba(16, 42, 39, 0.75), rgba(16, 42, 39, 0.75)), url(${blogfruit1})`
         }}
-        aria-label="Article Banner"
+        aria-label="Article Hero Banner"
       >
         <div className="blog-readmore-one-hero-container">
           {/* Back Navigation Button */}
           <nav aria-label="Breadcrumb Navigation">
-            <a href="/" className="blog-readmore-one-back-btn" title="Return to Homepage">
+            <a href="/" className="blog-readmore-one-back-btn" title="Return to Grocery Sathi Homepage">
               <span className="blog-readmore-one-arrow-circle" aria-hidden="true">
                 <svg
                   width="14"
@@ -126,7 +171,7 @@ const BlogReadmoreOne = () => {
 
           {/* Meta Badges / Interactive Controls */}
           <div className="blog-readmore-one-hero-meta">
-            <span className="blog-readmore-one-badge-featured">Featured</span>
+            <span className="blog-readmore-one-badge-featured">Featured Post</span>
             <button className="blog-readmore-one-meta-pill">
               Category: <strong>news</strong>
             </button>
@@ -139,14 +184,12 @@ const BlogReadmoreOne = () => {
           <h1 className="blog-readmore-one-hero-title">
             Fruit is an essential food
             <br />
-            for our life
+            for our daily life
           </h1>
 
           {/* Hero Subtitle */}
           <p className="blog-readmore-one-hero-desc">
-            Explore the world of culinary delights with our grocery blog, where we highlight unique
-            ingredients, share delicious recipes, and provide cooking hacks for all skill levels.
-            Fruits a...
+            Explore the world of wholesome nutrition with Grocery Sathi. Discover unique ingredients, expert storage tips, and farm-fresh produce guides designed to enrich your well-being.
           </p>
         </div>
       </section>
@@ -154,12 +197,14 @@ const BlogReadmoreOne = () => {
       {/* --- MAIN CONTENT & SIDEBAR GRID --- */}
       <main className="blog-readmore-one-main">
         <div className="blog-readmore-one-container">
+          
           {/* LEFT COLUMN: MAIN ARTICLE */}
           <article className="blog-readmore-one-content">
+            
             {/* Meta bar under hero */}
             <div className="blog-readmore-one-author-bar">
               <div className="blog-readmore-one-meta-group">
-                <span className="blog-readmore-one-author">WorkDo</span>
+                <span className="blog-readmore-one-author">Grocery Sathi</span>
                 <span className="blog-readmore-one-meta-item">
                   Category: <strong>news</strong>
                 </span>
@@ -171,7 +216,7 @@ const BlogReadmoreOne = () => {
               <button
                 className="blog-readmore-one-share-btn"
                 onClick={handleShare}
-                aria-label="Share article"
+                aria-label="Share this article"
               >
                 <svg
                   width="16"
@@ -193,39 +238,30 @@ const BlogReadmoreOne = () => {
 
             {/* Article Heading */}
             <h2 className="blog-readmore-one-article-title">
-              Fruit is an essential food for our life
+              Fruit is an essential food for our life &amp; vitality
             </h2>
 
             {/* Featured Image */}
             <div className="blog-readmore-one-feature-img-wrapper">
               <img
                 src={blogfruit1}
-                alt="Fruit is an essential food for our life"
+                alt="Fresh organic fruits basket representing healthy eating by Grocery Sathi"
                 className="blog-readmore-one-feature-img"
+                loading="lazy"
               />
             </div>
 
             {/* Paragraph Content */}
             <p className="blog-readmore-one-text">
-              Explore the world of culinary delights with our grocery blog, where we highlight unique
-              ingredients, share delicious recipes, and provide cooking hacks for all skill levels.
+              At Grocery Sathi, we believe that bringing fresh, quality produce into your kitchen is the foundation of a healthy lifestyle. Explore the world of culinary delights with our grocery blog, where we highlight unique ingredients, share delicious recipes, and provide expert cooking hacks for all skill levels.
             </p>
 
             <h3 className="blog-readmore-one-bold-heading">
-              Fruits are packed with essential vitamins, minerals, and antioxidants that contribute to
-              overall health. They are rich in vitamin C, potassium, folate, and dietary fiber, among
-              other nutrients. Disease Prevention: Regular consumption of fruits has been associated
-              with a reduced risk of chronic diseases, including heart disease, stroke, certain
-              cancers, and obesity.
+              Fruits are packed with essential vitamins, minerals, and natural antioxidants that contribute directly to long-term vitality, immune strengthening, and chronic disease prevention.
             </h3>
 
             <p className="blog-readmore-one-text">
-              The antioxidants found in fruits help protect the body from oxidative stress and
-              inflammation. Hydration and Digestion: Fruits have high water content, which helps keep
-              the body hydrated. Additionally, the fiber in fruits aids in digestion, promotes bowel
-              regularity, and supports a healthy digestive system. Weight Management: Fruits are
-              naturally low in calories and high in fiber, making them a great choice for weight
-              management.
+              Regular consumption of fresh fruits has been scientifically associated with a reduced risk of heart disease, stroke, certain cancers, and healthy weight management. The natural antioxidants found in berries and citrus protect your cells from oxidative stress and inflammation, while high water content supports daily hydration and digestive health.
             </p>
 
             {/* Italic Quote Block */}
@@ -234,11 +270,13 @@ const BlogReadmoreOne = () => {
                 “
               </span>
               <p>
-                Many fruits are excellent sources of vitamin C, which plays a vital role in supporting
-                a healthy immune system. Regular intake of vitamin C-rich fruits can help strengthen
-                the body's defenses against infections and illnesses.
+                Many fresh fruits are exceptional sources of vitamin C, playing a vital role in supporting a robust immune system. Regular daily intake helps strengthen your body&apos;s defenses against everyday infections and seasonal illnesses.
               </p>
             </blockquote>
+
+            <p className="blog-readmore-one-text">
+              Whether you are shopping for farm-fresh apples, juicy oranges, or antioxidant-rich seasonal berries, Grocery Sathi ensures top-tier quality delivered straight to your doorstep. Make smart, healthy choices every single day!
+            </p>
 
             {/* Tags */}
             <div className="blog-readmore-one-tags">
@@ -247,12 +285,13 @@ const BlogReadmoreOne = () => {
               <span className="blog-readmore-one-tag-comma">,</span>
               <span className="blog-readmore-one-tag-item">Fruits</span>
               <span className="blog-readmore-one-tag-comma">,</span>
-              <span className="blog-readmore-one-tag-item">Orange</span>
+              <span className="blog-readmore-one-tag-item">Healthy Diet</span>
             </div>
           </article>
 
           {/* RIGHT COLUMN: SIDEBAR */}
-          <aside className="blog-readmore-one-sidebar">
+          <aside className="blog-readmore-one-sidebar" aria-label="Sidebar Content">
+            
             {/* Related Articles Section */}
             <div className="blog-readmore-one-related-block">
               <h3 className="blog-readmore-one-sidebar-title">Related articles</h3>
@@ -260,7 +299,7 @@ const BlogReadmoreOne = () => {
               {relatedArticles.map((article) => (
                 <div key={article.id} className="blog-readmore-one-related-card">
                   <div className="blog-readmore-one-card-img-wrapper">
-                    <img src={article.image} alt={article.title} />
+                    <img src={article.image} alt={article.title} loading="lazy" />
                     <span className="blog-readmore-one-card-tag">{article.tag}</span>
                   </div>
 
@@ -271,6 +310,7 @@ const BlogReadmoreOne = () => {
                     <div className="blog-readmore-one-card-footer">
                       <button
                         className="blog-readmore-one-read-more-btn"
+                        onClick={() => alert(`Opening article: "${article.title}"`)}
                         aria-label={`Read more about ${article.title}`}
                       >
                         <span>Read more</span>
@@ -309,7 +349,7 @@ const BlogReadmoreOne = () => {
                     name="name"
                     value={commentForm.name}
                     onChange={handleInputChange}
-                    placeholder="Name"
+                    placeholder="Your Name"
                     required
                     className="blog-readmore-one-input"
                   />
@@ -321,7 +361,7 @@ const BlogReadmoreOne = () => {
                     name="email"
                     value={commentForm.email}
                     onChange={handleInputChange}
-                    placeholder="Email"
+                    placeholder="Your Email Address"
                     required
                     className="blog-readmore-one-input"
                   />
@@ -332,7 +372,7 @@ const BlogReadmoreOne = () => {
                     name="message"
                     value={commentForm.message}
                     onChange={handleInputChange}
-                    placeholder="Message"
+                    placeholder="Write your comment here..."
                     rows="4"
                     required
                     className="blog-readmore-one-textarea"
@@ -345,6 +385,7 @@ const BlogReadmoreOne = () => {
               </form>
             </div>
           </aside>
+
         </div>
       </main>
     </div>

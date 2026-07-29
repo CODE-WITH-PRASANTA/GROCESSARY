@@ -5,15 +5,13 @@ import {
   FaFileUpload, 
   FaReceipt, 
   FaClock, 
-  FaShoppingCart, 
-  FaStore,
-  FaArrowRight,
-  FaLeaf,
+  FaTruck,
   FaPercentage,
-  FaTruck
+  FaLeaf,
+  FaStore
 } from 'react-icons/fa';
 
-import bgImage from '../../assets/grocory-bg.png'; // Path to your background image
+import bgImage from '../../assets/grocory-bg.png';
 import './MobileSection.css';
 
 const MobileSection = () => {
@@ -58,22 +56,25 @@ const MobileSection = () => {
   }, [banners.length]);
 
   return (
-    <div 
+    <section 
       className="MobileSection-wrapper"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      aria-label="Grocery Sathi Mobile App and Services Overview"
     >
-      {/* Background Image Layer */}
+      {/* Background Image Layer with SEO-friendly fallback styling */}
       <div 
         className="MobileSection-bg-gradient" 
         style={{ backgroundImage: `url(${bgImage})` }}
+        role="img"
+        aria-label="Fresh organic groceries background"
       />
       <div className="MobileSection-bg-noise" />
       <div className="MobileSection-bg-glow-1" />
       <div className="MobileSection-bg-glow-2" />
 
       {/* Floating Ambient Particles */}
-      <div className="MobileSection-particles-container">
+      <div className="MobileSection-particles-container" aria-hidden="true">
         {[...Array(6)].map((_, i) => (
           <motion.div
             key={i}
@@ -106,6 +107,7 @@ const MobileSection = () => {
           scale: [1, 1.05, 1]
         }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        aria-hidden="true"
       >
         <FaLeaf />
       </motion.div>
@@ -118,64 +120,47 @@ const MobileSection = () => {
           y: [0, -20, 0],
         }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        aria-hidden="true"
       >
         <FaLeaf style={{ color: '#81c784' }} />
       </motion.div>
 
-      {/* Header Navigation */}
-      
-
       {/* Hero Content Grid */}
       <div className="MobileSection-container">
         
-        {/* LEFT COLUMN */}
+        {/* LEFT COLUMN - SEO Optimized Copy & Structured Hierarchy */}
         <div className="MobileSection-left">
-          <motion.span 
-            className="MobileSection-badge"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
+          <span className="MobileSection-badge">
             Har Ghar Ka Saathi
-          </motion.span>
+          </span>
 
-          <motion.h1 
-            className="MobileSection-title"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            Your Daily <span>Grocery Partner</span>
-          </motion.h1>
+          <h1 className="MobileSection-title">
+            Your Trusted Daily <span>Online Grocery Partner</span>
+          </h1>
 
-          <motion.p 
-            className="MobileSection-description"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            Fresh Products. Best Prices. Fast Delivery. Grocery Sathi brings everything you need right to your doorstep!
-          </motion.p>
+          <p className="MobileSection-description">
+            Experience farm-fresh vegetables, organic fruits, and daily household essentials delivered straight to your doorstep. Best prices, guaranteed quality, and lightning-fast grocery delivery with Grocery Sathi.
+          </p>
 
           <div className="MobileSection-features">
-            <div className="MobileSection-feature-card">
-              <FaTruck className="MobileSection-feature-icon" />
+            <article className="MobileSection-feature-card">
+              <FaTruck className="MobileSection-feature-icon" aria-hidden="true" />
               <div className="MobileSection-feature-text">
-                <h4>Fast Delivery</h4>
-                <p>On-Time Delivery</p>
+                <h3>Fast Delivery</h3>
+                <p>On-Time Doorstep Delivery</p>
               </div>
-            </div>
-            <div className="MobileSection-feature-card">
-              <FaPercentage className="MobileSection-feature-icon" />
+            </article>
+            <article className="MobileSection-feature-card">
+              <FaPercentage className="MobileSection-feature-icon" aria-hidden="true" />
               <div className="MobileSection-feature-text">
-                <h4>Best Offers</h4>
-                <p>Great Discounts</p>
+                <h3>Best Offers</h3>
+                <p>Great Daily Discounts</p>
               </div>
-            </div>
+            </article>
           </div>
         </div>
 
-        {/* CENTER COLUMN (3D FLOATING MAIN CARD) */}
+        {/* CENTER COLUMN (3D FLOATING INTERACTIVE CARD) */}
         <div className="MobileSection-center">
           <motion.div 
             className="MobileSection-main-card"
@@ -188,35 +173,34 @@ const MobileSection = () => {
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
           >
             {/* Banner Slider Inside Card */}
-            <div className="MobileSection-banner-slider">
+            <div className="MobileSection-banner-slider" aria-live="polite">
               <span className="MobileSection-banner-tag">{banners[currentBanner].tag}</span>
               <p className="MobileSection-banner-title">{banners[currentBanner].title}</p>
               <p className="MobileSection-banner-sub">{banners[currentBanner].sub}</p>
             </div>
 
             <div className="MobileSection-card-header">
-              <FaStore /> Grocery <span>Sathi</span>
+              <FaStore aria-hidden="true" /> Grocery <span>Sathi</span>
             </div>
 
             {/* 3D Interactive Stack Buttons */}
-            <div className="MobileSection-buttons-stack">
+            <nav className="MobileSection-buttons-stack" aria-label="Quick Actions">
               
               {/* Call Button */}
               <motion.div
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.9 }}
               >
-                <motion.button 
+                <motion.a 
+                  href="tel:+911234567890"
                   className="MobileSection-btn-3d btn-call"
                   whileHover={{ y: -12, rotateX: 15, scale: 1.05 }}
                   whileTap={{ y: 8, scale: 0.96 }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                  aria-label="Call Grocery Sathi Helpline"
                 >
-                  <div className="MobileSection-btn-bottom" />
-                  <div className="MobileSection-btn-middle" />
+                  <div className="MobileSection-btn-bottom" aria-hidden="true" />
+                  <div className="MobileSection-btn-middle" aria-hidden="true" />
                   <div className="MobileSection-btn-top">
                     <motion.div 
                       className="MobileSection-btn-icon"
@@ -226,31 +210,25 @@ const MobileSection = () => {
                       <FaPhoneAlt />
                     </motion.div>
                     <span>Call Now</span>
-                    <motion.div 
-                      className="MobileSection-shine"
-                      animate={{ x: ['-250%', '250%'] }}
-                      transition={{ duration: 4, repeat: Infinity, delay: 0.5 }}
-                    />
+                    <div className="MobileSection-shine" aria-hidden="true" />
                   </div>
-                </motion.button>
+                </motion.a>
               </motion.div>
 
               {/* List Upload Button */}
               <motion.div
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.1 }}
               >
                 <motion.button 
                   className="MobileSection-btn-3d btn-list"
                   whileHover={{ y: -12, rotateX: 15, scale: 1.05 }}
                   whileTap={{ y: 8, scale: 0.96 }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                  aria-label="Upload your grocery list"
                 >
-                  <div className="MobileSection-btn-bottom" />
-                  <div className="MobileSection-btn-middle" />
+                  <div className="MobileSection-btn-bottom" aria-hidden="true" />
+                  <div className="MobileSection-btn-middle" aria-hidden="true" />
                   <div className="MobileSection-btn-top">
                     <motion.div 
                       className="MobileSection-btn-icon"
@@ -260,11 +238,7 @@ const MobileSection = () => {
                       <FaFileUpload />
                     </motion.div>
                     <span>List Upload</span>
-                    <motion.div 
-                      className="MobileSection-shine"
-                      animate={{ x: ['-250%', '250%'] }}
-                      transition={{ duration: 4, repeat: Infinity, delay: 1 }}
-                    />
+                    <div className="MobileSection-shine" aria-hidden="true" />
                   </div>
                 </motion.button>
               </motion.div>
@@ -273,18 +247,16 @@ const MobileSection = () => {
               <motion.div
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.3 }}
               >
                 <motion.button 
                   className="MobileSection-btn-3d btn-orders"
                   whileHover={{ y: -12, rotateX: 15, scale: 1.05 }}
                   whileTap={{ y: 8, scale: 0.96 }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                  aria-label="View your grocery orders"
                 >
-                  <div className="MobileSection-btn-bottom" />
-                  <div className="MobileSection-btn-middle" />
+                  <div className="MobileSection-btn-bottom" aria-hidden="true" />
+                  <div className="MobileSection-btn-middle" aria-hidden="true" />
                   <div className="MobileSection-btn-top">
                     <motion.div 
                       className="MobileSection-btn-icon"
@@ -294,11 +266,7 @@ const MobileSection = () => {
                       <FaReceipt />
                     </motion.div>
                     <span>My Orders</span>
-                    <motion.div 
-                      className="MobileSection-shine"
-                      animate={{ x: ['-250%', '250%'] }}
-                      transition={{ duration: 4, repeat: Infinity, delay: 1.5 }}
-                    />
+                    <div className="MobileSection-shine" aria-hidden="true" />
                   </div>
                 </motion.button>
               </motion.div>
@@ -307,18 +275,16 @@ const MobileSection = () => {
               <motion.div
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.5 }}
               >
                 <motion.button 
                   className="MobileSection-btn-3d btn-delivery"
                   whileHover={{ y: -12, rotateX: 15, scale: 1.05 }}
                   whileTap={{ y: 8, scale: 0.96 }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                  aria-label="Check estimated delivery time"
                 >
-                  <div className="MobileSection-btn-bottom" />
-                  <div className="MobileSection-btn-middle" />
+                  <div className="MobileSection-btn-bottom" aria-hidden="true" />
+                  <div className="MobileSection-btn-middle" aria-hidden="true" />
                   <div className="MobileSection-btn-top">
                     <motion.div 
                       className="MobileSection-btn-icon"
@@ -328,26 +294,22 @@ const MobileSection = () => {
                       <FaClock />
                     </motion.div>
                     <span>DELIVERY TIME</span>
-                    <motion.div 
-                      className="MobileSection-shine"
-                      animate={{ x: ['-250%', '250%'] }}
-                      transition={{ duration: 4, repeat: Infinity, delay: 2 }}
-                    />
+                    <div className="MobileSection-shine" aria-hidden="true" />
                   </div>
                 </motion.button>
               </motion.div>
 
-            </div>
+            </nav>
 
             <div className="MobileSection-helpline">
               <span>HELP LINE NO.</span>
-              <h3>+91 1234567890</h3>
+              <a href="tel:+911234567890"><h3>+91 1234567890</h3></a>
             </div>
           </motion.div>
         </div>
 
-        {/* RIGHT COLUMN (3D PHONE MOCKUP & GROCERY) */}
-        <div className="MobileSection-right">
+        {/* RIGHT COLUMN (3D PHONE MOCKUP & GRAPHICS) */}
+        <div className="MobileSection-right" aria-hidden="true">
           <motion.div 
             className="MobileSection-phone-wrapper"
             initial={{ opacity: 0, x: 100 }}
@@ -414,7 +376,7 @@ const MobileSection = () => {
         </div>
 
       </div>
-    </div>
+    </section>
   );
 };
 

@@ -21,7 +21,7 @@ const BlogReadmoreFour = () => {
 
   const handleCommentSubmit = (e) => {
     e.preventDefault();
-    alert('Thank you for your comment!');
+    alert('Thank you for your comment on Grocery Sathi!');
     setCommentForm({ name: '', email: '', message: '' });
   };
 
@@ -29,7 +29,7 @@ const BlogReadmoreFour = () => {
     if (navigator.share) {
       navigator
         .share({
-          title: 'Delicious Citrus Juices & Smoothies',
+          title: 'Tasty Blueberry Fragrance & Fresh Fruit Guide | Grocery Sathi',
           url: window.location.href
         })
         .catch(() => {});
@@ -42,13 +42,25 @@ const BlogReadmoreFour = () => {
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
-    headline: 'Delicious Citrus Juices & Smoothies',
+    headline: 'Tasty Blueberry Fragrance & Fresh Fruit Guide',
+    alternativeHeadline: 'Discover fresh fruit tips and aromatic uses with Grocery Sathi',
+    image: [blogfruit4],
     author: {
       '@type': 'Organization',
-      name: 'WorkDo'
+      name: 'Grocery Sathi'
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Grocery Sathi',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://yourwebsite.com/logo.png'
+      }
     },
     datePublished: '2022-12-08',
-    keywords: ['Recipes', 'Juice', 'Citrus']
+    dateModified: '2026-07-29',
+    description: 'Explore organic fruits, storage hacks, and delightful blueberry fragrance tips with Grocery Sathi.',
+    keywords: ['Grocery Sathi', 'Fresh Fruit', 'Blueberry', 'Organic Produce', 'Health & Diet']
   };
 
   // Related articles array utilizing imported images
@@ -57,30 +69,30 @@ const BlogReadmoreFour = () => {
       id: 1,
       image: blogfruit1,
       tag: 'news',
-      title: 'Fruit is an essential food for our...',
+      title: 'Fruit is an essential food for our daily vitality...',
       description:
-        'Explore the world of culinary delights with our grocery blog, where we highlight unique ingredients, share delicious recipes, and provide cooking hacks...',
-      author: 'WorkDo,',
+        'Explore the world of culinary delights with our Grocery Sathi blog, highlighting unique ingredients, healthy recipes, and cooking hacks...',
+      author: 'Grocery Sathi',
       date: 'December 5, 2022'
     },
     {
       id: 2,
       image: blogfruit2,
-      tag: 'news',
-      title: 'Keeping Your Fruits and Ve...',
+      tag: 'guide',
+      title: 'Keeping Your Fruits and Vegetables Fresh Longer',
       description:
-        'Different fruits and vegetables have different storage requirements. Some can be stored at room temperature, while others need refrigeration...',
-      author: 'WorkDo,',
+        'Different produce requires distinct storage requirements. Learn what goes on the counter versus what needs refrigeration...',
+      author: 'Grocery Sathi',
       date: 'December 5, 2022'
     },
     {
       id: 3,
       image: blogfruit3,
       tag: 'health',
-      title: 'Organic vs Conventional Fruit',
+      title: 'Organic vs Conventional Fruit: What to Choose',
       description:
-        'Understanding the nutritional benefits and differences in sustainable farming practice when selecting fresh fruits for your daily health routine...',
-      author: 'WorkDo,',
+        'Understanding nutritional differences and sustainable farming practices when selecting fresh fruits for your daily health routine...',
+      author: 'Grocery Sathi',
       date: 'December 6, 2022'
     }
   ];
@@ -97,14 +109,14 @@ const BlogReadmoreFour = () => {
       <section
         className="blog-readmore-four-hero"
         style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url(${blogfruit4})`
+          backgroundImage: `linear-gradient(rgba(16, 42, 39, 0.65), rgba(16, 42, 39, 0.65)), url(${blogfruit4})`
         }}
-        aria-label="Article Banner"
+        aria-label="Grocery Sathi Article Banner"
       >
         <div className="blog-readmore-four-hero-container">
           {/* Back Navigation Button */}
           <nav aria-label="Breadcrumb Navigation">
-            <a href="/" className="blog-readmore-four-back-btn" title="Return to Homepage">
+            <a href="/" className="blog-readmore-four-back-btn" title="Return to Grocery Sathi Home">
               <span className="blog-readmore-four-arrow-circle" aria-hidden="true">
                 <svg
                   width="14"
@@ -120,31 +132,31 @@ const BlogReadmoreFour = () => {
                   <polyline points="12 19 5 12 12 5"></polyline>
                 </svg>
               </span>
-              <span>Back to Home</span>
+              <span>Back to Grocery Sathi Home</span>
             </a>
           </nav>
 
           {/* Meta Badges / Interactive Controls */}
           <div className="blog-readmore-four-hero-meta">
-            <span className="blog-readmore-four-badge-featured">Featured</span>
-            <button className="blog-readmore-four-meta-pill">
-              Category: <strong>recipes</strong>
+            <span className="blog-readmore-four-badge-featured">Grocery Sathi Featured</span>
+            <button className="blog-readmore-four-meta-pill" aria-label="Filter by category Recipes">
+              Category: <strong>Recipes & Fresh Produce</strong>
             </button>
-            <button className="blog-readmore-four-meta-pill">
+            <button className="blog-readmore-four-meta-pill" aria-label="Article publication date">
               Date: <strong>December 8, 2022</strong>
             </button>
           </div>
 
           {/* Hero Main Heading */}
           <h1 className="blog-readmore-four-hero-title">
-          Testy Blueberry
-            <br />Fragrance Oil
+            Tasty Blueberry
+            <br />& Natural Fragrance Guide
           </h1>
 
           {/* Hero Subtitle */}
           <p className="blog-readmore-four-hero-desc">
-           Blueberry fragrance oil can add a delightful and enticing scent to various products. 
-           Whether you're making candles, soaps, lotions, or other scented products, the testy...
+            Blueberry extracts and fresh fruit aromas add delightful, enticing scents to organic products. 
+            Discover natural health benefits and culinary inspirations curated by Grocery Sathi...
           </p>
         </div>
       </section>
@@ -152,24 +164,25 @@ const BlogReadmoreFour = () => {
       {/* --- MAIN CONTENT & SIDEBAR GRID --- */}
       <main className="blog-readmore-four-main">
         <div className="blog-readmore-four-container">
+          
           {/* LEFT COLUMN: MAIN ARTICLE */}
           <article className="blog-readmore-four-content">
             {/* Meta bar under hero */}
             <div className="blog-readmore-four-author-bar">
               <div className="blog-readmore-four-meta-group">
-                <span className="blog-readmore-four-author">WorkDo</span>
+                <span className="blog-readmore-four-author">Grocery Sathi Editorial</span>
                 <span className="blog-readmore-four-meta-item">
-                  Category: <strong>recipes</strong>
+                  Category: <strong>Fresh Foods</strong>
                 </span>
                 <span className="blog-readmore-four-meta-item">
-                  Date: <strong>December 8, 2022</strong>
+                  Published: <strong>Dec 8, 2022</strong>
                 </span>
               </div>
 
               <button
                 className="blog-readmore-four-share-btn"
                 onClick={handleShare}
-                aria-label="Share article"
+                aria-label="Share this Grocery Sathi article"
               >
                 <svg
                   width="16"
@@ -185,40 +198,39 @@ const BlogReadmoreFour = () => {
                   <polyline points="16 6 12 2 8 6"></polyline>
                   <line x1="12" y1="2" x2="12" y2="15"></line>
                 </svg>
-                <span>Share</span>
+                <span>Share Guide</span>
               </button>
             </div>
 
             {/* Article Heading */}
             <h2 className="blog-readmore-four-article-title">
-              Testy Blueberry Fragrance Oil
+              Tasty Blueberry Fragrance & Organic Fruit Insights
             </h2>
 
             {/* Featured Image */}
             <div className="blog-readmore-four-feature-img-wrapper">
               <img
                 src={blogfruit4}
-                alt="Delicious Citrus Juices & Smoothies"
+                alt="Fresh blueberries and citrus fruits curated by Grocery Sathi"
                 className="blog-readmore-four-feature-img"
               />
             </div>
 
             {/* Paragraph Content */}
             <p className="blog-readmore-four-text">
-              Easy-to-make refreshing summer juice recipes packed with antioxidants and natural vitamin C
-              boosts to energize your daily routines. Citrus fruits like oranges, lemons, limes, and
-              grapefruits offer incredible flavor profiles that can transform your breakfast table.
+              Welcome to <strong>Grocery Sathi</strong>! Your trusted partner for farm-fresh groceries, easy summer juice recipes, 
+              and antioxidant-packed natural vitamin C boosts designed to energize your daily routines. Citrus and berry fruits 
+              offer incredible flavor profiles that can transform your breakfast table and wellness regimen.
             </p>
 
             <h3 className="blog-readmore-four-bold-heading">
-             The fragrance oil can be used in different concentrations depending on the desired intensity of the scent.
-              It blends well with other fragrance oils and can be combined with complementary notes like vanilla,
-              citrus, or floral scents to create unique and captivating blends.
+              Natural fruit essences can be used in different concentrations depending on your desired aromatic intensity. 
+              They blend exceptionally well with complementary notes like organic vanilla, citrus, or floral scents.
             </h3>
 
             <p className="blog-readmore-four-text">
-              When preparing your fresh smoothies, try blending whole fruit instead of just juicing to keep
-              the beneficial dietary fibers intact. Add a dash of ginger or mint leaves for an extra
+              When preparing your fresh smoothies at home, try blending whole fruits instead of juicing alone to keep 
+              essential dietary fibers completely intact. Add a dash of fresh ginger or garden mint leaves for an extra 
               revitalizing twist that supports immunity and digestion throughout the day.
             </p>
 
@@ -228,28 +240,29 @@ const BlogReadmoreFour = () => {
                 “
               </span>
               <p>
-                Whether you're crafting homemade candles, soaps, or personal care products,
-                 the testy blueberry fragrance oil can enhance your creations with its enticing and delicious
-                 scent, leaving a lingering aroma that is sure to please the senses.
+                Whether you're crafting homemade smoothies, natural personal care items, or wholesome meal plans, 
+                Grocery Sathi brings the finest organic ingredients straight to your doorstep for a healthier lifestyle.
               </p>
             </blockquote>
 
             {/* Tags */}
             <div className="blog-readmore-four-tags">
               <strong>Tags:</strong>
+              <span className="blog-readmore-four-tag-item">Grocery Sathi</span>
+              <span className="blog-readmore-four-tag-comma">,</span>
               <span className="blog-readmore-four-tag-item">Recipes</span>
               <span className="blog-readmore-four-tag-comma">,</span>
-              <span className="blog-readmore-four-tag-item">Juice</span>
+              <span className="blog-readmore-four-tag-item">Fresh Fruit</span>
               <span className="blog-readmore-four-tag-comma">,</span>
-              <span className="blog-readmore-four-tag-item">Citrus</span>
+              <span className="blog-readmore-four-tag-item">Blueberry</span>
             </div>
           </article>
 
           {/* RIGHT COLUMN: SIDEBAR */}
-          <aside className="blog-readmore-four-sidebar">
+          <aside className="blog-readmore-four-sidebar" aria-label="Sidebar Content">
             {/* Related Articles Section */}
             <div className="blog-readmore-four-related-block">
-              <h3 className="blog-readmore-four-sidebar-title">Related articles</h3>
+              <h3 className="blog-readmore-four-sidebar-title">Related Grocery Articles</h3>
 
               {relatedArticles.map((article) => (
                 <div key={article.id} className="blog-readmore-four-related-card">
@@ -303,7 +316,7 @@ const BlogReadmoreFour = () => {
                     name="name"
                     value={commentForm.name}
                     onChange={handleInputChange}
-                    placeholder="Name"
+                    placeholder="Your Name"
                     required
                     className="blog-readmore-four-input"
                   />
@@ -315,7 +328,7 @@ const BlogReadmoreFour = () => {
                     name="email"
                     value={commentForm.email}
                     onChange={handleInputChange}
-                    placeholder="Email"
+                    placeholder="Your Email Address"
                     required
                     className="blog-readmore-four-input"
                   />
@@ -326,7 +339,7 @@ const BlogReadmoreFour = () => {
                     name="message"
                     value={commentForm.message}
                     onChange={handleInputChange}
-                    placeholder="Message"
+                    placeholder="Write your thoughts or recipe review here..."
                     rows="4"
                     required
                     className="blog-readmore-four-textarea"
@@ -339,6 +352,7 @@ const BlogReadmoreFour = () => {
               </form>
             </div>
           </aside>
+
         </div>
       </main>
     </div>

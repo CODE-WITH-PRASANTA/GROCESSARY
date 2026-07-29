@@ -1,12 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
 /* ==========================================================================
    1. OVERLAY & BACKDROP BLUR
    ========================================================================== */
 .floating-overlay {
   position: fixed;
-  inset: 0; /* Top, Right, Bottom, Left: 0 */
+  inset: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(15, 23, 42, 0.55); /* Subtle dark backdrop */
+  background-color: rgba(16, 42, 39, 0.6); /* Grocery Sathi dark theme tint */
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
@@ -23,16 +25,17 @@
 .floating-form-card {
   position: relative;
   width: 100%;
-  max-width: 420px; /* Optimal readability width */
-  max-height: 90vh; /* Prevents card from spilling past modern mobile viewports */
+  max-width: 420px;
+  max-height: 90vh;
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 35px -5px rgba(16, 42, 39, 0.15), 0 8px 15px -6px rgba(16, 42, 39, 0.1);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  scrollbar-width: thin; /* Smooth Firefox scrollbar */
+  scrollbar-width: thin;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -41,23 +44,23 @@
   position: absolute;
   top: 16px;
   right: 16px;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   background: #f1f5f9;
   border: none;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
-  color: #64748b;
+  font-size: 0.95rem;
+  color: #102a27;
   cursor: pointer;
   transition: background-color 0.2s, color 0.2s;
 }
 
 .floating-close-btn:hover {
   background: #e2e8f0;
-  color: #0f172a;
+  color: #0d1b1a;
 }
 
 /* ==========================================================================
@@ -66,22 +69,23 @@
 .floating-form-header {
   margin-bottom: 20px;
   text-align: center;
-  padding-right: 24px; /* Space off close icon */
+  padding-right: 24px;
 }
 
 .floating-form-header h3 {
   margin: 0 0 6px 0;
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: -0.02em;
+  font-size: 22px;
+  font-weight: 900;
+  color: #102a27;
+  letter-spacing: -0.4px;
 }
 
 .floating-form-header p {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 13.5px;
   color: #64748b;
   line-height: 1.4;
+  font-weight: 500;
 }
 
 /* ==========================================================================
@@ -100,24 +104,25 @@
 }
 
 .form-group label {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #334155;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #102a27;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
 }
 
 .form-group input,
 .form-group textarea {
   width: 100%;
-  padding: 10px 12px;
+  padding: 11px 14px;
   border: 1.5px solid #cbd5e1;
-  border-radius: 8px;
-  font-size: 0.9375rem;
-  color: #0f172a;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #102a27;
   background-color: #f8fafc;
   box-sizing: border-box;
   outline: none;
+  font-family: inherit;
   transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
 }
 
@@ -132,18 +137,19 @@
 .form-group input::placeholder,
 .form-group textarea::placeholder {
   color: #94a3b8;
+  font-weight: 400;
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
-  border-color: #2563eb;
+  border-color: #102a27;
   background-color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 3px rgba(16, 42, 39, 0.12);
 }
 
 .form-group textarea {
   resize: vertical;
-  min-height: 70px;
+  min-height: 65px;
 }
 
 /* ==========================================================================
@@ -153,7 +159,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .btn-action {
@@ -161,11 +167,11 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 12px 8px;
+  padding: 12px 6px;
   border: none;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
   color: #ffffff;
   text-decoration: none;
   cursor: pointer;
@@ -182,43 +188,43 @@
 }
 
 .btn-submit {
-  background-color: #2563eb;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  background-color: #ffc220;
+  color: #102a27;
+  box-shadow: 0 4px 12px rgba(255, 194, 32, 0.3);
 }
 
 .btn-call {
-  background-color: #0284c7;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+  background-color: #102a27;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 42, 39, 0.2);
 }
 
 .btn-whatsapp {
   background-color: #16a34a;
+  color: #ffffff;
   box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
 }
 
 /* ==========================================================================
    6. RESPONSIVE BREAKPOINTS & ANIMATIONS
    ========================================================================== */
-
-/* Mobile Phones (Small & Extra Small screens) */
 @media (max-width: 480px) {
   .floating-form-card {
     padding: 18px 16px;
-    border-radius: 14px;
+    border-radius: 16px;
   }
 
   .action-buttons {
-    grid-template-columns: 1fr; /* Stack buttons vertically for better tap targets on small phones */
-    gap: 10px;
+    grid-template-columns: 1fr; /* Stacks buttons neatly on compact mobile devices */
+    gap: 8px;
   }
 
   .btn-action {
     padding: 12px 16px;
-    font-size: 0.9rem;
+    font-size: 14px;
   }
 }
 
-/* Entrance Animations */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
