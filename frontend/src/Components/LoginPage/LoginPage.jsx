@@ -40,52 +40,69 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="auth-page-wrapper">
+    <main className="auth-page-wrapper">
+      {/* SEO Structured Data */}
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "name": view === 'login' ? "Grocery Sathi Login" : "Grocery Sathi Registration",
+          "description": "Access your Grocery Sathi account to manage orders and shop fresh groceries online.",
+          "publisher": {
+            "@type": "Organization",
+            "name": "Grocery Sathi"
+          }
+        })}
+      </script>
+
       {/* --- TOP BACK TO SHOP BUTTON --- */}
-      <button 
-        type="button" 
-        className="auth-back-shop-btn" 
-        onClick={() => alert('Redirecting to Shop...')}
-      >
-        <span className="auth-back-arrow-circle" aria-hidden="true">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
-        </span>
-        <span className="auth-back-text">Back to Shop</span>
-      </button>
+      <nav aria-label="Breadcrumb" className="auth-nav-container">
+        <button 
+          type="button" 
+          className="auth-back-shop-btn" 
+          onClick={() => alert('Redirecting to Shop...')}
+          aria-label="Back to online grocery shop"
+        >
+          <span className="auth-back-arrow-circle" aria-hidden="true">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </span>
+          <span className="auth-back-text">Back to Shop</span>
+        </button>
+      </nav>
 
       {/* --- PAGE MAIN HEADING --- */}
       <h1 className="auth-main-heading">
-        {view === 'login' ? 'Log In' : 'Register'}
+        {view === 'login' ? 'Log In to Grocery Sathi' : 'Create Account'}
       </h1>
 
       {/* --- MAIN CARD BOX --- */}
-      <div className="auth-card-box">
+      <section className="auth-card-box">
         {view === 'login' ? (
           /* ================= LOGIN FORM ================= */
           <div className="auth-form-container">
-            <div className="auth-card-header">
+            <header className="auth-card-header">
               <h2>Log In</h2>
-            </div>
+            </header>
 
-            <form onSubmit={handleLoginSubmit} className="auth-form-body">
-              <p className="auth-subtext">I am a returning customer</p>
+            <form onSubmit={handleLoginSubmit} className="auth-form-body" aria-label="Login Form">
+              <p className="auth-subtext">Welcome back! Please enter your details.</p>
 
               <div className="auth-form-row">
                 <div className="auth-field-group">
                   <label htmlFor="login-email">
-                    E-mail<span className="auth-required">*</span> :
+                    E-mail<span className="auth-required" aria-hidden="true">*</span> :
                   </label>
                   <input
                     id="login-email"
@@ -93,14 +110,15 @@ const LoginPage = () => {
                     name="email"
                     value={loginData.email}
                     onChange={handleLoginChange}
-                    placeholder="Email"
+                    placeholder="Enter your email"
                     required
+                    autoComplete="email"
                   />
                 </div>
 
                 <div className="auth-field-group">
                   <label htmlFor="login-password">
-                    Password<span className="auth-required">*</span> :
+                    Password<span className="auth-required" aria-hidden="true">*</span> :
                   </label>
                   <input
                     id="login-password"
@@ -108,8 +126,9 @@ const LoginPage = () => {
                     name="password"
                     value={loginData.password}
                     onChange={handleLoginChange}
-                    placeholder="Password"
+                    placeholder="Enter your password"
                     required
+                    autoComplete="current-password"
                   />
                 </div>
               </div>
@@ -138,6 +157,7 @@ const LoginPage = () => {
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    aria-hidden="true"
                   >
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
@@ -147,7 +167,7 @@ const LoginPage = () => {
 
               {/* Bottom Switch to Register Section */}
               <div className="auth-switch-row">
-                <span className="auth-switch-text">If you dont have account</span>
+                <span className="auth-switch-text">Don't have an account?</span>
                 <button
                   type="button"
                   className="auth-btn-secondary"
@@ -163,6 +183,7 @@ const LoginPage = () => {
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    aria-hidden="true"
                   >
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
@@ -174,15 +195,19 @@ const LoginPage = () => {
         ) : (
           /* ================= REGISTER FORM ================= */
           <div className="auth-form-container">
-            <form onSubmit={handleRegisterSubmit} className="auth-form-body">
+            <header className="auth-card-header">
+              <h2>Register</h2>
+            </header>
+
+            <form onSubmit={handleRegisterSubmit} className="auth-form-body" aria-label="Registration Form">
               {/* Personal Details Section */}
-              <div className="auth-section-block">
-                <h3 className="auth-section-title">Your Personal Details</h3>
+              <fieldset className="auth-section-block">
+                <legend className="auth-section-title">Your Personal Details</legend>
 
                 <div className="auth-form-row">
                   <div className="auth-field-group">
                     <label htmlFor="reg-firstname">
-                      First Name<span className="auth-required">*</span> :
+                      First Name<span className="auth-required" aria-hidden="true">*</span> :
                     </label>
                     <input
                       id="reg-firstname"
@@ -192,12 +217,13 @@ const LoginPage = () => {
                       onChange={handleRegisterChange}
                       placeholder="First name"
                       required
+                      autoComplete="given-name"
                     />
                   </div>
 
                   <div className="auth-field-group">
                     <label htmlFor="reg-lastname">
-                      Last Name<span className="auth-required">*</span> :
+                      Last Name<span className="auth-required" aria-hidden="true">*</span> :
                     </label>
                     <input
                       id="reg-lastname"
@@ -207,13 +233,14 @@ const LoginPage = () => {
                       onChange={handleRegisterChange}
                       placeholder="Last name"
                       required
+                      autoComplete="family-name"
                     />
                   </div>
                 </div>
 
                 <div className="auth-field-group full-width">
                   <label htmlFor="reg-email">
-                    E-mail<span className="auth-required">*</span> :
+                    E-mail<span className="auth-required" aria-hidden="true">*</span> :
                   </label>
                   <input
                     id="reg-email"
@@ -221,19 +248,20 @@ const LoginPage = () => {
                     name="email"
                     value={registerData.email}
                     onChange={handleRegisterChange}
-                    placeholder="Email"
+                    placeholder="Email address"
                     required
+                    autoComplete="email"
                   />
                 </div>
-              </div>
+              </fieldset>
 
               {/* Password Section */}
-              <div className="auth-section-block">
-                <h3 className="auth-section-title">Your Password</h3>
+              <fieldset className="auth-section-block">
+                <legend className="auth-section-title">Your Password</legend>
 
                 <div className="auth-field-group full-width">
                   <label htmlFor="reg-password">
-                    Password<span className="auth-required">*</span> :
+                    Password<span className="auth-required" aria-hidden="true">*</span> :
                   </label>
                   <input
                     id="reg-password"
@@ -241,16 +269,17 @@ const LoginPage = () => {
                     name="password"
                     value={registerData.password}
                     onChange={handleRegisterChange}
-                    placeholder="Password"
+                    placeholder="Create a password"
                     required
+                    autoComplete="new-password"
                   />
                 </div>
-              </div>
+              </fieldset>
 
               {/* Create Button Section */}
               <div className="auth-action-row align-end">
                 <button type="submit" className="auth-btn-primary">
-                  <span>Create</span>
+                  <span>Create Account</span>
                   <svg
                     width="16"
                     height="16"
@@ -260,6 +289,33 @@ const LoginPage = () => {
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </button>
+              </div>
+
+              {/* Bottom Switch to Login Section */}
+              <div className="auth-switch-row">
+                <span className="auth-switch-text">Already have an account?</span>
+                <button
+                  type="button"
+                  className="auth-btn-secondary"
+                  onClick={() => setView('login')}
+                >
+                  <span>Login</span>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
                   >
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
@@ -269,8 +325,8 @@ const LoginPage = () => {
             </form>
           </div>
         )}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 

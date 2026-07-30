@@ -1,5 +1,3 @@
-/* MobileSection.css */
-
 :root {
   --call-main: #FFC107;
   --call-dark: #F39C12;
@@ -34,7 +32,6 @@
   z-index: 1;
 }
 
-/* Optional Overlay to ensure foreground readability over the image */
 .MobileSection-bg-gradient::after {
   content: '';
   position: absolute;
@@ -103,69 +100,6 @@
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.1));
 }
 
-/* Header Navbar */
-.MobileSection-nav {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 4rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.MobileSection-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: #2e7d32;
-}
-
-.MobileSection-logo span {
-  color: #f57c00;
-}
-
-.MobileSection-nav-links {
-  display: flex;
-  gap: 2rem;
-  list-style: none;
-  font-weight: 600;
-  color: #444;
-}
-
-.MobileSection-nav-links li {
-  cursor: pointer;
-  transition: color 0.3s;
-}
-
-.MobileSection-nav-links li:hover {
-  color: #2e7d32;
-}
-
-.MobileSection-nav-cta {
-  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
-  color: white;
-  border: none;
-  padding: 0.8rem 1.8rem;
-  border-radius: 30px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  box-shadow: 0 10px 20px rgba(46, 125, 50, 0.25);
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.MobileSection-nav-cta:hover {
-  background: linear-gradient(135deg, #1b5e20 0%, #0d3b10 100%);
-  transform: scale(1.08);
-}
-
 /* Hero Main Layout */
 .MobileSection-container {
   position: relative;
@@ -176,7 +110,7 @@
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
-  padding: 1rem 4rem;
+  padding: 4rem 4rem;
   flex: 1;
 }
 
@@ -240,9 +174,10 @@
   color: #2e7d32;
 }
 
-.MobileSection-feature-text h4 {
+.MobileSection-feature-text h3 {
   font-size: 0.9rem;
   margin: 0;
+  color: #1a1a1a;
 }
 
 .MobileSection-feature-text p {
@@ -344,6 +279,8 @@
   outline: none;
   padding: 0;
   transform-style: preserve-3d;
+  display: block;
+  text-decoration: none;
 }
 
 /* Button 3D Layers */
@@ -425,6 +362,10 @@
   color: #2e7d32;
   letter-spacing: 1px;
   display: block;
+}
+
+.MobileSection-helpline a {
+  text-decoration: none;
 }
 
 .MobileSection-helpline h3 {
@@ -535,11 +476,8 @@
   }
   .MobileSection-container {
     grid-template-columns: 1fr;
-    padding: 1rem 1.5rem;
+    padding: 2rem 1.5rem;
     gap: 3rem;
-  }
-  .MobileSection-nav-links {
-    display: none;
   }
   .MobileSection-title {
     font-size: 2.4rem;

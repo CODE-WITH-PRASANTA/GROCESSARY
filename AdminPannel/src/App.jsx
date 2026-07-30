@@ -12,6 +12,8 @@ import ReturnApproval from "./Components/Blog/ReturnApproval/ReturnApproval";
 import PickupManagement from "./Components/Blog/PickupManagement/PickupManagement";
 import InventoryAdjustment from "./Components/Blog/InventoryAdjustment/InventoryAdjustment";
 import ActivityLog from "./Components/Blog/ActivityLog/ActivityLog";
+import Dashboard from "./Pages/Dashboard/Dashboard";
+import Order from "./Pages/Order/Order";
 
 
 
@@ -50,6 +52,10 @@ const App = () => {
 
 
 
+        <Route path="/dashboard"element={<Dashboard/>}/>
+        <Route path="/orders/all-orders"element={<Order/>}/>
+
+        
         </Route>
 
       </Routes>
