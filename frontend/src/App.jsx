@@ -36,8 +36,6 @@ const App = () => {
         <Route path="/AboutUsOurService" element={<AboutUsOurService/>} />
         <Route path="/contact-us" element={<ContactUs/>} />
         <Route path="/faq" element={<FaqSection/>} />
-
-
         <Route path="terms-and-conditions" element={<TermAndCondition/>} />
         <Route path="/privacy-policy" element={<PrivacyPolicy/>} />
         <Route path="/shipping-delivery" element={<ShippingAndDelivery/>} />
@@ -46,16 +44,8 @@ const App = () => {
         <Route path="/BlogReadmoreTwo" element={<BlogReadmoreTwo/>} />
         <Route path="/BlogReadmoreThree" element={<BlogReadmoreThree/>} />
         <Route path="/BlogReadmoreFour" element={<BlogReadmoreFour/>} />
-
-
         <Route path="/account" element={<LoginPage/>} />
         <Route path="/cart" element={<CartSection/>} />
-
-
-
-
-    
-      
       </Routes> 
       <FloatingForm/>
       <FloatingButton/>
