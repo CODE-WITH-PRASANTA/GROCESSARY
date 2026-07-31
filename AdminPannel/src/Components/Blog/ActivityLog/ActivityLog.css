@@ -1,0 +1,274 @@
+/* Base Container */
+.ActivityLog-container {
+  padding: 16px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Header & Navigation */
+.ActivityLog-header {
+  margin-bottom: 20px;
+}
+
+.ActivityLog-back-btn {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  transition: all 0.2s ease;
+  min-height: 44px; /* Essential for mobile touch targets */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.ActivityLog-back-btn:active {
+  transform: scale(0.97);
+  background: #f1f5f9;
+}
+
+/* Error State */
+.ActivityLog-error-card {
+  margin-top: 16px;
+  padding: 20px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  max-width: 600px;
+}
+
+.ActivityLog-error-card h3 {
+  color: #b91c1c;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.ActivityLog-error-card p {
+  color: #dc2626;
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Main Layout Centering */
+.ActivityLog-section {
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+/* Main Card */
+.ActivityLog-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.ActivityLog-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ActivityLog-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.ActivityLog-id-badge {
+  background-color: #f1f5f9;
+  color: #475569;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: ui-monospace, monospace;
+}
+
+/* Timeline Layout */
+.ActivityLog-timeline-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.ActivityLog-item {
+  position: relative;
+  padding-left: 36px;
+  padding-bottom: 28px;
+}
+
+.ActivityLog-item:last-child {
+  padding-bottom: 0;
+}
+
+/* The Connecting Line using ::before */
+.ActivityLog-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 11px; /* Centers with the 24px node */
+  top: 24px;
+  bottom: -4px;
+  width: 2px;
+  transition: background-color 0.3s ease;
+}
+
+/* Line Styles based on Status */
+.ActivityLog-item.ActivityLog-completed:not(:last-child)::before {
+  background-color: #22c55e; /* Solid green for completed */
+}
+.ActivityLog-item.ActivityLog-active:not(:last-child)::before,
+.ActivityLog-item.ActivityLog-pending:not(:last-child)::before {
+  background-color: transparent;
+  border-left: 2px dashed #cbd5e1; /* Dashed gray for upcoming steps */
+}
+
+/* Timeline Node */
+.ActivityLog-node {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+/* Completed Node */
+.ActivityLog-completed .ActivityLog-node {
+  background-color: #22c55e;
+  color: white;
+}
+.ActivityLog-check-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Active Node */
+.ActivityLog-active .ActivityLog-node {
+  background-color: #dcfce7;
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
+  animation: ActivityLog-pulse 2s infinite;
+}
+.ActivityLog-active .ActivityLog-node-inner {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #16a34a;
+}
+
+/* Pending Node */
+.ActivityLog-pending .ActivityLog-node {
+  background-color: #f1f5f9;
+  border: 2px solid #cbd5e1;
+  box-sizing: border-box;
+}
+
+/* Text Content */
+.ActivityLog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 2px;
+}
+
+.ActivityLog-event-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.ActivityLog-pending .ActivityLog-event-title {
+  color: #94a3b8;
+}
+
+.ActivityLog-event-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ActivityLog-event-time {
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.ActivityLog-event-author {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.ActivityLog-event-empty {
+  font-size: 13px;
+  color: #cbd5e1;
+  font-style: italic;
+}
+
+/* Active Node Pulse Animation */
+@keyframes ActivityLog-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Responsive Layouts (Tablet & iPad Pro)                                     */
+/* -------------------------------------------------------------------------- */
+
+@media (min-width: 768px) {
+  .ActivityLog-container {
+    padding: 24px;
+  }
+
+  .ActivityLog-card {
+    padding: 32px 40px;
+  }
+
+  .ActivityLog-event-meta {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ActivityLog-event-meta::after {
+    content: '';
+    display: none; /* Reset for flex row */
+  }
+  
+  .ActivityLog-event-author::before {
+    content: '•';
+    margin-right: 8px;
+    color: #cbd5e1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ActivityLog-container {
+    padding: 40px;
+  }
+  
+  .ActivityLog-title {
+    font-size: 20px;
+  }
+  
+  .ActivityLog-event-title {
+    font-size: 16px;
+  }
+}
