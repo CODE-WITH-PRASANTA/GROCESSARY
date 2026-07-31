@@ -1,110 +1,105 @@
-.FloatingButton{
-position:fixed;
-right:20px;
-bottom:25px;
-display:flex;
-flex-direction:column;
-gap:14px;
-z-index:999;
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600&display=swap');
+
+.FloatingButton {
+  position: fixed;
+  right: 20px;
+  bottom: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 9999;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 /* BUTTON BASE */
-
 .FloatingButton a,
-.FloatingButton button{
-width:50px;
-height:50px;
-border-radius:50%;
-border:none;
-
-display:flex;
-align-items:center;
-justify-content:center;
-
-font-size:20px;
-color:#fff;
-cursor:pointer;
-
-box-shadow:0 4px 12px rgba(0,0,0,0.25);
-transition:all 0.3s ease;
+.FloatingButton button {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(16, 42, 39, 0.25);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
 }
 
-/* CALL BUTTON */
-
-.FloatingButton-call{
-background:#1d0251;
+/* BRAND CALL BUTTON (Grocery Sathi Deep Theme Accent) */
+.FloatingButton-call {
+  background: #102a27;
 }
 
 /* WHATSAPP BUTTON */
-
-.FloatingButton-whatsapp{
-background:#25D366;
+.FloatingButton-whatsapp {
+  background: #16a34a;
 }
 
 /* SCROLL TOP */
-
-.FloatingButton-top{
-background:#035d7b;
+.FloatingButton-top {
+  background: #ffc220;
+  color: #102a27 !important;
+  font-weight: 800;
 }
 
 /* HOVER EFFECT */
-
 .FloatingButton a:hover,
-.FloatingButton button:hover{
-transform:translateY(-4px);
-box-shadow:0 6px 16px rgba(0,0,0,0.3);
+.FloatingButton button:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(16, 42, 39, 0.35);
+  opacity: 0.95;
+}
+
+.FloatingButton a:active,
+.FloatingButton button:active {
+  transform: translateY(-1px);
 }
 
 /* ================= */
 /* TABLET */
 /* ================= */
+@media (max-width: 992px) {
+  .FloatingButton {
+    right: 18px;
+    bottom: 20px;
+  }
 
-@media (max-width:992px){
-
-.FloatingButton{
-right:18px;
-bottom:20px;
-}
-
-.FloatingButton a,
-.FloatingButton button{
-width:46px;
-height:46px;
-font-size:18px;
-}
-
+  .FloatingButton a,
+  .FloatingButton button {
+    width: 46px;
+    height: 46px;
+    font-size: 18px;
+  }
 }
 
 /* ================= */
 /* MOBILE */
 /* ================= */
+@media (max-width: 600px) {
+  .FloatingButton {
+    right: 15px;
+    bottom: 18px;
+    gap: 12px;
+  }
 
-@media (max-width:600px){
-
-.FloatingButton{
-right:15px;
-bottom:18px;
-gap:12px;
-}
-
-.FloatingButton a,
-.FloatingButton button{
-width:44px;
-height:44px;
-font-size:17px;
-}
-
+  .FloatingButton a,
+  .FloatingButton button {
+    width: 44px;
+    height: 44px;
+    font-size: 17px;
+  }
 }
 
 /* SMALL MOBILE */
-
-@media (max-width:400px){
-
-.FloatingButton a,
-.FloatingButton button{
-width:40px;
-height:40px;
-font-size:16px;
-}
-
+@media (max-width: 400px) {
+  .FloatingButton a,
+  .FloatingButton button {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
 }

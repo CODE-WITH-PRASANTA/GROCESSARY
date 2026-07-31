@@ -11,40 +11,39 @@ const HomeDailyDiscounts = () => {
   ];
 
   return (
-    <section className="home-daily-discounts">
+    <section className="home-daily-discounts" aria-labelledby="daily-discounts-heading">
       <div className="daily-discounts-container">
         
         {/* Left Content Side */}
         <div className="daily-discounts-content">
           <span className="badge-yellow">Daily Discounts</span>
-          <h1 className="main-title">
-            Fruits <br />
-            &amp; Vegetables
-          </h1>
+          <h2 id="daily-discounts-heading" className="main-title">
+            Fresh Fruits <br />
+            &amp; Organic Vegetables
+          </h2>
           <p className="description">
-            We love organic, fresh-picked vegetables for their taste and health
-            benefits. Fruits &amp; Vegetables has brought you the perfect recipes for all
-            your vegetable needs.
+            We love organic, farm-fresh vegetables for their superior taste and health
+            benefits. Grocery Sathi brings you the absolute best everyday deals and fresh produce recipes for all your healthy household needs.
           </p>
         </div>
 
         {/* Right Image & Badges Side */}
-        <div className="daily-discounts-visual">
+        <div className="daily-discounts-visual" role="region" aria-label="Customer reviews and organic citrus display">
           <img
             src={fruitsImg}
-            alt="Fresh Citrus Fruits"
+            alt="Fresh Organic Green Mandarines and Citrus Fruits on Grocery Sathi"
             className="main-image"
           />
 
           {/* Badge 1: Top Left Floating */}
-          <div className="review-card badge-top-left">
-            <div className="avatar-group">
+          <div className="review-card badge-top-left" aria-label="Review: Best shop on the world, rated 4.5 out of 5 stars">
+            <div className="avatar-group" aria-hidden="true">
               {avatars.map((url, index) => (
-                <img key={index} src={url} alt="User Avatar" className="avatar-img" />
+                <img key={index} src={url} alt="" className="avatar-img" />
               ))}
             </div>
             <div className="review-details">
-              <span className="review-title">Best shop on the world!</span>
+              <span className="review-title">Best shop in the world!</span>
               <span className="rating-score">
                 4.5 / <span className="highlight-yellow">5.0</span>
               </span>
@@ -52,14 +51,14 @@ const HomeDailyDiscounts = () => {
           </div>
 
           {/* Badge 2: Middle Right Floating */}
-          <div className="review-card badge-middle-right">
-            <div className="avatar-group">
+          <div className="review-card badge-middle-right" aria-label="Review: Perfect product on the world, rated 4.5 out of 5 stars">
+            <div className="avatar-group" aria-hidden="true">
               {avatars.map((url, index) => (
-                <img key={index} src={url} alt="User Avatar" className="avatar-img" />
+                <img key={index} src={url} alt="" className="avatar-img" />
               ))}
             </div>
             <div className="review-details">
-              <span className="review-title">Perfect product on the world!</span>
+              <span className="review-title">Perfect product quality!</span>
               <span className="rating-score">
                 4.5 / <span className="highlight-yellow">5.0</span>
               </span>
@@ -67,10 +66,10 @@ const HomeDailyDiscounts = () => {
           </div>
 
           {/* Badge 3: Bottom Left Floating */}
-          <div className="review-card badge-bottom-left">
-            <div className="avatar-group">
+          <div className="review-card badge-bottom-left" aria-label="Review: Quick Customer Support, rated 4.5 out of 5 stars">
+            <div className="avatar-group" aria-hidden="true">
               {avatars.map((url, index) => (
-                <img key={index} src={url} alt="User Avatar" className="avatar-img" />
+                <img key={index} src={url} alt="" className="avatar-img" />
               ))}
             </div>
             <div className="review-details">

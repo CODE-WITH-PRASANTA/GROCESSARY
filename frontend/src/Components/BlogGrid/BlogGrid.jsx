@@ -11,42 +11,42 @@ const BlogGrid = () => {
   // State for handling active pagination page
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Mock Blog Data for Pagination Demo
+  // Mock Blog Data for Grocery Sathi
   const allBlogs = [
     {
       id: 1,
       image: blogfruit1,
       tag: 'news',
-      title: 'Fruit is an essenti...',
-      description: 'Explore the world of culinary delights with our grocery blog, where we highlight unique ingredients, share delicious recipes, and provide...',
-      author: 'WorkDo,',
+      title: 'Fruit is an Essential Part of a Healthy Diet',
+      description: 'Explore the world of culinary delights with our grocery blog, where we highlight unique ingredients, share delicious recipes, and provide expert tips for your kitchen.',
+      author: 'Grocery Sathi',
       date: 'December 5, 2022'
     },
     {
       id: 2,
       image: blogfruit2,
       tag: 'news',
-      title: 'Keeping Your Fruit...',
-      description: 'Different fruits and vegetables have different storage requirements. Some can be stored at room temperature, while others need...',
-      author: 'WorkDo,',
+      title: 'Keeping Your Fresh Fruit Longer at Home',
+      description: 'Different fruits and vegetables have unique storage requirements. Some can be stored at room temperature, while others need refrigeration to stay crisp.',
+      author: 'Grocery Sathi',
       date: 'December 5, 2022'
     },
     {
       id: 3,
       image: blogfruit3,
       tag: 'news',
-      title: 'Tasty Fruits & Veg...',
-      description: 'Strawberries, blueberries, raspberries, and blackberries are not only delicious but also packed with antioxidants and vitamins. Add the...',
-      author: 'WorkDo,',
+      title: 'Tasty Berries & Their Amazing Benefits',
+      description: 'Strawberries, blueberries, raspberries, and blackberries are not only delicious but also packed with antioxidants and vitamins. Add them to your daily meals!',
+      author: 'Grocery Sathi',
       date: 'December 5, 2022'
     },
     {
       id: 4,
       image: blogfruit4,
       tag: 'news',
-      title: 'Testy Blueberry Fr...',
-      description: 'Blueberry fragrance oil can add a delightful and enticing scent to various products. Whether you\'re making candles, soaps, lotions, or...',
-      author: 'WorkDo,',
+      title: 'The Natural Goodness of Blueberries',
+      description: 'Discover how fresh blueberries add delightful and enticing flavors to your diet. Whether you are making smoothies, baking, or enjoying them raw.',
+      author: 'Grocery Sathi',
       date: 'December 5, 2022'
     },
     // Page 2 Mock Data
@@ -54,36 +54,36 @@ const BlogGrid = () => {
       id: 5,
       image: blogfruit1,
       tag: 'news',
-      title: 'Fresh Organic Produce',
-      description: 'Discover how organic farming practices bring healthier and fresher fruits and vegetables directly from farms to your kitchen table...',
-      author: 'WorkDo,',
+      title: 'Fresh Organic Produce from Local Farms',
+      description: 'Discover how organic farming practices bring healthier and fresher fruits and vegetables directly from farms to your kitchen table in Rajgarh.',
+      author: 'Grocery Sathi',
       date: 'December 8, 2022'
     },
     {
       id: 6,
       image: blogfruit2,
       tag: 'news',
-      title: 'Seasonal Fruit Guide',
-      description: 'Learn which fruits are in season this month to get maximum flavor, nutritional value, and the best prices on your grocery run...',
-      author: 'WorkDo,',
+      title: 'Seasonal Fruit Guide for Smart Shoppers',
+      description: 'Learn which fruits are in season this month to get maximum flavor, nutritional value, and the best prices on your grocery run.',
+      author: 'Grocery Sathi',
       date: 'December 10, 2022'
     },
     {
       id: 7,
       image: blogfruit3,
       tag: 'news',
-      title: 'Healthy Green Smoothies',
-      description: 'Blend your way to health with these easy green smoothie recipes featuring fresh spinach, kale, apples, and energizing chia seeds...',
-      author: 'WorkDo,',
+      title: 'Healthy Green Smoothies for Energy',
+      description: 'Blend your way to health with these easy green smoothie recipes featuring fresh spinach, kale, apples, and energizing chia seeds.',
+      author: 'Grocery Sathi',
       date: 'December 12, 2022'
     },
     {
       id: 8,
       image: blogfruit4,
       tag: 'news',
-      title: 'Antioxidant Superfoods',
-      description: 'Uncover the top antioxidant-rich berries that boost your immune system and keep your body feeling fresh and energized every day...',
-      author: 'WorkDo,',
+      title: 'Top Antioxidant Superfoods to Try',
+      description: 'Uncover the top antioxidant-rich berries and greens that boost your immune system and keep your body feeling fresh and energized every day.',
+      author: 'Grocery Sathi',
       date: 'December 15, 2022'
     }
   ];
@@ -111,15 +111,29 @@ const BlogGrid = () => {
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://yourwebsite.com/"
+        "item": "https://www.grocerysathi.com/"
       },
       {
         "@type": "ListItem",
         "position": 2,
-        "name": "News",
-        "item": "https://yourwebsite.com/news"
+        "name": "News & Blog",
+        "item": "https://www.grocerysathi.com/news"
       }
     ]
+  };
+
+  const blogCollectionSchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Grocery Sathi News & Blog",
+    "url": "https://www.grocerysathi.com/news",
+    "description": "Read the latest grocery tips, healthy recipes, and farm-fresh produce guides from Grocery Sathi.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Grocery Sathi",
+      "url": "https://www.grocerysathi.com",
+      "logo": "https://www.grocerysathi.com/logo.png"
+    }
   };
 
   return (
@@ -129,6 +143,10 @@ const BlogGrid = () => {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogCollectionSchema) }}
+      />
 
       {/* --- BREADCRUMB / HERO BANNER --- */}
       <section className="blog-grid-breadcrumb" aria-label="News Breadcrumb Banner">
@@ -136,7 +154,7 @@ const BlogGrid = () => {
           
           {/* Back Navigation Link */}
           <nav aria-label="Breadcrumb Navigation">
-            <a href="/" className="blog-grid-back-link" title="Return to Homepage">
+            <a href="/" className="blog-grid-back-link" title="Return to Grocery Sathi Homepage">
               <span className="blog-grid-arrow-circle" aria-hidden="true">
                 <svg
                   className="blog-grid-back-arrow-icon"
@@ -158,13 +176,11 @@ const BlogGrid = () => {
           </nav>
 
           {/* Heading Title */}
-          <h1 className="blog-grid-banner-title">news</h1>
+          <h1 className="blog-grid-banner-title">News &amp; Blog</h1>
 
           {/* Subtitle Description */}
           <p className="blog-grid-banner-desc">
-            Food is any substance consumed by living organisms to provide energy, nutrients, and 
-            nourishment for growth, maintenance, and overall well-being. It is essential for the survival 
-            and proper functioning of the human body.
+            Explore expert grocery guides, nutrition tips, and farm-fresh recipes from Grocery Sathi. Stay informed on healthy eating and proper food storage to support your family&apos;s overall well-being.
           </p>
         </div>
       </section>

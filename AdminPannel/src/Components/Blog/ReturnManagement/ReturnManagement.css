@@ -1,0 +1,766 @@
+/* Container & Base Styles */
+.ReturnManagement-container {
+  background-color: #f8fafc;
+  padding: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #1e293b;
+  min-height: 100vh;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Header */
+.ReturnManagement-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ReturnManagement-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.ReturnManagement-breadcrumb {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.ReturnManagement-breadcrumb span {
+  margin: 0 4px;
+  color: #cbd5e1;
+}
+
+.ReturnManagement-top-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+.ReturnManagement-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  min-height: 36px;
+}
+
+.ReturnManagement-btn:active {
+  transform: scale(0.97);
+  background-color: #f1f5f9;
+}
+
+.ReturnManagement-hide-mobile {
+  display: none;
+}
+
+/* Metrics Cards Layout: Fluid scrolling row on mobile/tablet */
+.ReturnManagement-metrics {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.ReturnManagement-metrics::-webkit-scrollbar {
+  display: none;
+}
+
+/* Individual Card: Fixed compact sizing so cards never distort on any device */
+.ReturnManagement-card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  flex: 0 0 175px;
+  scroll-snap-align: start;
+  box-sizing: border-box;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ReturnManagement-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.04);
+}
+
+/* Circular Icon Badge */
+.ReturnManagement-card-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+/* Soft Background Colors for Icons */
+.ReturnManagement-icon-green { background-color: #ecfdf5; color: #059669; }
+.ReturnManagement-icon-yellow { background-color: #fefce8; color: #d97706; }
+.ReturnManagement-icon-emerald { background-color: #d1fae5; color: #047857; }
+.ReturnManagement-icon-red { background-color: #fef2f2; color: #dc2626; }
+.ReturnManagement-icon-blue { background-color: #eff6ff; color: #2563eb; }
+.ReturnManagement-icon-purple { background-color: #faf5ff; color: #9333ea; }
+.ReturnManagement-icon-cyan { background-color: #ecfeff; color: #0891b2; }
+.ReturnManagement-icon-lime { background-color: #f7fee7; color: #65a30d; }
+
+/* Text Content Area */
+.ReturnManagement-card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  min-width: 0;
+  flex: 1;
+}
+
+.ReturnManagement-card-label {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  line-height: 1.2;
+}
+
+.ReturnManagement-card-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+  margin: 1px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ReturnManagement-card-sub {
+  font-size: 9.5px;
+  color: #94a3b8;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  line-height: 1.1;
+}
+
+/* Panel & Controls */
+.ReturnManagement-panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+  position: relative;
+  overflow: visible !important;
+}
+
+.ReturnManagement-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+  overflow: visible !important;
+}
+
+.ReturnManagement-search-box {
+  position: relative;
+  width: 100%;
+}
+
+.ReturnManagement-search-box input {
+  width: 100%;
+  padding: 8px 12px 8px 34px;
+  font-size: 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  box-sizing: border-box;
+  background-color: #f8fafc;
+  min-height: 38px;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.ReturnManagement-search-box input:focus {
+  border-color: #2563eb;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.ReturnManagement-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  display: flex;
+}
+
+.ReturnManagement-filter-dropdowns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: visible !important;
+}
+
+/* Custom Dropdown Styles (iPad Pro & FB in-app browser safe) */
+.ReturnManagement-custom-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.ReturnManagement-dropdown-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffffff;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #334155;
+  cursor: pointer;
+  min-height: 38px;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+.ReturnManagement-dropdown-toggle:hover {
+  border-color: #94a3b8;
+}
+
+.ReturnManagement-dropdown-arrow {
+  display: flex;
+  transition: transform 0.2s ease;
+  color: #64748b;
+}
+
+.ReturnManagement-dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.ReturnManagement-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  max-height: 200px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.ReturnManagement-dropdown-item {
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: #334155;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.ReturnManagement-dropdown-item:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.ReturnManagement-dropdown-item.selected {
+  background-color: #eff6ff;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.ReturnManagement-select-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow: visible !important;
+}
+
+.ReturnManagement-btn-clear {
+  color: #ef4444;
+  border-color: #fee2e2;
+  background-color: #fef2f2;
+  grid-column: span 2;
+  min-height: 38px;
+  font-size: 12.5px;
+}
+
+/* Table Design (Compact) */
+.ReturnManagement-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.ReturnManagement-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  font-size: 12px;
+  min-width: 1000px;
+}
+
+.ReturnManagement-table th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.ReturnManagement-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.ReturnManagement-table tbody tr {
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+}
+
+.ReturnManagement-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.ReturnManagement-row-selected,
+.ReturnManagement-table tbody tr.ReturnManagement-row-selected:hover {
+  background-color: #eff6ff;
+}
+
+/* Radio button styling */
+.ReturnManagement-col-check {
+  width: 32px;
+  text-align: center;
+}
+.ReturnManagement-radio-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.ReturnManagement-radio-wrapper input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+/* Table Typography & Colors */
+.ReturnManagement-code { color: #059669; font-weight: 600; font-family: ui-monospace, monospace; }
+.ReturnManagement-code-alt { color: #2563eb; font-weight: 600; font-family: ui-monospace, monospace; }
+.ReturnManagement-name { font-weight: 600; color: #0f172a; font-size: 13px; }
+.ReturnManagement-sub { font-size: 11px; color: #64748b; margin-top: 1px; }
+.ReturnManagement-font-semibold { font-weight: 600; color: #1e293b; }
+.ReturnManagement-font-medium { font-weight: 500; color: #334155; }
+.ReturnManagement-bold { font-weight: 700; color: #0f172a; font-size: 13px; }
+.ReturnManagement-date { font-weight: 500; color: #1e293b; }
+.ReturnManagement-text-right { text-align: right; }
+.ReturnManagement-empty-state { text-align: center; padding: 30px; color: #64748b; font-size: 13px; }
+
+/* Product Display in Table */
+.ReturnManagement-product {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ReturnManagement-product-icon {
+  width: 30px;
+  height: 30px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+.ReturnManagement-product-details {
+  display: flex;
+  flex-direction: column;
+}
+.ReturnManagement-product-name { font-weight: 600; color: #1e293b; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ReturnManagement-product-sku { font-size: 10.5px; color: #94a3b8; font-family: ui-monospace, monospace; margin-top: 1px; }
+
+/* Reason Pill & Badges */
+.ReturnManagement-reason-pill {
+  background: #f1f5f9;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.ReturnManagement-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ReturnManagement-badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.ReturnManagement-badge-pending { background-color: #fef3c7; color: #b45309; }
+.ReturnManagement-badge-scheduled { background-color: #dbeafe; color: #1d4ed8; }
+.ReturnManagement-badge-inspection { background-color: #f3e8ff; color: #7e22ce; }
+.ReturnManagement-badge-processing { background-color: #ffedd5; color: #c2410c; }
+
+/* Action Icons inside Table */
+.ReturnManagement-row-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.ReturnManagement-table-btn {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.ReturnManagement-table-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+/* Pagination (Compact) */
+.ReturnManagement-pagination-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.ReturnManagement-entries-count {
+  font-size: 12px;
+  color: #64748b;
+}
+.ReturnManagement-entries-count span {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.ReturnManagement-pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ReturnManagement-page-btn,
+.ReturnManagement-page-nav {
+  min-width: 34px;
+  height: 34px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.ReturnManagement-page-btn:hover:not(.ReturnManagement-page-active):not(:disabled) {
+  background: #f8fafc;
+}
+
+.ReturnManagement-page-active {
+  border-color: #2563eb;
+  background-color: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.ReturnManagement-page-nav:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f8fafc;
+}
+
+/* Footer Section */
+.ReturnManagement-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: #ffffff;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.ReturnManagement-footer-selection-label {
+  font-size: 12px;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 6px 10px;
+  border-radius: 6px;
+  align-self: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ReturnManagement-footer-selection-label strong {
+  color: #059669;
+  font-family: ui-monospace, monospace;
+}
+
+/* Mobile: Horizontally Scrollable Pills for Nav actions */
+.ReturnManagement-footer-nav-scroll {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding-bottom: 6px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.ReturnManagement-footer-nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.ReturnManagement-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  min-height: 40px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  transition: transform 0.2s ease;
+}
+
+.ReturnManagement-action-btn:active { transform: scale(0.97); }
+
+/* Main State Actions */
+.ReturnManagement-footer-state-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.ReturnManagement-state-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  min-height: 42px;
+  transition: opacity 0.2s ease, transform 0.2s;
+  color: #fff;
+}
+.ReturnManagement-state-btn:active { transform: scale(0.98); }
+
+/* Colors */
+.ReturnManagement-btn-details { background-color: #f1f5f9; border-color: #cbd5e1; color: #334155; }
+.ReturnManagement-btn-inspection { background-color: #faf5ff; border-color: #e9d5ff; color: #7e22ce; }
+.ReturnManagement-btn-refund-details { background-color: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+.ReturnManagement-btn-product-info { background-color: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+.ReturnManagement-btn-approval { background-color: #ecfdf5; border-color: #a7f3d0; color: #047857; }
+.ReturnManagement-btn-replacement { background-color: #fdf4ff; border-color: #f5d0fe; color: #a21caf; }
+.ReturnManagement-btn-pickup { background-color: #f0f9ff; border-color: #bae6fd; color: #0369a1; }
+.ReturnManagement-btn-inventory { background-color: #fff7ed; border-color: #ffedd5; color: #c2410c; }
+.ReturnManagement-btn-activity { background-color: #f8fafc; border-color: #e2e8f0; color: #475569; }
+
+.ReturnManagement-btn-approve { background-color: #059669; }
+.ReturnManagement-btn-reject { background-color: #ef4444; }
+.ReturnManagement-btn-process { background-color: #2563eb; }
+
+
+/* -------------------------------------------------------------------------- */
+/* Responsive Layouts (Tablet, iPad Pro, Desktop)                             */
+/* -------------------------------------------------------------------------- */
+
+@media (min-width: 768px) {
+  .ReturnManagement-container {
+    padding: 18px;
+  }
+  
+  .ReturnManagement-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .ReturnManagement-top-actions {
+    display: flex;
+    width: auto;
+  }
+  
+  .ReturnManagement-hide-mobile {
+    display: inline-flex;
+  }
+  
+  .ReturnManagement-filters {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .ReturnManagement-search-box {
+    max-width: 260px;
+    flex-shrink: 0;
+  }
+  
+  .ReturnManagement-filter-dropdowns {
+    display: flex;
+    flex: 1;
+    justify-content: flex-end;
+    gap: 8px;
+    max-width: none;
+  }
+  
+  .ReturnManagement-select-wrap {
+    flex: 0 1 150px;
+    max-width: 180px;
+  }
+  
+  .ReturnManagement-btn-clear {
+    grid-column: auto;
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  .ReturnManagement-pagination-bar {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  
+  .ReturnManagement-footer-state-actions {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .ReturnManagement-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    overflow-x: visible;
+  }
+  .ReturnManagement-card {
+    flex: unset;
+  }
+
+  .ReturnManagement-footer-nav-scroll {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    padding-bottom: 0;
+  }
+  
+  .ReturnManagement-action-btn {
+    flex: 1 1 calc(33.333% - 8px);
+    justify-content: flex-start;
+  }
+}
+
+@media (min-width: 1400px) {
+  .ReturnManagement-metrics {
+    grid-template-columns: repeat(8, 1fr);
+  }
+
+  .ReturnManagement-footer {
+    flex-direction: row;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  
+  .ReturnManagement-footer-selection-label {
+    width: 100%;
+    margin-bottom: 6px;
+  }
+  
+  .ReturnManagement-footer-nav-scroll {
+    width: 65%;
+  }
+
+  .ReturnManagement-action-btn {
+    flex: 0 1 auto;
+  }
+  
+  .ReturnManagement-footer-state-actions {
+    width: 32%;
+    display: flex;
+    flex-direction: column;
+  }
+}

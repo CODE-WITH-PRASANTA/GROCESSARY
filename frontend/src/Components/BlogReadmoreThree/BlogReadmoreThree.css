@@ -100,20 +100,12 @@
   color: #ffffff;
   font-size: 13px;
   font-weight: 500;
-  cursor: pointer;
   padding: 4px 8px;
   border-radius: 4px;
-  transition: color 0.3s ease, background-color 0.3s ease;
 }
 
 .blog-readmore-three-meta-pill strong {
   font-weight: 700;
-}
-
-.blog-readmore-three-meta-pill:hover {
-  color: #0e0d0d;
-  background-color: rgba(241, 199, 33, 0.947);
-  border-radius: 20px;
 }
 
 /* Titles */
@@ -298,23 +290,16 @@
   text-decoration: underline;
 }
 
-.blog-readmore-three-tag-comma {
-  margin-right: 4px;
-  color: #555555;
-}
-
 /* ==========================================================================
    RIGHT COLUMN: SIDEBAR
    ========================================================================== */
-
-/* Sidebar Titles */
 .blog-readmore-three-sidebar-title {
   font-size: 28px;
   font-weight: 900;
   color: #102a27;
   margin: 0 0 20px 0;
   letter-spacing: -0.5px;
-  margin-top: 85px;
+  margin-top: 15px;
 }
 
 /* Related Article Cards */

@@ -1,0 +1,234 @@
+/* Base Container */
+.PickupManagement-container {
+  padding: 16px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Header & Navigation */
+.PickupManagement-header {
+  margin-bottom: 20px;
+}
+
+.PickupManagement-back-btn {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  transition: all 0.2s ease;
+  min-height: 44px; /* Touch target size */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.PickupManagement-back-btn:active {
+  transform: scale(0.97);
+  background: #f1f5f9;
+}
+
+/* Error State */
+.PickupManagement-error-card {
+  margin-top: 16px;
+  padding: 20px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  max-width: 600px;
+}
+
+.PickupManagement-error-card h3 {
+  color: #b91c1c;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.PickupManagement-error-card p {
+  color: #dc2626;
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Section Wrapper */
+.PickupManagement-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+  max-width: 900px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Section Header */
+.PickupManagement-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.PickupManagement-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #16a34a; 
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.PickupManagement-id-badge {
+  background-color: #f1f5f9;
+  color: #475569;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: ui-monospace, monospace;
+}
+
+/* Form Inner Card */
+.PickupManagement-card {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Grids - Mobile First (1 column) */
+.PickupManagement-grid-top,
+.PickupManagement-grid-bottom {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+/* Form Fields */
+.PickupManagement-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.PickupManagement-label {
+  font-size: 13px;
+  color: #475569; 
+  font-weight: 600;
+}
+
+.PickupManagement-input {
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14.5px;
+  color: #1e293b;
+  background-color: #f8fafc;
+  outline: none;
+  font-family: inherit;
+  min-height: 46px; /* Essential touch target height */
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.PickupManagement-input:focus {
+  border-color: #16a34a;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
+}
+
+.PickupManagement-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+/* Fix for date placeholder on some mobile browsers */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  width: 20px;
+  height: 20px;
+}
+
+/* Actions */
+.PickupManagement-actions {
+  margin-top: 32px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.PickupManagement-submit-btn {
+  width: 100%;
+  background-color: #16a34a;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 50px;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.PickupManagement-submit-btn:active {
+  transform: scale(0.98);
+  background-color: #15803d;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Responsive Layouts (Tablet & iPad Pro)                                     */
+/* -------------------------------------------------------------------------- */
+
+@media (min-width: 768px) {
+  .PickupManagement-container {
+    padding: 32px;
+  }
+
+  .PickupManagement-section {
+    padding: 32px 40px;
+  }
+
+  /* 2-Column Grid for Portrait Tablets */
+  .PickupManagement-grid-top,
+  .PickupManagement-grid-bottom {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  
+  .PickupManagement-submit-btn {
+    width: auto;
+    padding: 14px 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .PickupManagement-container {
+    padding: 40px;
+  }
+
+  /* Target exact design specs for iPad Pro Landscape / Desktop */
+  .PickupManagement-grid-top {
+    grid-template-columns: 1fr 1fr 1.5fr; 
+  }
+
+  .PickupManagement-grid-bottom {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
