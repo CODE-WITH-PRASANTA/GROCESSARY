@@ -29,7 +29,7 @@ const BlogReadmoreThree = () => {
     if (navigator.share) {
       navigator
         .share({
-          title: 'Fruit is an essential food for our life',
+          title: 'Fruit is an essential food for our life | Grocery Sathi',
           url: window.location.href
         })
         .catch(() => {});
@@ -38,17 +38,28 @@ const BlogReadmoreThree = () => {
     }
   };
 
-  // Structured Data (JSON-LD) for SEO schema
+  // Structured Data (JSON-LD) for SEO schema optimization
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
-    headline: 'Fruit is an essential food for our life',
+    headline: 'Fruit is an essential food for our life - Grocery Sathi Blog',
+    description: 'Learn why fresh fruits and vegetables are essential for daily health, proper storage guidelines, and nutritional benefits with Grocery Sathi.',
+    image: [blogfruit3],
     author: {
       '@type': 'Organization',
-      name: 'WorkDo'
+      name: 'Grocery Sathi'
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Grocery Sathi',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://grocerysathi.com/logo.webp'
+      }
     },
     datePublished: '2022-12-05',
-    keywords: ['Food', 'Fruits', 'Orange']
+    dateModified: '2026-07-29',
+    keywords: ['Grocery Sathi', 'Fresh Food', 'Fruits and Vegetables', 'Healthy Living', 'Storage Tips']
   };
 
   // Related articles array utilizing imported images
@@ -56,27 +67,27 @@ const BlogReadmoreThree = () => {
     {
       id: 1,
       image: blogfruit1,
-      tag: 'news',
+      tag: 'News',
       title: 'Fruit is an essential food for our...',
       description:
         'Different fruits and vegetables have different storage requirements. Some can be stored at room temperature, while others need refrigeration. For example, bananas, apples, citrus fruits, tomatoes,...',
-      author: 'WorkDo,',
+      author: 'Grocery Sathi',
       date: 'December 5, 2022'
     },
     {
       id: 2,
       image: blogfruit2,
-      tag: 'health',
-      title: 'Keeping Your Fruits and Ve...',
+      tag: 'Health',
+      title: 'Keeping Your Fruits and Vegetables Fresh...',
       description:
         'Understanding the nutritional benefits and differences in sustainable farming practice when selecting fresh fruits for your daily health routine...',
-      author: 'WorkDo,',
+      author: 'Grocery Sathi',
       date: 'December 6, 2022'
-    },
+    }
   ];
 
   return (
-    <div className="blog-readmore-three-page">
+    <article className="blog-readmore-three-page">
       {/* SEO Schema Injection */}
       <script
         type="application/ld+json"
@@ -84,17 +95,17 @@ const BlogReadmoreThree = () => {
       />
 
       {/* --- HERO / BREADCRUMB BANNER --- */}
-      <section
+      <header
         className="blog-readmore-three-hero"
         style={{
           backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url(${blogfruit3})`
         }}
-        aria-label="Article Banner"
+        aria-label="Grocery Sathi Article Banner"
       >
         <div className="blog-readmore-three-hero-container">
           {/* Back Navigation Button */}
           <nav aria-label="Breadcrumb Navigation">
-            <a href="/" className="blog-readmore-three-back-btn" title="Return to Homepage">
+            <a href="/" className="blog-readmore-three-back-btn" title="Return to Grocery Sathi Homepage">
               <span className="blog-readmore-three-arrow-circle" aria-hidden="true">
                 <svg
                   width="14"
@@ -110,57 +121,57 @@ const BlogReadmoreThree = () => {
                   <polyline points="12 19 5 12 12 5"></polyline>
                 </svg>
               </span>
-              <span>Back to Home</span>
+              <span>Back to Grocery Sathi Home</span>
             </a>
           </nav>
 
           {/* Meta Badges / Interactive Controls */}
           <div className="blog-readmore-three-hero-meta">
-            <span className="blog-readmore-three-badge-featured">Featured</span>
-            <button className="blog-readmore-three-meta-pill">
-              Category: <strong>news</strong>
-            </button>
-            <button className="blog-readmore-three-meta-pill">
-              Date: <strong>December 5, 2022</strong>
-            </button>
+            <span className="blog-readmore-three-badge-featured">Grocery Sathi Featured</span>
+            <span className="blog-readmore-three-meta-pill">
+              Category: <strong>Fresh Produce & Nutrition</strong>
+            </span>
+            <span className="blog-readmore-three-meta-pill">
+              Published: <time dateTime="2022-12-05">December 5, 2022</time>
+            </span>
           </div>
 
           {/* Hero Main Heading */}
           <h1 className="blog-readmore-three-hero-title">
-            Tasty Fruits &
+            Tasty Fruits &amp;
             <br />
-           Vegetables
+            Essential Vegetables
           </h1>
 
           {/* Hero Subtitle */}
           <p className="blog-readmore-three-hero-desc">
-           Strawberries, blueberries, raspberries, and blackberries are not only delicious but also
-            packed with antioxidants and vitamins. Add them to your morning cereal, yogurt, or..
+            Strawberries, blueberries, raspberries, and blackberries from Grocery Sathi are not only delicious but also
+            packed with antioxidants and vitamins. Add them to your morning cereal, yogurt, or daily diet...
           </p>
         </div>
-      </section>
+      </header>
 
       {/* --- MAIN CONTENT & SIDEBAR GRID --- */}
-      <main className="blog-readmore-three-main">
+      <div className="blog-readmore-three-main">
         <div className="blog-readmore-three-container">
           {/* LEFT COLUMN: MAIN ARTICLE */}
-          <article className="blog-readmore-three-content">
+          <section className="blog-readmore-three-content">
             {/* Meta bar under hero */}
             <div className="blog-readmore-three-author-bar">
               <div className="blog-readmore-three-meta-group">
-                <span className="blog-readmore-three-author">WorkDo</span>
+                <span className="blog-readmore-three-author">Grocery Sathi Editorial</span>
                 <span className="blog-readmore-three-meta-item">
-                  Category: <strong>news</strong>
+                  Category: <strong>Nutrition</strong>
                 </span>
                 <span className="blog-readmore-three-meta-item">
-                  Date: <strong>December 5, 2022</strong>
+                  Updated: <time dateTime="2022-12-05">December 5, 2022</time>
                 </span>
               </div>
 
               <button
                 className="blog-readmore-three-share-btn"
                 onClick={handleShare}
-                aria-label="Share article"
+                aria-label="Share article on social media"
               >
                 <svg
                   width="16"
@@ -176,68 +187,66 @@ const BlogReadmoreThree = () => {
                   <polyline points="16 6 12 2 8 6"></polyline>
                   <line x1="12" y1="2" x2="12" y2="15"></line>
                 </svg>
-                <span>Share</span>
+                <span>Share Article</span>
               </button>
             </div>
 
             {/* Article Heading */}
             <h2 className="blog-readmore-three-article-title">
-              Fruit is an essential food for our life
+              Fruit is an essential food for our life &mdash; Grocery Sathi Guide
             </h2>
 
             {/* Featured Image */}
             <div className="blog-readmore-three-feature-img-wrapper">
               <img
                 src={blogfruit3}
-                alt="Fruit is an essential food for our life"
+                alt="Fresh assortment of essential fruits and vegetables from Grocery Sathi"
                 className="blog-readmore-three-feature-img"
               />
             </div>
 
             {/* Paragraph Content */}
             <p className="blog-readmore-three-text">
-              Different fruits and vegetables have different storage requirements.
-              Some can be stored at room temperature, while others need refrigeration. For example, bananas, apples, citrus fruits, tomatoes, and onions can be kept at room temperature, while leafy greens, berries, and delicate fruits like peaches and strawberries should be
-              refrigerated. Refer to specific storage guidelines for each type of produce.
+              Different fruits and vegetables ordered through Grocery Sathi require specialized storage conditions to maintain maximum freshness and nutritional density.
+              Some items thrive at room temperature, while others require consistent refrigeration. For instance, bananas, apples, citrus selections, tomatoes, and onions can safely sit at room temperature, whereas leafy greens, fresh berries, and tender fruits like peaches and strawberries must be refrigerated immediately. Always consult specific storage guidelines for each grocery item.
             </p>
 
             <h3 className="blog-readmore-three-bold-heading">
-              Some fruits release a natural gas called ethylene, which speeds up the ripening 
-              process and can cause other fruits and vegetables to spoil faster. Keep ethylene-producing fruits like apples, bananas, and avocados 
-              separate from ethylene-sensitive produce like leafy greens, broccoli, and berries.
+              Managing Ethylene Gas Production for Longer Shelf Life
             </h3>
 
             <p className="blog-readmore-three-text">
-              Wash fruits and vegetables just before you plan to eat or use them. Rinse them under cold
-              running water to remove any dirt, bacteria, or pesticide residues. Use a brush for firm 
-              produce with a rough surface, like potatoes or melons. Handle with Care: Handle your produce gently to prevent bruising and damage. Avoid squeezing or stacking delicate fruits and vegetables 
-              on top of each other. Store them in a way that allows air circulation to maintain freshness
+              Certain natural fruits release a plant hormone called ethylene gas, which accelerates the ripening process and can cause neighboring produce to spoil prematurely. To prevent early spoilage, store high ethylene-producing items like apples, bananas, and avocados entirely separate from sensitive produce such as leafy greens, broccoli, and fresh berries.
+            </p>
+
+            <p className="blog-readmore-three-text">
+              Wash your Grocery Sathi fresh produce deliveries right before you plan to prepare or consume them. Gently rinse under cool running water to eliminate dust, natural elements, or surface residues. For firmer produce with textured skins like potatoes or melons, use a soft vegetable brush. Handle all items with care to avoid bruising and maintain proper airflow in storage spaces.
             </p>
 
             {/* Italic Quote Block */}
             <blockquote className="blog-readmore-three-quote">
               <span className="blog-readmore-three-quote-icon" aria-hidden="true">
-                “
+                &ldquo;
               </span>
               <p>
-                Check your produce regularly and discard any items that show signs of spoilage, such as mold,
-                soft spots, or unpleasant odors.
-                By removing spoiled produce promptly, you can prevent the spread of decay to other items.
+                Inspect your fresh food stock regularly and discard any items displaying signs of deterioration, such as blemishes, soft areas, or unexpected odors. Prompt removal safeguards the freshness of your entire pantry inventory.
               </p>
             </blockquote>
 
             {/* Tags */}
-            <div className="blog-readmore-three-tags">
+            <footer className="blog-readmore-three-tags">
               <strong>Tags:</strong>
-              <span className="blog-readmore-three-tag-item">Fruits</span>
-            </div>
-          </article>
+              <span className="blog-readmore-three-tag-item">Grocery Sathi</span>,{' '}
+              <span className="blog-readmore-three-tag-item">Fresh Fruits</span>,{' '}
+              <span className="blog-readmore-three-tag-item">Healthy Diet</span>
+            </footer>
+          </section>
 
           {/* RIGHT COLUMN: SIDEBAR */}
-          <aside className="blog-readmore-three-sidebar">
+          <aside className="blog-readmore-three-sidebar" aria-label="Sidebar Content">
             {/* Related Articles Section */}
             <div className="blog-readmore-three-related-block">
-              <h3 className="blog-readmore-three-sidebar-title">Related articles</h3>
+              <h3 className="blog-readmore-three-sidebar-title">Related Grocery Articles</h3>
 
               {relatedArticles.map((article) => (
                 <div key={article.id} className="blog-readmore-three-related-card">
@@ -291,7 +300,7 @@ const BlogReadmoreThree = () => {
                     name="name"
                     value={commentForm.name}
                     onChange={handleInputChange}
-                    placeholder="Name"
+                    placeholder="Your Name"
                     required
                     className="blog-readmore-three-input"
                   />
@@ -303,7 +312,7 @@ const BlogReadmoreThree = () => {
                     name="email"
                     value={commentForm.email}
                     onChange={handleInputChange}
-                    placeholder="Email"
+                    placeholder="Your Email Address"
                     required
                     className="blog-readmore-three-input"
                   />
@@ -314,7 +323,7 @@ const BlogReadmoreThree = () => {
                     name="message"
                     value={commentForm.message}
                     onChange={handleInputChange}
-                    placeholder="Message"
+                    placeholder="Share your thoughts on fresh fruits..."
                     rows="4"
                     required
                     className="blog-readmore-three-textarea"
@@ -328,8 +337,8 @@ const BlogReadmoreThree = () => {
             </div>
           </aside>
         </div>
-      </main>
-    </div>
+      </div>
+    </article>
   );
 };
 

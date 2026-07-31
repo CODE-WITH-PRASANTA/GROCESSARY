@@ -106,7 +106,6 @@ const categoriesData = [
     title: 'Blogs',
     path: '/blogs',
     icon: BookOpen,
-    
   },
 ];
 
@@ -120,164 +119,187 @@ const Navbar = () => {
   };
 
   const handleCategoryClick = (id) => {
-    // Toggle sub-category in mobile accordion style
     setActiveCategory(activeCategory === id ? null : id);
   };
 
   return (
-    <header className="navbar-header">
-      {/* Top Bar */}
-      <div className="navbar-top-bar">
-        <div className="navbar-container navbar-top-container">
-          
-          {/* Brand Logo */}
-          <div className="navbar-logo-container">
-            <a href={NAV_PATHS.HOME} aria-label="Go to Homepage">
-              <img src={logo} alt="Grocery Sathi Logo" className="navbar-logo-img" />
-            </a>
-          </div>
+    <>
+      {/* SEO Schema Markup for Grocery Sathi */}
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": "Grocery Sathi",
+          "url": "https://www.grocerysathi.com",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://www.grocerysathi.com/search?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        })}
+      </script>
 
-          {/* Search Bar */}
-          <form className="navbar-search-box" action={NAV_PATHS.SEARCH} method="GET">
-            <Search className="navbar-search-icon" size={18} />
-            <input 
-              type="text" 
-              name="q"
-              placeholder="Search Product..." 
-              className="navbar-search-input"
-              aria-label="Search Product"
-            />
-          </form>
-
-          {/* Contact & Hours Info */}
-          <div className="navbar-info-wrapper">
-            <div className="navbar-info-item">
-              <span className="navbar-info-title">Monday - Friday:</span>
-              <span className="navbar-info-sub">8:00 AM - 9:00 PM</span>
+      <header className="navbar-header" role="banner">
+        {/* Top Bar */}
+        <div className="navbar-top-bar">
+          <div className="navbar-container navbar-top-container">
+            
+            {/* Brand Logo */}
+            <div className="navbar-logo-container">
+              <a href={NAV_PATHS.HOME} aria-label="Grocery Sathi Homepage">
+                <img src={logo} alt="Grocery Sathi - Fresh Organic Groceries Logo" className="navbar-logo-img" />
+              </a>
             </div>
 
-            <div className="navbar-info-item">
-              <span className="navbar-info-title">Support 24/7:</span>
-              <a href="tel:+12002224111" className="navbar-info-phone">+12 002-224-111</a>
+            {/* Search Bar */}
+            <form className="navbar-search-box" action={NAV_PATHS.SEARCH} method="GET" role="search">
+              <Search className="navbar-search-icon" size={18} aria-hidden="true" />
+              <input 
+                type="text" 
+                name="q"
+                placeholder="Search fresh vegetables, fruits, groceries..." 
+                className="navbar-search-input"
+                aria-label="Search products"
+                required
+              />
+            </form>
+
+            {/* Contact & Hours Info */}
+            <div className="navbar-info-wrapper">
+              <div className="navbar-info-item">
+                <span className="navbar-info-title">Monday - Friday:</span>
+                <span className="navbar-info-sub">8:00 AM - 9:00 PM</span>
+              </div>
+
+              <div className="navbar-info-item">
+                <span className="navbar-info-title">Support 24/7:</span>
+                <a href="tel:+919887868746" className="navbar-info-phone" aria-label="Call Grocery Sathi Support">+91 98878 68746</a>
+              </div>
             </div>
+
+            {/* User Actions */}
+            <div className="navbar-user-actions">
+              <a href={NAV_PATHS.ACCOUNT} className="navbar-icon-btn" aria-label="User Account Dashboard">
+                <User size={22} aria-hidden="true" />
+              </a>
+
+              <a href={NAV_PATHS.CART} className="navbar-cart-container" aria-label="View Shopping Cart">
+                <div className="navbar-cart-text">
+                  <span className="navbar-cart-label">My Cart:</span>
+                  <span className="navbar-cart-price">$0.00</span>
+                </div>
+                <div className="navbar-cart-icon-wrapper">
+                  <ShoppingBag size={22} className="navbar-cart-icon" aria-hidden="true" />
+                  <span className="navbar-cart-badge" aria-label="0 items in cart">0</span>
+                </div>
+              </a>
+
+              {/* Mobile Hamburger Toggle */}
+              <button 
+                type="button"
+                className="navbar-mobile-toggle"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-expanded={isMobileMenuOpen}
+                aria-label="Toggle navigation menu"
+              >
+                {isMobileMenuOpen ? <X size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
+              </button>
+            </div>
+
           </div>
-
-          {/* User Actions */}
-          <div className="navbar-user-actions">
-            <a href={NAV_PATHS.ACCOUNT} className="navbar-icon-btn" aria-label="User Account">
-              <User size={22} />
-            </a>
-
-            <a href={NAV_PATHS.CART} className="navbar-cart-container" aria-label="View Shopping Cart">
-              <div className="navbar-cart-text">
-                <span className="navbar-cart-label">My Cart:</span>
-                <span className="navbar-cart-price">$0.00</span>
-              </div>
-              <div className="navbar-cart-icon-wrapper">
-                <ShoppingBag size={22} className="navbar-cart-icon" />
-                <span className="navbar-cart-badge">0</span>
-              </div>
-            </a>
-
-            {/* Mobile Hamburger Toggle */}
-            <button 
-              className="navbar-mobile-toggle"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Toggle Navigation Menu"
-            >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
-
         </div>
-      </div>
 
-      {/* Bottom Navigation Bar */}
-      <div className={`navbar-bottom-bar ${isMobileMenuOpen ? 'navbar-mobile-active' : ''}`}>
-        <div className="navbar-container navbar-bottom-container">
-          
-          {/* Main Categories Menu */}
-          <div className="navbar-category-wrapper">
-            <button 
-              className={`navbar-category-btn ${isCategoryOpen ? 'navbar-category-btn-active' : ''}`}
-              onClick={toggleCategoryDropdown}
-              aria-expanded={isCategoryOpen}
-            >
-              <div className="navbar-category-btn-left">
-                <Grid size={18} />
-                <span>All Categories</span>
-              </div>
-              <ChevronRight size={18} className={`navbar-category-arrow ${isCategoryOpen ? 'rotate-90' : ''}`} />
-            </button>
+        {/* Bottom Navigation Bar */}
+        <nav className={`navbar-bottom-bar ${isMobileMenuOpen ? 'navbar-mobile-active' : ''}`} aria-label="Main Navigation">
+          <div className="navbar-container navbar-bottom-container">
+            
+            {/* Main Categories Menu */}
+            <div className="navbar-category-wrapper">
+              <button 
+                type="button"
+                className={`navbar-category-btn ${isCategoryOpen ? 'navbar-category-btn-active' : ''}`}
+                onClick={toggleCategoryDropdown}
+                aria-expanded={isCategoryOpen}
+                aria-controls="category-dropdown-menu"
+              >
+                <div className="navbar-category-btn-left">
+                  <Grid size={18} aria-hidden="true" />
+                  <span>All Categories</span>
+                </div>
+                <ChevronRight size={18} className={`navbar-category-arrow ${isCategoryOpen ? 'rotate-90' : ''}`} aria-hidden="true" />
+              </button>
 
-            {/* Level 1 Dropdown */}
-            <div className={`navbar-dropdown-menu ${isCategoryOpen ? 'navbar-dropdown-show' : ''}`}>
-              <ul className="navbar-dropdown-list">
-                {categoriesData.map((category) => {
-                  const IconComponent = category.icon;
-                  const isSubOpen = activeCategory === category.id;
+              {/* Level 1 Dropdown */}
+              <div id="category-dropdown-menu" className={`navbar-dropdown-menu ${isCategoryOpen ? 'navbar-dropdown-show' : ''}`}>
+                <ul className="navbar-dropdown-list">
+                  {categoriesData.map((category) => {
+                    const IconComponent = category.icon;
+                    const isSubOpen = activeCategory === category.id;
 
-                  return (
-                    <li 
-                      key={category.id} 
-                      className="navbar-dropdown-item"
-                      onMouseEnter={() => window.innerWidth > 768 && setActiveCategory(category.id)}
-                      onMouseLeave={() => window.innerWidth > 768 && setActiveCategory(null)}
-                    >
-                      <div className="navbar-dropdown-item-header">
-                        <a href={category.path} className="navbar-dropdown-title-link">
-                          <IconComponent size={18} className="navbar-dropdown-icon" />
-                          <span className="navbar-category-title-text">{category.title}</span>
-                        </a>
+                    return (
+                      <li 
+                        key={category.id} 
+                        className="navbar-dropdown-item"
+                        onMouseEnter={() => window.innerWidth > 768 && setActiveCategory(category.id)}
+                        onMouseLeave={() => window.innerWidth > 768 && setActiveCategory(null)}
+                      >
+                        <div className="navbar-dropdown-item-header">
+                          <a href={category.path} className="navbar-dropdown-title-link">
+                            <IconComponent size={18} className="navbar-dropdown-icon" aria-hidden="true" />
+                            <span className="navbar-category-title-text">{category.title}</span>
+                          </a>
 
-                        {category.subCategories && (
-                          <button 
-                            className="navbar-sub-toggle-btn"
-                            onClick={() => handleCategoryClick(category.id)}
-                            aria-label={`Toggle ${category.title} subcategories`}
-                          >
-                            {isSubOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Level 2 Sub-Dropdown */}
-                      {category.subCategories && (
-                        <div className={`navbar-sub-dropdown ${isSubOpen ? 'navbar-sub-dropdown-show' : ''}`}>
-                          <ul className="navbar-sub-list">
-                            {category.subCategories.map((sub) => (
-                              <li key={sub.id} className="navbar-sub-item">
-                                <a href={sub.path}>{sub.title}</a>
-                              </li>
-                            ))}
-                          </ul>
+                          {category.subCategories && (
+                            <button 
+                              type="button"
+                              className="navbar-sub-toggle-btn"
+                              onClick={() => handleCategoryClick(category.id)}
+                              aria-expanded={isSubOpen}
+                              aria-label={`Toggle ${category.title} subcategories`}
+                            >
+                              {isSubOpen ? <ChevronDown size={16} aria-hidden="true" /> : <ChevronRight size={16} aria-hidden="true" />}
+                            </button>
+                          )}
                         </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+
+                        {/* Level 2 Sub-Dropdown */}
+                        {category.subCategories && (
+                          <div className={`navbar-sub-dropdown ${isSubOpen ? 'navbar-sub-dropdown-show' : ''}`}>
+                            <ul className="navbar-sub-list">
+                              {category.subCategories.map((sub) => (
+                                <li key={sub.id} className="navbar-sub-item">
+                                  <a href={sub.path}>{sub.title}</a>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             </div>
-          </div>
 
-          {/* Special Offer Banner */}
-          <div className="navbar-offer-text">
-            <strong>-30% off</strong> for first order with 200 USD in the cart.{' '}
-            <a href="/promotions/first-order-discount">Show More</a>
-          </div>
+            {/* Special Offer Banner */}
+            <div className="navbar-offer-text">
+              <strong>-30% off</strong> on your first order over $200.{' '}
+              <a href="/promotions/first-order-discount">Show More</a>
+            </div>
 
-          {/* Quick Nav Links */}
-          <nav className="navbar-nav-links" aria-label="Quick Links">
+            {/* Quick Nav Links */}
+            <div className="navbar-nav-links">
               <a href={NAV_PATHS.HOME}>Home</a>
-            <a href={NAV_PATHS.FAQ}>Faq</a>
-            <a href={NAV_PATHS.SUPPORT}>Support</a>
-            <a href={NAV_PATHS.CONTACT}>Contact</a>
-            <a href={NAV_PATHS.ABOUT}>About Us</a>
-          </nav>
+              <a href={NAV_PATHS.FAQ}>Faq</a>
+              <a href={NAV_PATHS.SUPPORT}>Support</a>
+              <a href={NAV_PATHS.CONTACT}>Contact</a>
+              <a href={NAV_PATHS.ABOUT}>About Us</a>
+            </div>
 
-        </div>
-      </div>
-    </header>
+          </div>
+        </nav>
+      </header>
+    </>
   );
 };
 

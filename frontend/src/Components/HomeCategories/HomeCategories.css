@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
 .HomeCategories {
-  padding: 40px 20px;
+  padding: 50px 20px;
   background-color: #ffffff;
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
@@ -12,17 +12,17 @@
 }
 
 .HomeCategories__title {
-  font-size: 2.75rem;
+  font-size: 2.5rem;
   font-weight: 800;
   color: #102a27;
-  margin-bottom: 28px;
+  margin-bottom: 32px;
   letter-spacing: -0.5px;
 }
 
 .HomeCategories__grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 24px;
 }
 
 /* Card Container */
@@ -46,17 +46,18 @@
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
 }
 
-/* Dark Gradient Overlay to match design */
+/* Dark Gradient Overlay */
 .HomeCategories__overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     180deg, 
-    rgba(16, 42, 39, 0.2) 0%, 
-    rgba(16, 42, 39, 0.75) 55%, 
-    rgba(16, 42, 39, 0.92) 100%
+    rgba(16, 42, 39, 0.15) 0%, 
+    rgba(16, 42, 39, 0.7) 50%, 
+    rgba(16, 42, 39, 0.95) 100%
   );
   z-index: 1;
+  pointer-events: none;
 }
 
 /* Card Inner Content */
@@ -67,25 +68,27 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  width: 100%;
 }
 
 .HomeCategories__card-title {
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #ffc107;
   margin: 0 0 10px 0;
+  line-height: 1.2;
 }
 
 .HomeCategories__card-description {
   font-size: 0.875rem;
   color: #ffffff;
-  line-height: 1.45;
+  line-height: 1.5;
   margin: 0 0 20px 0;
   font-weight: 500;
   opacity: 0.95;
 }
 
-/* Button Styling */
+/* SEO Link Button Styling */
 .HomeCategories__card-button {
   background-color: #ffc107;
   color: #102a27;
@@ -94,6 +97,7 @@
   padding: 10px 18px;
   font-size: 0.85rem;
   font-weight: 700;
+  text-decoration: none;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -103,6 +107,11 @@
 
 .HomeCategories__card-button:hover {
   background-color: #e5ac00;
+}
+
+.HomeCategories__card-button:focus-visible {
+  outline: 2px solid #102a27;
+  outline-offset: 2px;
 }
 
 .HomeCategories__card-button-icon {

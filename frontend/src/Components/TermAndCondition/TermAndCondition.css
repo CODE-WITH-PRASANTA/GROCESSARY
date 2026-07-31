@@ -9,7 +9,7 @@
 }
 
 /* ==========================================================================
-   BREADCRUMB / BANNER SECTION
+   BREADCRUMB / BANNER SECTION (#f2f3f5 Light Gray Background matching Contact Us)
    ========================================================================== */
 .term-and-condition-breadcrumb {
   background-color: #f2f3f5;
@@ -59,7 +59,7 @@
   transition: color 0.3s ease;
 }
 
-/* Arrow Hover Animations (Solid Background & Color Swap) */
+/* Arrow Hover Animations */
 .term-and-condition-back-link:hover .term-and-condition-arrow-circle {
   background-color: #102a27;
   color: #ffffff;
@@ -72,20 +72,20 @@
 
 /* Banner Title (H1) */
 .term-and-condition-banner-title {
-  font-size: 40px;
+  font-size: 52px;
   font-weight: 800;
   color: #102a27;
   margin: 0 0 20px 0;
-  letter-spacing: -1px;
+  letter-spacing: -1.2px;
   line-height: 1.1;
 }
 
 /* Banner Description */
 .term-and-condition-banner-desc {
-  font-size: 16px;
-  line-height: 1.6;
-  color: #2c3e3b;
-  max-width: 540px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: #3b4d4a;
+  max-width: 580px;
   margin: 0;
   font-weight: 500;
 }
@@ -106,22 +106,22 @@
 
 /* Primary Section Title inside main */
 .term-and-condition-section-title {
-  font-size: 45px;
+  font-size: 40px;
   font-weight: 800;
   color: #102a27;
-  letter-spacing: -1.2px;
+  letter-spacing: -1px;
   margin: 0 0 40px 0;
   line-height: 1.1;
 }
 
 /* Section Grouping */
 .term-and-condition-block {
-  margin-bottom: 36px;
+  margin-bottom: 40px;
 }
 
 /* Section Subtitle (e.g. 1. GENERAL CONDITIONS) */
 .term-and-condition-subtitle {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   color: #102a27;
   letter-spacing: -0.3px;
@@ -132,10 +132,10 @@
 
 /* Content Body Paragraphs */
 .term-and-condition-text {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
-  line-height: 1.65;
-  color: #2c3e3b;
+  line-height: 1.7;
+  color: #3b4d4a;
   margin: 0 0 16px 0;
 }
 
@@ -150,13 +150,16 @@
     padding: 50px 20px;
   }
 
-  .term-and-condition-banner-title,
+  .term-and-condition-banner-title {
+    font-size: 40px;
+  }
+
   .term-and-condition-section-title {
-    font-size: 38px;
+    font-size: 34px;
   }
 
   .term-and-condition-subtitle {
-    font-size: 19px;
+    font-size: 18px;
   }
 
   .term-and-condition-banner-desc,
@@ -173,14 +176,17 @@
     padding: 36px 16px;
   }
 
-  .term-and-condition-banner-title,
-  .term-and-condition-section-title {
-    font-size: 30px;
+  .term-and-condition-banner-title {
+    font-size: 32px;
     letter-spacing: -0.5px;
   }
 
+  .term-and-condition-section-title {
+    font-size: 28px;
+  }
+
   .term-and-condition-subtitle {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   .term-and-condition-banner-desc,

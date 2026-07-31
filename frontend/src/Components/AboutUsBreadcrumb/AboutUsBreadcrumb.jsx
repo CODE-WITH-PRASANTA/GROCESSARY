@@ -2,7 +2,7 @@ import React from 'react';
 import './AboutUsBreadcrumb.css';
 
 const AboutUsBreadcrumb = () => {
-  // Structured Data (JSON-LD) for SEO schema
+  // Structured Data (JSON-LD) for SEO schema customized for Grocery Sathi
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -11,13 +11,13 @@ const AboutUsBreadcrumb = () => {
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://yourwebsite.com/"
+        "item": "https://www.grocerysathi.com/"
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": "About Us",
-        "item": "https://yourwebsite.com/about-us"
+        "item": "https://www.grocerysathi.com/about-us"
       }
     ]
   };
@@ -31,12 +31,12 @@ const AboutUsBreadcrumb = () => {
       />
 
       {/* Main Container using Semantic <nav> / <section> */}
-      <section className="breadcrumb-container" aria-label="Breadcrumb Banner">
+      <section className="breadcrumb-container" aria-label="About Us Breadcrumb Banner">
         <div className="breadcrumb-content">
           
           {/* Back Navigation with ARIA Label */}
           <nav aria-label="Breadcrumb Navigation">
-            <a href="/" className="back-link" title="Return to Homepage">
+            <a href="/" className="back-link" title="Return to Grocery Sathi Homepage">
               <span className="arrow-circle" aria-hidden="true">
                 <svg
                   className="arrow-icon"
@@ -58,13 +58,12 @@ const AboutUsBreadcrumb = () => {
           </nav>
 
           {/* Primary Page Heading (H1 for SEO) */}
-          <h1 className="breadcrumb-title">About Us</h1>
+          <h1 className="breadcrumb-title">About Grocery Sathi</h1>
 
           {/* SEO Description Paragraph */}
           <p className="breadcrumb-description">
-            The style of an "About Us" page can vary depending on the company and its target 
-            audience. However, there are some general tips that can help you create a well-written and 
-            engaging "About Us" page.
+            Discover the story behind Grocery Sathi. We are committed to bringing farm-fresh organic vegetables, 
+            daily essentials, and high-quality groceries directly to your doorstep with unmatched reliability and care.
           </p>
         </div>
       </section>

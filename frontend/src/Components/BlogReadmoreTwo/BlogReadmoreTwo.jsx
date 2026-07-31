@@ -34,21 +34,37 @@ const BlogReadmoreTwo = () => {
         })
         .catch(() => {});
     } else {
+      navigator.clipboard.writeText(window.location.href);
       alert('Link copied to clipboard!');
     }
   };
 
-  // Structured Data (JSON-LD) for SEO schema
+  // Comprehensive SEO Structured Data (JSON-LD)
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
-    headline: 'Fruit is an essential food for our life',
+    headline: 'Fruit is an essential food for our life & Proper Storage Guide',
+    description: 'Discover essential guidelines for storing fruits and vegetables, maintaining freshness, and preventing premature spoilage through optimal kitchen management.',
+    image: [blogfruit2],
+    datePublished: '2022-12-05T08:00:00+00:00',
+    dateModified: '2026-07-29T12:00:00+00:00',
     author: {
       '@type': 'Organization',
-      name: 'WorkDo'
+      name: 'Grocery Sathi WorkDo'
     },
-    datePublished: '2022-12-05',
-    keywords: ['Food', 'Fruits', 'Orange']
+    publisher: {
+      '@type': 'Organization',
+      name: 'Grocery Sathi',
+      logo: {
+        '@type': 'ImageObject',
+        url: blogfruit2
+      }
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': window.location.href
+    },
+    keywords: ['Grocery Sathi', 'Food', 'Fruits', 'Vegetables', 'Health', 'Storage Guide']
   };
 
   // Related articles array utilizing imported images
@@ -57,20 +73,20 @@ const BlogReadmoreTwo = () => {
       id: 1,
       image: blogfruit1,
       tag: 'news',
-      title: 'Fruit is an essential food for our...',
+      title: 'Fruit is an essential food for our life',
       description:
-        'Different fruits and vegetables have different storage requirements. Some can be stored at room temperature, while others need refrigeration. For example, bananas, apples, citrus fruits, tomatoes,...',
-      author: 'WorkDo,',
+        'Different fruits and vegetables have different storage requirements. Some can be stored at room temperature, while others need refrigeration. For example, bananas, apples, citrus fruits...',
+      author: 'Grocery Sathi',
       date: 'December 5, 2022'
     },
     {
       id: 2,
       image: blogfruit2,
       tag: 'health',
-      title: 'Keeping Your Fruits and Ve...',
+      title: 'Keeping Your Fruits and Veggies Fresh',
       description:
         'Understanding the nutritional benefits and differences in sustainable farming practice when selecting fresh fruits for your daily health routine...',
-      author: 'WorkDo,',
+      author: 'Grocery Sathi',
       date: 'December 6, 2022'
     },
     {
@@ -80,7 +96,7 @@ const BlogReadmoreTwo = () => {
       title: 'Delicious Citrus Juices & Smoothies',
       description:
         'Easy-to-make refreshing summer juice recipes packed with antioxidants and natural vitamin C boosts to energize your daily routines...',
-      author: 'WorkDo,',
+      author: 'Grocery Sathi',
       date: 'December 8, 2022'
     }
   ];
@@ -94,12 +110,12 @@ const BlogReadmoreTwo = () => {
       />
 
       {/* --- HERO / BREADCRUMB BANNER --- */}
-      <section
+      <header
         className="blog-readmore-two-hero"
         style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url(${blogfruit2})`
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${blogfruit2})`
         }}
-        aria-label="Article Banner"
+        role="banner"
       >
         <div className="blog-readmore-two-hero-container">
           {/* Back Navigation Button */}
@@ -124,53 +140,51 @@ const BlogReadmoreTwo = () => {
             </a>
           </nav>
 
-          {/* Meta Badges / Interactive Controls */}
+          {/* Meta Badges */}
           <div className="blog-readmore-two-hero-meta">
-            <span className="blog-readmore-two-badge-featured">Featured</span>
-            <button className="blog-readmore-two-meta-pill">
-              Category: <strong>news</strong>
-            </button>
-            <button className="blog-readmore-two-meta-pill">
-              Date: <strong>December 5, 2022</strong>
-            </button>
+            <span className="blog-readmore-two-badge-featured">Featured Article</span>
+            <span className="blog-readmore-two-meta-pill">
+              Category: <strong>Fresh Produce & Nutrition</strong>
+            </span>
+            <span className="blog-readmore-two-meta-pill">
+              Published: <strong>December 5, 2022</strong>
+            </span>
           </div>
 
           {/* Hero Main Heading */}
           <h1 className="blog-readmore-two-hero-title">
-            Keeping Your Fruits and 
-            <br />
-            Veggies
+            Fruit is an Essential Food for Our Life & Produce Guide
           </h1>
 
           {/* Hero Subtitle */}
           <p className="blog-readmore-two-hero-desc">
-            Different fruits and vegetables have different storage requirements. Some can be stored at 
-            room temperature, while others need refrigeration. For example, bananas, apples,...
+            Explore expert grocery insights from Grocery Sathi on proper fruit and vegetable storage techniques to extend shelf-life and maximize everyday freshness.
           </p>
         </div>
-      </section>
+      </header>
 
       {/* --- MAIN CONTENT & SIDEBAR GRID --- */}
       <main className="blog-readmore-two-main">
         <div className="blog-readmore-two-container">
+          
           {/* LEFT COLUMN: MAIN ARTICLE */}
           <article className="blog-readmore-two-content">
             {/* Meta bar under hero */}
             <div className="blog-readmore-two-author-bar">
               <div className="blog-readmore-two-meta-group">
-                <span className="blog-readmore-two-author">WorkDo</span>
+                <span className="blog-readmore-two-author">By Grocery Sathi</span>
                 <span className="blog-readmore-two-meta-item">
-                  Category: <strong>news</strong>
+                  Category: <strong>News & Guides</strong>
                 </span>
                 <span className="blog-readmore-two-meta-item">
-                  Date: <strong>December 5, 2022</strong>
+                  Updated: <strong>December 5, 2022</strong>
                 </span>
               </div>
 
               <button
                 className="blog-readmore-two-share-btn"
                 onClick={handleShare}
-                aria-label="Share article"
+                aria-label="Share this grocery guide article"
               >
                 <svg
                   width="16"
@@ -186,42 +200,41 @@ const BlogReadmoreTwo = () => {
                   <polyline points="16 6 12 2 8 6"></polyline>
                   <line x1="12" y1="2" x2="12" y2="15"></line>
                 </svg>
-                <span>Share</span>
+                <span>Share Article</span>
               </button>
             </div>
 
-            {/* Article Heading */}
+            {/* Sub-heading / Article Introduction */}
             <h2 className="blog-readmore-two-article-title">
-              Fruit is an essential food for our life
+              Mastering Fruit & Vegetable Preservation at Home
             </h2>
 
             {/* Featured Image */}
             <div className="blog-readmore-two-feature-img-wrapper">
               <img
                 src={blogfruit2}
-                alt="Fruit is an essential food for our life"
+                alt="Fresh assorted fruits and vegetables stored neatly for optimal kitchen freshness"
                 className="blog-readmore-two-feature-img"
+                loading="lazy"
               />
             </div>
 
             {/* Paragraph Content */}
             <p className="blog-readmore-two-text">
-              Different fruits and vegetables have different storage requirements.
-               Some can be stored at room temperature, while others need refrigeration. For example, bananas, apples, citrus fruits, tomatoes, and onions can be kept at room temperature, while leafy greens, berries, and delicate fruits like peaches and strawberries should be
-               refrigerated. Refer to specific storage guidelines for each type of produce.
+              Different fruits and vegetables have distinct storage requirements. Some can be stored at 
+              room temperature, while others need refrigeration. For example, bananas, apples, citrus fruits, tomatoes, and onions can be kept at room temperature, while leafy greens, berries, and delicate fruits like peaches and strawberries should be refrigerated. Always refer to specific storage guidelines for each type of produce to reduce household food waste.
             </p>
 
             <h3 className="blog-readmore-two-bold-heading">
-              Some fruits release a natural gas called ethylene, which speeds up the ripening 
-              process and can cause other fruits and vegetables to spoil faster. Keep ethylene-producing fruits like apples, bananas, and avocados 
-              separate from ethylene-sensitive produce like leafy greens, broccoli, and berries.
+              Managing Ethylene Gas Production in Your Pantry
             </h3>
 
             <p className="blog-readmore-two-text">
-              Wash fruits and vegetables just before you plan to eat or use them. Rinse them under cold
-               running water to remove any dirt, bacteria, or pesticide residues. Use a brush for firm 
-               produce with a rough surface, like potatoes or melons. Handle with Care: Handle your produce gently to prevent bruising and damage. Avoid squeezing or stacking delicate fruits and vegetables 
-              on top of each other. Store them in a way that allows air circulation to maintain freshness
+              Some fruits release a natural plant hormone called ethylene gas, which speeds up the ripening process and can cause neighboring fruits and vegetables to spoil faster. Keep ethylene-producing produce like apples, bananas, and avocados safely separate from ethylene-sensitive items like leafy greens, broccoli, and berries.
+            </p>
+
+            <p className="blog-readmore-two-text">
+              Wash your fruits and vegetables just before you plan to consume or cook them. Rinse them thoroughly under cold running water to eliminate dirt, surface bacteria, or pesticide residues. Use a soft brush for firm produce with rough surfaces, such as potatoes or melons. Handle your grocery items gently to prevent bruising and preserve structural integrity.
             </p>
 
             {/* Italic Quote Block */}
@@ -230,31 +243,31 @@ const BlogReadmoreTwo = () => {
                 “
               </span>
               <p>
-               Check your produce regularly and discard any items that show signs of spoilage, such as mold,
-                soft spots, or unpleasant odors.
-                By removing spoiled produce promptly, you can prevent the spread of decay to other items.
+                Check your grocery produce regularly and discard items showing early signs of spoilage, such as mold, soft spots, or unpleasant odors. Prompt removal prevents decay from spreading across your kitchen pantry.
               </p>
             </blockquote>
 
             {/* Tags */}
             <div className="blog-readmore-two-tags">
-              <strong>Tags:</strong>
-              
-              <span className="blog-readmore-two-tag-item">Fruits</span>
-  
+              <strong>Related Tags:</strong>
+              <span className="blog-readmore-two-tag-item">Grocery Sathi</span>,{' '}
+              <span className="blog-readmore-two-tag-item">Fruits</span>,{' '}
+              <span className="blog-readmore-two-tag-item">Healthy Living</span>,{' '}
+              <span className="blog-readmore-two-tag-item">Produce Storage</span>
             </div>
           </article>
 
           {/* RIGHT COLUMN: SIDEBAR */}
-          <aside className="blog-readmore-two-sidebar">
+          <aside className="blog-readmore-two-sidebar" aria-label="Sidebar Content">
+            
             {/* Related Articles Section */}
             <div className="blog-readmore-two-related-block">
-              <h3 className="blog-readmore-two-sidebar-title">Related articles</h3>
+              <h3 className="blog-readmore-two-sidebar-title">Related Articles</h3>
 
               {relatedArticles.map((article) => (
                 <div key={article.id} className="blog-readmore-two-related-card">
                   <div className="blog-readmore-two-card-img-wrapper">
-                    <img src={article.image} alt={article.title} />
+                    <img src={article.image} alt={article.title} loading="lazy" />
                     <span className="blog-readmore-two-card-tag">{article.tag}</span>
                   </div>
 
@@ -267,7 +280,7 @@ const BlogReadmoreTwo = () => {
                         className="blog-readmore-two-read-more-btn"
                         aria-label={`Read more about ${article.title}`}
                       >
-                        <span>Read more</span>
+                        <span>Read More</span>
                         <svg
                           width="14"
                           height="14"
@@ -298,35 +311,41 @@ const BlogReadmoreTwo = () => {
 
               <form onSubmit={handleCommentSubmit} className="blog-readmore-two-comment-form">
                 <div className="blog-readmore-two-form-group">
+                  <label htmlFor="comment-name" className="visually-hidden">Name</label>
                   <input
+                    id="comment-name"
                     type="text"
                     name="name"
                     value={commentForm.name}
                     onChange={handleInputChange}
-                    placeholder="Name"
+                    placeholder="Your Name"
                     required
                     className="blog-readmore-two-input"
                   />
                 </div>
 
                 <div className="blog-readmore-two-form-group">
+                  <label htmlFor="comment-email" className="visually-hidden">Email</label>
                   <input
+                    id="comment-email"
                     type="email"
                     name="email"
                     value={commentForm.email}
                     onChange={handleInputChange}
-                    placeholder="Email"
+                    placeholder="Your Email Address"
                     required
                     className="blog-readmore-two-input"
                   />
                 </div>
 
                 <div className="blog-readmore-two-form-group">
+                  <label htmlFor="comment-message" className="visually-hidden">Message</label>
                   <textarea
+                    id="comment-message"
                     name="message"
                     value={commentForm.message}
                     onChange={handleInputChange}
-                    placeholder="Message"
+                    placeholder="Write your thoughts or feedback here..."
                     rows="4"
                     required
                     className="blog-readmore-two-textarea"
