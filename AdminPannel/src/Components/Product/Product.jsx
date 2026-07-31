@@ -14,6 +14,9 @@ import {
   Image as ImageIcon,
   Settings,
   ArrowRight,
+  X,
+  CheckCircle,
+  Download,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -25,13 +28,11 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  LineChart,
-  Line,
 } from "recharts";
 import "./Product.css";
 
 /* ------------------------------------------------------------------ */
-/* Mock Data matching the reference UI                                */
+/* Mock Data                                                          */
 /* ------------------------------------------------------------------ */
 
 const TOP_SELLING = [
@@ -82,10 +83,50 @@ const RECENT_ACTIVITIES = [
   { title: "New Customer Registered", sub: "Rahul Sharma", time: "1 hour ago", icon: Users, color: "blue" },
 ];
 
+const ORDERS_DATA = [
+  { id: "ORD-2026-08765", customer: "Rahul Sharma", items: 4, total: "₹1,240", status: "Processing", statusColor: "yellow" },
+  { id: "ORD-2026-08764", customer: "Priya Nair", items: 2, total: "₹560", status: "Shipped", statusColor: "blue" },
+  { id: "ORD-2026-08763", customer: "Amit Verma", items: 7, total: "₹2,180", status: "Delivered", statusColor: "green" },
+  { id: "ORD-2026-08762", customer: "Sneha Patil", items: 1, total: "₹175", status: "Delivered", statusColor: "green" },
+  { id: "ORD-2026-08761", customer: "Karan Mehta", items: 3, total: "₹920", status: "Processing", statusColor: "yellow" },
+];
+
+const RETURNS_DATA = [
+  { id: "RET-2026-00124", customer: "Sneha Patil", product: "Amul Fresh Milk 1L", reason: "Damaged", status: "Pending", statusColor: "yellow" },
+  { id: "RET-2026-00123", customer: "Karan Mehta", product: "Organic Bananas", reason: "Wrong Item", status: "Approved", statusColor: "green" },
+  { id: "RET-2026-00122", customer: "Rahul Sharma", product: "Tata Salt 1kg", reason: "Not Needed", status: "Rejected", statusColor: "blue" },
+];
+
+const CUSTOMERS_DATA = [
+  { id: 1, name: "Rahul Sharma", email: "rahul.sharma@example.com", orders: 18, spent: "₹24,560" },
+  { id: 2, name: "Priya Nair", email: "priya.nair@example.com", orders: 12, spent: "₹15,230" },
+  { id: 3, name: "Amit Verma", email: "amit.verma@example.com", orders: 27, spent: "₹38,900" },
+  { id: 4, name: "Sneha Patil", email: "sneha.patil@example.com", orders: 5, spent: "₹6,410" },
+];
+
+const CATEGORIES_DATA = [
+  { id: 1, name: "Groceries", products: 412 },
+  { id: 2, name: "Fruits & Vegetables", products: 268 },
+  { id: 3, name: "Dairy & Bakery", products: 154 },
+  { id: 4, name: "Beverages", products: 96 },
+];
+
+const COUPONS_DATA = [
+  { id: 1, code: "WELCOME10", discount: "10%", expiry: "31 Aug 2026", status: "Active", statusColor: "green" },
+  { id: 2, code: "FESTIVE50", discount: "₹50", expiry: "15 Aug 2026", status: "Active", statusColor: "green" },
+  { id: 3, code: "SUMMER20", discount: "20%", expiry: "01 Jun 2026", status: "Expired", statusColor: "blue" },
+];
+
+const BANNERS_DATA = [
+  { id: 1, title: "Monsoon Grocery Sale", placement: "Homepage Top", status: "Live", statusColor: "green" },
+  { id: 2, title: "Fresh Fruits Combo", placement: "Category Page", status: "Live", statusColor: "green" },
+  { id: 3, title: "Diwali Early Bird", placement: "Homepage Top", status: "Scheduled", statusColor: "yellow" },
+];
+
 const PERIOD_OPTIONS = ["This Month", "Last Month", "This Year"];
 
 /* ------------------------------------------------------------------ */
-/* Outside click helper for custom dropdowns                         */
+/* Outside click helper                                               */
 /* ------------------------------------------------------------------ */
 function useOutsideClick(onClose) {
   const ref = useRef(null);
@@ -100,7 +141,59 @@ function useOutsideClick(onClose) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Main Component                                                    */
+/* Inline SVG Sparkline Component for Seamless Curves                */
+/* ------------------------------------------------------------------ */
+const Sparkline = ({ strokeColor, fillColor, id }) => (
+  <svg className="sparkline-svg" viewBox="0 0 80 32" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id={`gradient-${id}`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor={fillColor} stopOpacity="0.3" />
+        <stop offset="100%" stopColor={fillColor} stopOpacity="0.0" />
+      </linearGradient>
+    </defs>
+    <path
+      d="M 0,22 Q 15,28 30,14 T 60,18 T 80,6 L 80,32 L 0,32 Z"
+      fill={`url(#gradient-${id})`}
+    />
+    <path
+      d="M 0,22 Q 15,28 30,14 T 60,18 T 80,6"
+      fill="none"
+      stroke={strokeColor}
+      strokeWidth="2.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+/* ------------------------------------------------------------------ */
+/* Modal Wrapper                                                      */
+/* ------------------------------------------------------------------ */
+const Modal = ({ title, onClose, children }) => {
+  useEffect(() => {
+    function handleEsc(e) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [onClose]);
+
+  return (
+    <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-card">
+        <div className="modal-header">
+          <h3 className="modal-title">{title}</h3>
+          <button className="modal-close-btn" onClick={onClose} aria-label="Close">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="modal-body">{children}</div>
+      </div>
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/* Main Component                                                     */
 /* ------------------------------------------------------------------ */
 
 const Product = () => {
@@ -110,6 +203,446 @@ const Product = () => {
 
   const [hoveredSlice, setHoveredSlice] = useState(null);
 
+  // which modal is open: null | "addProduct" | "viewOrders" | "manageReturns" |
+  // "customers" | "addCategory" | "stockReport" | "salesReport" | "coupons" |
+  // "banners" | "siteSettings" | "topSelling" | "lowStock" | "inventory"
+  const [activeModal, setActiveModal] = useState(null);
+
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
+
+  const showToast = (message) => {
+    setToast(message);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2500);
+  };
+
+  useEffect(() => () => toastTimer.current && clearTimeout(toastTimer.current), []);
+
+  const closeModal = () => setActiveModal(null);
+
+  const handleReorder = (item) => {
+    showToast(`Reorder placed for "${item.name}"`);
+  };
+
+  const handleFormSubmit = (e, successMessage) => {
+    e.preventDefault();
+    closeModal();
+    showToast(successMessage);
+  };
+
+  const handleExport = (label) => {
+    showToast(`${label} export started — check your downloads`);
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* Modal content renderers                                            */
+  /* ------------------------------------------------------------------ */
+
+  const renderAddProductModal = () => (
+    <Modal title="Add Product" onClose={closeModal}>
+      <form className="modal-form" onSubmit={(e) => handleFormSubmit(e, "Product added successfully")}>
+        <div className="form-group">
+          <label>Product Name</label>
+          <input type="text" placeholder="e.g. Organic Bananas" required />
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Category</label>
+            <select required defaultValue="">
+              <option value="" disabled>Select category</option>
+              {CATEGORIES_DATA.map((c) => (
+                <option key={c.id} value={c.name}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Price (₹)</label>
+            <input type="number" min="0" step="0.01" placeholder="0.00" required />
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Stock Quantity</label>
+            <input type="number" min="0" placeholder="0" required />
+          </div>
+          <div className="form-group">
+            <label>SKU</label>
+            <input type="text" placeholder="e.g. GRC-0142" />
+          </div>
+        </div>
+        <div className="form-group">
+          <label>Description</label>
+          <input type="text" placeholder="Short product description" />
+        </div>
+        <button type="submit" className="modal-submit-btn green">Add Product</button>
+      </form>
+    </Modal>
+  );
+
+  const renderAddCategoryModal = () => (
+    <Modal title="Add Category" onClose={closeModal}>
+      <form className="modal-form" onSubmit={(e) => handleFormSubmit(e, "Category added successfully")}>
+        <div className="form-group">
+          <label>Category Name</label>
+          <input type="text" placeholder="e.g. Frozen Foods" required />
+        </div>
+        <div className="form-group">
+          <label>Parent Category</label>
+          <select defaultValue="">
+            <option value="">None (Top-level category)</option>
+            {CATEGORIES_DATA.map((c) => (
+              <option key={c.id} value={c.name}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="modal-submit-btn green">Save Category</button>
+      </form>
+      <div className="modal-table-wrap" style={{ marginTop: 18 }}>
+        <table className="modal-table">
+          <thead>
+            <tr><th>Category</th><th>Products</th></tr>
+          </thead>
+          <tbody>
+            {CATEGORIES_DATA.map((c) => (
+              <tr key={c.id}><td>{c.name}</td><td>{c.products}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Modal>
+  );
+
+  const renderViewOrdersModal = () => (
+    <Modal title="Orders" onClose={closeModal}>
+      <div className="modal-table-wrap">
+        <table className="modal-table">
+          <thead>
+            <tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {ORDERS_DATA.map((o) => (
+              <tr key={o.id}>
+                <td>{o.id}</td>
+                <td>{o.customer}</td>
+                <td>{o.items}</td>
+                <td>{o.total}</td>
+                <td><span className={`badge ${o.statusColor}`}>{o.status}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Modal>
+  );
+
+  const renderManageReturnsModal = () => (
+    <Modal title="Manage Returns" onClose={closeModal}>
+      <div className="modal-table-wrap">
+        <table className="modal-table">
+          <thead>
+            <tr><th>Return ID</th><th>Customer</th><th>Product</th><th>Reason</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody>
+            {RETURNS_DATA.map((r) => (
+              <tr key={r.id}>
+                <td>{r.id}</td>
+                <td>{r.customer}</td>
+                <td>{r.product}</td>
+                <td>{r.reason}</td>
+                <td><span className={`badge ${r.statusColor}`}>{r.status}</span></td>
+                <td>
+                  {r.status === "Pending" ? (
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button
+                        className="action-btn-sm green"
+                        onClick={() => showToast(`Return ${r.id} approved`)}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        className="action-btn-sm red"
+                        onClick={() => showToast(`Return ${r.id} rejected`)}
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  ) : (
+                    <span style={{ color: "#94a3b8", fontSize: 11 }}>—</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Modal>
+  );
+
+  const renderCustomersModal = () => (
+    <Modal title="Customers" onClose={closeModal}>
+      <div className="modal-table-wrap">
+        <table className="modal-table">
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>Orders</th><th>Total Spent</th></tr>
+          </thead>
+          <tbody>
+            {CUSTOMERS_DATA.map((c) => (
+              <tr key={c.id}>
+                <td>{c.name}</td>
+                <td>{c.email}</td>
+                <td>{c.orders}</td>
+                <td>{c.spent}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Modal>
+  );
+
+  const renderStockReportModal = () => (
+    <Modal title="Stock Report" onClose={closeModal}>
+      <div className="modal-table-wrap">
+        <table className="modal-table">
+          <thead>
+            <tr><th>Product</th><th>In Stock</th></tr>
+          </thead>
+          <tbody>
+            {LOW_STOCK_ITEMS.map((i) => (
+              <tr key={i.id}><td>{i.name}</td><td>{i.stock}</td></tr>
+            ))}
+            {TOP_SELLING.map((i) => (
+              <tr key={`ts-${i.id}`}><td>{i.name}</td><td>In Stock</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <button
+        type="button"
+        className="modal-submit-btn slate"
+        style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 6, width: "auto" }}
+        onClick={() => handleExport("Stock report")}
+      >
+        <Download size={14} /> Export CSV
+      </button>
+    </Modal>
+  );
+
+  const renderSalesReportModal = () => (
+    <Modal title="Sales Report" onClose={closeModal}>
+      <div style={{ height: 200, width: "100%" }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={SALES_PERFORMANCE_BARS} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+            <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v / 1000}K`} />
+            <Tooltip cursor={{ fill: "rgba(22, 163, 74, 0.05)" }} />
+            <Bar dataKey="val" fill="#16a34a" radius={[3, 3, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <button
+        type="button"
+        className="modal-submit-btn slate"
+        style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 6, width: "auto" }}
+        onClick={() => handleExport("Sales report")}
+      >
+        <Download size={14} /> Export CSV
+      </button>
+    </Modal>
+  );
+
+  const renderCouponsModal = () => (
+    <Modal title="Coupons" onClose={closeModal}>
+      <form className="modal-form" onSubmit={(e) => handleFormSubmit(e, "Coupon created successfully")}>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Coupon Code</label>
+            <input type="text" placeholder="e.g. SAVE15" required />
+          </div>
+          <div className="form-group">
+            <label>Discount</label>
+            <input type="text" placeholder="e.g. 15% or ₹50" required />
+          </div>
+        </div>
+        <div className="form-group">
+          <label>Expiry Date</label>
+          <input type="date" required />
+        </div>
+        <button type="submit" className="modal-submit-btn purple">Create Coupon</button>
+      </form>
+      <div className="modal-table-wrap" style={{ marginTop: 18 }}>
+        <table className="modal-table">
+          <thead>
+            <tr><th>Code</th><th>Discount</th><th>Expiry</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {COUPONS_DATA.map((c) => (
+              <tr key={c.id}>
+                <td>{c.code}</td>
+                <td>{c.discount}</td>
+                <td>{c.expiry}</td>
+                <td><span className={`badge ${c.statusColor}`}>{c.status}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Modal>
+  );
+
+  const renderBannersModal = () => (
+    <Modal title="Banners" onClose={closeModal}>
+      <form className="modal-form" onSubmit={(e) => handleFormSubmit(e, "Banner scheduled successfully")}>
+        <div className="form-group">
+          <label>Banner Title</label>
+          <input type="text" placeholder="e.g. Weekend Flash Sale" required />
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Placement</label>
+            <select required defaultValue="">
+              <option value="" disabled>Select placement</option>
+              <option value="Homepage Top">Homepage Top</option>
+              <option value="Category Page">Category Page</option>
+              <option value="Checkout Page">Checkout Page</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Go Live Date</label>
+            <input type="date" required />
+          </div>
+        </div>
+        <button type="submit" className="modal-submit-btn orange">Save Banner</button>
+      </form>
+      <div className="modal-table-wrap" style={{ marginTop: 18 }}>
+        <table className="modal-table">
+          <thead>
+            <tr><th>Title</th><th>Placement</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {BANNERS_DATA.map((b) => (
+              <tr key={b.id}>
+                <td>{b.title}</td>
+                <td>{b.placement}</td>
+                <td><span className={`badge ${b.statusColor}`}>{b.status}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Modal>
+  );
+
+  const renderSiteSettingsModal = () => (
+    <Modal title="Site Settings" onClose={closeModal}>
+      <form className="modal-form" onSubmit={(e) => handleFormSubmit(e, "Settings saved successfully")}>
+        <div className="form-group">
+          <label>Store Name</label>
+          <input type="text" defaultValue="AICWA Grocery Store" required />
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Support Email</label>
+            <input type="email" defaultValue="support@aicwa.example.com" required />
+          </div>
+          <div className="form-group">
+            <label>Currency</label>
+            <select defaultValue="INR">
+              <option value="INR">INR (₹)</option>
+              <option value="USD">USD ($)</option>
+            </select>
+          </div>
+        </div>
+        <div className="form-group">
+          <label>Low Stock Threshold</label>
+          <input type="number" min="0" defaultValue="15" />
+        </div>
+        <button type="submit" className="modal-submit-btn slate">Save Settings</button>
+      </form>
+    </Modal>
+  );
+
+  const renderTopSellingModal = () => (
+    <Modal title="Top Selling Products" onClose={closeModal}>
+      <div className="modal-table-wrap">
+        <table className="modal-table">
+          <thead>
+            <tr><th>#</th><th>Product</th><th>Sold</th><th>Price</th></tr>
+          </thead>
+          <tbody>
+            {TOP_SELLING.map((item, idx) => (
+              <tr key={item.id}>
+                <td>{idx + 1}</td>
+                <td>{item.emoji} {item.name}</td>
+                <td>{item.sold}</td>
+                <td>{item.price}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Modal>
+  );
+
+  const renderLowStockModal = () => (
+    <Modal title="Low Stock Items" onClose={closeModal}>
+      <div className="modal-table-wrap">
+        <table className="modal-table">
+          <thead>
+            <tr><th>Product</th><th>Stock</th><th></th></tr>
+          </thead>
+          <tbody>
+            {LOW_STOCK_ITEMS.map((item) => (
+              <tr key={item.id}>
+                <td>{item.emoji} {item.name}</td>
+                <td>{item.stock}</td>
+                <td>
+                  <button className="action-btn-sm red" onClick={() => handleReorder(item)}>
+                    Reorder
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Modal>
+  );
+
+  const renderInventoryModal = () => (
+    <Modal title="Inventory Summary" onClose={closeModal}>
+      <div className="modal-table-wrap">
+        <table className="modal-table">
+          <thead>
+            <tr><th>Metric</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            {INVENTORY_SUMMARY.map((row, idx) => (
+              <tr key={idx}><td>{row.label}</td><td>{row.value}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Modal>
+  );
+
+  const MODAL_RENDERERS = {
+    addProduct: renderAddProductModal,
+    addCategory: renderAddCategoryModal,
+    viewOrders: renderViewOrdersModal,
+    manageReturns: renderManageReturnsModal,
+    customers: renderCustomersModal,
+    stockReport: renderStockReportModal,
+    salesReport: renderSalesReportModal,
+    coupons: renderCouponsModal,
+    banners: renderBannersModal,
+    siteSettings: renderSiteSettingsModal,
+    topSelling: renderTopSellingModal,
+    lowStock: renderLowStockModal,
+    inventory: renderInventoryModal,
+  };
+
   return (
     <div className="product-dashboard">
       {/* Top Row: Top Selling, Revenue Breakup, Inventory Summary, Low Stock Alert */}
@@ -118,7 +651,7 @@ const Product = () => {
         <div className="product-card">
           <div className="product-card__header">
             <h3 className="product-card__title">Top Selling Products</h3>
-            <button className="product-card__link">View All</button>
+            <button className="product-card__link" onClick={() => setActiveModal("topSelling")}>View All</button>
           </div>
           <div className="product-list">
             {TOP_SELLING.map((item, idx) => (
@@ -155,6 +688,7 @@ const Product = () => {
                       onClick={() => {
                         setRevenuePeriod(opt);
                         setRevenuePeriodOpen(false);
+                        showToast(`Revenue breakup updated for ${opt}`);
                       }}
                     >
                       {opt}
@@ -220,7 +754,7 @@ const Product = () => {
         <div className="product-card">
           <div className="product-card__header">
             <h3 className="product-card__title">Inventory Summary</h3>
-            <button className="product-card__link">View All</button>
+            <button className="product-card__link" onClick={() => setActiveModal("inventory")}>View All</button>
           </div>
           <div className="inventory-summary-list">
             {INVENTORY_SUMMARY.map((row, idx) => (
@@ -240,7 +774,7 @@ const Product = () => {
         <div className="product-card">
           <div className="product-card__header">
             <h3 className="product-card__title">Low Stock Alert</h3>
-            <button className="product-card__link">View All</button>
+            <button className="product-card__link" onClick={() => setActiveModal("lowStock")}>View All</button>
           </div>
           <div className="low-stock-list">
             {LOW_STOCK_ITEMS.map((item) => (
@@ -250,7 +784,7 @@ const Product = () => {
                   <p className="low-stock-name">{item.name}</p>
                   <span className="low-stock-qty">Stock: {item.stock}</span>
                 </div>
-                <button className="btn-reorder">Reorder Now</button>
+                <button className="btn-reorder" onClick={() => handleReorder(item)}>Reorder Now</button>
               </div>
             ))}
           </div>
@@ -302,7 +836,7 @@ const Product = () => {
         <div className="product-card">
           <div className="product-card__header">
             <h3 className="product-card__title">Customer Overview</h3>
-            <button className="product-card__link">View All</button>
+            <button className="product-card__link" onClick={() => setActiveModal("customers")}>View All</button>
           </div>
           <div className="customer-overview-list">
             <div className="customer-overview-item">
@@ -312,11 +846,7 @@ const Product = () => {
                 <span className="cust-count">128 <span className="cust-trend pos"><ArrowUp size={10} />15.2%</span></span>
               </div>
               <div className="cust-mini-chart">
-                <ResponsiveContainer width="1000%" height="100%">
-                  <LineChart data={[{v:10},{v:15},{v:12},{v:18},{v:22}]}>
-                    <Line type="monotone" dataKey="v" stroke="#16a34a" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
+                <Sparkline strokeColor="#16a34a" fillColor="#16a34a" id="green" />
               </div>
             </div>
             <div className="customer-overview-item">
@@ -326,11 +856,7 @@ const Product = () => {
                 <span className="cust-count">728 <span className="cust-trend pos"><ArrowUp size={10} />8.6%</span></span>
               </div>
               <div className="cust-mini-chart">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={[{v:20},{v:18},{v:25},{v:23},{v:28}]}>
-                    <Line type="monotone" dataKey="v" stroke="#2563eb" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
+                <Sparkline strokeColor="#2563eb" fillColor="#2563eb" id="blue" />
               </div>
             </div>
             <div className="customer-overview-item">
@@ -340,11 +866,7 @@ const Product = () => {
                 <span className="cust-count">856 <span className="cust-trend pos"><ArrowUp size={10} />10.3%</span></span>
               </div>
               <div className="cust-mini-chart">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={[{v:30},{v:35},{v:32},{v:40},{v:45}]}>
-                    <Line type="monotone" dataKey="v" stroke="#8b5cf6" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
+                <Sparkline strokeColor="#8b5cf6" fillColor="#8b5cf6" id="purple" />
               </div>
             </div>
           </div>
@@ -354,7 +876,12 @@ const Product = () => {
         <div className="product-card">
           <div className="product-card__header">
             <h3 className="product-card__title">Recent Activities</h3>
-            <button className="product-card__link">View All</button>
+            <button
+              className="product-card__link"
+              onClick={() => showToast("Showing all recent activity")}
+            >
+              View All
+            </button>
           </div>
           <div className="activities-list">
             {RECENT_ACTIVITIES.map((act, idx) => {
@@ -380,7 +907,7 @@ const Product = () => {
           <div className="promo-content">
             <h3 className="promo-title">Fast Delivery Happy Customers!</h3>
             <p className="promo-desc">Manage orders and deliver happiness to your customers.</p>
-            <button className="btn-promo-action">
+            <button className="btn-promo-action" onClick={() => setActiveModal("viewOrders")}>
               View Orders <ArrowRight size={16} />
             </button>
           </div>
@@ -394,18 +921,48 @@ const Product = () => {
       <div className="product-card product-card--quick-actions">
         <h3 className="product-card__title quick-actions-title">Quick Actions</h3>
         <div className="quick-actions-grid">
-          <button className="quick-action-btn"><Plus size={16} className="text-green" /> Add Product</button>
-          <button className="quick-action-btn"><ShoppingBag size={16} className="text-purple" /> View Orders</button>
-          <button className="quick-action-btn"><TrendingUp size={16} className="text-orange" /> Manage Returns</button>
-          <button className="quick-action-btn"><Users size={16} className="text-blue" /> Customers</button>
-          <button className="quick-action-btn"><Package size={16} className="text-green" /> Add Category</button>
-          <button className="quick-action-btn"><FileText size={16} className="text-red" /> Stock Report</button>
-          <button className="quick-action-btn"><FileText size={16} className="text-cyan" /> Sales Report</button>
-          <button className="quick-action-btn"><Tag size={16} className="text-purple" /> Coupons</button>
-          <button className="quick-action-btn"><ImageIcon size={16} className="text-orange" /> Banners</button>
-          <button className="quick-action-btn"><Settings size={16} className="text-slate" /> Site Settings</button>
+          <button className="quick-action-btn" onClick={() => setActiveModal("addProduct")}>
+            <Plus size={16} className="text-green" /> Add Product
+          </button>
+          <button className="quick-action-btn" onClick={() => setActiveModal("viewOrders")}>
+            <ShoppingBag size={16} className="text-purple" /> View Orders
+          </button>
+          <button className="quick-action-btn" onClick={() => setActiveModal("manageReturns")}>
+            <TrendingUp size={16} className="text-orange" /> Manage Returns
+          </button>
+          <button className="quick-action-btn" onClick={() => setActiveModal("customers")}>
+            <Users size={16} className="text-blue" /> Customers
+          </button>
+          <button className="quick-action-btn" onClick={() => setActiveModal("addCategory")}>
+            <Package size={16} className="text-green" /> Add Category
+          </button>
+          <button className="quick-action-btn" onClick={() => setActiveModal("stockReport")}>
+            <FileText size={16} className="text-red" /> Stock Report
+          </button>
+          <button className="quick-action-btn" onClick={() => setActiveModal("salesReport")}>
+            <FileText size={16} className="text-cyan" /> Sales Report
+          </button>
+          <button className="quick-action-btn" onClick={() => setActiveModal("coupons")}>
+            <Tag size={16} className="text-purple" /> Coupons
+          </button>
+          <button className="quick-action-btn" onClick={() => setActiveModal("banners")}>
+            <ImageIcon size={16} className="text-orange" /> Banners
+          </button>
+          <button className="quick-action-btn" onClick={() => setActiveModal("siteSettings")}>
+            <Settings size={16} className="text-slate" /> Site Settings
+          </button>
         </div>
       </div>
+
+      {/* Active Modal */}
+      {activeModal && MODAL_RENDERERS[activeModal] && MODAL_RENDERERS[activeModal]()}
+
+      {/* Toast Feedback */}
+      {toast && (
+        <div className="dashboard-toast">
+          <CheckCircle size={16} /> {toast}
+        </div>
+      )}
     </div>
   );
 };
