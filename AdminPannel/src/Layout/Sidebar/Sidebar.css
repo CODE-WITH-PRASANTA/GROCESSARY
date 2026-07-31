@@ -1,0 +1,256 @@
+/* ==========================================================================
+   Step 5, 6, 7, 8, 9, 10, 21: Sidebar
+   ========================================================================== */
+.Sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  background-color: var(--bg-sidebar, #08392E);
+  color: #FFFFFF;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.35s ease, transform 0.35s ease;
+  overflow: hidden;
+}
+
+/* Step 5: Sidebar Widths */
+.Sidebar.expanded {
+  width: 260px;
+}
+
+.Sidebar.collapsed {
+  width: 80px;
+}
+
+/* Step 21: Mobile / Tablet Backdrop Overlay */
+.Sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 90;
+  backdrop-filter: blur(2px);
+}
+
+/* Step 7: Sidebar Header */
+.Sidebar-header {
+  height: 70px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 12px;
+}
+
+.Sidebar-logoIcon {
+  min-width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.Sidebar-brandText h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.Sidebar-brandText span {
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  color: var(--primary-green, #22C55E);
+  font-weight: 600;
+}
+
+/* Step 6: Navigation Menu */
+.Sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 12px;
+}
+
+.Sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.Sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.SidebarSection {
+  margin-bottom: 16px;
+}
+
+.SidebarSection-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.8px;
+  padding: 8px 12px;
+  text-transform: uppercase;
+}
+
+.SidebarSection-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 12px 8px;
+}
+
+.Sidebar-menu {
+  list-style: none;
+}
+
+.SidebarItem-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+/* Step 9: Hover Effect */
+.SidebarItem-link:hover {
+  background-color: var(--bg-sidebar-hover, #0D4A3A);
+  color: #FFFFFF;
+}
+
+/* Step 9: Active Menu Highlight */
+.SidebarItem-link.active {
+  background-color: var(--bg-active, #2E8B57);
+  color: #FFFFFF;
+  font-weight: 600;
+  border-radius: 12px;
+}
+
+.SidebarItem-icon {
+  min-width: 20px;
+}
+
+/* Step 10: Sidebar Footer Fixed Card */
+.SidebarFooter {
+  position: relative;
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.SidebarFooter-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.SidebarFooter-user:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.SidebarFooter-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary-green, #22C55E);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  min-width: 36px;
+}
+
+.SidebarFooter-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.SidebarFooter-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.SidebarFooter-role {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+}
+
+.SidebarFooter-chevron {
+  transition: transform 0.2s;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.SidebarFooter-chevron.open {
+  transform: rotate(180deg);
+}
+
+.SidebarFooter-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 12px;
+  right: 12px;
+  margin-bottom: 8px;
+  background: #0D4A3A;
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.SidebarFooter-dropdownItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: #FFFFFF;
+  font-size: 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.SidebarFooter-dropdownItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.SidebarFooter-dropdownItem.danger {
+  color: #EF4444;
+}
+
+.SidebarFooter-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 4px 0;
+}
+
+/* Step 21: Responsive Layout for Mobile/Tablet */
+@media (max-width: 1023px) {
+  .Sidebar {
+    transform: translateX(-100%);
+    width: 260px !important;
+  }
+
+  .Sidebar.mobile-open {
+    transform: translateX(0);
+  }
+}

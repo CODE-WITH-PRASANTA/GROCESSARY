@@ -20,6 +20,9 @@ import BlogReadmoreThree from "./Components/BlogReadmoreThree/BlogReadmoreThree"
 import BlogReadmoreFour from "./Components/BlogReadmoreFour/BlogReadmoreFour";
 import LoginPage from "./Components/LoginPage/LoginPage";
 import CartSection from "./Components/CartSection/CartSection";
+import FloatingForm from "./Components/FloatingForm/FloatingForm";
+import FloatingButton from "./Components/FloatingButton/FloatingButton";
+
 
 
 const App = () => {
@@ -53,7 +56,9 @@ const App = () => {
 
     
       
-      </Routes>
+      </Routes> 
+      <FloatingForm/>
+      <FloatingButton/>
 
       <Footer />
     </BrowserRouter>
