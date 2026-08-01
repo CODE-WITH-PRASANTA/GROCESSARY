@@ -21,7 +21,9 @@ import {
   LogOut,
   User,
   Settings,
-  ShoppingBasket
+  ShoppingBasket,
+  Notebook,
+  Book
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -49,6 +51,17 @@ const menuSections = [
       { label: 'Returns', path: '/orders/returns', icon: RotateCcw },
     ]
   },
+
+  {
+    title: 'Blog',
+    items: [
+      { label: 'blogposting', path: '/blog', icon: Book },
+      { label: 'blogmanagemnet', path: '/blogmanagement', icon: Notebook },
+      { label: 'testimonialmanagement', path: '/testimonialmanagement', icon: Book },
+    ]
+  },
+
+
   {
     title: 'CUSTOMERS',
     items: [

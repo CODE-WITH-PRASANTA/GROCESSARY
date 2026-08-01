@@ -32,7 +32,7 @@ const Breadcrumb = () => {
           return (
             <li key={to} className="Breadcrumb-item">
               {isLast ? (
-                <span className="Breadcrumb-current">{formatPathName(value)}</span>
+                <span className="Breadcrumb ">{formatPathName(value)}</span>
               ) : (
                 <>
                   <Link to={to} className="Breadcrumb-link">

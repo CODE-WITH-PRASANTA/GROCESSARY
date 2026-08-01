@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
+
 import { 
   FaPhoneAlt, 
   FaFileUpload, 
@@ -15,8 +17,14 @@ import {
 
 import bgImage from '../../assets/grocory-bg.png'; // Path to your background image
 import './MobileSection.css';
+import DeliveryTime from "../DeliveryTime/DeliveryTime";
+import ListUpload from "../ListUpload/ListUpload"; // Make sure path matches your project structure
 
 const MobileSection = () => {
+  const navigate = useNavigate();
+  const [isDeliveryTimeOpen, setIsDeliveryTimeOpen] = useState(false);
+  const [isListUploadOpen, setIsListUploadOpen] = useState(false);
+
   // Mouse Parallax Motion Values
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -121,9 +129,6 @@ const MobileSection = () => {
       >
         <FaLeaf style={{ color: '#81c784' }} />
       </motion.div>
-
-      {/* Header Navigation */}
-      
 
       {/* Hero Content Grid */}
       <div className="MobileSection-container">
@@ -245,6 +250,7 @@ const MobileSection = () => {
               >
                 <motion.button 
                   className="MobileSection-btn-3d btn-list"
+                  onClick={() => setIsListUploadOpen(true)}
                   whileHover={{ y: -12, rotateX: 15, scale: 1.05 }}
                   whileTap={{ y: 8, scale: 0.96 }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
@@ -277,8 +283,9 @@ const MobileSection = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.3 }}
               >
-                <motion.button 
+               <motion.button
                   className="MobileSection-btn-3d btn-orders"
+                  onClick={() => navigate("/myorders")}
                   whileHover={{ y: -12, rotateX: 15, scale: 1.05 }}
                   whileTap={{ y: 8, scale: 0.96 }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
@@ -286,15 +293,17 @@ const MobileSection = () => {
                   <div className="MobileSection-btn-bottom" />
                   <div className="MobileSection-btn-middle" />
                   <div className="MobileSection-btn-top">
-                    <motion.div 
+                    <motion.div
                       className="MobileSection-btn-icon"
                       animate={{ y: [0, -6, 0] }}
                       transition={{ duration: 0.8, repeat: Infinity, ease: "easeOut" }}
                     >
                       <FaReceipt />
                     </motion.div>
+
                     <span>My Orders</span>
-                    <motion.div 
+
+                    <motion.div
                       className="MobileSection-shine"
                       animate={{ x: ['-250%', '250%'] }}
                       transition={{ duration: 4, repeat: Infinity, delay: 1.5 }}
@@ -311,11 +320,12 @@ const MobileSection = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.5 }}
               >
-                <motion.button 
-                  className="MobileSection-btn-3d btn-delivery"
-                  whileHover={{ y: -12, rotateX: 15, scale: 1.05 }}
-                  whileTap={{ y: 8, scale: 0.96 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
+               <motion.button
+                 className="MobileSection-btn-3d btn-delivery"
+                 whileHover={{ y: -12, rotateX: 15, scale: 1.05 }}
+                 whileTap={{ y: 8, scale: 0.96 }}
+                 transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                 onClick={() => setIsDeliveryTimeOpen(true)}
                 >
                   <div className="MobileSection-btn-bottom" />
                   <div className="MobileSection-btn-middle" />
@@ -375,13 +385,21 @@ const MobileSection = () => {
               <div className="MobileSection-phone-mini-btn phone-btn-1">
                 <FaPhoneAlt /> Call Now
               </div>
-              <div className="MobileSection-phone-mini-btn phone-btn-2">
+              <div 
+                className="MobileSection-phone-mini-btn phone-btn-2"
+                onClick={() => setIsListUploadOpen(true)}
+                style={{ cursor: "pointer" }}
+              >
                 <FaFileUpload /> List Upload
               </div>
               <div className="MobileSection-phone-mini-btn phone-btn-3">
                 <FaReceipt /> My Orders
               </div>
-              <div className="MobileSection-phone-mini-btn phone-btn-4">
+             <div
+                className="MobileSection-phone-mini-btn phone-btn-4"
+                onClick={() => setIsDeliveryTimeOpen(true)}
+                style={{ cursor: "pointer" }}
+              >
                 <FaClock /> Delivery Time
               </div>
             </div>
@@ -414,6 +432,19 @@ const MobileSection = () => {
         </div>
 
       </div>
+
+      {/* Modals */}
+      {isDeliveryTimeOpen && (
+        <DeliveryTime
+          onClose={() => setIsDeliveryTimeOpen(false)}
+        />
+      )}
+
+      {isListUploadOpen && (
+        <ListUpload
+          onClose={() => setIsListUploadOpen(false)}
+        />
+      )}
     </div>
   );
 };
