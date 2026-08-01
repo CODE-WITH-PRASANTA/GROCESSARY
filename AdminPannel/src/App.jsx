@@ -16,6 +16,13 @@ import InventoryAdjustment from "./Components/Blog/InventoryAdjustment/Inventory
 import ActivityLog from "./Components/Blog/ActivityLog/ActivityLog";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import Order from "./Pages/Order/Order";
+import Categories from "./Components/Categories/Categories";
+import Brands from "./Components/Brands/Brands";
+import Discounts from "./Components/Discounts/Discounts";
+
+import EditUnit from "./Components/EditUnit/EditUnit";
+import ListUploads from "./Components/ListUploads/ListUploads";
+import Banners from "./Components/Banners/Banners";
 
  
 const App = () => {
@@ -59,7 +66,14 @@ const App = () => {
 
         <Route path="/dashboard"element={<Dashboard/>}/>
         <Route path="/orders/all-orders"element={<Order/>}/>
-
+        <Route path="/products/categories"element={<Categories/>}/>
+        <Route path="/products/brands"element={<Brands/>}/>
+        <Route path="/marketing/discounts"element={<Discounts/>}/>
+        <Route path="/products/units"element={<EditUnit/>}/>
+        <Route path="/products/list-uploads"element={<ListUploads/>}/>
+        <Route path="/marketing/banners"element={<Banners/>}/>
+      
+        
         
         </Route>
 

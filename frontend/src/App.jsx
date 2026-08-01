@@ -25,6 +25,10 @@ import FloatingButton from "./Components/FloatingButton/FloatingButton";
 
 
 
+
+
+
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -46,6 +50,8 @@ const App = () => {
         <Route path="/BlogReadmoreFour" element={<BlogReadmoreFour/>} />
         <Route path="/account" element={<LoginPage/>} />
         <Route path="/cart" element={<CartSection/>} />
+        
+        
       </Routes> 
       <FloatingForm/>
       <FloatingButton/>
