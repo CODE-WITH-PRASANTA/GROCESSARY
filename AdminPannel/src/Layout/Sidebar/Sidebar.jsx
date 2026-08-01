@@ -42,6 +42,7 @@ const menuSections = [
       { label: 'Categories', path: '/products/categories', icon: FolderTree },
       { label: 'Brands', path: '/products/brands', icon: Tag },
       { label: 'Units', path: '/products/units', icon: Scale },
+      { label: 'ListUploads', path: '/products/list-uploads', icon: Book},
     ]
   },
   {

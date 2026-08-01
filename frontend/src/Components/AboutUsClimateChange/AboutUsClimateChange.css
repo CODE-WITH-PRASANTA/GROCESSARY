@@ -20,9 +20,9 @@
 
 /* Headings Styling */
 .section-title {
-  font-size: 45px;
-  font-weight: 1000;
-  font-family:Georgia, 'Times New Roman', Times, serif;
+  font-size: 42px;
+  font-weight: 800;
+  font-family: Georgia, 'Times New Roman', Times, serif;
   color: #102a27;
   letter-spacing: -0.5px;
   line-height: 1.2;
@@ -30,7 +30,7 @@
 }
 
 .banner-heading {
-  font-size: 46px;
+  font-size: 44px;
   font-weight: 800;
   color: #102a27;
   text-align: center;
@@ -51,7 +51,7 @@
 .text-paragraph {
   font-size: 15px;
   line-height: 1.65;
-  color: #0d1f1c;
+  color: #2c3e3b;
   margin: 0 0 16px 0;
   font-weight: 500;
 }
@@ -74,6 +74,7 @@
   height: 100%;
   border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
 }
 
 .section-img {
@@ -84,12 +85,17 @@
   object-fit: cover;
   display: block;
   border-radius: 16px;
+  transition: transform 0.4s ease;
+}
+
+.section-img:hover {
+  transform: scale(1.02);
 }
 
 /* Responsive Adjustments */
 @media (max-width: 992px) {
   .banner-heading {
-    font-size: 36px;
+    font-size: 34px;
   }
 
   .section-title {
@@ -127,8 +133,9 @@
   }
 
   .banner-heading {
-    font-size: 28px;
+    font-size: 26px;
     text-align: left;
+    line-height: 1.25;
   }
 
   .section-title {

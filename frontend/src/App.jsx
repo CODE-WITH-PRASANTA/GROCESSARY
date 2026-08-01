@@ -29,6 +29,10 @@ import ListUpload from "./Components/ListUpload/ListUpload";
 
 
 
+
+
+
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -40,18 +44,14 @@ const App = () => {
         <Route path="/AboutUsOurService" element={<AboutUsOurService/>} />
         <Route path="/contact-us" element={<ContactUs/>} />
         <Route path="/faq" element={<FaqSection/>} />
-
-
-        <Route path="/pages/terms-of-service" element={<TermAndCondition/>} />
-        <Route path="/pages/privacy-policy" element={<PrivacyPolicy/>} />
-        <Route path="/ShippingAndDelivery" element={<ShippingAndDelivery/>} />
+        <Route path="terms-and-conditions" element={<TermAndCondition/>} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy/>} />
+        <Route path="/shipping-delivery" element={<ShippingAndDelivery/>} />
         <Route path="/blogs" element={<BlogGrid/>} />
         <Route path="/BlogReadmoreOne" element={<BlogReadmoreOne/>} />
         <Route path="/BlogReadmoreTwo" element={<BlogReadmoreTwo/>} />
         <Route path="/BlogReadmoreThree" element={<BlogReadmoreThree/>} />
         <Route path="/BlogReadmoreFour" element={<BlogReadmoreFour/>} />
-
-
         <Route path="/account" element={<LoginPage/>} />
         <Route path="/cart" element={<CartSection/>} />
          <Route path="/deliverytime" element={<DeliveryTime/>}/>
@@ -63,6 +63,8 @@ const App = () => {
 
     
       
+        
+        
       </Routes> 
       <FloatingForm/>
       <FloatingButton/>

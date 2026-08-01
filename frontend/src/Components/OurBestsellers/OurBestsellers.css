@@ -107,7 +107,7 @@
   transform: translateY(-5px);
 }
 
-/* Image Container - Scaled for full display */
+/* Image Container */
 .OurBestsellers-img-box {
   position: relative;
   background-color: #f7f7f7;
@@ -160,7 +160,6 @@
   background-color: #ffa000;
 }
 
-/* Full image width/height styling */
 .OurBestsellers-product-img {
   width: 100%;
   height: 100%;
@@ -407,6 +406,7 @@
   overflow: hidden;
   background: #fff;
   cursor: pointer;
+  padding: 0;
 }
 
 .modal-thumb-box.active {

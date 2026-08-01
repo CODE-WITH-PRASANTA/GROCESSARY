@@ -18,6 +18,13 @@
 /* ==========================================================================
    TOP "BACK TO SHOP" BUTTON
    ========================================================================== */
+.auth-nav-container {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  justify-content: flex-start;
+}
+
 .auth-back-shop-btn {
   background: transparent;
   border: none;
@@ -50,7 +57,6 @@
   transition: color 0.3s ease;
 }
 
-/* Hover Effect for Back to Shop: Toggles smoothly to dark theme */
 .auth-back-shop-btn:hover .auth-back-arrow-circle {
   background-color: #102a27;
   color: #fbbd23;
@@ -74,7 +80,7 @@
 }
 
 /* ==========================================================================
-   MAIN CARD BOX (Identical size for both Login & Register)
+   MAIN CARD BOX
    ========================================================================== */
 .auth-card-box {
   width: 100%;
@@ -116,8 +122,9 @@
 
 /* Form Sections for Register */
 .auth-section-block {
-  margin-bottom: 24px;
-  padding-bottom: 24px;
+  border: none;
+  margin: 0 0 24px 0;
+  padding: 0 0 24px 0;
   border-bottom: 1px solid #edf2f7;
 }
 
@@ -126,6 +133,7 @@
   font-weight: 900;
   color: #102a27;
   margin: 0 0 20px 0;
+  padding: 0;
 }
 
 /* ==========================================================================
@@ -217,7 +225,6 @@
   text-decoration: underline;
 }
 
-/* Primary Button (Login / Create) - Yellow to Smooth Dark Green/Black */
 .auth-btn-primary {
   background-color: #fbbd23;
   color: #102a27;
@@ -239,7 +246,6 @@
   color: #fbbd23;
 }
 
-/* Secondary Button (Register) - White to Smooth Dark Green/Black */
 .auth-btn-secondary {
   background-color: #ffffff;
   color: #102a27;
@@ -262,7 +268,6 @@
   border-color: #102a27;
 }
 
-/* Bottom Account Switch Row */
 .auth-switch-row {
   display: flex;
   align-items: center;

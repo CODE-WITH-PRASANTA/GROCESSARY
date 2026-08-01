@@ -1,947 +1,1312 @@
+
+/* =========================================================
+   GROCERY SATHI - NOURISH SECTION
+   SEO FRIENDLY + RESPONSIVE
+========================================================= */
+
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
-.nourish-wrapper {
+.grocery-nourish-wrapper {
   width: 100%;
+  overflow: hidden;
 }
 
-/* ==========================================
-   1. NOURISH TOP SECTION
-   ========================================== */
-.nourish-section {
+/* =========================================================
+   1. NOURISH SECTION
+========================================================= */
+
+.grocery-nourish-section {
   width: 100%;
-  background: linear-gradient(135deg, #f7b731 0%, #ffc233 100%);
-  padding: 4.5rem 2rem 3rem 2rem;
-  display: flex;
-  justify-content: center;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 70px 24px 55px;
+  background: linear-gradient(
+    135deg,
+    #f7b731 0%,
+    #ffc233 100%
+  );
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
 }
 
-.nourish-container {
+.grocery-nourish-container {
   width: 100%;
   max-width: 1280px;
+  margin: 0 auto;
 }
 
-.nourish-header-row {
-  margin-bottom: 28px;
+/* =========================================================
+   SECTION HEADER
+========================================================= */
+
+.grocery-nourish-header {
+  margin-bottom: 34px;
 }
 
-.nourish-sub-heading {
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: #794c00;
+.grocery-nourish-heading-content {
+  max-width: 800px;
+}
+
+.grocery-nourish-eyebrow {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  color: #704500;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  line-height: 1.5;
+  text-transform: uppercase;
 }
 
-.nourish-main-heading {
-  font-size: 38px;
-  font-weight: 900;
+.grocery-nourish-main-heading {
+  margin: 0 0 12px;
   color: #0f172a;
-  letter-spacing: -0.8px;
+  font-size: 42px;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: -1px;
 }
 
-.nourish-grid {
+.grocery-nourish-intro {
+  max-width: 720px;
+  margin: 0;
+  color: #4b3209;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* =========================================================
+   MAIN GRID
+========================================================= */
+
+.grocery-nourish-grid {
   display: grid;
-  grid-template-columns: 1fr 1.35fr;
+  grid-template-columns: minmax(280px, 1fr) minmax(0, 1.35fr);
   gap: 28px;
   align-items: stretch;
 }
 
-/* LEFT BANNER CARD */
-.nourish-banner-card {
+/* =========================================================
+   FEATURE BANNER
+========================================================= */
+
+.grocery-nourish-banner-card {
   position: relative;
-  border-radius: 20px;
-  overflow: hidden;
-  min-height: 520px;
+  min-height: 540px;
+  padding: 38px;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 36px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  align-items: flex-end;
+  overflow: hidden;
+  border-radius: 24px;
+  box-shadow:
+    0 18px 45px rgba(15, 23, 42, 0.18);
+  isolation: isolate;
 }
 
-.nourish-banner-img {
+.grocery-nourish-banner-img {
   position: absolute;
   inset: 0;
+  z-index: -2;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition:
+    transform 0.7s
+    cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.nourish-banner-card:hover .nourish-banner-img {
-  transform: scale(1.05);
+.grocery-nourish-banner-card:hover
+.grocery-nourish-banner-img {
+  transform: scale(1.06);
 }
 
-.nourish-banner-overlay {
+.grocery-nourish-banner-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(15, 23, 42, 0.95) 0%,
-    rgba(15, 23, 42, 0.4) 60%,
-    rgba(15, 23, 42, 0.1) 100%
-  );
+  z-index: -1;
+  background:
+    linear-gradient(
+      to top,
+      rgba(15, 23, 42, 0.96) 0%,
+      rgba(15, 23, 42, 0.62) 45%,
+      rgba(15, 23, 42, 0.1) 100%
+    );
 }
 
-.nourish-banner-content {
-  position: relative;
-  z-index: 2;
+.grocery-nourish-banner-content {
+  width: 100%;
   color: #ffffff;
 }
 
-.nourish-banner-tag {
-  display: inline-block;
-  background-color: rgba(255, 184, 46, 0.2);
-  backdrop-filter: blur(8px);
-  color: #ffc233;
-  padding: 4px 12px;
-  border-radius: 20px;
+.grocery-nourish-banner-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 13px;
+  margin-bottom: 14px;
+  border: 1px solid
+    rgba(255, 194, 51, 0.35);
+  border-radius: 50px;
+  background: rgba(255, 194, 51, 0.18);
+  color: #ffd66a;
   font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
+  font-weight: 800;
   letter-spacing: 1px;
-  margin-bottom: 12px;
-  border: 1px solid rgba(255, 184, 46, 0.3);
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
 }
 
-.nourish-banner-title {
-  font-size: 32px;
-  font-weight: 800;
+.grocery-nourish-banner-title {
+  max-width: 480px;
+  margin: 0 0 12px;
   color: #ffffff;
-  margin-bottom: 10px;
+  font-size: 32px;
+  font-weight: 900;
   line-height: 1.2;
 }
 
-.nourish-banner-text {
+.grocery-nourish-banner-text {
+  max-width: 520px;
+  margin: 0 0 25px;
+  color: #e2e8f0;
   font-size: 14px;
-  line-height: 1.6;
-  color: #cbd5e1;
-  margin-bottom: 24px;
-  max-width: 90%;
+  line-height: 1.7;
 }
 
-.nourish-category-btn {
-  background-color: #ffb82e;
-  color: #0f172a;
-  border: none;
-  border-radius: 12px;
-  padding: 14px 24px;
-  font-size: 14px;
-  font-weight: 700;
+.grocery-nourish-category-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 4px 14px rgba(255, 184, 46, 0.4);
-}
-
-.nourish-category-btn:hover {
-  background-color: #ffffff;
+  padding: 14px 22px;
+  border: none;
+  border-radius: 12px;
+  background: #ffc233;
   color: #0f172a;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow:
+    0 8px 22px rgba(255, 194, 51, 0.3);
+  transition:
+    transform 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
-/* RIGHT SLIDER SECTION */
-.nourish-slider-wrapper {
+.grocery-nourish-category-btn:hover {
+  background: #ffffff;
+  transform: translateY(-3px);
+  box-shadow:
+    0 12px 28px rgba(255, 255, 255, 0.2);
+}
+
+.grocery-nourish-btn-icon {
+  font-size: 13px;
+}
+
+/* =========================================================
+   PRODUCT SLIDER
+========================================================= */
+
+.grocery-nourish-slider-wrapper {
   position: relative;
+  min-width: 0;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: 24px;
   padding: 4px;
   touch-action: pan-y;
 }
 
-.nourish-slider-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background-color: #0f172a;
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  cursor: pointer;
-  z-index: 10;
-  opacity: 0;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-}
-
-.nourish-slider-wrapper:hover .nourish-slider-arrow {
-  opacity: 1;
-}
-
-.nourish-slider-arrow.left {
-  left: 12px;
-}
-
-.nourish-slider-arrow.right {
-  right: 12px;
-}
-
-.nourish-slider-arrow:hover:not(.disabled) {
-  background-color: #ffffff;
-  color: #0f172a;
-  transform: translateY(-50%) scale(1.08);
-}
-
-.nourish-slider-arrow.disabled {
-  opacity: 0 !important;
-  cursor: not-allowed;
-}
-
-.nourish-cards-track {
+.grocery-nourish-cards-track {
   display: flex;
   gap: 20px;
-  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+  width: max-content;
+  transition:
+    transform 0.5s
+    cubic-bezier(0.25, 1, 0.5, 1);
   will-change: transform;
 }
 
-/* PRODUCT CARD */
-.nourish-product-card {
+/* =========================================================
+   SLIDER ARROWS
+========================================================= */
+
+.grocery-nourish-slider-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 20;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid
+    rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0;
+  transform:
+    translateY(-50%)
+    scale(0.95);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.2);
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease,
+    background 0.25s ease;
+}
+
+.grocery-nourish-slider-wrapper:hover
+.grocery-nourish-slider-arrow {
+  opacity: 1;
+}
+
+.grocery-nourish-slider-arrow.left {
+  left: 12px;
+}
+
+.grocery-nourish-slider-arrow.right {
+  right: 12px;
+}
+
+.grocery-nourish-slider-arrow:hover:not(
+  :disabled
+) {
+  background: #ffffff;
+  color: #0f172a;
+  transform:
+    translateY(-50%)
+    scale(1.08);
+}
+
+.grocery-nourish-slider-arrow.disabled,
+.grocery-nourish-slider-arrow:disabled {
+  pointer-events: none;
+  opacity: 0 !important;
+}
+
+/* =========================================================
+   PRODUCT CARD
+========================================================= */
+
+.grocery-nourish-product-card {
+  position: relative;
   width: 310px;
   min-width: 310px;
-  background-color: #ffffff;
-  border-radius: 20px;
+  min-height: 520px;
   padding: 20px;
-  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid
+    rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.08);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
-.nourish-product-card:hover {
+.grocery-nourish-product-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 20px 40px rgba(15, 23, 42, 0.14);
 }
 
-.nourish-card-badge {
+/* BADGE */
+
+.grocery-nourish-card-badge {
   position: absolute;
   top: 16px;
   left: 16px;
-  background-color: #0f172a;
+  z-index: 5;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: #0f172a;
   color: #ffffff;
   font-size: 10px;
   font-weight: 800;
+  letter-spacing: 0.6px;
   text-transform: uppercase;
-  padding: 4px 10px;
-  border-radius: 12px;
-  letter-spacing: 0.5px;
-  z-index: 2;
 }
 
-.nourish-card-actions {
+/* ACTIONS */
+
+.grocery-nourish-card-actions {
   position: absolute;
   top: 16px;
   right: 16px;
+  z-index: 5;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  z-index: 3;
   opacity: 0;
   transform: translateX(10px);
-  transition: all 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
-.nourish-product-card:hover .nourish-card-actions {
+.grocery-nourish-product-card:hover
+.grocery-nourish-card-actions {
   opacity: 1;
   transform: translateX(0);
 }
 
-.nourish-action-icon {
+.grocery-nourish-action-icon {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
   color: #475569;
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
-.nourish-action-icon:hover {
-  background-color: #0f172a;
-  color: #ffb82e;
-  border-color: #0f172a;
-  transform: scale(1.1);
+.grocery-nourish-action-icon:hover {
+  background: #0f172a;
+  color: #ffc233;
+  transform: scale(1.08);
 }
 
-.nourish-card-img-holder {
+/* IMAGE */
+
+.grocery-nourish-card-img-holder {
   width: 100%;
   height: 190px;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: 14px;
+  background: #f8fafc;
 }
 
-.nourish-card-img {
-  max-width: 100%;
-  max-height: 100%;
+.grocery-nourish-card-img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  transition: transform 0.4s ease;
+  transition:
+    transform 0.4s ease;
 }
 
-.nourish-product-card:hover .nourish-card-img {
+.grocery-nourish-product-card:hover
+.grocery-nourish-card-img {
   transform: scale(1.06);
 }
 
-.nourish-card-category {
-  font-size: 11px;
-  color: #94a3b8;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: block;
-  margin-bottom: 4px;
+/* BODY */
+
+.grocery-nourish-card-body {
+  display: flex;
+  flex-direction: column;
 }
 
-.nourish-card-title {
+.grocery-nourish-card-category {
+  display: block;
+  margin-bottom: 5px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.grocery-nourish-card-title {
+  min-height: 44px;
+  margin: 0 0 8px;
+  color: #0f172a;
   font-size: 17px;
   font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 8px;
   line-height: 1.3;
 }
 
-.nourish-stars {
+/* STARS */
+
+.grocery-nourish-stars {
   display: flex;
   align-items: center;
   gap: 3px;
-  color: #f59e0b;
-  font-size: 12px;
   margin-bottom: 12px;
+  color: #f59e0b;
 }
 
-.nourish-star-count {
+.grocery-nourish-star-icon {
+  font-size: 12px;
+}
+
+.grocery-nourish-star-count {
+  margin-left: 4px;
+  color: #64748b;
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
-  margin-left: 4px;
 }
 
-.nourish-price-row {
+/* PRICE */
+
+.grocery-nourish-price-row {
   display: flex;
   align-items: baseline;
+  flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 15px;
 }
 
-.nourish-price {
+.grocery-nourish-price {
+  color: #0f172a;
   font-size: 18px;
   font-weight: 900;
-  color: #0f172a;
 }
 
-.nourish-original-price {
-  font-size: 13px;
+.grocery-nourish-original-price {
   color: #94a3b8;
+  font-size: 13px;
   text-decoration: line-through;
 }
 
-.nourish-select-group {
+/* SELECT */
+
+.grocery-nourish-select-group {
   margin-bottom: 16px;
 }
 
-.nourish-select-label {
+.grocery-nourish-select-label {
   display: block;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #64748b;
   margin-bottom: 6px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
-.nourish-select {
+.grocery-nourish-select {
   width: 100%;
   padding: 10px 12px;
-  border-radius: 10px;
   border: 1px solid #e2e8f0;
+  border-radius: 10px;
   outline: none;
+  background: #f8fafc;
+  color: #0f172a;
   font-size: 13px;
   font-weight: 600;
-  color: #0f172a;
-  background-color: #f8fafc;
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.nourish-add-btn {
+.grocery-nourish-select:focus {
+  border-color: #f7b731;
+  box-shadow:
+    0 0 0 3px
+    rgba(247, 183, 49, 0.2);
+}
+
+/* ADD CART */
+
+.grocery-nourish-add-btn {
   width: 100%;
-  background-color: #0f172a;
-  color: #ffffff;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
   border: none;
   border-radius: 10px;
-  padding: 12px;
-  font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.nourish-add-btn:hover {
-  background-color: #ffb82e;
-  color: #0f172a;
-  box-shadow: 0 4px 12px rgba(255, 184, 46, 0.3);
-}
-
-/* ==========================================
-   2. GOODIES FOR YOUR LITTLE ONES SECTION
-   ========================================== */
-.goodies-section {
-  width: 100%;
-  background: linear-gradient(to bottom, #ffc233 130px, #182a2f 130px);
-  padding: 1rem 2rem 5rem 2rem;
-  display: flex;
-  justify-content: center;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-.goodies-container {
-  width: 100%;
-  max-width: 1280px;
-}
-
-.goodies-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 30px;
-}
-
-.goodies-main-heading {
-  font-size: 38px;
-  font-weight: 900;
-  color: #0f172a;
-  letter-spacing: -0.8px;
-}
-
-.goodies-show-more-btn {
-  background-color: #111827;
+  background: #0f172a;
   color: #ffffff;
-  border: none;
-  border-radius: 12px;
-  padding: 10px 20px;
   font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s ease;
 }
 
-.goodies-show-more-btn:hover {
-  background-color: #000000;
+.grocery-nourish-add-btn:hover {
+  background: #ffc233;
+  color: #0f172a;
   transform: translateY(-2px);
 }
 
-.goodies-grid {
+/* =========================================================
+   2. GOODIES SECTION
+========================================================= */
+
+.grocery-goodies-section {
+  width: 100%;
+  padding: 65px 24px 80px;
+  background:
+    linear-gradient(
+      to bottom,
+      #ffc233 150px,
+      #182a2f 150px
+    );
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+}
+
+.grocery-goodies-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.grocery-goodies-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 32px;
+}
+
+.grocery-goodies-eyebrow {
+  display: block;
+  margin-bottom: 7px;
+  color: #704500;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.grocery-goodies-main-heading {
+  margin: 0 0 10px;
+  color: #0f172a;
+  font-size: 38px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.grocery-goodies-description {
+  max-width: 650px;
+  margin: 0;
+  color: #49330d;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.grocery-goodies-show-more-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 0.25s ease,
+    background 0.25s ease;
+}
+
+.grocery-goodies-show-more-btn:hover {
+  background: #000000;
+  transform: translateY(-3px);
+}
+
+/* GRID */
+
+.grocery-goodies-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
   gap: 24px;
 }
 
-/* GOODY CARD STYLING */
-.goody-card {
-  border-radius: 20px;
-  padding: 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: stretch;
+/* GOODIE CARD */
+
+.grocery-goody-card {
   position: relative;
+  min-height: 240px;
+  padding: 25px;
   overflow: hidden;
-  min-height: 220px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 20px;
+  background: var(--goody-bg);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.15);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
-.goody-card:hover {
+.grocery-goody-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 20px 38px rgba(0, 0, 0, 0.24);
 }
 
-.goody-card-content {
+.grocery-goody-card-content {
+  position: relative;
+  z-index: 3;
+  width: 58%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  z-index: 2;
-  max-width: 55%;
+  align-items: flex-start;
 }
 
-.goody-category {
+.grocery-goody-category {
+  margin-bottom: 5px;
+  color: #1a202c;
   font-size: 12px;
   font-weight: 800;
-  color: #1a202c;
-  display: block;
 }
 
-.goody-title {
+.grocery-goody-title {
+  margin: 0 0 8px;
+  color: #0f172a;
   font-size: 20px;
   font-weight: 900;
-  color: #0f172a;
   line-height: 1.2;
 }
 
-.goody-stars {
+.grocery-goody-stars {
   display: flex;
   gap: 4px;
-  margin: 4px 0;
+  margin-bottom: 7px;
 }
 
-.star-filled {
+.grocery-star-filled,
+.grocery-star-empty {
+  font-size: 13px;
+}
+
+.grocery-star-filled {
   color: #1a202c;
-  font-size: 13px;
 }
 
-.star-empty {
+.grocery-star-empty {
   color: rgba(26, 32, 44, 0.25);
-  font-size: 13px;
 }
 
-.goody-price {
+.grocery-goody-price {
+  color: #0f172a;
   font-size: 16px;
   font-weight: 900;
-  color: #0f172a;
 }
 
-.goody-add-btn {
-  background-color: #ffc233;
-  color: #0f172a;
+.grocery-goody-add-btn {
+  margin-top: auto;
+  padding: 10px 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
   border: none;
-  border-radius: 12px;
-  padding: 10px 16px;
+  border-radius: 11px;
+  background: #ffc233;
+  color: #0f172a;
   font-size: 12px;
   font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
   cursor: pointer;
-  margin-top: 10px;
-  width: fit-content;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
-.goody-add-btn:hover {
-  background-color: #111827;
+.grocery-goody-add-btn:hover {
+  background: #111827;
   color: #ffffff;
+  transform: translateY(-2px);
 }
 
-.goody-btn-arrow {
+.grocery-goody-btn-arrow {
   font-size: 10px;
 }
 
-.goody-card-image-wrap {
+/* GOODIE IMAGE */
+
+.grocery-goody-card-image-wrap {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
   z-index: 1;
 }
 
-.goody-img {
+.grocery-goody-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: right center;
-  transition: transform 0.4s ease;
+  transition:
+    transform 0.5s ease;
 }
 
-.goody-card:hover .goody-img {
-  transform: scale(1.05);
+.grocery-goody-card:hover
+.grocery-goody-img {
+  transform: scale(1.06);
 }
 
-/* ==========================================
-   3. POPUP MODAL STYLING
-   ========================================== */
-.nourish-modal-backdrop {
+/* =========================================================
+   3. QUICK VIEW MODAL
+========================================================= */
+
+.grocery-nourish-modal-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(6px);
+  z-index: 9999;
+  padding: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: 20px;
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(7px);
 }
 
-.nourish-modal-content {
+.grocery-nourish-modal-content {
   position: relative;
-  background-color: #ffffff;
   width: 100%;
-  max-width: 800px;
-  border-radius: 24px;
+  max-width: 850px;
+  max-height: 90vh;
   padding: 40px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  animation: modalPopIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.3);
+  animation:
+    groceryModalIn 0.3s
+    cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes modalPopIn {
+@keyframes groceryModalIn {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(10px);
+    transform:
+      scale(0.94)
+      translateY(15px);
   }
+
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform:
+      scale(1)
+      translateY(0);
   }
 }
 
-.nourish-modal-close {
+.grocery-nourish-modal-close {
   position: absolute;
-  top: 20px;
-  right: 20px;
-  background: #f1f5f9;
+  top: 18px;
+  right: 18px;
+  width: 38px;
+  height: 38px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  width: 36px;
-  height: 36px;
   border-radius: 50%;
-  font-size: 16px;
+  background: #f1f5f9;
   color: #0f172a;
+  font-size: 15px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
-.nourish-modal-close:hover {
-  background-color: #0f172a;
+.grocery-nourish-modal-close:hover {
+  background: #0f172a;
   color: #ffffff;
+  transform: rotate(90deg);
 }
 
-.nourish-modal-grid {
+.grocery-nourish-modal-grid {
   display: grid;
-  grid-template-columns: 1fr 1.1fr;
-  gap: 36px;
+  grid-template-columns:
+    minmax(260px, 1fr)
+    minmax(0, 1.1fr);
+  gap: 38px;
   align-items: center;
 }
 
-.nourish-modal-image-col {
-  background-color: #f8fafc;
-  border-radius: 16px;
-  padding: 20px;
+.grocery-nourish-modal-image-col {
+  height: 330px;
+  padding: 25px;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 300px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #f8fafc;
 }
 
-.nourish-modal-img {
-  max-width: 100%;
-  max-height: 100%;
+.grocery-nourish-modal-img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
-.nourish-modal-category {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #94a3b8;
+.grocery-nourish-modal-category {
   display: block;
-  margin-bottom: 4px;
-}
-
-.nourish-modal-title {
-  font-size: 28px;
+  margin-bottom: 6px;
+  color: #94a3b8;
+  font-size: 12px;
   font-weight: 800;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.grocery-nourish-modal-title {
+  margin: 0 0 14px;
   color: #0f172a;
+  font-size: 28px;
+  font-weight: 900;
   line-height: 1.2;
-  margin-bottom: 12px;
 }
 
-.modal-price-spacing {
-  margin-bottom: 16px;
+.grocery-nourish-modal-price-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
 }
 
-.nourish-modal-price {
+.grocery-nourish-modal-price {
+  color: #0f172a;
   font-size: 24px;
   font-weight: 900;
-  color: #0f172a;
 }
 
-.nourish-modal-orig-price {
-  font-size: 16px;
+.grocery-nourish-modal-orig-price {
   color: #94a3b8;
+  font-size: 15px;
   text-decoration: line-through;
 }
 
-.nourish-modal-description {
-  font-size: 14px;
-  line-height: 1.6;
+.grocery-nourish-modal-description {
+  margin: 0 0 24px;
   color: #475569;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.grocery-nourish-modal-attribute-section {
   margin-bottom: 24px;
 }
 
-.nourish-modal-attribute-section {
-  margin-bottom: 24px;
-}
-
-.nourish-modal-attr-label {
-  font-size: 12px;
-  color: #0f172a;
+.grocery-nourish-modal-attr-label {
   display: block;
-  margin-bottom: 8px;
-  font-weight: 700;
+  margin-bottom: 10px;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 800;
   text-transform: uppercase;
 }
 
-.nourish-modal-pills {
+.grocery-nourish-modal-pills {
   display: flex;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 9px;
 }
 
-.nourish-modal-pill {
-  padding: 8px 16px;
-  border-radius: 10px;
+.grocery-nourish-modal-pill {
+  padding: 9px 15px;
   border: 1px solid #cbd5e1;
+  border-radius: 10px;
   background: #ffffff;
   color: #0f172a;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
-.nourish-modal-pill.active {
-  background-color: #0f172a;
-  color: #ffffff;
+.grocery-nourish-modal-pill:hover,
+.grocery-nourish-modal-pill.active {
   border-color: #0f172a;
+  background: #0f172a;
+  color: #ffffff;
 }
 
-.nourish-modal-actions-row {
+/* MODAL ACTIONS */
+
+.grocery-nourish-modal-actions-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
-.nourish-quantity-selector {
+.grocery-nourish-quantity-selector {
   display: flex;
   align-items: center;
+  overflow: hidden;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
-  overflow: hidden;
-  background-color: #f8fafc;
+  background: #f8fafc;
 }
 
-.nourish-quantity-selector button {
-  width: 38px;
-  height: 42px;
+.grocery-nourish-quantity-selector button {
+  width: 40px;
+  height: 44px;
+  border: none;
   background: transparent;
-  border: none;
-  font-weight: 800;
-  font-size: 16px;
   color: #0f172a;
+  font-size: 17px;
+  font-weight: 800;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition:
+    background 0.2s ease;
 }
 
-.nourish-quantity-selector button:hover {
-  background-color: #e2e8f0;
+.grocery-nourish-quantity-selector button:hover {
+  background: #e2e8f0;
 }
 
-.nourish-quantity-selector span {
-  padding: 0 16px;
+.grocery-nourish-quantity-selector span {
+  min-width: 42px;
+  text-align: center;
+  color: #0f172a;
   font-size: 14px;
   font-weight: 800;
-  color: #0f172a;
 }
 
-.nourish-modal-cart-btn {
+.grocery-nourish-modal-cart-btn {
   flex: 1;
-  background-color: #ffb82e;
-  color: #0f172a;
-  border: none;
-  border-radius: 10px;
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 800;
+  min-height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  border: none;
+  border-radius: 10px;
+  background: #ffc233;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(255, 184, 46, 0.3);
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s ease;
 }
 
-.nourish-modal-cart-btn:hover {
-  background-color: #0f172a;
+.grocery-nourish-modal-cart-btn:hover {
+  background: #0f172a;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+  transform: translateY(-2px);
 }
 
-/* ==========================================
-   4. TARGETED RESPONSIVE BREAKPOINTS
-   ========================================== */
+/* =========================================================
+   TABLET
+========================================================= */
 
-/* IPAD PRO / TABLET (PORTRAIT & LANDSCAPE, 769px to 1366px) */
-@media screen and (min-width: 769px) and (max-width: 1366px) {
-  .nourish-section {
-    padding: 3rem 1.5rem 2.5rem 1.5rem;
+@media screen and (min-width: 769px)
+  and (max-width: 1366px) {
+
+  .grocery-nourish-section {
+    padding: 55px 20px 45px;
   }
 
-  .nourish-grid {
+  .grocery-nourish-grid {
     grid-template-columns: 1fr;
-    gap: 24px;
   }
 
-  .nourish-banner-card {
-    min-height: 380px;
-    padding: 28px;
+  .grocery-nourish-banner-card {
+    min-height: 400px;
   }
 
-  .nourish-banner-title {
-    font-size: 28px;
+  .grocery-nourish-slider-wrapper {
+    min-height: 540px;
   }
 
-  .goodies-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-  }
-
-  .goodies-section {
-    background: linear-gradient(to bottom, #ffc233 110px, #182a2f 110px);
-    padding: 1rem 1.5rem 4rem 1.5rem;
-  }
-
-  .nourish-modal-content {
-    max-width: 700px;
-    padding: 30px;
-  }
-
-  .nourish-slider-arrow {
+  .grocery-nourish-slider-arrow {
     opacity: 0.9;
   }
+
+  .grocery-goodies-section {
+    padding: 55px 20px 65px;
+  }
+
+  .grocery-goodies-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
 }
 
-/* FACEBOOK IN-APP BROWSER / ANDROID MOBILE (UP TO 768px) */
+/* =========================================================
+   MOBILE
+========================================================= */
+
 @media screen and (max-width: 768px) {
-  .nourish-section {
-    padding: 2rem 1rem 2rem 1rem;
+
+  .grocery-nourish-section {
+    padding: 42px 15px 35px;
   }
 
-  .nourish-main-heading,
-  .goodies-main-heading {
-    font-size: 26px;
+  .grocery-nourish-main-heading {
+    font-size: 29px;
+    letter-spacing: -0.5px;
   }
 
-  .nourish-sub-heading {
-    font-size: 11px;
+  .grocery-nourish-eyebrow {
+    font-size: 10px;
   }
 
-  .nourish-grid {
+  .grocery-nourish-intro {
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
+  .grocery-nourish-grid {
     grid-template-columns: 1fr;
     gap: 20px;
   }
 
-  .nourish-banner-card {
-    min-height: 320px;
-    padding: 20px;
+  /* BANNER */
+
+  .grocery-nourish-banner-card {
+    min-height: 360px;
+    padding: 22px;
+    border-radius: 18px;
   }
 
-  .nourish-banner-title {
-    font-size: 22px;
+  .grocery-nourish-banner-title {
+    font-size: 24px;
   }
 
-  .nourish-banner-text {
+  .grocery-nourish-banner-text {
     font-size: 13px;
-    max-width: 100%;
   }
 
-  /* Single-card view on mobile screens */
-  .nourish-cards-track {
+  .grocery-nourish-category-btn {
+    width: 100%;
+    padding: 13px 18px;
+  }
+
+  /* SLIDER */
+
+  .grocery-nourish-slider-wrapper {
+    padding: 0;
+    border-radius: 18px;
+  }
+
+  .grocery-nourish-cards-track {
     gap: 0;
   }
 
-  .nourish-product-card {
+  .grocery-nourish-product-card {
     width: 100%;
     min-width: 100%;
-    padding: 16px;
+    min-height: 500px;
+    padding: 17px;
+    border-radius: 18px;
   }
 
-  .nourish-card-img-holder {
-    height: 150px;
+  .grocery-nourish-card-img-holder {
+    height: 170px;
   }
 
-  .nourish-card-actions {
+  .grocery-nourish-card-actions {
     opacity: 1;
     transform: translateX(0);
   }
 
-  .nourish-slider-arrow {
-    opacity: 0.9;
+  .grocery-nourish-slider-arrow {
     width: 36px;
     height: 36px;
+    opacity: 0.9;
     font-size: 12px;
   }
 
-  .goodies-section {
-    background: linear-gradient(to bottom, #ffc233 160px, #182a2f 160px);
-    padding: 1rem 1rem 3rem 1rem;
+  /* GOODIES */
+
+  .grocery-goodies-section {
+    padding: 42px 15px 55px;
+    background:
+      linear-gradient(
+        to bottom,
+        #ffc233 190px,
+        #182a2f 190px
+      );
   }
 
-  .goodies-header-row {
+  .grocery-goodies-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-
-  .goodies-grid {
-    grid-template-columns: 1fr;
     gap: 16px;
+    margin-bottom: 22px;
   }
 
-  .goody-card {
-    min-height: 200px;
-    padding: 18px;
+  .grocery-goodies-main-heading {
+    font-size: 28px;
   }
 
-  .nourish-modal-grid {
+  .grocery-goodies-description {
+    font-size: 13px;
+  }
+
+  .grocery-goodies-show-more-btn {
+    width: 100%;
+  }
+
+  .grocery-goodies-grid {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 17px;
   }
 
-  .nourish-modal-image-col {
-    height: 200px;
+  .grocery-goody-card {
+    min-height: 215px;
+    padding: 19px;
+    border-radius: 18px;
   }
 
-  .nourish-modal-content {
-    padding: 24px;
+  /* MODAL */
+
+  .grocery-nourish-modal-backdrop {
+    padding: 12px;
+  }
+<<<<<<< HEAD
+}
+=======
+
+  .grocery-nourish-modal-content {
+    max-height: 94vh;
+    padding: 22px;
+    border-radius: 18px;
+  }
+
+  .grocery-nourish-modal-grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .grocery-nourish-modal-image-col {
+    height: 210px;
+    padding: 15px;
+  }
+
+  .grocery-nourish-modal-title {
+    font-size: 23px;
+  }
+
+  .grocery-nourish-modal-description {
+    font-size: 13px;
+  }
+
+  .grocery-nourish-modal-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .grocery-nourish-quantity-selector {
+    justify-content: center;
+  }
+
+  .grocery-nourish-modal-cart-btn {
+    width: 100%;
   }
 }
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media screen and (max-width: 420px) {
+
+  .grocery-nourish-main-heading {
+    font-size: 26px;
+  }
+
+  .grocery-nourish-banner-title {
+    font-size: 21px;
+  }
+
+  .grocery-nourish-banner-text {
+    font-size: 12px;
+  }
+
+  .grocery-nourish-product-card {
+    min-height: 490px;
+  }
+
+  .grocery-nourish-card-title {
+    font-size: 16px;
+  }
+
+  .grocery-goodies-main-heading {
+    font-size: 25px;
+  }
+
+  .grocery-goody-title {
+    font-size: 18px;
+  }
+}
+
+/* =========================================================
+   ACCESSIBILITY
+========================================================= */
+
+.grocery-nourish-category-btn:focus-visible,
+.grocery-nourish-add-btn:focus-visible,
+.grocery-nourish-action-icon:focus-visible,
+.grocery-nourish-slider-arrow:focus-visible,
+.grocery-goodies-show-more-btn:focus-visible,
+.grocery-goody-add-btn:focus-visible,
+.grocery-nourish-modal-close:focus-visible,
+.grocery-nourish-modal-pill:focus-visible,
+.grocery-nourish-modal-cart-btn:focus-visible {
+  outline: 3px solid
+    rgba(15, 23, 42, 0.35);
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .grocery-nourish-banner-img,
+  .grocery-nourish-card-img,
+  .grocery-goody-img,
+  .grocery-nourish-product-card,
+  .grocery-goody-card,
+  .grocery-nourish-modal-content,
+  .grocery-nourish-cards-track {
+    transition: none;
+    animation: none;
+  }
+}
+
+>>>>>>> e66d91b506c67cf12e50aeb0b8ccbfcb1c917be4

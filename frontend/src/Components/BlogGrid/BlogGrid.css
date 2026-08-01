@@ -10,7 +10,7 @@
 }
 
 /* ==========================================================================
-   BREADCRUMB / HERO BANNER SECTION
+   BREADCRUMB / HERO BANNER SECTION (#f2f3f5 Light Gray Background)
    ========================================================================== */
 .blog-grid-breadcrumb {
   background-color: #f2f3f5;
@@ -73,20 +73,20 @@
 
 /* Banner Title (H1) */
 .blog-grid-banner-title {
-  font-size: 40px;
+  font-size: 44px;
   font-weight: 900;
   color: #102a27;
   margin: 0 0 16px 0;
   letter-spacing: -1.2px;
   line-height: 1.1;
-  text-transform: lowercase;
+  text-transform: capitalize;
 }
 
 /* Banner Description */
 .blog-grid-banner-desc {
   font-size: 15px;
-  line-height: 1.6;
-  color: #2c3e3b;
+  line-height: 1.65;
+  color: #3b4d4a;
   max-width: 620px;
   margin: 0;
   font-weight: 500;
@@ -167,7 +167,7 @@
 }
 
 .blog-grid-card-title {
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 800;
   color: #102a27;
   margin: 0 0 12px 0;
@@ -304,8 +304,6 @@
 /* ==========================================================================
    RESPONSIVE LAYOUT (All Devices)
    ========================================================================== */
-
-/* Large Tablets / Laptops (<= 1024px) */
 @media (max-width: 1024px) {
   .blog-grid-cards-wrapper {
     grid-template-columns: repeat(2, 1fr);
@@ -313,7 +311,6 @@
   }
 }
 
-/* Tablet Screens (<= 768px) */
 @media (max-width: 768px) {
   .blog-grid-breadcrumb,
   .blog-grid-main {
@@ -321,11 +318,7 @@
   }
 
   .blog-grid-banner-title {
-    font-size: 42px;
-  }
-
-  .blog-grid-banner-desc {
-    font-size: 14px;
+    font-size: 38px;
   }
 
   .blog-grid-cards-wrapper {
@@ -333,7 +326,6 @@
   }
 }
 
-/* Mobile Devices (<= 576px) */
 @media (max-width: 576px) {
   .blog-grid-breadcrumb,
   .blog-grid-main {
@@ -341,7 +333,7 @@
   }
 
   .blog-grid-banner-title {
-    font-size: 34px;
+    font-size: 32px;
   }
 
   .blog-grid-cards-wrapper {

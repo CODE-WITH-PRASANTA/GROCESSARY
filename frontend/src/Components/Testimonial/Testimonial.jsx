@@ -5,41 +5,41 @@ const testimonialsData = [
   {
     id: 1,
     rating: 4.5,
-    title: 'Excellent service!',
-    text: 'I was so impressed with the customer service I received from company name. The staff was friendly and helpful, and...',
+    title: 'Excellent service & fresh delivery!',
+    text: 'I was so impressed with the customer service and fresh organic produce I received from Grocery Sathi. The delivery was fast and everything was in pristine condition...',
     author: 'John Doe',
-    role: 'Client',
-    product: 'about Basil Leaves',
+    role: 'Verified Buyer',
+    product: 'Fresh Basil Leaves & Produce',
     avatar: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=150'
   },
   {
     id: 2,
     rating: 4.5,
-    title: 'Great Products',
-    text: 'I was hesitant to order online, but I\'m so glad I did! The product arrived quickly and in perfect condition. I would...',
+    title: 'Great Organic Products',
+    text: 'I was hesitant to order groceries online, but I am so glad I did! The items arrived chilled, quickly, and in perfect condition. Highly recommend Grocery Sathi...',
     author: 'Isabel Hanson',
-    role: 'SEO',
-    product: 'about Basil Leaves',
+    role: 'Regular Customer',
+    product: 'Organic Vegetables & Greens',
     avatar: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=150'
   },
   {
     id: 3,
     rating: 4.5,
-    title: 'Customer Support',
-    text: 'I\'m so happy with my purchase from company name . The product is exactly what I was looking for, and it\'s even better...',
+    title: 'Exceptional Customer Support',
+    text: 'I am so happy with my order from Grocery Sathi. The products are exceptionally fresh, organic, and exactly what I was looking for to maintain a healthy diet...',
     author: 'Ewan Sharpe',
-    role: 'Developer',
-    product: 'about Basil Leaves',
+    role: 'Food Enthusiast',
+    product: 'Daily Bakery & Essentials',
     avatar: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=150'
   },
   {
     id: 4,
     rating: 5.0,
-    title: 'Highly Recommended',
-    text: 'The quality of the organic products exceeded all my expectations. Fast delivery and eco-friendly packaging!',
+    title: 'Highly Recommended Store',
+    text: 'The quality of the organic grocery products exceeded all my expectations. Fast home delivery, friendly delivery staff, and eco-friendly packaging!',
     author: 'Sarah Jenkins',
-    role: 'Designer',
-    product: 'about Basil Leaves',
+    role: 'Home Chef',
+    product: 'Organic Fruits & Herbs',
     avatar: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=150'
   }
 ];
@@ -59,29 +59,38 @@ const Testimonial = () => {
   };
 
   return (
-    <section className="testimonial">
+    <section 
+      className="testimonial" 
+      aria-labelledby="testimonial-section-title"
+      itemScope 
+      itemType="https://schema.org/Product"
+    >
+      {/* Hidden SEO meta description for schema aggregation */}
+      <meta itemProp="name" content="Grocery Sathi Organic Products & Fresh Delivery" />
+      
       <div className="testimonial-container">
         
         {/* Left Side: Header Section */}
         <div className="testimonial-header">
-          <h2 className="testimonial-title">Testimonials</h2>
+          <span className="testimonial-subtitle">Customer Feedback</span>
+          <h2 id="testimonial-section-title" className="testimonial-title">What Our Customers Say</h2>
           <p className="testimonial-description">
-            Grocery stores are an important part of the food supply chain. They provide a convenient way for consumers to purchase a variety of food products, and they play a role in ensuring that food is safe and accessible to everyone.
+            Grocery Sathi connects you to farm-fresh organic food products, ensuring safety, nutrition, and reliable doorstep delivery for every household.
           </p>
           
           {/* Navigation Arrows */}
-          <div className="testimonial-controls">
+          <div className="testimonial-controls" aria-label="Testimonial slider controls">
             <button 
               className="testimonial-arrow testimonial-arrow-left" 
               onClick={() => scroll('left')}
-              aria-label="Previous testimonials"
+              aria-label="Previous customer testimonials"
             >
               &#8592;
             </button>
             <button 
               className="testimonial-arrow testimonial-arrow-right" 
               onClick={() => scroll('right')}
-              aria-label="Next testimonials"
+              aria-label="Next customer testimonials"
             >
               &#8594;
             </button>
@@ -91,36 +100,53 @@ const Testimonial = () => {
         {/* Right Side: Scrollable Cards Section */}
         <div className="testimonial-slider" ref={scrollRef}>
           {testimonialsData.map((item) => (
-            <div className="testimonial-card" key={item.id}>
+            <article 
+              className="testimonial-card" 
+              key={item.id}
+              itemScope 
+              itemType="https://schema.org/Review"
+            >
+              <meta itemProp="itemReviewed" content="Grocery Sathi Organic Delivery" />
               
               {/* Star Rating Header */}
-              <div className="testimonial-rating">
-                <div className="testimonial-stars">
+              <div 
+                className="testimonial-rating"
+                itemScope 
+                itemType="https://schema.org/Rating"
+              >
+                <meta itemProp="ratingValue" content={item.rating} />
+                <meta itemProp="bestRating" content="5" />
+                <div className="testimonial-stars" aria-label={`Rated ${item.rating} out of 5 stars`}>
                   {'★'.repeat(5)}
                 </div>
                 <span className="testimonial-rating-score">{item.rating.toFixed(1)} / 5.0</span>
               </div>
 
               {/* Review Content */}
-              <h3 className="testimonial-card-title">{item.title}</h3>
-              <p className="testimonial-card-text">{item.text}</p>
+              <h3 className="testimonial-card-title" itemProp="headline">{item.title}</h3>
+              <p className="testimonial-card-text" itemProp="reviewBody">{item.text}</p>
 
               {/* Author Details */}
-              <div className="testimonial-author-wrapper">
+              <div 
+                className="testimonial-author-wrapper"
+                itemScope 
+                itemType="https://schema.org/Person"
+              >
                 <img 
                   src={item.avatar} 
-                  alt={item.author} 
-                  className="testimonial-author-avatar" 
+                  alt={`Customer avatar for ${item.author}`} 
+                  className="testimonial-author-avatar"
+                  loading="lazy"
                 />
                 <div className="testimonial-author-info">
                   <p className="testimonial-author-name">
-                    <strong>{item.author}</strong>, <span>{item.role}</span>
+                    <strong itemProp="name">{item.author}</strong>, <span className="testimonial-role">{item.role}</span>
                   </p>
                   <p className="testimonial-product">{item.product}</p>
                 </div>
               </div>
 
-            </div>
+            </article>
           ))}
         </div>
 
