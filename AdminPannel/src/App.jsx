@@ -9,6 +9,8 @@ import Dashboard from "./Pages/Dashboard/Dashboard";
 import Order from "./Pages/Order/Order";
 
 // Return & Reviews Related Components
+import Allproduct from "./Components/Blog/AllProduct/Allproduct";
+import Addnew from "./Components/Blog/Addnew/Addnew";
 import ReturnManagement from "./Components/Blog/ReturnManagement/ReturnManagement";
 import ReviewsManagement from "./Components/Blog/ReviewsManagement/ReviewsManagement";
 import ReturnDetails from "./Components/Blog/ReturnDetails/ReturnDetails";
@@ -29,6 +31,8 @@ const PlaceholderPage = ({ title }) => (
   </div>
 );
 
+
+ 
 const App = () => {
   return (
     <BrowserRouter>
@@ -38,6 +42,23 @@ const App = () => {
           
           {/* Default Redirect to Dashboard */}
           <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route path="products/all-products" element={<Allproduct/>}/>
+        <Route path="products/add-product" element={<Addnew/>}/>
+      
+        
+        
+         
+        <Route path="/orders/returns" element={<ReturnManagement />} />
+        <Route path="/customers/reviews" element={<ReviewsManagement />} />
+        <Route path="/returns/details" element={<ReturnDetails />} />
+        <Route path="/returns/inspection" element={<QualityInspection />} />
+        <Route path="/returns/refund" element={<RefundDetails />} />
+        <Route path="/returns/product-info" element={<ProductInformation />} />
+        <Route path="/returns/replacement-details" element={<ReplacementDetails />} />
+        <Route path="/returns/approval" element={<ReturnApproval />} />
+        <Route path="/returns/pickup-management" element={<PickupManagement />} />
+        <Route path="/returns/inventory-adjustment" element={<InventoryAdjustment />} />
+        <Route path="//returns/activity-log" element={<ActivityLog />} />
 
           {/* DASHBOARD */}
           <Route path="/dashboard" element={<Dashboard />} />
