@@ -10,7 +10,7 @@ import {
   Filter,
   Download,
   Eye,
-  ChevronDown,
+  Edit2,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -20,12 +20,12 @@ import {
   X,
   Truck,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  MoreVertical
 } from 'lucide-react';
 import './Order.css';
 
-// Anchor date so "Today / This Week / This Month" chips behave predictably
-// against the mock data below, regardless of the real current date.
+// Anchor date so chips behave predictably
 const TODAY = new Date('2026-07-24');
 
 const AVATAR_COLORS = ['#e0e7ff', '#dcfce7', '#fef3c7', '#fee2e2', '#e0f2fe', '#f3e8ff'];
@@ -82,9 +82,14 @@ const Order = () => {
   const [quickChip, setQuickChip] = useState('All Time');
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
+
+  // Set default page size to 8
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(8);
+
+  const [activeMenuId, setActiveMenuId] = useState(null);
   const [viewOrder, setViewOrder] = useState(null);
+  const [editOrder, setEditOrder] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -97,7 +102,18 @@ const Order = () => {
     showToast._t = window.setTimeout(() => setToast(null), 2600);
   };
 
-  // ---------- Derived stats (always from the full order list) ----------
+  // Close actions menu on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('.Order-actions-dropdown-wrap')) {
+        setActiveMenuId(null);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, []);
+
+  // Stats
   const stats = useMemo(() => {
     const total = orders.length;
     const pending = orders.filter((o) => o.status === 'Pending').length;
@@ -127,7 +143,7 @@ const Order = () => {
     return { segments, total: orders.length };
   }, [orders]);
 
-  // ---------- Filtering ----------
+  // Filtering
   const matchesQuickChip = (order) => {
     if (quickChip === 'All Time') return true;
     const d = new Date(order.date);
@@ -165,7 +181,6 @@ const Order = () => {
     });
   }, [orders, searchTerm, statusFilter, paymentFilter, dateStart, dateEnd, quickChip]);
 
-  // Reset to page 1 whenever the filtered result set changes shape
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, paymentFilter, dateStart, dateEnd, quickChip]);
@@ -184,7 +199,7 @@ const Order = () => {
     return pages;
   }, [totalPages, safePage]);
 
-  // ---------- Selection ----------
+  // Selection
   const allVisibleSelected = pageOrders.length > 0 && pageOrders.every((o) => selectedIds.has(o.id));
 
   const toggleSelectAll = () => {
@@ -207,16 +222,47 @@ const Order = () => {
     });
   };
 
-  // ---------- Actions ----------
+  // Actions
+  const handleUpdateStatus = (orderId, newStatus) => {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+    );
+    setActiveMenuId(null);
+    showToast(`Order #${orderId} marked as ${newStatus}`);
+  };
+
+  const handleSaveEdit = (e) => {
+    e.preventDefault();
+    if (!editOrder) return;
+
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === editOrder.id
+          ? {
+              ...editOrder,
+              amountUsd: Number(editOrder.amount) / 83,
+            }
+          : o
+      )
+    );
+
+    showToast(`Order #${editOrder.id} updated`);
+    setEditOrder(null);
+  };
+
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('All Status');
+    setPaymentFilter('All Payment Status');
+    setDateStart('');
+    setDateEnd('');
+    setQuickChip('All Time');
+  };
+
   const handleRefresh = () => {
     setIsRefreshing(true);
     window.setTimeout(() => {
-      setSearchTerm('');
-      setStatusFilter('All Status');
-      setPaymentFilter('All Payment Status');
-      setDateStart('');
-      setDateEnd('');
-      setQuickChip('All Time');
+      clearAllFilters();
       setSelectedIds(new Set());
       setIsRefreshing(false);
       showToast('Orders refreshed');
@@ -308,15 +354,6 @@ const Order = () => {
     showToast(`Order ${newOrder.id} created`);
   };
 
-  const clearAllFilters = () => {
-    setSearchTerm('');
-    setStatusFilter('All Status');
-    setPaymentFilter('All Payment Status');
-    setDateStart('');
-    setDateEnd('');
-    setQuickChip('All Time');
-  };
-
   const initials = (name) => name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join('');
   const avatarStyle = (idx) => ({ backgroundColor: AVATAR_COLORS[idx % AVATAR_COLORS.length], color: AVATAR_TEXT[idx % AVATAR_TEXT.length] });
 
@@ -336,7 +373,7 @@ const Order = () => {
         </div>
       </div>
 
-      {/* Stat Cards */}
+      {/* 1. TOP 5 STAT CARDS */}
       <div className="Order-stats">
         <div className="Order-stat-card">
           <div className="Order-stat-icon" style={{ background: '#dcfce7', color: '#16a34a' }}>
@@ -394,352 +431,566 @@ const Order = () => {
         </div>
       </div>
 
-      <div className="Order-layout">
-        {/* Main column */}
-        <div className="Order-main">
-          {/* Filters bar */}
-          <div className="Order-filters-card">
-            <div className="Order-filters-row">
-              <div className="Order-field Order-field-search">
-                <label>Search Order</label>
-                <div className="Order-search-box">
-                  <Search size={16} className="Order-search-icon" />
-                  <input
-                    type="text"
-                    placeholder="Search by Order ID, Name..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+      {/* 2. MIDDLE PART: MAIN ORDERS LIST */}
+      <div className="Order-main">
+        {/* Filters Bar */}
+        <div className="Order-filters-card">
+          <div className="Order-filters-row">
+            <div className="Order-field Order-field-search">
+              <label>Search Order</label>
+              <div className="Order-search-box">
+                <Search size={16} className="Order-search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search by Order ID, Name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="Order-field">
+              <label>Order Status</label>
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                <option>All Status</option>
+                <option>Pending</option>
+                <option>Processing</option>
+                <option>Shipped</option>
+                <option>Delivered</option>
+                <option>Cancelled</option>
+              </select>
+            </div>
+
+            <div className="Order-field">
+              <label>Payment Status</label>
+              <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)}>
+                <option>All Payment Status</option>
+                <option>Paid</option>
+                <option>COD</option>
+                <option>Failed</option>
+              </select>
+            </div>
+
+            <div className="Order-field">
+              <label>Date Range</label>
+              <div className="Order-date-range">
+                <Calendar size={15} />
+                <input type="date" value={dateStart} onChange={(e) => setDateStart(e.target.value)} />
+                <span>–</span>
+                <input type="date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className={`Order-btn Order-btn-outline ${showFilterPanel ? 'active' : ''}`}
+              onClick={() => setShowFilterPanel((v) => !v)}
+            >
+              <Filter size={15} /> Filters
+            </button>
+          </div>
+
+          {showFilterPanel && (
+            <div className="Order-quick-chips">
+              {['Today', 'This Week', 'This Month', 'All Time'].map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  className={`Order-chip ${quickChip === chip ? 'active' : ''}`}
+                  onClick={() => setQuickChip(chip)}
+                >
+                  {chip}
+                </button>
+              ))}
+              <button type="button" className="Order-chip Order-chip-clear" onClick={clearAllFilters}>
+                Clear all filters
+              </button>
+            </div>
+          )}
+
+          <div className="Order-actions-row">
+            <span className="Order-result-count">
+              {filteredOrders.length} order{filteredOrders.length === 1 ? '' : 's'} found
+              {selectedIds.size > 0 ? ` · ${selectedIds.size} selected` : ''}
+            </span>
+            <div className="Order-actions-buttons">
+              <button type="button" className="Order-btn Order-btn-outline" onClick={handleImportClick}>
+                <Upload size={15} /> Import
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                onChange={handleImportFile}
+                style={{ display: 'none' }}
+              />
+              <button type="button" className="Order-btn Order-btn-outline" onClick={handleExport}>
+                <Download size={15} /> Export
+              </button>
+              <button type="button" className="Order-btn Order-btn-primary" onClick={handleRefresh}>
+                <RefreshCw size={15} className={isRefreshing ? 'spin' : ''} /> Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="Order-table-card">
+          <div className="Order-table-scroll">
+            <table className="Order-table">
+              <thead>
+                <tr>
+                  <th className="Order-th-check">
+                    <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} />
+                  </th>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Amount</th>
+                  <th>Payment</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th style={{ textAlign: 'center' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pageOrders.length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="Order-empty-row">No orders match your filters.</td>
+                  </tr>
+                )}
+                {pageOrders.map((o, idx) => {
+                  const meta = statusMeta[o.status] || statusMeta.Pending;
+                  const StatusIcon = meta.icon;
+                  const payMeta = paymentBadgeMeta[o.paymentStatus] || paymentBadgeMeta.COD;
+                  return (
+                    <tr key={o.id}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(o.id)}
+                          onChange={() => toggleSelectOne(o.id)}
+                        />
+                      </td>
+                      <td>
+                        <p className="Order-cell-strong">#{o.id}</p>
+                        <p className="Order-cell-muted">{o.refCode}</p>
+                      </td>
+                      <td>
+                        <div className="Order-customer-cell">
+                          <div className="Order-avatar" style={avatarStyle(idx)}>{initials(o.customer)}</div>
+                          <div>
+                            <p className="Order-cell-strong">{o.customer}</p>
+                            <p className="Order-cell-muted">{o.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <p className="Order-cell-strong">{o.items} Items</p>
+                        <button type="button" className="Order-view-items-link" onClick={() => setViewOrder(o)}>
+                          View Items
+                        </button>
+                      </td>
+                      <td>
+                        <p className="Order-cell-strong">${o.amountUsd.toFixed(2)}</p>
+                        <p className="Order-cell-muted">{formatINR(o.amount)}</p>
+                      </td>
+                      <td>
+                        <span className="Order-badge" style={{ background: payMeta.bg, color: payMeta.color }}>
+                          {o.paymentStatus}
+                        </span>
+                        <p className="Order-cell-muted" style={{ marginTop: 3 }}>{o.paymentMethod}</p>
+                      </td>
+                      <td>
+                        <span className="Order-status-badge" style={{ background: meta.bg, color: meta.color }}>
+                          {o.status} <StatusIcon size={12} />
+                        </span>
+                      </td>
+                      <td>
+                        <p className="Order-cell-strong">{new Date(o.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                        <p className="Order-cell-muted">{o.time}</p>
+                      </td>
+                      <td>
+                        <div className="Order-row-actions">
+                          {/* 1. Edit Option (Left) */}
+                          <button
+                            type="button"
+                            className="Order-icon-btn"
+                            onClick={() => setEditOrder(o)}
+                            title="Edit Order"
+                            aria-label="Edit order"
+                          >
+                            <Edit2 size={15} />
+                          </button>
+
+                          {/* 2. View Option (Middle) */}
+                          <button
+                            type="button"
+                            className="Order-icon-btn"
+                            onClick={() => setViewOrder(o)}
+                            title="View Details"
+                            aria-label="View order details"
+                          >
+                            <Eye size={15} />
+                          </button>
+
+                          {/* 3. Three-Dots Menu Option (Right) */}
+                          <div className="Order-actions-dropdown-wrap">
+                            <button
+                              type="button"
+                              className="Order-icon-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuId(activeMenuId === o.id ? null : o.id);
+                              }}
+                              title="Update Status"
+                              aria-label="Status menu"
+                            >
+                              <MoreVertical size={15} />
+                            </button>
+
+                            {activeMenuId === o.id && (
+                              <div className="Order-dropdown-menu">
+                                <div className="Order-dropdown-header">Update Status</div>
+                                <button type="button" onClick={() => handleUpdateStatus(o.id, 'Delivered')}>
+                                  <CheckCircle2 size={14} className="icon-green" /> Set Delivered
+                                </button>
+                                <button type="button" onClick={() => handleUpdateStatus(o.id, 'Shipped')}>
+                                  <Truck size={14} className="icon-blue" /> Set Shipped
+                                </button>
+                                <button type="button" onClick={() => handleUpdateStatus(o.id, 'Processing')}>
+                                  <RefreshCw size={14} className="icon-amber" /> Set Processing
+                                </button>
+                                <button type="button" onClick={() => handleUpdateStatus(o.id, 'Pending')}>
+                                  <Clock size={14} className="icon-amber" /> Set Pending
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="Order-pagination">
+            <span className="Order-pagination-info">
+              Showing {filteredOrders.length === 0 ? 0 : pageStart + 1} to {Math.min(pageStart + pageSize, filteredOrders.length)} of {filteredOrders.length} orders
+            </span>
+
+            <div className="Order-pagination-controls">
+              <button type="button" className="Order-page-btn" disabled={safePage === 1} onClick={() => setCurrentPage(1)}>
+                <ChevronsLeft size={15} />
+              </button>
+              <button type="button" className="Order-page-btn" disabled={safePage === 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}>
+                <ChevronLeft size={15} />
+              </button>
+
+              {pageNumbers.map((p, i) =>
+                p === '...' ? (
+                  <span key={`ellipsis-${i}`} className="Order-page-ellipsis">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    type="button"
+                    className={`Order-page-btn ${p === safePage ? 'active' : ''}`}
+                    onClick={() => setCurrentPage(p)}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+
+              <button type="button" className="Order-page-btn" disabled={safePage === totalPages} onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}>
+                <ChevronRight size={15} />
+              </button>
+              <button type="button" className="Order-page-btn" disabled={safePage === totalPages} onClick={() => setCurrentPage(totalPages)}>
+                <ChevronsRight size={15} />
+              </button>
+            </div>
+
+            <div className="Order-pagesize">
+              <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>
+                <option value={8}>8 / page</option>
+                <option value={16}>16 / page</option>
+                <option value={24}>24 / page</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. BOTTOM HORIZONTAL SECTION */}
+      <div className="Order-bottom-horizontal">
+        {/* Order Summary */}
+        <div className="Order-card">
+          <div className="Order-card-header">
+            <h3>Order Summary</h3>
+            <select defaultValue="This Month" className="Order-mini-select">
+              <option>This Month</option>
+              <option>Last Month</option>
+              <option>This Year</option>
+            </select>
+          </div>
+
+          <div className="Order-donut-wrap">
+            <div
+              className="Order-donut"
+              style={{
+                background: `conic-gradient(${donutData.segments
+                  .map((s) => `${s.color} ${s.start}% ${s.start + s.pct}%`)
+                  .join(', ')})`,
+              }}
+            >
+              <div className="Order-donut-hole">
+                <span className="Order-donut-total">{donutData.total}</span>
+                <span className="Order-donut-caption">Total Orders</span>
+              </div>
+            </div>
+
+            <ul className="Order-legend">
+              {donutData.segments.map((s) => (
+                <li key={s.label}>
+                  <span className="Order-legend-dot" style={{ background: s.color }} />
+                  <span className="Order-legend-label">{s.label}</span>
+                  <span className="Order-legend-value">{s.count} ({s.pct.toFixed(1)}%)</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Top Selling Products */}
+        <div className="Order-card">
+          <div className="Order-card-header">
+            <h3>Top Selling Products</h3>
+            <button type="button" className="Order-link-btn">View All</button>
+          </div>
+          <ul className="Order-product-list">
+            {topProducts.map((p) => (
+              <li key={p.name}>
+                <div className="Order-product-thumb" style={{ background: p.bg }}>{p.emoji}</div>
+                <div>
+                  <p className="Order-cell-strong">{p.name}</p>
+                  <p className="Order-cell-muted">{p.orders} Orders</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="Order-card">
+          <h3 className="Order-quick-title">Quick Actions</h3>
+          <div className="Order-quick-actions">
+            <button type="button" className="Order-btn Order-btn-green Order-quick-btn" onClick={() => setShowAddModal(true)}>
+              <Plus size={16} /> Add New Order
+            </button>
+            <button type="button" className="Order-btn Order-btn-outline Order-quick-btn" onClick={handleImportClick}>
+              <Upload size={16} /> Import Orders
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Styled View Order Modal */}
+      {viewOrder && (
+        <div className="Order-modal-overlay" onClick={() => setViewOrder(null)}>
+          <div className="Order-modal Order-view-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="Order-modal-header">
+              <div className="Order-view-title-wrap">
+                <h3>Order #{viewOrder.id}</h3>
+                <span className="Order-view-ref">{viewOrder.refCode}</span>
+              </div>
+              <button
+                type="button"
+                className="Order-close-btn"
+                onClick={() => setViewOrder(null)}
+                aria-label="Close modal"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="Order-modal-body Order-view-body">
+              <div className="Order-view-user-card">
+                <div className="Order-avatar large" style={avatarStyle(0)}>
+                  {initials(viewOrder.customer)}
+                </div>
+                <div>
+                  <p className="Order-view-user-name">{viewOrder.customer}</p>
+                  <p className="Order-view-user-email">{viewOrder.email}</p>
                 </div>
               </div>
 
-              <div className="Order-field">
-                <label>Order Status</label>
-                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                  <option>All Status</option>
+              <div className="Order-view-grid">
+                <div className="Order-view-item">
+                  <span className="Order-view-label">Order Status</span>
+                  <span
+                    className="Order-status-badge"
+                    style={{
+                      background: (statusMeta[viewOrder.status] || {}).bg,
+                      color: (statusMeta[viewOrder.status] || {}).color,
+                    }}
+                  >
+                    {viewOrder.status}
+                  </span>
+                </div>
+
+                <div className="Order-view-item">
+                  <span className="Order-view-label">Payment Status</span>
+                  <span
+                    className="Order-badge"
+                    style={{
+                      background: (paymentBadgeMeta[viewOrder.paymentStatus] || {}).bg,
+                      color: (paymentBadgeMeta[viewOrder.paymentStatus] || {}).color,
+                    }}
+                  >
+                    {viewOrder.paymentStatus}
+                  </span>
+                </div>
+
+                <div className="Order-view-item">
+                  <span className="Order-view-label">Total Amount</span>
+                  <span className="Order-view-value highlight">{formatINR(viewOrder.amount)}</span>
+                </div>
+
+                <div className="Order-view-item">
+                  <span className="Order-view-label">Payment Method</span>
+                  <span className="Order-view-value">{viewOrder.paymentMethod}</span>
+                </div>
+
+                <div className="Order-view-item">
+                  <span className="Order-view-label">Total Items</span>
+                  <span className="Order-view-value">{viewOrder.items} Items</span>
+                </div>
+
+                <div className="Order-view-item">
+                  <span className="Order-view-label">Placed Date</span>
+                  <span className="Order-view-value">{viewOrder.date} · {viewOrder.time}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="Order-modal-footer">
+              <button type="button" className="Order-btn Order-btn-outline" onClick={() => setViewOrder(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Order Modal */}
+      {editOrder && (
+        <div className="Order-modal-overlay" onClick={() => setEditOrder(null)}>
+          <form className="Order-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleSaveEdit}>
+            <div className="Order-modal-header">
+              <h3>Edit Order #{editOrder.id}</h3>
+              <button type="button" className="Order-close-btn" onClick={() => setEditOrder(null)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="Order-modal-body">
+              <label className="Order-form-label">Customer Name
+                <input
+                  required
+                  value={editOrder.customer}
+                  onChange={(e) => setEditOrder({ ...editOrder, customer: e.target.value })}
+                />
+              </label>
+
+              <label className="Order-form-label">Email
+                <input
+                  type="email"
+                  value={editOrder.email}
+                  onChange={(e) => setEditOrder({ ...editOrder, email: e.target.value })}
+                />
+              </label>
+
+              <div className="Order-form-grid">
+                <label className="Order-form-label">Items
+                  <input
+                    type="number"
+                    min="1"
+                    value={editOrder.items}
+                    onChange={(e) => setEditOrder({ ...editOrder, items: Number(e.target.value) })}
+                  />
+                </label>
+                <label className="Order-form-label">Amount (INR)
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    value={editOrder.amount}
+                    onChange={(e) => setEditOrder({ ...editOrder, amount: Number(e.target.value) })}
+                  />
+                </label>
+              </div>
+
+              <div className="Order-form-grid">
+                <label className="Order-form-label">Payment Method
+                  <select
+                    value={editOrder.paymentMethod}
+                    onChange={(e) => setEditOrder({ ...editOrder, paymentMethod: e.target.value })}
+                  >
+                    <option>Online</option>
+                    <option>UPI</option>
+                    <option>Credit Card</option>
+                    <option>Cash on Delivery</option>
+                    <option>Wallet</option>
+                    <option>Net Banking</option>
+                  </select>
+                </label>
+
+                <label className="Order-form-label">Payment Status
+                  <select
+                    value={editOrder.paymentStatus}
+                    onChange={(e) => setEditOrder({ ...editOrder, paymentStatus: e.target.value })}
+                  >
+                    <option>Paid</option>
+                    <option>COD</option>
+                    <option>Failed</option>
+                  </select>
+                </label>
+              </div>
+
+              <label className="Order-form-label">Order Status
+                <select
+                  value={editOrder.status}
+                  onChange={(e) => setEditOrder({ ...editOrder, status: e.target.value })}
+                >
                   <option>Pending</option>
                   <option>Processing</option>
                   <option>Shipped</option>
                   <option>Delivered</option>
                   <option>Cancelled</option>
                 </select>
-              </div>
-
-              <div className="Order-field">
-                <label>Payment Status</label>
-                <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)}>
-                  <option>All Payment Status</option>
-                  <option>Paid</option>
-                  <option>COD</option>
-                  <option>Failed</option>
-                </select>
-              </div>
-
-              <div className="Order-field">
-                <label>Date Range</label>
-                <div className="Order-date-range">
-                  <Calendar size={15} />
-                  <input type="date" value={dateStart} onChange={(e) => setDateStart(e.target.value)} />
-                  <span>–</span>
-                  <input type="date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} />
-                </div>
-              </div>
-
-              <button
-                type="button"
-                className={`Order-btn Order-btn-outline ${showFilterPanel ? 'active' : ''}`}
-                onClick={() => setShowFilterPanel((v) => !v)}
-              >
-                <Filter size={15} /> Filters
-              </button>
+              </label>
             </div>
 
-            {showFilterPanel && (
-              <div className="Order-quick-chips">
-                {['Today', 'This Week', 'This Month', 'All Time'].map((chip) => (
-                  <button
-                    key={chip}
-                    type="button"
-                    className={`Order-chip ${quickChip === chip ? 'active' : ''}`}
-                    onClick={() => setQuickChip(chip)}
-                  >
-                    {chip}
-                  </button>
-                ))}
-                <button type="button" className="Order-chip Order-chip-clear" onClick={clearAllFilters}>
-                  Clear all filters
-                </button>
-              </div>
-            )}
-
-            <div className="Order-actions-row">
-              <span className="Order-result-count">
-                {filteredOrders.length} order{filteredOrders.length === 1 ? '' : 's'} found
-                {selectedIds.size > 0 ? ` · ${selectedIds.size} selected` : ''}
-              </span>
-              <div className="Order-actions-buttons">
-                <button type="button" className="Order-btn Order-btn-outline" onClick={handleImportClick}>
-                  <Upload size={15} /> Import
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv,text/csv"
-                  onChange={handleImportFile}
-                  style={{ display: 'none' }}
-                />
-                <button type="button" className="Order-btn Order-btn-outline" onClick={handleExport}>
-                  <Download size={15} /> Export
-                </button>
-                <button type="button" className="Order-btn Order-btn-primary" onClick={handleRefresh}>
-                  <RefreshCw size={15} className={isRefreshing ? 'spin' : ''} /> Refresh
-                </button>
-              </div>
+            <div className="Order-modal-footer">
+              <button type="button" className="Order-btn Order-btn-outline" onClick={() => setEditOrder(null)}>Cancel</button>
+              <button type="submit" className="Order-btn Order-btn-primary">Save Changes</button>
             </div>
-          </div>
-
-          {/* Table */}
-          <div className="Order-table-card">
-            <div className="Order-table-scroll">
-              <table className="Order-table">
-                <thead>
-                  <tr>
-                    <th className="Order-th-check">
-                      <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} />
-                    </th>
-                    <th>Order ID</th>
-                    <th>Customer</th>
-                    <th>Items</th>
-                    <th>Amount</th>
-                    <th>Payment</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pageOrders.length === 0 && (
-                    <tr>
-                      <td colSpan={9} className="Order-empty-row">No orders match your filters.</td>
-                    </tr>
-                  )}
-                  {pageOrders.map((o, idx) => {
-                    const meta = statusMeta[o.status] || statusMeta.Pending;
-                    const StatusIcon = meta.icon;
-                    const payMeta = paymentBadgeMeta[o.paymentStatus] || paymentBadgeMeta.COD;
-                    return (
-                      <tr key={o.id}>
-                        <td>
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.has(o.id)}
-                            onChange={() => toggleSelectOne(o.id)}
-                          />
-                        </td>
-                        <td>
-                          <p className="Order-cell-strong">#{o.id}</p>
-                          <p className="Order-cell-muted">{o.refCode}</p>
-                        </td>
-                        <td>
-                          <div className="Order-customer-cell">
-                            <div className="Order-avatar" style={avatarStyle(idx)}>{initials(o.customer)}</div>
-                            <div>
-                              <p className="Order-cell-strong">{o.customer}</p>
-                              <p className="Order-cell-muted">{o.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <p className="Order-cell-strong">{o.items} Items</p>
-                          <button type="button" className="Order-view-items-link" onClick={() => setViewOrder(o)}>
-                            View Items
-                          </button>
-                        </td>
-                        <td>
-                          <p className="Order-cell-strong">${o.amountUsd.toFixed(2)}</p>
-                          <p className="Order-cell-muted">{formatINR(o.amount)}</p>
-                        </td>
-                        <td>
-                          <span className="Order-badge" style={{ background: payMeta.bg, color: payMeta.color }}>
-                            {o.paymentStatus}
-                          </span>
-                          <p className="Order-cell-muted" style={{ marginTop: 3 }}>{o.paymentMethod}</p>
-                        </td>
-                        <td>
-                          <span className="Order-status-badge" style={{ background: meta.bg, color: meta.color }}>
-                            {o.status} <StatusIcon size={12} />
-                          </span>
-                        </td>
-                        <td>
-                          <p className="Order-cell-strong">{new Date(o.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-                          <p className="Order-cell-muted">{o.time}</p>
-                        </td>
-                        <td>
-                          <button type="button" className="Order-icon-btn" onClick={() => setViewOrder(o)} aria-label="View order">
-                            <Eye size={16} />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            <div className="Order-pagination">
-              <span className="Order-pagination-info">
-                Showing {filteredOrders.length === 0 ? 0 : pageStart + 1} to {Math.min(pageStart + pageSize, filteredOrders.length)} of {filteredOrders.length} orders
-              </span>
-
-              <div className="Order-pagination-controls">
-                <button type="button" className="Order-page-btn" disabled={safePage === 1} onClick={() => setCurrentPage(1)}>
-                  <ChevronsLeft size={15} />
-                </button>
-                <button type="button" className="Order-page-btn" disabled={safePage === 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}>
-                  <ChevronLeft size={15} />
-                </button>
-
-                {pageNumbers.map((p, i) =>
-                  p === '...' ? (
-                    <span key={`ellipsis-${i}`} className="Order-page-ellipsis">…</span>
-                  ) : (
-                    <button
-                      key={p}
-                      type="button"
-                      className={`Order-page-btn ${p === safePage ? 'active' : ''}`}
-                      onClick={() => setCurrentPage(p)}
-                    >
-                      {p}
-                    </button>
-                  )
-                )}
-
-                <button type="button" className="Order-page-btn" disabled={safePage === totalPages} onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}>
-                  <ChevronRight size={15} />
-                </button>
-                <button type="button" className="Order-page-btn" disabled={safePage === totalPages} onClick={() => setCurrentPage(totalPages)}>
-                  <ChevronsRight size={15} />
-                </button>
-              </div>
-
-              <div className="Order-pagesize">
-                <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}>
-                  <option value={10}>10 / page</option>
-                  <option value={25}>25 / page</option>
-                  <option value={50}>50 / page</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right sidebar */}
-        <div className="Order-side">
-          <div className="Order-card">
-            <div className="Order-card-header">
-              <h3>Order Summary</h3>
-              <select defaultValue="This Month" className="Order-mini-select">
-                <option>This Month</option>
-                <option>Last Month</option>
-                <option>This Year</option>
-              </select>
-            </div>
-
-            <div className="Order-donut-wrap">
-              <div
-                className="Order-donut"
-                style={{
-                  background: `conic-gradient(${donutData.segments
-                    .map((s) => `${s.color} ${s.start}% ${s.start + s.pct}%`)
-                    .join(', ')})`,
-                }}
-              >
-                <div className="Order-donut-hole">
-                  <span className="Order-donut-total">{donutData.total}</span>
-                  <span className="Order-donut-caption">Total Orders</span>
-                </div>
-              </div>
-
-              <ul className="Order-legend">
-                {donutData.segments.map((s) => (
-                  <li key={s.label}>
-                    <span className="Order-legend-dot" style={{ background: s.color }} />
-                    <span className="Order-legend-label">{s.label}</span>
-                    <span className="Order-legend-value">{s.count} ({s.pct.toFixed(1)}%)</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="Order-card">
-            <div className="Order-card-header">
-              <h3>Top Selling Products</h3>
-              <button type="button" className="Order-link-btn">View All</button>
-            </div>
-            <ul className="Order-product-list">
-              {topProducts.map((p) => (
-                <li key={p.name}>
-                  <div className="Order-product-thumb" style={{ background: p.bg }}>{p.emoji}</div>
-                  <div>
-                    <p className="Order-cell-strong">{p.name}</p>
-                    <p className="Order-cell-muted">{p.orders} Orders</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="Order-card">
-            <h3 className="Order-quick-title">Quick Actions</h3>
-            <div className="Order-quick-actions">
-              <button type="button" className="Order-btn Order-btn-primary Order-quick-btn" onClick={() => setShowAddModal(true)}>
-                <Plus size={15} /> Add New Order
-              </button>
-              <button type="button" className="Order-btn Order-btn-outline Order-quick-btn" onClick={handleImportClick}>
-                <Upload size={15} /> Import Orders
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* View order modal */}
-      {viewOrder && (
-        <div className="Order-modal-overlay" onClick={() => setViewOrder(null)}>
-          <div className="Order-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="Order-modal-header">
-              <h3>Order #{viewOrder.id}</h3>
-              <button type="button" className="Order-icon-btn" onClick={() => setViewOrder(null)}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className="Order-modal-body">
-              <div className="Order-modal-row"><span>Customer</span><strong>{viewOrder.customer}</strong></div>
-              <div className="Order-modal-row"><span>Email</span><strong>{viewOrder.email}</strong></div>
-              <div className="Order-modal-row"><span>Items</span><strong>{viewOrder.items} items</strong></div>
-              <div className="Order-modal-row"><span>Amount</span><strong>{formatINR(viewOrder.amount)}</strong></div>
-              <div className="Order-modal-row"><span>Payment</span><strong>{viewOrder.paymentMethod} · {viewOrder.paymentStatus}</strong></div>
-              <div className="Order-modal-row">
-                <span>Status</span>
-                <strong style={{ color: (statusMeta[viewOrder.status] || {}).color }}>{viewOrder.status}</strong>
-              </div>
-              <div className="Order-modal-row"><span>Placed on</span><strong>{viewOrder.date} · {viewOrder.time}</strong></div>
-              <div className="Order-modal-row"><span>Reference</span><strong>{viewOrder.refCode}</strong></div>
-            </div>
-          </div>
+          </form>
         </div>
       )}
 
-      {/* Add order modal */}
+      {/* Add Order Modal */}
       {showAddModal && (
         <div className="Order-modal-overlay" onClick={() => setShowAddModal(false)}>
           <form className="Order-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleAddOrder}>
             <div className="Order-modal-header">
               <h3>Add New Order</h3>
-              <button type="button" className="Order-icon-btn" onClick={() => setShowAddModal(false)}>
-                <X size={18} />
+              <button type="button" className="Order-close-btn" onClick={() => setShowAddModal(false)}>
+                <X size={20} />
               </button>
             </div>
             <div className="Order-modal-body">
@@ -788,13 +1039,13 @@ const Order = () => {
             </div>
             <div className="Order-modal-footer">
               <button type="button" className="Order-btn Order-btn-outline" onClick={() => setShowAddModal(false)}>Cancel</button>
-              <button type="submit" className="Order-btn Order-btn-primary">Create Order</button>
+              <button type="submit" className="Order-btn Order-btn-green">Create Order</button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Toast */}
+      {/* Toast Notification */}
       {toast && <div className="Order-toast">{toast}</div>}
     </div>
   );

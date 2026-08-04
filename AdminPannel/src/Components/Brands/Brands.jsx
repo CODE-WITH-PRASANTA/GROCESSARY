@@ -13,6 +13,7 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
+import { Editor } from '@tinymce/tinymce-react';
 
 const initialBrands = [
   { id: 1, name: 'Nestlé', tagline: 'Good Food, Good Life', category: 'Food & Beverages', catColor: 'green', products: 120, order: 1, status: 'Active', logoUrl: null },
@@ -46,6 +47,7 @@ const Brands = () => {
   });
 
   const fileInputRef = useRef(null);
+  const editorRef = useRef(null);
 
   // --- List, Search, Filter & Pagination States ---
   const [brandsList, setBrandsList] = useState(initialBrands);
@@ -104,6 +106,14 @@ const Brands = () => {
     }));
   };
 
+  // Handle TinyMCE Editor Change
+  const handleEditorChange = (content) => {
+    setFormData(prev => ({
+      ...prev,
+      description: content
+    }));
+  };
+
   // Reset Form
   const handleReset = () => {
     setFormData({
@@ -117,6 +127,9 @@ const Brands = () => {
       status: true,
       logoUrl: null
     });
+    if (editorRef.current) {
+      editorRef.current.setContent('');
+    }
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -189,6 +202,10 @@ const Brands = () => {
       status: brand.status === 'Active',
       logoUrl: brand.logoUrl
     });
+
+    if (editorRef.current) {
+      editorRef.current.setContent('');
+    }
     setActiveDropdownId(null);
   };
 
@@ -240,6 +257,7 @@ const Brands = () => {
                 <div 
                   className="brand-upload-circle" 
                   onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                  title="Click to upload logo"
                 >
                   {formData.logoUrl ? (
                     <img src={formData.logoUrl} alt="Logo" className="brand-preview-img" />
@@ -312,19 +330,32 @@ const Brands = () => {
               </div>
             </div>
 
-            {/* Description */}
+            {/* Description (TinyMCE Integration) */}
             <div className="brand-form-group">
               <label>Description</label>
-              <div className="brand-textarea-wrapper">
-                <textarea 
-                  name="description"
-                  placeholder="Enter brand description..."
-                  rows="3"
-                  maxLength={200}
+              <div className="brand-editor-wrapper">
+                <Editor
+                  apiKey="8hswbe7bfeeneui9eb9gjgsym8ku30nx5gwre9808ajdzniu"
+                  onInit={(evt, editor) => editorRef.current = editor}
                   value={formData.description}
-                  onChange={handleInputChange}
-                ></textarea>
-                <span className="brand-char-count">{formData.description.length} / 200</span>
+                  onEditorChange={handleEditorChange}
+                  init={{
+                    height: 200,
+                    menubar: false,
+                    plugins: [
+                      'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
+                      'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                      'insertdatetime', 'table', 'code', 'help', 'wordcount'
+                    ],
+                    toolbar: 'undo redo | blocks | ' +
+                      'bold italic forecolor | alignleft aligncenter ' +
+                      'alignright alignjustify | bullist numlist outdent indent | ' +
+                      'removeformat | help',
+                    content_style: 'body { font-family:Inter,sans-serif; font-size:14px }',
+                    statusbar: false,
+                    branding: false
+                  }}
+                />
               </div>
             </div>
 
@@ -371,144 +402,151 @@ const Brands = () => {
 
         {/* ================= RIGHT SECTION (50%) ================= */}
         <div className="brand-card brand-list-section">
-          {/* Header Controls */}
-          <div className="brand-list-header">
-            <div>
-              <h2>All Brands</h2>
-              <p>Manage and organize all your brands</p>
-            </div>
-
-            <div className="brand-controls">
-              <div className="brand-search-box">
-                <Search size={16} className="brand-search-icon" />
-                <input 
-                  type="text" 
-                  placeholder="Search brands..." 
-                  value={searchQuery}
-                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                />
+          <div>
+            {/* Header Controls */}
+            <div className="brand-list-header">
+              <div>
+                <h2>All Brands</h2>
+                <p>Manage and organize all your brands</p>
               </div>
 
-              {/* Filter */}
-              <div className="brand-filter-container">
-                <button 
-                  className={`brand-btn-icon ${statusFilter !== 'All' ? 'active-filter' : ''}`}
-                  onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                >
-                  <Filter size={16} /> Filter
+              <div className="brand-controls">
+                <div className="brand-search-box">
+                  <Search size={16} className="brand-search-icon" />
+                  <input 
+                    type="text" 
+                    placeholder="Search brands..." 
+                    value={searchQuery}
+                    onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                  />
+                </div>
+
+                {/* Filter */}
+                <div className="brand-filter-container">
+                  <button 
+                    type="button"
+                    className={`brand-btn-icon ${statusFilter !== 'All' ? 'active-filter' : ''}`}
+                    onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                  >
+                    <Filter size={16} /> Filter
+                  </button>
+                  {showFilterDropdown && (
+                    <div className="brand-filter-dropdown">
+                      <p className="brand-filter-title">Filter Status</p>
+                      <button type="button" className={statusFilter === 'All' ? 'selected' : ''} onClick={() => { setStatusFilter('All'); setShowFilterDropdown(false); }}>All Brands</button>
+                      <button type="button" className={statusFilter === 'Active' ? 'selected' : ''} onClick={() => { setStatusFilter('Active'); setShowFilterDropdown(false); }}>Active</button>
+                      <button type="button" className={statusFilter === 'Inactive' ? 'selected' : ''} onClick={() => { setStatusFilter('Inactive'); setShowFilterDropdown(false); }}>Inactive</button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Refresh */}
+                <button type="button" className="brand-btn-icon" onClick={handleRefresh} title="Refresh Table">
+                  <RotateCcw size={16} />
                 </button>
-                {showFilterDropdown && (
-                  <div className="brand-filter-dropdown">
-                    <p className="brand-filter-title">Filter Status</p>
-                    <button className={statusFilter === 'All' ? 'selected' : ''} onClick={() => { setStatusFilter('All'); setShowFilterDropdown(false); }}>All Brands</button>
-                    <button className={statusFilter === 'Active' ? 'selected' : ''} onClick={() => { setStatusFilter('Active'); setShowFilterDropdown(false); }}>Active</button>
-                    <button className={statusFilter === 'Inactive' ? 'selected' : ''} onClick={() => { setStatusFilter('Inactive'); setShowFilterDropdown(false); }}>Inactive</button>
-                  </div>
-                )}
               </div>
-
-              {/* Refresh */}
-              <button className="brand-btn-icon" onClick={handleRefresh} title="Refresh Table">
-                <RotateCcw size={16} />
-              </button>
             </div>
-          </div>
 
-          {/* Table */}
-          <div className="brand-table-wrapper">
-            <table className="brand-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Logo</th>
-                  <th>Brand Name</th>
-                  <th>Category</th>
-                  <th>Products</th>
-                  <th>Order</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentBrands.length > 0 ? (
-                  currentBrands.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.id}</td>
-                      <td>
-                        <div className="brand-logo-circle">
-                          {item.logoUrl ? (
-                            <img src={item.logoUrl} alt={item.name} className="brand-table-logo" />
-                          ) : (
-                            <span className="brand-logo-text">{item.name.charAt(0)}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="brand-name-group">
-                          <span className="brand-title-text">{item.name}</span>
-                          <span className="brand-sub-text">{item.tagline}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`brand-cat-tag ${item.catColor}`}>
-                          {item.category}
-                        </span>
-                      </td>
-                      <td>{item.products}</td>
-                      <td>{item.order}</td>
-                      <td>
-                        <span className={`brand-badge ${item.status.toLowerCase()}`}>
-                          {item.status}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="brand-action-wrapper">
-                          <button 
-                            className="brand-action-btn brand-edit-btn" 
-                            onClick={() => handleEdit(item)}
-                            title="Edit"
-                          >
-                            <Edit3 size={14} />
-                          </button>
-                          <button 
-                            className="brand-action-btn brand-delete-btn" 
-                            onClick={() => handleDelete(item.id)}
-                            title="Delete"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-
-                          {/* Three Dots Dropdown */}
-                          <div className="brand-dropdown-container">
-                            <button 
-                              className="brand-action-btn brand-more-btn"
-                              onClick={() => setActiveDropdownId(activeDropdownId === item.id ? null : item.id)}
-                            >
-                              <MoreVertical size={14} />
-                            </button>
-
-                            {activeDropdownId === item.id && (
-                              <div className="brand-action-dropdown">
-                                <button onClick={() => handleStatusChange(item.id, 'Active')}>
-                                  <CheckCircle size={14} className="icon-green" /> Set Active
-                                </button>
-                                <button onClick={() => handleStatusChange(item.id, 'Inactive')}>
-                                  <XCircle size={14} className="icon-red" /> Set Inactive
-                                </button>
-                              </div>
+            {/* Table */}
+            <div className="brand-table-wrapper">
+              <table className="brand-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Logo</th>
+                    <th>Brand Name</th>
+                    <th>Category</th>
+                    <th>Products</th>
+                    <th>Order</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentBrands.length > 0 ? (
+                    currentBrands.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.id}</td>
+                        <td>
+                          <div className="brand-logo-circle">
+                            {item.logoUrl ? (
+                              <img src={item.logoUrl} alt={item.name} className="brand-table-logo" />
+                            ) : (
+                              <span className="brand-logo-text">{item.name.charAt(0)}</span>
                             )}
                           </div>
-                        </div>
-                      </td>
+                        </td>
+                        <td>
+                          <div className="brand-name-group">
+                            <span className="brand-title-text">{item.name}</span>
+                            <span className="brand-sub-text">{item.tagline}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`brand-cat-tag ${item.catColor}`}>
+                            {item.category}
+                          </span>
+                        </td>
+                        <td>{item.products}</td>
+                        <td>{item.order}</td>
+                        <td>
+                          <span className={`brand-badge ${item.status.toLowerCase()}`}>
+                            {item.status}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="brand-action-wrapper">
+                            <button 
+                              type="button"
+                              className="brand-action-btn brand-edit-btn" 
+                              onClick={() => handleEdit(item)}
+                              title="Edit"
+                            >
+                              <Edit3 size={14} />
+                            </button>
+                            <button 
+                              type="button"
+                              className="brand-action-btn brand-delete-btn" 
+                              onClick={() => handleDelete(item.id)}
+                              title="Delete"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+
+                            {/* Three Dots Dropdown */}
+                            <div className="brand-dropdown-container">
+                              <button 
+                                type="button"
+                                className="brand-action-btn brand-more-btn"
+                                onClick={() => setActiveDropdownId(activeDropdownId === item.id ? null : item.id)}
+                                title="More Options"
+                              >
+                                <MoreVertical size={14} />
+                              </button>
+
+                              {activeDropdownId === item.id && (
+                                <div className="brand-action-dropdown">
+                                  <button type="button" onClick={() => handleStatusChange(item.id, 'Active')}>
+                                    <CheckCircle size={14} className="icon-green" /> Set Active
+                                  </button>
+                                  <button type="button" onClick={() => handleStatusChange(item.id, 'Inactive')}>
+                                    <XCircle size={14} className="icon-red" /> Set Inactive
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="8" className="brand-no-data">No brands found.</td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="8" className="brand-no-data">No brands found.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Pagination */}
@@ -518,15 +556,17 @@ const Brands = () => {
             </span>
             <div className="brand-pagination">
               <button 
+                type="button"
                 className="brand-page-btn" 
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
               >
                 Previous
               </button>
-              
+
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                 <button 
+                  type="button"
                   key={page}
                   className={`brand-page-btn ${currentPage === page ? 'active' : ''}`}
                   onClick={() => setCurrentPage(page)}
@@ -536,6 +576,7 @@ const Brands = () => {
               ))}
 
               <button 
+                type="button"
                 className="brand-page-btn"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}

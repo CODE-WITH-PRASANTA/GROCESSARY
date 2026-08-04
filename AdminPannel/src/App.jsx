@@ -1,11 +1,11 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "./Layout/MainLayout/MainLayout";
-import Blog from "../../frontend/src/Components/Blog/Blog";
-import BlogManagement from "./Components/BlogManagement/BlogManagement";
+
+
 import TestimonialManagement from "./Components/TestimonialManagement/TestimonialManagement";
 import Allproduct from "./Components/Blog/AllProduct/Allproduct";
-import Addnew from "./Components/Blog/Addnew/Addnew";
+import Addnew from "./Components/Blog/AddProducts/AddProducts";
 import ReturnManagement from "./Components/Blog/ReturnManagement/ReturnManagement";
 import ReviewsManagement from "./Components/Blog/ReviewsManagement/ReviewsManagement";
 import ReturnDetails from "./Components/Blog/ReturnDetails/ReturnDetails";
@@ -26,6 +26,8 @@ import Discounts from "./Components/Discounts/Discounts";
 import EditUnit from "./Components/EditUnit/EditUnit";
 import ListUploads from "./Components/ListUploads/ListUploads";
 import Banners from "./Components/Banners/Banners";
+import BlogPosting from "./Components/BlogPosting/BlogPosting";
+import BlogManagement from "./Components/BlogManagement/BlogManagement";
 
  
 const App = () => {
@@ -35,8 +37,10 @@ const App = () => {
 
         {/* Main Layout */}
         <Route path="/" element={<MainLayout />}>
-        <Route path="/blog" element={<Blog/>}/>
-         <Route path="/blogmanagement" element={<BlogManagement/>}/>
+       
+        <Route path="/blog" element={<BlogPosting/>}/>
+        <Route path="/blogmanagement" element={<BlogManagement/>}/>
+         
          <Route path="/testimonialmanagement" element={<TestimonialManagement/>}/>
         <Route path="products/all-products" element={<Allproduct/>}/>
         <Route path="products/add-product" element={<Addnew/>}/>

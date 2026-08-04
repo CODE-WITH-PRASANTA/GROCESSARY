@@ -1,12 +1,17 @@
 import React from 'react'
-import DashboardHome from '../../Components/DashboardHome/DashboardHome'
-import Product from '../../Components/Product/Product'
+import Overview from '../../Components/Overview/Overview'
+import Sales from '../../Components/Sales/Sales'
+import TopProducts from '../../Components/TopProducts/TopProducts'
+import SalesPerformance from '../../Components/SalesPerformance/SalesPerformance'
 
 const Dashboard = () => {
   return (
     <div>
-      <DashboardHome/>
-      <Product/>
+      
+      <Overview/>
+      <Sales/>
+      <TopProducts/>
+      <SalesPerformance/>
     </div>
   )
 }
