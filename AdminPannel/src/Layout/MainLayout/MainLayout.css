@@ -103,12 +103,12 @@ body {
   flex-wrap: wrap;
 }
 
-.Breadcrumb-item {
+/* .Breadcrumb-item {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 0.85rem;
-}
+} */
 
 .Breadcrumb-link {
   text-decoration: none;

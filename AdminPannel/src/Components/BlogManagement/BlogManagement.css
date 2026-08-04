@@ -1,0 +1,713 @@
+/* Container & Base layout */
+.BlogManagement {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f8fafc;
+  color: #1e293b;
+margin-bottom: 100px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.BlogManagement-breadcrumb {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.BlogManagement-breadcrumb span {
+  color: #0f172a;
+  font-weight: 500;
+}
+
+/* Top Add New Button */
+.BlogManagement-top-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.BlogManagement-add-btn {
+  background-color: #059669;
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.BlogManagement-add-btn:hover {
+  background-color: #047857;
+}
+
+/* Metric Cards Top */
+.BlogManagement-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.BlogManagement-metric-card {
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border: 1px solid #e2e8f0;
+}
+
+.BlogManagement-metric-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.BlogManagement-metric-icon.green { background: #ecfdf5; color: #059669; }
+.BlogManagement-metric-icon.blue { background: #eff6ff; color: #3b82f6; }
+.BlogManagement-metric-icon.yellow { background: #fefce8; color: #ca8a04; }
+.BlogManagement-metric-icon.purple { background: #fdf4ff; color: #c084fc; }
+.BlogManagement-metric-icon.pink { background: #fff1f2; color: #f43f5e; }
+
+.BlogManagement-metric-info h3 {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+.BlogManagement-metric-info h2 {
+  font-size: 22px;
+  color: #0f172a;
+  margin: 4px 0;
+  font-weight: 700;
+}
+
+.BlogManagement-metric-info p {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* Exact 50/50 Layout */
+.BlogManagement-main-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.BlogManagement-form-section,
+.BlogManagement-table-section {
+  flex: 0 0 50%;
+  max-width: 50%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
+@media (max-width: 1024px) {
+  .BlogManagement-main-layout {
+    flex-direction: column;
+  }
+  .BlogManagement-form-section,
+  .BlogManagement-table-section {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+/* Form Elements */
+.BlogManagement-section-header h3 {
+  font-size: 18px;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.BlogManagement-section-header p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 20px 0;
+}
+
+.BlogManagement-input-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.BlogManagement-input-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.BlogManagement-input-group input,
+.BlogManagement-input-group select,
+.BlogManagement-input-group textarea {
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+  background: #fff;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.BlogManagement-input-group input:focus,
+.BlogManagement-input-group select:focus,
+.BlogManagement-input-group textarea:focus {
+  border-color: #059669;
+}
+
+.BlogManagement-char-count,
+.BlogManagement-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: right;
+}
+
+.BlogManagement-hint {
+  text-align: left;
+}
+
+/* Dropzone & Preview */
+.BlogManagement-dropzone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  background: #f8fafc;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+}
+
+.BlogManagement-upload-icon {
+  font-size: 28px;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.BlogManagement-dropzone p {
+  font-size: 13px;
+  color: #334155;
+  margin: 0 0 4px 0;
+  font-weight: 500;
+}
+
+.BlogManagement-dropzone span {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.BlogManagement-preview-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.BlogManagement-uploaded-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+/* Editor Toolbar */
+.BlogManagement-editor-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-bottom: none;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.BlogManagement-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.BlogManagement-toolbar-left select {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  width: auto;
+}
+
+.BlogManagement-editor-toolbar button {
+  background: transparent;
+  border: none;
+  padding: 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.BlogManagement-editor-toolbar button:hover {
+  background: #e2e8f0;
+}
+
+.BlogManagement-content-textarea {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+
+/* SEO Section */
+.BlogManagement-seo-section {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.BlogManagement-seo-section h4 {
+  font-size: 14px;
+  margin: 0 0 12px 0;
+  color: #0f172a;
+}
+
+.BlogManagement-dual-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.BlogManagement-dual-input input {
+  padding-right: 50px;
+}
+
+.BlogManagement-dual-input span {
+  position: absolute;
+  right: 12px;
+  font-size: 11px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.BlogManagement-row-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.BlogManagement-date-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.BlogManagement-input-calendar-icon {
+  position: absolute;
+  right: 12px;
+  color: #64748b;
+  pointer-events: none;
+}
+
+/* Form Actions */
+.BlogManagement-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 16px;
+}
+
+.BlogManagement-reset-btn {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.BlogManagement-draft-btn {
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.BlogManagement-publish-btn {
+  background: #059669;
+  color: #ffffff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.BlogManagement-publish-btn:hover {
+  background: #047857;
+}
+
+/* Table Section Styling */
+.BlogManagement-table-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.BlogManagement-table-title-area h3 {
+  font-size: 18px;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.BlogManagement-table-title-area p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.BlogManagement-table-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.BlogManagement-filter-select,
+.BlogManagement-control-btn {
+  padding: 7px 12px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.BlogManagement-table-container {
+  overflow-x: auto;
+}
+
+.BlogManagement-blogs-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.BlogManagement-blogs-table th {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  background: #f8fafc;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.BlogManagement-blogs-table td {
+  padding: 12px;
+  font-size: 13px;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.BlogManagement-title-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 240px;
+}
+
+.BlogManagement-row-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.BlogManagement-title-cell strong {
+  display: block;
+  font-size: 13px;
+  color: #0f172a;
+  line-height: 1.3;
+  margin-bottom: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.BlogManagement-title-cell p {
+  font-size: 11px;
+  color: #64748b;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.BlogManagement-author-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.BlogManagement-author-avatar {
+  background: #e2e8f0;
+  padding: 2px 6px;
+  border-radius: 50%;
+  font-size: 10px;
+}
+
+/* Badges */
+.BlogManagement-badge {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.category-nutrition { background: #ecfdf5; color: #059669; }
+.category-health-tips { background: #eff6ff; color: #3b82f6; }
+.category-organic-food { background: #fdf4ff; color: #c084fc; }
+.category-recipes { background: #fff7ed; color: #c2410c; }
+.category-superfoods { background: #fefce8; color: #ca8a04; }
+
+.status-published { background: #ecfdf5; color: #059669; }
+.status-draft { background: #fefce8; color: #ca8a04; }
+.status-scheduled { background: #eff6ff; color: #3b82f6; }
+
+.BlogManagement-date-cell {
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+/* Action Buttons */
+.BlogManagement-action-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.BlogManagement-action-edit,
+.BlogManagement-action-delete {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.BlogManagement-action-edit {
+  color: #059669;
+  background: #ecfdf5;
+}
+
+.BlogManagement-action-delete {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+/* Pagination & Bottom Metrics */
+.BlogManagement-table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  font-size: 13px;
+  color: #64748b;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.BlogManagement-pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.BlogManagement-page-btn {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #334155;
+}
+
+.BlogManagement-page-btn.active {
+  background: #059669;
+  color: #ffffff;
+  border-color: #059669;
+}
+
+.BlogManagement-bottom-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 20px;
+}
+
+.BlogManagement-bottom-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.BlogManagement-bottom-card.highlight {
+  background: #fff5f5;
+  border-color: #fed7d7;
+}
+
+.BlogManagement-bottom-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.BlogManagement-bottom-card h3 {
+  font-size: 15px;
+  color: #0f172a;
+  margin: 0 0 2px 0;
+}
+
+.BlogManagement-bottom-card p {
+  font-size: 11px;
+  color: #64748b;
+  margin: 0;
+}
+
+.trend-up {
+  color: #059669;
+  font-weight: 500;
+}
+
+/* Modal Popup Window */
+.BlogManagement-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.BlogManagement-modal-content {
+  background: #ffffff;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.BlogManagement-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.BlogManagement-modal-header h3 {
+  font-size: 18px;
+  margin: 0;
+  color: #0f172a;
+}
+
+.BlogManagement-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.BlogManagement-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .BlogManagement {
+    padding: 12px;
+  }
+  .BlogManagement-row-inputs {
+    grid-template-columns: 1fr;
+  }
+}

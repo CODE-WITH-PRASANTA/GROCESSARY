@@ -1,0 +1,462 @@
+/* MyOrders.css */
+
+.MyOrders-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background: #f0f2f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  padding: 2rem 1rem;
+}
+
+.MyOrders-container {
+  display: flex;
+  flex-direction: row;
+  gap: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  max-width: 900px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+/* Card Base Styles */
+.MyOrders-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+.MyOrders-close-btn {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: #f1f3f5;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #495057;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.MyOrders-close-btn:hover {
+  background: #e9ecef;
+}
+
+.MyOrders-header-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #fff9e6;
+  color: #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  margin: 0 auto 1.2rem auto;
+  box-shadow: 0 8px 16px rgba(245, 158, 11, 0.15);
+}
+
+.MyOrders-header-icon.success-icon {
+  background: #e8f5e9;
+  color: #2e7d32;
+  box-shadow: 0 8px 16px rgba(46, 125, 50, 0.15);
+}
+
+.MyOrders-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-align: center;
+  color: #1a1a1a;
+  margin: 0 0 0.4rem 0;
+}
+
+.MyOrders-subtitle {
+  font-size: 0.875rem;
+  text-align: center;
+  color: #6c757d;
+  margin: 0 0 1.5rem 0;
+}
+
+/* Illustration mock inside Track Card */
+.MyOrders-illustration {
+  background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 16px;
+  height: 110px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.MyOrders-scooter-scene {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.MyOrders-sun-spot {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 193, 7, 0.2);
+  border-radius: 50%;
+  filter: blur(10px);
+}
+
+.MyOrders-scooter-icon-wrap {
+  background: #ffc107;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.4rem;
+  box-shadow: 0 6px 15px rgba(255, 193, 7, 0.4);
+  animation: scooterBounce 2s ease-in-out infinite;
+}
+
+@keyframes scooterBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* Form Styles */
+.MyOrders-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.MyOrders-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.MyOrders-input-group label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #343a40;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.MyOrders-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.MyOrders-input-prefix-icon {
+  position: absolute;
+  left: 1rem;
+  color: #adb5bd;
+  font-size: 1rem;
+}
+
+.MyOrders-input-wrapper input {
+  width: 100%;
+  height: 50px;
+  padding: 0 1rem 0 3rem;
+  border-radius: 14px;
+  border: 1.5px solid #dee2e6;
+  background: #fff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: #212529;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.MyOrders-input-wrapper input:focus {
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.1);
+}
+
+.MyOrders-security-note {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #f1f8f5;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #c8e6c9;
+  color: #2e7d32;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.MyOrders-security-icon {
+  font-size: 1rem;
+}
+
+.MyOrders-submit-btn {
+  width: 100%;
+  height: 52px;
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(46, 125, 50, 0.3);
+  margin-top: 0.5rem;
+  transition: filter 0.2s;
+}
+
+.MyOrders-submit-btn:hover {
+  filter: brightness(1.08);
+}
+
+.MyOrders-help-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.MyOrders-phone-link {
+  color: #2e7d32;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.MyOrders-phone-link:hover {
+  text-decoration: underline;
+}
+
+/* Order Status Popup Overlay & Styles */
+.MyOrders-status-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.MyOrders-status-card {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.MyOrders-id-display-box {
+  background: #f1f8f5;
+  border: 1px solid #c8e6c9;
+  border-radius: 14px;
+  padding: 0.8rem 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.MyOrders-id-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.MyOrders-id-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #6c757d;
+  text-transform: uppercase;
+}
+
+.MyOrders-id-value {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1b5e20;
+}
+
+.MyOrders-copy-btn {
+  background: transparent;
+  border: none;
+  color: #2e7d32;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.MyOrders-copy-btn:hover {
+  background: rgba(46, 125, 50, 0.1);
+}
+
+/* Timeline Styles */
+.MyOrders-timeline {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin-bottom: 1.5rem;
+  padding-left: 0.5rem;
+}
+
+.MyOrders-timeline::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 18px;
+  width: 2px;
+  background: #e9ecef;
+  z-index: 1;
+}
+
+.MyOrders-timeline-item {
+  display: flex;
+  gap: 1rem;
+  position: relative;
+  padding-bottom: 1.5rem;
+  z-index: 2;
+}
+
+.MyOrders-timeline-item.last {
+  padding-bottom: 0;
+}
+
+.MyOrders-timeline-icon-wrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f1f3f5;
+  color: #adb5bd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.MyOrders-timeline-item.completed .MyOrders-timeline-icon-wrap {
+  background: #2e7d32;
+  color: #fff;
+}
+
+.MyOrders-timeline-item.active .MyOrders-timeline-icon-wrap {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 2px solid #2e7d32;
+}
+
+.spin-anim {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.MyOrders-timeline-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.MyOrders-timeline-content h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #343a40;
+  margin: 0 0 0.1rem 0;
+}
+
+.MyOrders-timeline-content h4.active-text {
+  color: #2e7d32;
+}
+
+.MyOrders-timeline-content p {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin: 0;
+}
+
+.MyOrders-time {
+  font-size: 0.7rem;
+  color: #adb5bd;
+  margin-top: 0.2rem;
+}
+
+/* Estimated Delivery Box */
+.MyOrders-estimated-box {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.MyOrders-est-icon {
+  font-size: 1.4rem;
+  color: #2e7d32;
+}
+
+.MyOrders-est-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.MyOrders-est-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #6c757d;
+  text-transform: uppercase;
+}
+
+.MyOrders-est-value {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .MyOrders-container {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+}

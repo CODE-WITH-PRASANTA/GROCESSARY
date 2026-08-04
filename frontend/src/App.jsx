@@ -22,6 +22,14 @@ import LoginPage from "./Components/LoginPage/LoginPage";
 import CartSection from "./Components/CartSection/CartSection";
 import FloatingForm from "./Components/FloatingForm/FloatingForm";
 import FloatingButton from "./Components/FloatingButton/FloatingButton";
+import DeliveryTime from "./Components/DeliveryTime/DeliveryTime";
+import MyOrders from "./Components/MyOrders/MyOrders";
+import ListUpload from "./Components/ListUpload/ListUpload";
+
+
+
+
+
 
 
 
@@ -46,6 +54,17 @@ const App = () => {
         <Route path="/BlogReadmoreFour" element={<BlogReadmoreFour/>} />
         <Route path="/account" element={<LoginPage/>} />
         <Route path="/cart" element={<CartSection/>} />
+         <Route path="/deliverytime" element={<DeliveryTime/>}/>
+         
+         <Route path="/myorders" element={<MyOrders/>}/>
+         <Route path="/listupload" element={<ListUpload/>}/>
+      
+
+
+    
+      
+        
+        
       </Routes> 
       <FloatingForm/>
       <FloatingButton/>

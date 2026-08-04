@@ -4,13 +4,28 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 // Layout
 import MainLayout from "./Layout/MainLayout/MainLayout";
 
-// Main Pages
+// Pages
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import Order from "./Pages/Order/Order";
 
-// Return & Reviews Related Components
+// Blog
+import Blog from "./Components/Blog/Blog";
+import BlogManagement from "./Components/BlogManagement/BlogManagement";
+import TestimonialManagement from "./Components/TestimonialManagement/TestimonialManagement";
+
+// Products
 import Allproduct from "./Components/Blog/AllProduct/Allproduct";
 import Addnew from "./Components/Blog/Addnew/Addnew";
+import Categories from "./Components/Categories/Categories";
+import Brands from "./Components/Brands/Brands";
+import EditUnit from "./Components/EditUnit/EditUnit";
+import ListUploads from "./Components/ListUploads/ListUploads";
+
+// Marketing
+import Discounts from "./Components/Discounts/Discounts";
+import Banners from "./Components/Banners/Banners";
+
+// Returns & Reviews
 import ReturnManagement from "./Components/Blog/ReturnManagement/ReturnManagement";
 import ReviewsManagement from "./Components/Blog/ReviewsManagement/ReviewsManagement";
 import ReturnDetails from "./Components/Blog/ReturnDetails/ReturnDetails";
@@ -23,83 +38,153 @@ import PickupManagement from "./Components/Blog/PickupManagement/PickupManagemen
 import InventoryAdjustment from "./Components/Blog/InventoryAdjustment/InventoryAdjustment";
 import ActivityLog from "./Components/Blog/ActivityLog/ActivityLog";
 
-// Dummy Placeholder Component for missing page components
+// Placeholder Component
 const PlaceholderPage = ({ title }) => (
-  <div style={{ padding: '2rem' }}>
+  <div
+    style={{
+      padding: "40px",
+      textAlign: "center",
+      fontFamily: "sans-serif",
+    }}
+  >
     <h2>{title}</h2>
-    <p>This page is under development.</p>
+    <p>This page is currently under development.</p>
   </div>
 );
 
-
- 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Main Layout Wrapper */}
         <Route path="/" element={<MainLayout />}>
-          
-          {/* Default Redirect to Dashboard */}
+
+          {/* Default Route */}
           <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="products/all-products" element={<Allproduct/>}/>
-        <Route path="products/add-product" element={<Addnew/>}/>
-      
-        
-        
-         
-        <Route path="/orders/returns" element={<ReturnManagement />} />
-        <Route path="/customers/reviews" element={<ReviewsManagement />} />
-        <Route path="/returns/details" element={<ReturnDetails />} />
-        <Route path="/returns/inspection" element={<QualityInspection />} />
-        <Route path="/returns/refund" element={<RefundDetails />} />
-        <Route path="/returns/product-info" element={<ProductInformation />} />
-        <Route path="/returns/replacement-details" element={<ReplacementDetails />} />
-        <Route path="/returns/approval" element={<ReturnApproval />} />
-        <Route path="/returns/pickup-management" element={<PickupManagement />} />
-        <Route path="/returns/inventory-adjustment" element={<InventoryAdjustment />} />
-        <Route path="//returns/activity-log" element={<ActivityLog />} />
 
-          {/* DASHBOARD */}
-          <Route path="/dashboard" element={<Dashboard />} />
+          {/* Dashboard */}
+          <Route path="dashboard" element={<Dashboard />} />
 
-          {/* PRODUCTS SECTION */}
-          <Route path="/products/all-products" element={<PlaceholderPage title="All Products" />} />
-          <Route path="/products/add-product" element={<PlaceholderPage title="Add Product" />} />
-          <Route path="/products/categories" element={<PlaceholderPage title="Categories" />} />
-          <Route path="/products/brands" element={<PlaceholderPage title="Brands" />} />
-          <Route path="/products/units" element={<PlaceholderPage title="Units" />} />
+          {/* Blog */}
+          <Route path="blog" element={<Blog />} />
+          <Route path="blogmanagement" element={<BlogManagement />} />
+          <Route
+            path="testimonialmanagement"
+            element={<TestimonialManagement />}
+          />
 
-          {/* ORDERS SECTION */}
-          <Route path="/orders/all-orders" element={<Order />} />
-          <Route path="/orders/returns" element={<ReturnManagement />} />
+          {/* Products */}
+          <Route
+            path="products/all-products"
+            element={<Allproduct />}
+          />
+          <Route
+            path="products/add-product"
+            element={<Addnew />}
+          />
+          <Route
+            path="products/categories"
+            element={<Categories />}
+          />
+          <Route
+            path="products/brands"
+            element={<Brands />}
+          />
+          <Route
+            path="products/units"
+            element={<EditUnit />}
+          />
+          <Route
+            path="products/list-uploads"
+            element={<ListUploads />}
+          />
 
-          {/* CUSTOMERS SECTION */}
-          <Route path="/customers/all-customers" element={<PlaceholderPage title="All Customers" />} />
-          <Route path="/customers/reviews" element={<ReviewsManagement />} />
+          {/* Orders */}
+          <Route
+            path="orders/all-orders"
+            element={<Order />}
+          />
+          <Route
+            path="orders/returns"
+            element={<ReturnManagement />}
+          />
 
-          {/* MARKETING SECTION */}
-          <Route path="/marketing/banners" element={<PlaceholderPage title="Banners" />} />
-          <Route path="/marketing/discounts" element={<PlaceholderPage title="Discounts" />} />
-          <Route path="/marketing/coupons" element={<PlaceholderPage title="Coupons" />} />
+          {/* Customers */}
+          <Route
+            path="customers/all-customers"
+            element={<PlaceholderPage title="All Customers" />}
+          />
+          <Route
+            path="customers/reviews"
+            element={<ReviewsManagement />}
+          />
 
-          {/* SETTINGS SECTION */}
-          <Route path="/settings/site-settings" element={<PlaceholderPage title="Site Settings" />} />
-          <Route path="/settings/users-roles" element={<PlaceholderPage title="Users & Roles" />} />
+          {/* Marketing */}
+          <Route
+            path="marketing/banners"
+            element={<Banners />}
+          />
+          <Route
+            path="marketing/discounts"
+            element={<Discounts />}
+          />
+          <Route
+            path="marketing/coupons"
+            element={<PlaceholderPage title="Coupons" />}
+          />
 
-          {/* SUB-ROUTES / NESTED RETURN ACTION ROUTES */}
-          <Route path="/returns/details" element={<ReturnDetails />} />
-          <Route path="/returns/inspection" element={<QualityInspection />} />
-          <Route path="/returns/refund" element={<RefundDetails />} />
-          <Route path="/returns/product-info" element={<ProductInformation />} />
-          <Route path="/returns/replacement-details" element={<ReplacementDetails />} />
-          <Route path="/returns/approval" element={<ReturnApproval />} />
-          <Route path="/returns/pickup-management" element={<PickupManagement />} />
-          <Route path="/returns/inventory-adjustment" element={<InventoryAdjustment />} />
-          <Route path="/returns/activity-log" element={<ActivityLog />} />
+          {/* Returns */}
+          <Route
+            path="returns/details"
+            element={<ReturnDetails />}
+          />
+          <Route
+            path="returns/inspection"
+            element={<QualityInspection />}
+          />
+          <Route
+            path="returns/refund"
+            element={<RefundDetails />}
+          />
+          <Route
+            path="returns/product-info"
+            element={<ProductInformation />}
+          />
+          <Route
+            path="returns/replacement-details"
+            element={<ReplacementDetails />}
+          />
+          <Route
+            path="returns/approval"
+            element={<ReturnApproval />}
+          />
+          <Route
+            path="returns/pickup-management"
+            element={<PickupManagement />}
+          />
+          <Route
+            path="returns/inventory-adjustment"
+            element={<InventoryAdjustment />}
+          />
+          <Route
+            path="returns/activity-log"
+            element={<ActivityLog />}
+          />
 
-          {/* 404 / Fallback Route */}
-          <Route path="*" element={<PlaceholderPage title="404 - Page Not Found" />} />
+          {/* Settings */}
+          <Route
+            path="settings/site-settings"
+            element={<PlaceholderPage title="Site Settings" />}
+          />
+          <Route
+            path="settings/users-roles"
+            element={<PlaceholderPage title="Users & Roles" />}
+          />
+
+          {/* 404 */}
+          <Route
+            path="*"
+            element={<PlaceholderPage title="404 - Page Not Found" />}
+          />
 
         </Route>
       </Routes>
