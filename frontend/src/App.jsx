@@ -55,16 +55,8 @@ const App = () => {
         <Route path="/account" element={<LoginPage/>} />
         <Route path="/cart" element={<CartSection/>} />
          <Route path="/deliverytime" element={<DeliveryTime/>}/>
-         
          <Route path="/myorders" element={<MyOrders/>}/>
-         <Route path="/listupload" element={<ListUpload/>}/>
-      
-
-
-    
-      
-        
-        
+         <Route path="/listupload" element={<ListUpload/>}/>       
       </Routes> 
       <FloatingForm/>
       <FloatingButton/>

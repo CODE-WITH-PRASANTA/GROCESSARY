@@ -1,673 +1,480 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  FaFileAlt, FaDownload, FaCheckCircle, FaClock, FaTimesCircle, 
-  FaPlus, FaSearch, FaFilter, FaEye, FaEllipsisV, 
-  FaLightbulb, FaHeadset, FaTimes, FaFileExcel, FaFilePdf, FaCloudUploadAlt, FaCalendarAlt, FaUndo
-} from 'react-icons/fa';
+import React, { useState } from 'react';
 import './ListUploads.css';
 
-// Mock Data
-const INITIAL_LISTS = [
-  { id: 1, name: 'Daily Groceries', fileName: 'daily_groceries.xlsx', type: 'excel', uploadedBy: 'Rohit Sharma', role: 'Customer', avatar: 'R', avatarBg: '#00838f', phone: '+91 9876543210', itemsCount: 24, items: '24 items', downloads: 45, todayDownloads: '+8 today', status: 'Active', uploadedOn: '2025-05-10', time: '10:30 AM' },
-  { id: 2, name: 'Weekly Essentials', fileName: 'weekly_essentials.pdf', type: 'pdf', uploadedBy: 'Priya Patnaik', role: 'Customer', avatar: 'P', avatarBg: '#3f51b5', phone: '+91 8765432109', itemsCount: 18, items: '18 items', downloads: 32, todayDownloads: '+5 today', status: 'Active', uploadedOn: '2025-05-10', time: '10:25 AM' },
-  { id: 3, name: 'Monthly Shopping', fileName: 'monthly_shopping.xlsx', type: 'excel', uploadedBy: 'Amit Kumar', role: 'Customer', avatar: 'A', avatarBg: '#5c6bc0', phone: '+91 7654321098', itemsCount: 32, items: '32 items', downloads: 68, todayDownloads: '+12 today', status: 'Active', uploadedOn: '2025-05-10', time: '10:20 AM' },
-  { id: 4, name: 'Party List', fileName: 'party_list.pdf', type: 'pdf', uploadedBy: 'Sneha Rani', role: 'Customer', avatar: 'S', avatarBg: '#1e88e5', phone: '+91 6543210987', itemsCount: 15, items: '15 items', downloads: 28, todayDownloads: '+4 today', status: 'Active', uploadedOn: '2025-05-10', time: '10:15 AM' },
-  { id: 5, name: 'Fruits & Vegetables', fileName: 'fruits_vegetables.xlsx', type: 'excel', uploadedBy: 'Manoj Behera', role: 'Customer', avatar: 'M', avatarBg: '#039be5', phone: '+91 5432109876', itemsCount: 8, items: '8 items', downloads: 12, todayDownloads: '+2 today', status: 'Expired', uploadedOn: '2025-05-09', time: '09:55 AM' },
-  { id: 6, name: 'Office Supplies', fileName: 'office_supplies.pdf', type: 'pdf', uploadedBy: 'Karan Singh', role: 'Vendor', avatar: 'K', avatarBg: '#8e24aa', phone: '+91 9988776655', itemsCount: 50, items: '50 items', downloads: 15, todayDownloads: '+1 today', status: 'Pending', uploadedOn: '2025-05-08', time: '04:12 PM' },
-  { id: 7, name: 'Hardware Items', fileName: 'hardware_tools.xlsx', type: 'excel', uploadedBy: 'Anil Kumar', role: 'Customer', avatar: 'A', avatarBg: '#d81b60', phone: '+91 8877665544', itemsCount: 42, items: '42 items', downloads: 90, todayDownloads: '+15 today', status: 'Active', uploadedOn: '2025-05-08', time: '02:30 PM' },
-  { id: 8, name: 'Bakery Orders', fileName: 'bakery_list.pdf', type: 'pdf', uploadedBy: 'Pooja Roy', role: 'Customer', avatar: 'P', avatarBg: '#43a047', phone: '+91 7766554433', itemsCount: 11, items: '11 items', downloads: 5, todayDownloads: '+0 today', status: 'Inactive', uploadedOn: '2025-05-07', time: '11:10 AM' },
+const INITIAL_DATA = [
+  { id: 1, name: 'Daily Groceries', file: 'daily_groceries.xlsx', user: 'Rohit Sharma', role: 'Customer', phone: '+91 9876543210', items: 24, downloads: 45, todayDL: 8, status: 'Active', date: '2025-05-10 10:30 AM' },
+  { id: 2, name: 'Weekly Essentials', file: 'weekly_essentials.pdf', user: 'Priya Patnaik', role: 'Customer', phone: '+91 8765432109', items: 18, downloads: 32, todayDL: 5, status: 'Active', date: '2025-05-10 10:25 AM' },
+  { id: 3, name: 'Monthly Shopping', file: 'monthly_shopping.xlsx', user: 'Amit Kumar', role: 'Customer', phone: '+91 7654321098', items: 32, downloads: 68, todayDL: 12, status: 'Active', date: '2025-05-10 10:20 AM' },
+  { id: 4, name: 'Party List', file: 'party_list.pdf', user: 'Sneha Rani', role: 'Customer', phone: '+91 6543210987', items: 15, downloads: 28, todayDL: 4, status: 'Active', date: '2025-05-10 10:15 AM' },
+  { id: 5, name: 'Fruits & Vegetables', file: 'fruits_vegetables.xlsx', user: 'Manoj Behera', role: 'Customer', phone: '+91 5432109876', items: 8, downloads: 12, todayDL: 2, status: 'Expired', date: '2025-05-09 09:55 AM' },
+  { id: 6, name: 'Office Supplies', file: 'office_supplies.xlsx', user: 'Rohan Mehta', role: 'Customer', phone: '+91 9988776655', items: 40, downloads: 15, todayDL: 1, status: 'Active', date: '2025-05-08 11:20 AM' },
+  { id: 7, name: 'Home Electronics', file: 'electronics.pdf', user: 'Kavita Das', role: 'Customer', phone: '+91 8877665544', items: 12, downloads: 50, todayDL: 9, status: 'Active', date: '2025-05-07 03:45 PM' },
+  { id: 8, name: 'Hardware Items', file: 'hardware.xlsx', user: 'Suresh Verma', role: 'Customer', phone: '+91 7766554433', items: 20, downloads: 8, todayDL: 0, status: 'Expired', date: '2025-05-06 01:10 PM' }
 ];
 
 const ListUploads = () => {
-  // Main Data States
-  const [lists, setLists] = useState(INITIAL_LISTS);
-  const [filteredLists, setFilteredLists] = useState(INITIAL_LISTS);
-  
-  // Search & Basic Filters
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [userFilter, setUserFilter] = useState('All');
-
-  // Calendar Date Range Filter States
+  const [lists, setLists] = useState(INITIAL_DATA);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All Status');
+  const [userFilter, setUserFilter] = useState('All Users');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-
-  // Expandable Advanced Filter Panel State
-  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
-  const [fileTypeFilter, setFileTypeFilter] = useState('All');
-  const [minItemsFilter, setMinItemsFilter] = useState('');
-
-  // Pagination (5 per page)
+  
+  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // Dropdown Menu State
-  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [activeDropdownId, setActiveDropdownId] = useState(null);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [viewDetailsModal, setViewDetailsModal] = useState(null);
 
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [uploadFormData, setUploadFormData] = useState({
-    listName: '',
-    uploadedBy: '',
-    phone: '',
-    file: null
+  const [formData, setFormData] = useState({ title: '', uploadedBy: '', phone: '', file: null });
+
+  // Filtering Logic
+  const filteredLists = lists.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          item.user.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'All Status' || item.status === statusFilter;
+    const matchesUser = userFilter === 'All Users' || item.user === userFilter;
+    
+    let matchesDate = true;
+    if (startDate && endDate) {
+      const itemTimestamp = new Date(item.date).getTime();
+      const startTimestamp = new Date(startDate).getTime();
+      const endTimestamp = new Date(endDate).getTime();
+      matchesDate = itemTimestamp >= startTimestamp && itemTimestamp <= endTimestamp;
+    }
+
+    return matchesSearch && matchesStatus && matchesUser && matchesDate;
   });
 
-  const dropdownRef = useRef(null);
+  // Calculate Pagination Slices
+  const totalItems = filteredLists.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentDisplayedLists = filteredLists.slice(startIndex, endIndex);
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setActiveDropdown(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Combined Filtering logic (Search + Status + Role + Calendar Dates + File Format + Item Count)
-  useEffect(() => {
-    let result = [...lists];
-
-    // 1. Search Bar Filter
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(item => 
-        item.name.toLowerCase().includes(q) || 
-        item.uploadedBy.toLowerCase().includes(q) ||
-        item.fileName.toLowerCase().includes(q)
-      );
-    }
-
-    // 2. Status Dropdown Filter
-    if (statusFilter !== 'All') {
-      result = result.filter(item => item.status.toLowerCase() === statusFilter.toLowerCase());
-    }
-
-    // 3. User Role Filter
-    if (userFilter !== 'All') {
-      result = result.filter(item => item.role.toLowerCase() === userFilter.toLowerCase());
-    }
-
-    // 4. File Type Filter
-    if (fileTypeFilter !== 'All') {
-      result = result.filter(item => item.type.toLowerCase() === fileTypeFilter.toLowerCase());
-    }
-
-    // 5. Min Items Filter
-    if (minItemsFilter) {
-      result = result.filter(item => item.itemsCount >= parseInt(minItemsFilter, 10));
-    }
-
-    // 6. Date Range Filtering
-    if (startDate) {
-      result = result.filter(item => new Date(item.uploadedOn) >= new Date(startDate));
-    }
-    if (endDate) {
-      result = result.filter(item => new Date(item.uploadedOn) <= new Date(endDate));
-    }
-
-    setFilteredLists(result);
-    setCurrentPage(1);
-  }, [searchQuery, statusFilter, userFilter, startDate, endDate, fileTypeFilter, minItemsFilter, lists]);
-
-  // Actions
-  const handleStatusChange = (id, newStatus) => {
-    setLists(prev => prev.map(item => item.id === id ? { ...item, status: newStatus } : item));
-    setActiveDropdown(null);
+  // Pagination Change Handlers
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
   };
 
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to page 1 on search
+  };
+
+  const handleStatusFilterChange = (e) => {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1); // Reset to page 1 on filter
+  };
+
+  const handleUserFilterChange = (e) => {
+    setUserFilter(e.target.value);
+    setCurrentPage(1); // Reset to page 1 on filter
+  };
+
+  // Action Handlers
   const handleDownload = (fileName) => {
-    alert(`Downloading ${fileName}...`);
+    alert(`Starting download for: ${fileName}`);
   };
 
-  const handleView = (item) => {
-    alert(`Details:\nList Name: ${item.name}\nFile Name: ${item.fileName}\nUploaded On: ${item.uploadedOn}`);
+  const toggleStatus = (id) => {
+    setLists(prev => prev.map(item => {
+      if (item.id === id) {
+        return { ...item, status: item.status === 'Active' ? 'Inactive' : 'Active' };
+      }
+      return item;
+    }));
+    setActiveDropdownId(null);
   };
 
-  const handleResetFilters = () => {
-    setSearchQuery('');
-    setStatusFilter('All');
-    setUserFilter('All');
-    setStartDate('');
-    setEndDate('');
-    setFileTypeFilter('All');
-    setMinItemsFilter('');
-  };
-
-  // Upload Submission
   const handleUploadSubmit = (e) => {
     e.preventDefault();
-    if (!uploadFormData.listName || !uploadFormData.uploadedBy || !uploadFormData.file) {
-      alert('Please fill in all required fields and upload a file.');
-      return;
-    }
-
-    const todayStr = new Date().toISOString().split('T')[0];
-    const isPdf = uploadFormData.file.name.endsWith('.pdf');
-    
-    const newList = {
+    const newItem = {
       id: Date.now(),
-      name: uploadFormData.listName,
-      fileName: uploadFormData.file.name,
-      type: isPdf ? 'pdf' : 'excel',
-      uploadedBy: uploadFormData.uploadedBy,
+      name: formData.title || 'Untitled List',
+      file: formData.file ? formData.file.name : 'new_upload.xlsx',
+      user: formData.uploadedBy || 'Guest User',
       role: 'Customer',
-      avatar: uploadFormData.uploadedBy.charAt(0).toUpperCase(),
-      avatarBg: '#004d40',
-      phone: uploadFormData.phone || '+91 9999999999',
-      itemsCount: 10,
-      items: '10 items',
+      phone: formData.phone || '+91 0000000000',
+      items: 10,
       downloads: 0,
-      todayDownloads: '+0 today',
+      todayDL: 0,
       status: 'Active',
-      uploadedOn: todayStr,
-      time: 'Just now'
+      date: new Date().toISOString().replace('T', ' ').substring(0, 16)
     };
-
-    setLists([newList, ...lists]);
-    setIsModalOpen(false);
-    setUploadFormData({ listName: '', uploadedBy: '', phone: '', file: null });
+    setLists([newItem, ...lists]);
+    setIsUploadModalOpen(false);
+    setFormData({ title: '', uploadedBy: '', phone: '', file: null });
   };
 
-  // Stats Calculations
-  const totalListsCount = lists.length;
-  const activeCount = lists.filter(l => l.status === 'Active').length;
-  const pendingCount = lists.filter(l => l.status === 'Pending').length;
-  const expiredCount = lists.filter(l => l.status === 'Expired').length;
-  const totalDownloadsCount = lists.reduce((acc, curr) => acc + curr.downloads, 0);
-
-  // Pagination Math
-  const totalPages = Math.ceil(filteredLists.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentItems = filteredLists.slice(startIndex, startIndex + itemsPerPage);
-
   return (
-    <div className="lu-container">
-      {/* Top 5 Stat Cards - Full Width Covering Layout */}
-      <div className="lu-full-width-section">
-        <div className="lu-stats-grid">
-          <div className="lu-stat-card">
-            <div className="lu-stat-icon green"><FaFileAlt /></div>
-            <div className="lu-stat-info">
-              <span className="lu-stat-title">Total Lists</span>
-              <h2>{totalListsCount}</h2>
-              <span className="lu-stat-sub green-text">+12 this month</span>
-            </div>
+    <div className="list-uploads-container">
+      
+      {/* 1. TOP 5 STATS CARDS */}
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="icon-box icon-total">📄</div>
+          <div className="stat-info">
+            <h4>Total Lists</h4>
+            <div className="stat-value">{lists.length}</div>
+            <p className="stat-sub text-green">+12 this month</p>
           </div>
+        </div>
 
-          <div className="lu-stat-card">
-            <div className="lu-stat-icon orange"><FaDownload /></div>
-            <div className="lu-stat-info">
-              <span className="lu-stat-title">Total Downloads</span>
-              <h2>{totalDownloadsCount}</h2>
-              <span className="lu-stat-sub green-text">+18.5% this month</span>
-            </div>
+        <div className="stat-card">
+          <div className="icon-box icon-downloads">📥</div>
+          <div className="stat-info">
+            <h4>Total Downloads</h4>
+            <div className="stat-value">295</div>
+            <p className="stat-sub text-green">+18.5% this month</p>
           </div>
+        </div>
 
-          <div className="lu-stat-card">
-            <div className="lu-stat-icon blue"><FaCheckCircle /></div>
-            <div className="lu-stat-info">
-              <span className="lu-stat-title">Active Lists</span>
-              <h2>{activeCount}</h2>
-              <span className="lu-stat-sub green-text">{((activeCount / totalListsCount) * 100 || 0).toFixed(1)}% of total</span>
-            </div>
+        <div className="stat-card">
+          <div className="icon-box icon-active">☑️</div>
+          <div className="stat-info">
+            <h4>Active Lists</h4>
+            <div className="stat-value">{lists.filter(i => i.status === 'Active').length}</div>
+            <p className="stat-sub text-green">62.5% of total</p>
           </div>
+        </div>
 
-          <div className="lu-stat-card">
-            <div className="lu-stat-icon purple"><FaClock /></div>
-            <div className="lu-stat-info">
-              <span className="lu-stat-title">Pending Lists</span>
-              <h2>{pendingCount}</h2>
-              <span className="lu-stat-sub green-text">{((pendingCount / totalListsCount) * 100 || 0).toFixed(1)}% of total</span>
-            </div>
+        <div className="stat-card">
+          <div className="icon-box icon-pending">🕒</div>
+          <div className="stat-info">
+            <h4>Pending Lists</h4>
+            <div className="stat-value">1</div>
+            <p className="stat-sub text-green">12.5% of total</p>
           </div>
+        </div>
 
-          <div className="lu-stat-card">
-            <div className="lu-stat-icon red"><FaTimesCircle /></div>
-            <div className="lu-stat-info">
-              <span className="lu-stat-title">Expired Lists</span>
-              <h2>{expiredCount}</h2>
-              <span className="lu-stat-sub red-text">{((expiredCount / totalListsCount) * 100 || 0).toFixed(1)}% of total</span>
-            </div>
+        <div className="stat-card">
+          <div className="icon-box icon-expired">❌</div>
+          <div className="stat-info">
+            <h4>Expired Lists</h4>
+            <div className="stat-value">{lists.filter(i => i.status === 'Expired').length}</div>
+            <p className="stat-sub text-red">12.5% of total</p>
           </div>
         </div>
       </div>
 
-      {/* Main Content Layout */}
-      <div className="lu-main-layout">
-        
-        {/* Left Column: Table & Filters */}
-        <div className="lu-left-column">
-          
-          <div className="lu-table-header">
-            <div>
-              <h3>All Uploaded Lists</h3>
-              <p className="lu-subtitle">View, manage and download all uploaded lists</p>
-            </div>
-            <button className="lu-btn-primary" onClick={() => setIsModalOpen(true)}>
-              <FaPlus /> Upload New List
-            </button>
+      {/* 2. MIDDLE LIST TABLE SECTION */}
+      <div className="table-container">
+        <div className="header-row">
+          <div>
+            <h2>All Uploaded Lists</h2>
+            <p>View, manage and download all uploaded lists</p>
           </div>
+          <button className="btn-primary" onClick={() => setIsUploadModalOpen(true)}>
+            + Upload New List
+          </button>
+        </div>
 
-          {/* Primary Filter & Search Bar */}
-          <div className="lu-filter-bar">
-            {/* Search Input */}
-            <div className="lu-search-box">
-              <FaSearch className="lu-search-icon" />
-              <input 
-                type="text" 
-                placeholder="Search by list name or user..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+        {/* Filter Controls */}
+        <div className="filter-controls">
+          <input 
+            type="text" 
+            placeholder="Search by list name or user..." 
+            className="search-input"
+            value={searchTerm}
+            onChange={handleSearchChange}
+          />
+          <select className="select-input" value={statusFilter} onChange={handleStatusFilterChange}>
+            <option value="All Status">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Expired">Expired</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+          <select className="select-input" value={userFilter} onChange={handleUserFilterChange}>
+            <option value="All Users">All Users</option>
+            {Array.from(new Set(lists.map(i => i.user))).map(u => <option key={u} value={u}>{u}</option>)}
+          </select>
+          <input type="date" className="date-input" onChange={(e) => setStartDate(e.target.value)} />
+          <input type="date" className="date-input" onChange={(e) => setEndDate(e.target.value)} />
+        </div>
 
-            {/* Status Selector */}
-            <select className="lu-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-              <option value="All">All Status</option>
-              <option value="Active">Active</option>
-              <option value="Pending">Pending</option>
-              <option value="Expired">Expired</option>
-              <option value="Inactive">Inactive</option>
-            </select>
+        {/* Data Table */}
+        <div className="table-wrapper">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>List Name</th>
+                <th>Uploaded By</th>
+                <th>Phone Number</th>
+                <th>Items</th>
+                <th>Downloads</th>
+                <th>Status</th>
+                <th>Uploaded On</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentDisplayedLists.length > 0 ? (
+                currentDisplayedLists.map((row) => (
+                  <tr key={row.id}>
+                    <td>
+                      <div className="file-cell">
+                        <div>
+                          <strong>{row.name}</strong>
+                          <br/><small style={{color: '#64748b'}}>{row.file}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="user-cell">
+                        <div className="avatar-circle">{row.user.charAt(0)}</div>
+                        <div>
+                          <strong>{row.user}</strong>
+                          <br/><small style={{color: '#64748b'}}>{row.role}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{row.phone}</td>
+                    <td>{row.items} items</td>
+                    <td>
+                      <strong>{row.downloads}</strong>
+                      <br/><small className="text-green">+{row.todayDL} today</small>
+                    </td>
+                    <td>
+                      <span className={`badge ${row.status === 'Active' ? 'badge-active' : row.status === 'Expired' ? 'badge-expired' : 'badge-inactive'}`}>
+                        {row.status}
+                      </span>
+                    </td>
+                    <td>{row.date}</td>
+                    <td>
+                      <div className="action-buttons">
+                        <button className="icon-btn" onClick={() => handleDownload(row.file)} title="Download">📥</button>
+                        <button className="icon-btn" onClick={() => setViewDetailsModal(row)} title="View Details">👁️</button>
+                        <button className="icon-btn" onClick={() => setActiveDropdownId(activeDropdownId === row.id ? null : row.id)}>⋮</button>
+                        
+                        {activeDropdownId === row.id && (
+                          <div className="dropdown-menu">
+                            <button className="dropdown-item" onClick={() => toggleStatus(row.id)}>
+                              Set {row.status === 'Active' ? 'Inactive' : 'Active'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="8" style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
+                    No results found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
-            {/* User Role Selector */}
-            <select className="lu-select" value={userFilter} onChange={(e) => setUserFilter(e.target.value)}>
-              <option value="All">All Users</option>
-              <option value="Customer">Customer</option>
-              <option value="Vendor">Vendor</option>
-            </select>
+        {/* Pagination Row */}
+        <div className="pagination-row">
+          <span>
+            Showing {totalItems > 0 ? startIndex + 1 : 0} to {Math.min(endIndex, totalItems)} of {totalItems} lists
+          </span>
 
-            {/* CALENDAR DATE RANGE PICKER */}
-            <div className="lu-date-range-container">
-              <FaCalendarAlt className="lu-calendar-icon" />
-              <input 
-                type="date" 
-                className="lu-date-input"
-                title="Start Date"
-                value={startDate} 
-                onChange={(e) => setStartDate(e.target.value)} 
-              />
-              <span className="lu-date-separator">-</span>
-              <input 
-                type="date" 
-                className="lu-date-input"
-                title="End Date"
-                value={endDate} 
-                onChange={(e) => setEndDate(e.target.value)} 
-              />
-            </div>
-
-            {/* FILTER BUTTON WITH TOGGLE DRAWER */}
+          <div className="pagination-controls">
             <button 
-              className={`lu-btn-filter ${isFilterPanelOpen ? 'active' : ''}`}
-              onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
+              className="page-btn" 
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
             >
-              <FaFilter /> Filter
+              &lt;
             </button>
-
-            {(startDate || endDate || searchQuery || statusFilter !== 'All' || userFilter !== 'All' || fileTypeFilter !== 'All' || minItemsFilter) && (
-              <button className="lu-btn-reset" title="Reset All Filters" onClick={handleResetFilters}>
-                <FaUndo /> Reset
+            
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+              <button 
+                key={page} 
+                className={`page-btn ${currentPage === page ? 'active' : ''}`}
+                onClick={() => handlePageChange(page)}
+              >
+                {page}
               </button>
-            )}
+            ))}
+
+            <button 
+              className="page-btn" 
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages || totalPages === 0}
+            >
+              &gt;
+            </button>
           </div>
+        </div>
 
-          {/* Expandable Advanced Filter Drawer */}
-          {isFilterPanelOpen && (
-            <div className="lu-filter-drawer">
-              <div className="lu-drawer-group">
-                <label>File Format</label>
-                <select value={fileTypeFilter} onChange={(e) => setFileTypeFilter(e.target.value)}>
-                  <option value="All">All Formats</option>
-                  <option value="excel">Excel (.xlsx)</option>
-                  <option value="pdf">PDF (.pdf)</option>
-                </select>
-              </div>
+        <div className="info-banner">
+          <span>💡 <strong>Tips for Better Results:</strong> Upload clear and well-structured lists in Excel (.xlsx) or PDF format for fast processing.</span>
+          <span>📋</span>
+        </div>
+      </div>
 
-              <div className="lu-drawer-group">
-                <label>Min Items Count</label>
+      {/* 3. BOTTOM HORIZONTAL SECTION */}
+      <div className="bottom-horizontal-grid">
+        
+        {/* Widget 1: Summary Chart */}
+        <div className="bottom-card">
+          <div style={{display:'flex', justifyContent:'space-between', marginBottom: 12}}>
+            <strong>Upload Summary</strong>
+            <small style={{color: '#64748b'}}>This Month Overview</small>
+          </div>
+          <div className="donut-wrapper">
+            <div className="donut-inner">
+              <strong>8</strong>
+              <span>Total Lists</span>
+            </div>
+          </div>
+          <ul className="legend-list">
+            <li className="legend-item"><span>🟢 Active</span> <strong>5 (62.5%)</strong></li>
+            <li className="legend-item"><span>🟡 Pending</span> <strong>1 (12.5%)</strong></li>
+            <li className="legend-item"><span>🔴 Expired</span> <strong>1 (12.5%)</strong></li>
+            <li className="legend-item"><span>🔵 Downloaded</span> <strong>295</strong></li>
+          </ul>
+        </div>
+
+        {/* Widget 2: Steps Instructions */}
+        <div className="bottom-card">
+          <h4 style={{marginTop:0}}>👤 How List Upload Works?</h4>
+          <ol style={{paddingLeft: 18, fontSize: 13, lineHeight: '1.8', margin: 0}}>
+            <li><strong className="text-green">1.</strong> Upload your list (Excel/PDF)</li>
+            <li><strong className="text-green">2.</strong> We process and validate it</li>
+            <li><strong className="text-green">3.</strong> Available for download</li>
+            <li><strong className="text-green">4.</strong> Get items delivered fast</li>
+          </ol>
+        </div>
+
+        {/* Widget 3: Recent Activity */}
+        <div className="bottom-card">
+          <div style={{display:'flex', justifyContent:'space-between', marginBottom: 12}}>
+            <strong>Recent Uploads</strong>
+            <small className="text-green" style={{cursor:'pointer'}}>View All</small>
+          </div>
+          {lists.slice(0, 3).map(i => (
+            <div key={i.id} style={{fontSize: 12, marginBottom: 10}}>
+              <strong>{i.file}</strong>
+              <div style={{color:'#64748b'}}>{i.date}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Widget 4: Support */}
+        <div className="bottom-card" style={{background: '#ecfdf5', borderColor: '#a7f3d0'}}>
+          <h4 style={{marginTop:0}}>🎧 Need Help?</h4>
+          <p style={{fontSize: 13, color: '#047857'}}>Our support team is here to help you with uploads.</p>
+          <button className="btn-primary" style={{width: '100%', justifyContent: 'center', marginTop: 16}}>
+            Contact Support
+          </button>
+        </div>
+
+      </div>
+
+      {/* ================= MODAL 1: UPLOAD NEW LIST ================= */}
+      {isUploadModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Upload New List</h3>
+              <button className="close-btn" onClick={() => setIsUploadModalOpen(false)}>×</button>
+            </div>
+            <form onSubmit={handleUploadSubmit}>
+              <div className="form-group">
+                <label>List Title <span style={{color:'red'}}>*</span></label>
                 <input 
-                  type="number" 
-                  placeholder="e.g. 15" 
-                  value={minItemsFilter} 
-                  onChange={(e) => setMinItemsFilter(e.target.value)} 
+                  type="text" 
+                  placeholder="e.g. Daily Groceries" 
+                  required 
+                  onChange={(e) => setFormData({...formData, title: e.target.value})} 
                 />
               </div>
-
-              <button className="lu-btn-clear-drawer" onClick={handleResetFilters}>
-                Clear All
-              </button>
-            </div>
-          )}
-
-          {/* Table Container */}
-          <div className="lu-table-wrapper">
-            <table className="lu-table">
-              <thead>
-                <tr>
-                  <th>List Name</th>
-                  <th>Uploaded By</th>
-                  <th>Phone Number</th>
-                  <th>Items</th>
-                  <th>Downloads</th>
-                  <th>Status</th>
-                  <th>Uploaded On</th>
-                  <th style={{ textAlign: 'center' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentItems.length > 0 ? (
-                  currentItems.map((item) => (
-                    <tr key={item.id}>
-                      <td>
-                        <div className="lu-file-cell">
-                          {item.type === 'excel' ? (
-                            <div className="lu-file-icon excel"><FaFileExcel /></div>
-                          ) : (
-                            <div className="lu-file-icon pdf"><FaFilePdf /></div>
-                          )}
-                          <div>
-                            <strong className="lu-file-title">{item.name}</strong>
-                            <span className="lu-file-sub">{item.fileName}</span>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td>
-                        <div className="lu-user-cell">
-                          <div className="lu-avatar" style={{ backgroundColor: item.avatarBg }}>
-                            {item.avatar}
-                          </div>
-                          <div>
-                            <strong className="lu-user-name">{item.uploadedBy}</strong>
-                            <span className="lu-user-role">{item.role}</span>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="lu-phone">{item.phone}</td>
-
-                      <td>
-                        <span className="lu-item-badge">{item.items}</span>
-                      </td>
-
-                      <td>
-                        <div className="lu-downloads-cell">
-                          <strong>{item.downloads}</strong>
-                          <small>{item.todayDownloads}</small>
-                        </div>
-                      </td>
-
-                      <td>
-                        <span className={`lu-status-tag ${item.status.toLowerCase()}`}>
-                          {item.status}
-                        </span>
-                      </td>
-
-                      <td>
-                        <div className="lu-date-cell">
-                          <span>{item.uploadedOn}</span>
-                          <small>{item.time}</small>
-                        </div>
-                      </td>
-
-                      <td>
-                        <div className="lu-actions-cell">
-                          <button 
-                            className="lu-action-btn" 
-                            title="Download List"
-                            onClick={() => handleDownload(item.fileName)}
-                          >
-                            <FaDownload />
-                          </button>
-                          <button 
-                            className="lu-action-btn" 
-                            title="View Details"
-                            onClick={() => handleView(item)}
-                          >
-                            <FaEye />
-                          </button>
-
-                          <div className="lu-dropdown-container">
-                            <button 
-                              className="lu-action-btn" 
-                              title="More Actions"
-                              onClick={() => setActiveDropdown(activeDropdown === item.id ? null : item.id)}
-                            >
-                              <FaEllipsisV />
-                            </button>
-
-                            {activeDropdown === item.id && (
-                              <div className="lu-dropdown-menu" ref={dropdownRef}>
-                                <button onClick={() => handleStatusChange(item.id, 'Active')}>
-                                  Set Active
-                                </button>
-                                <button onClick={() => handleStatusChange(item.id, 'Inactive')}>
-                                  Set Inactive
-                                </button>
-                                <button onClick={() => handleStatusChange(item.id, 'Pending')}>
-                                  Set Pending
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="8" className="lu-empty">No lists matching selected filters or date range.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          <div className="lu-pagination-wrapper">
-            <span className="lu-pagination-info">
-              Showing {filteredLists.length === 0 ? 0 : startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredLists.length)} of {filteredLists.length} lists
-            </span>
-
-            <div className="lu-pagination">
-              <button 
-                disabled={currentPage === 1} 
-                onClick={() => setCurrentPage(prev => prev - 1)}
-              >
-                &lt;
-              </button>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  className={currentPage === page ? 'active' : ''}
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-                </button>
-              ))}
-
-              <button 
-                disabled={currentPage === totalPages} 
-                onClick={() => setCurrentPage(prev => prev + 1)}
-              >
-                &gt;
-              </button>
-            </div>
-          </div>
-
-          {/* Bottom Green Tip Card */}
-          <div className="lu-tips-banner">
-            <div className="lu-tip-content">
-              <div className="lu-tip-icon"><FaLightbulb /></div>
-              <div>
-                <strong>Tips for Better Results</strong>
-                <p>Upload clear and well-structured lists in Excel (.xlsx) or PDF format. Make sure all items are readable for fast processing.</p>
+              <div className="form-group">
+                <label>Uploaded By <span style={{color:'red'}}>*</span></label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. John Doe" 
+                  required 
+                  onChange={(e) => setFormData({...formData, uploadedBy: e.target.value})} 
+                />
               </div>
-            </div>
-            <div className="lu-tip-graphic">📋</div>
+              <div className="form-group">
+                <label>Phone Number</label>
+                <input 
+                  type="text" 
+                  placeholder="+91 9876543210" 
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})} 
+                />
+              </div>
+              <div className="form-group">
+                <label>Attach File (.xlsx or .pdf) <span style={{color:'red'}}>*</span></label>
+                <div className="drop-zone">
+                  <div style={{fontSize: 24, color: 'var(--primary)'}}>☁️</div>
+                  <input 
+                    type="file" 
+                    required 
+                    style={{display: 'none'}} 
+                    id="fileInput" 
+                    onChange={(e) => setFormData({...formData, file: e.target.files[0]})}
+                  />
+                  <label htmlFor="fileInput" style={{cursor:'pointer', fontWeight: 'bold', color: 'var(--primary)'}}>
+                    {formData.file ? formData.file.name : 'Click to select file'}
+                  </label>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary" onClick={() => setIsUploadModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn-primary">Upload List</button>
+              </div>
+            </form>
           </div>
-
         </div>
+      )}
 
-        {/* Right Sidebar Widgets */}
-        <div className="lu-right-column">
-          
-          <div className="lu-card lu-summary-card">
-            <div className="lu-card-header">
-              <h4>Upload Summary</h4>
-              <span>This Month Overview</span>
+      {/* ================= MODAL 2: VIEW DETAILS ================= */}
+      {viewDetailsModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>View List Details</h3>
+              <button className="close-btn" onClick={() => setViewDetailsModal(null)}>×</button>
             </div>
-
-            <div className="lu-chart-container">
-              <div className="lu-donut-chart">
-                <div className="lu-chart-center">
-                  <h3>{totalListsCount}</h3>
-                  <span>Total Lists</span>
-                </div>
+            <form onSubmit={(e) => e.preventDefault()}>
+              <div className="form-group">
+                <label>List Title</label>
+                <input 
+                  type="text" 
+                  value={viewDetailsModal.name} 
+                  readOnly 
+                />
               </div>
-            </div>
-
-            <div className="lu-summary-list">
-              <div className="lu-summary-item">
-                <span className="lu-dot active"></span>
-                <span className="label">Active</span>
-                <span className="value">{activeCount} ({((activeCount/totalListsCount)*100 || 0).toFixed(1)}%)</span>
+              <div className="form-group">
+                <label>Uploaded By</label>
+                <input 
+                  type="text" 
+                  value={`${viewDetailsModal.user} (${viewDetailsModal.role})`} 
+                  readOnly 
+                />
               </div>
-              <div className="lu-summary-item">
-                <span className="lu-dot pending"></span>
-                <span className="label">Pending</span>
-                <span className="value">{pendingCount} ({((pendingCount/totalListsCount)*100 || 0).toFixed(1)}%)</span>
+              <div className="form-group">
+                <label>Phone Number</label>
+                <input 
+                  type="text" 
+                  value={viewDetailsModal.phone} 
+                  readOnly 
+                />
               </div>
-              <div className="lu-summary-item">
-                <span className="lu-dot expired"></span>
-                <span className="label">Expired</span>
-                <span className="value">{expiredCount} ({((expiredCount/totalListsCount)*100 || 0).toFixed(1)}%)</span>
+              <div className="form-group">
+                <label>File Name</label>
+                <input 
+                  type="text" 
+                  value={viewDetailsModal.file} 
+                  readOnly 
+                />
               </div>
-              <div className="lu-summary-item">
-                <span className="lu-dot downloaded"></span>
-                <span className="label">Downloaded</span>
-                <span className="value">{totalDownloadsCount}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="lu-card">
-            <h4 className="lu-card-title green-title">👤 How List Upload Works?</h4>
-            <ul className="lu-steps-list">
-              <li><span>1.</span> Upload your list (Excel/PDF)</li>
-              <li><span>2.</span> We process and validate it</li>
-              <li><span>3.</span> Available for download</li>
-              <li><span>4.</span> Get items delivered fast</li>
-            </ul>
-          </div>
-
-          <div className="lu-card">
-            <div className="lu-card-header">
-              <h4 className="lu-card-title">Recent Uploads</h4>
-              <a href="#view-all" className="lu-link">View All</a>
-            </div>
-            <div className="lu-recent-list">
-              {lists.slice(0, 3).map((item) => (
-                <div key={item.id} className="lu-recent-item">
-                  <div className={`lu-recent-icon ${item.type}`}>
-                    {item.type === 'excel' ? <FaFileExcel /> : <FaFilePdf />}
-                  </div>
-                  <div>
-                    <strong>{item.fileName}</strong>
-                    <span>{item.uploadedOn}, {item.time}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="lu-card lu-help-card">
-            <h4 className="lu-card-title"><FaHeadset /> Need Help?</h4>
-            <p className="lu-help-text">Our support team is here to help you</p>
-            <button className="lu-btn-support">
-              <FaHeadset /> Contact Support
-            </button>
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="lu-modal-overlay">
-          <div className="lu-modal">
-            <div className="lu-modal-header">
-              <h3>Upload New List</h3>
-              <button className="lu-modal-close" onClick={() => setIsModalOpen(false)}>
-                <FaTimes />
-              </button>
-            </div>
-            
-            <form onSubmit={handleUploadSubmit}>
-              <div className="lu-modal-body">
-                <div className="lu-form-group">
-                  <label>List Title <span className="req">*</span></label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. Daily Groceries" 
-                    value={uploadFormData.listName} 
-                    onChange={(e) => setUploadFormData({...uploadFormData, listName: e.target.value})}
-                    required
-                  />
-                </div>
-
-                <div className="lu-form-group">
-                  <label>Uploaded By <span className="req">*</span></label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. John Doe" 
-                    value={uploadFormData.uploadedBy} 
-                    onChange={(e) => setUploadFormData({...uploadFormData, uploadedBy: e.target.value})}
-                    required
-                  />
-                </div>
-
-                <div className="lu-form-group">
-                  <label>Phone Number</label>
-                  <input 
-                    type="text" 
-                    placeholder="+91 9876543210" 
-                    value={uploadFormData.phone} 
-                    onChange={(e) => setUploadFormData({...uploadFormData, phone: e.target.value})}
-                  />
-                </div>
-
-                <div className="lu-form-group">
-                  <label>Attach File (.xlsx or .pdf) <span className="req">*</span></label>
-                  <div className="lu-file-dropzone">
-                    <input 
-                      type="file" 
-                      id="modalFileInput"
-                      accept=".pdf, .xlsx, .xls"
-                      onChange={(e) => setUploadFormData({...uploadFormData, file: e.target.files[0]})}
-                      hidden 
-                    />
-                    <label htmlFor="modalFileInput" className="lu-file-label">
-                      <FaCloudUploadAlt className="lu-upload-icon" />
-                      <span>{uploadFormData.file ? uploadFormData.file.name : "Click to select file"}</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="lu-modal-footer">
-                <button type="button" className="lu-btn-cancel" onClick={() => setIsModalOpen(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="lu-btn-primary">
-                  Upload List
-                </button>
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary" onClick={() => setViewDetailsModal(null)}>Close</button>
               </div>
             </form>
           </div>

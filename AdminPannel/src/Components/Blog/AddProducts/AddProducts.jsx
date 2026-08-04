@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
-import './Addnew.css';
+import { useNavigate } from 'react-router-dom';
+import { Editor } from '@tinymce/tinymce-react';
+import './AddProducts.css';
 
-const Addnew = () => {
+const AddProducts = () => {
+  const navigate = useNavigate();
+
   // Form State Management
   const [formData, setFormData] = useState({
     productName: '',
@@ -27,12 +31,20 @@ const Addnew = () => {
   const [mainImage, setMainImage] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
 
-  // Handle Input Change
+  // Handle Standard Input Changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  // Handle TinyMCE Description Change
+  const handleEditorChange = (content) => {
+    setFormData((prev) => ({
+      ...prev,
+      fullDescription: content,
     }));
   };
 
@@ -92,6 +104,15 @@ const Addnew = () => {
     alert('Product Saved as Draft!');
   };
 
+  // Back Button Navigation
+  const handleBackToProducts = () => {
+    if (navigate) {
+      navigate('/products'); // Adjust target path as needed
+    } else {
+      window.history.back();
+    }
+  };
+
   return (
     <div className="an-page-container">
       {/* Top Header Section */}
@@ -102,13 +123,13 @@ const Addnew = () => {
             <span>Dashboard</span> &gt; <span>Products</span> &gt; <span className="active">Add New Product</span>
           </div>
         </div>
-        <button className="an-btn-back" type="button" onClick={() => alert('Going back to products...')}>
+        <button className="an-btn-back" type="button" onClick={handleBackToProducts}>
           &larr; Back to Products
         </button>
       </div>
 
       <form onSubmit={handleSaveProduct} className="an-main-layout-grid">
-        {/* LEFT COLUMN: Product Information, Pricing & Stock */}
+        {/* LEFT COLUMN: 50% Width */}
         <div className="an-left-column">
           
           {/* Product Information Card */}
@@ -216,46 +237,38 @@ const Addnew = () => {
               <label>Short Description</label>
               <textarea
                 name="shortDescription"
-                rows="2"
+                rows="3"
                 placeholder="Enter short description about the product"
                 value={formData.shortDescription}
                 onChange={handleChange}
               ></textarea>
             </div>
 
-            {/* Rich Text Editor Mockup */}
+            {/* TinyMCE Rich Text Editor */}
             <div className="an-form-group">
               <label>Full Description</label>
-              <div className="an-editor-wrapper">
-                <div className="an-editor-toolbar">
-                  <select defaultValue="Normal">
-                    <option value="Normal">Normal</option>
-                    <option value="Heading">Heading</option>
-                  </select>
-                  <span className="editor-pipe"></span>
-                  <button type="button" className="editor-btn"><b>B</b></button>
-                  <button type="button" className="editor-btn"><i>I</i></button>
-                  <button type="button" className="editor-btn"><u>U</u></button>
-                  <button type="button" className="editor-btn"><s>S</s></button>
-                  <span className="editor-pipe"></span>
-                  <button type="button" className="editor-btn">&#8226;&mdash;</button>
-                  <button type="button" className="editor-btn">1.</button>
-                  <button type="button" className="editor-btn">&#8801;</button>
-                  <span className="editor-pipe"></span>
-                  <button type="button" className="editor-btn">&lt;/&gt;</button>
-                  <button type="button" className="editor-btn">&#10077;</button>
-                  <button type="button" className="editor-btn">&#128279;</button>
-                  <button type="button" className="editor-btn">&#128279;</button>
-                  <button type="button" className="editor-btn">&#128279;</button>
-                </div>
-                <textarea
-                  name="fullDescription"
-                  rows="4"
-                  placeholder="Write product description..."
+              <div className="an-tinymce-container">
+                <Editor
+                  apiKey="8hswbe7bfeeneui9eb9gjgsym8ku30nx5gwre9808ajdzniu" 
                   value={formData.fullDescription}
-                  onChange={handleChange}
-                  className="an-editor-textarea"
-                ></textarea>
+                  onEditorChange={handleEditorChange}
+                  init={{
+                    height: 280,
+                    menubar: false,
+                    plugins: [
+                      'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                      'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                      'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                    ],
+                    toolbar: 'undo redo | blocks | ' +
+                      'bold italic forecolor | alignleft aligncenter ' +
+                      'alignright alignjustify | bullist numlist outdent indent | ' +
+                      'removeformat | help',
+                    content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px }',
+                    skin: 'oxide',
+                    border: '1px solid #cbd5e1'
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -343,7 +356,7 @@ const Addnew = () => {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Product Images, Variants, Product Status */}
+        {/* RIGHT COLUMN: 50% Width */}
         <div className="an-right-column">
           
           {/* Product Images Card */}
@@ -402,7 +415,7 @@ const Addnew = () => {
             </div>
           </div>
 
-          {/* Product Variants (Optional) Card */}
+          {/* Product Variants Card */}
           <div className="an-card">
             <h2 className="an-card-title">Product Variants (Optional)</h2>
             <p className="an-card-subtitle">This is a variable product with options like size, color, etc.</p>
@@ -483,4 +496,4 @@ const Addnew = () => {
   );
 };
 
-export default Addnew;
+export default AddProducts;
