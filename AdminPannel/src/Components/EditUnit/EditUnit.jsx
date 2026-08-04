@@ -304,141 +304,147 @@ const EditUnit = () => {
         {/* ================= RIGHT SECTION (50%) ================= */}
         <div className="unit-page-right">
           <div className="unit-page-card unit-page-list-section">
-            {/* Header Bar */}
-            <div className="unit-page-list-header">
-              <div>
-                <h2>All Units</h2>
-                <p>Manage and organize all product units.</p>
-              </div>
-
-              <div className="unit-page-controls">
-                {/* Search Box */}
-                <div className="unit-page-search-box">
-                  <Search size={16} className="unit-page-search-icon" />
-                  <input 
-                    type="text" 
-                    placeholder="Search units..." 
-                    value={searchQuery}
-                    onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                  />
+            <div>
+              {/* Header Bar */}
+              <div className="unit-page-list-header">
+                <div>
+                  <h2>All Units</h2>
+                  <p>Manage and organize all product units.</p>
                 </div>
 
-                {/* Filter */}
-                <div className="unit-page-filter-container">
-                  <button 
-                    className={`unit-page-btn-icon ${statusFilter !== 'All' ? 'active-filter' : ''}`}
-                    onClick={() => setShowFilterDropdown(prev => !prev)}
-                  >
-                    <Filter size={16} /> Filter
+                <div className="unit-page-controls">
+                  {/* Search Box */}
+                  <div className="unit-page-search-box">
+                    <Search size={16} className="unit-page-search-icon" />
+                    <input 
+                      type="text" 
+                      placeholder="Search units..." 
+                      value={searchQuery}
+                      onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                    />
+                  </div>
+
+                  {/* Filter */}
+                  <div className="unit-page-filter-container">
+                    <button 
+                      type="button"
+                      className={`unit-page-btn-icon ${statusFilter !== 'All' ? 'active-filter' : ''}`}
+                      onClick={() => setShowFilterDropdown(prev => !prev)}
+                    >
+                      <Filter size={16} /> Filter
+                    </button>
+                    {showFilterDropdown && (
+                      <div className="unit-page-filter-dropdown">
+                        <p className="unit-page-filter-title">Filter Status</p>
+                        <button type="button" className={statusFilter === 'All' ? 'selected' : ''} onClick={() => { setStatusFilter('All'); setShowFilterDropdown(false); }}>All</button>
+                        <button type="button" className={statusFilter === 'Active' ? 'selected' : ''} onClick={() => { setStatusFilter('Active'); setShowFilterDropdown(false); }}>Active</button>
+                        <button type="button" className={statusFilter === 'Inactive' ? 'selected' : ''} onClick={() => { setStatusFilter('Inactive'); setShowFilterDropdown(false); }}>Inactive</button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Refresh */}
+                  <button type="button" className="unit-page-btn-icon" onClick={handleRefresh} title="Refresh Table">
+                    <RotateCcw size={16} />
                   </button>
-                  {showFilterDropdown && (
-                    <div className="unit-page-filter-dropdown">
-                      <p className="unit-page-filter-title">Filter Status</p>
-                      <button className={statusFilter === 'All' ? 'selected' : ''} onClick={() => { setStatusFilter('All'); setShowFilterDropdown(false); }}>All</button>
-                      <button className={statusFilter === 'Active' ? 'selected' : ''} onClick={() => { setStatusFilter('Active'); setShowFilterDropdown(false); }}>Active</button>
-                      <button className={statusFilter === 'Inactive' ? 'selected' : ''} onClick={() => { setStatusFilter('Inactive'); setShowFilterDropdown(false); }}>Inactive</button>
-                    </div>
-                  )}
                 </div>
-
-                {/* Refresh */}
-                <button className="unit-page-btn-icon" onClick={handleRefresh} title="Refresh Table">
-                  <RotateCcw size={16} />
-                </button>
               </div>
-            </div>
 
-            {/* Table */}
-            <div className="unit-page-table-wrapper">
-              <table className="unit-page-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Unit Name</th>
-                    <th>Symbol</th>
-                    <th>Type</th>
-                    <th>Display Order</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentUnits.length > 0 ? (
-                    currentUnits.map((item) => (
-                      <tr key={item.id}>
-                        <td>{item.id}</td>
-                        <td>
-                          <div className="unit-page-name-cell">
-                            <div className={`unit-page-symbol-circle ${item.typeColor}`}>
-                              {item.symbol}
+              {/* Table */}
+              <div className="unit-page-table-wrapper">
+                <table className="unit-page-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Unit Name</th>
+                      <th>Symbol</th>
+                      <th>Type</th>
+                      <th>Display Order</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentUnits.length > 0 ? (
+                      currentUnits.map((item) => (
+                        <tr key={item.id}>
+                          <td>{item.id}</td>
+                          <td>
+                            <div className="unit-page-name-cell">
+                              <div className={`unit-page-symbol-circle ${item.typeColor}`}>
+                                {item.symbol}
+                              </div>
+                              <div className="unit-page-name-group">
+                                <span className="unit-page-font-semibold">{item.name}</span>
+                                <span className="unit-page-text-sub">{item.subType}</span>
+                              </div>
                             </div>
-                            <div className="unit-page-name-group">
-                              <span className="unit-page-font-semibold">{item.name}</span>
-                              <span className="unit-page-text-sub">{item.subType}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="unit-page-font-semibold">{item.symbol}</td>
-                        <td>
-                          <span className={`unit-page-type-tag ${item.typeColor}`}>
-                            {item.type}
-                          </span>
-                        </td>
-                        <td>{item.order}</td>
-                        <td>
-                          <span className={`unit-page-badge ${item.status.toLowerCase()}`}>
-                            {item.status}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="unit-page-action-wrapper">
-                            <button 
-                              className="unit-page-btn-action unit-page-edit-btn"
-                              onClick={() => handleEdit(item)}
-                              title="Edit"
-                            >
-                              <Edit3 size={14} />
-                            </button>
-                            <button 
-                              className="unit-page-btn-action unit-page-delete-btn"
-                              onClick={() => handleDelete(item.id)}
-                              title="Delete"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-
-                            {/* Three Dots Dropdown */}
-                            <div className="unit-page-dropdown-container">
+                          </td>
+                          <td className="unit-page-font-semibold">{item.symbol}</td>
+                          <td>
+                            <span className={`unit-page-type-tag ${item.typeColor}`}>
+                              {item.type}
+                            </span>
+                          </td>
+                          <td>{item.order}</td>
+                          <td>
+                            <span className={`unit-page-badge ${item.status.toLowerCase()}`}>
+                              {item.status}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="unit-page-action-wrapper">
                               <button 
-                                className="unit-page-btn-action unit-page-more-btn"
-                                onClick={() => setActiveDropdownId(activeDropdownId === item.id ? null : item.id)}
-                                title="More Options"
+                                type="button"
+                                className="unit-page-btn-action unit-page-edit-btn"
+                                onClick={() => handleEdit(item)}
+                                title="Edit"
                               >
-                                <MoreVertical size={14} />
+                                <Edit3 size={14} />
+                              </button>
+                              <button 
+                                type="button"
+                                className="unit-page-btn-action unit-page-delete-btn"
+                                onClick={() => handleDelete(item.id)}
+                                title="Delete"
+                              >
+                                <Trash2 size={14} />
                               </button>
 
-                              {activeDropdownId === item.id && (
-                                <div className="unit-page-action-dropdown">
-                                  <button onClick={() => handleStatusChange(item.id, 'Active')}>
-                                    <CheckCircle size={14} className="unit-icon-active" /> Set Active
-                                  </button>
-                                  <button onClick={() => handleStatusChange(item.id, 'Inactive')}>
-                                    <XCircle size={14} className="unit-icon-inactive" /> Set Inactive
-                                  </button>
-                                </div>
-                              )}
+                              {/* Three Dots Dropdown */}
+                              <div className="unit-page-dropdown-container">
+                                <button 
+                                  type="button"
+                                  className="unit-page-btn-action unit-page-more-btn"
+                                  onClick={() => setActiveDropdownId(activeDropdownId === item.id ? null : item.id)}
+                                  title="More Options"
+                                >
+                                  <MoreVertical size={14} />
+                                </button>
+
+                                {activeDropdownId === item.id && (
+                                  <div className="unit-page-action-dropdown">
+                                    <button type="button" onClick={() => handleStatusChange(item.id, 'Active')}>
+                                      <CheckCircle size={14} className="unit-icon-active" /> Set Active
+                                    </button>
+                                    <button type="button" onClick={() => handleStatusChange(item.id, 'Inactive')}>
+                                      <XCircle size={14} className="unit-icon-inactive" /> Set Inactive
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </td>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="7" className="unit-page-no-data">No units found.</td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="7" className="unit-page-no-data">No units found.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Pagination (8 Items Per Page) */}
@@ -448,6 +454,7 @@ const EditUnit = () => {
               </span>
               <div className="unit-page-pagination">
                 <button 
+                  type="button"
                   className="unit-page-page-btn" 
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
@@ -457,6 +464,7 @@ const EditUnit = () => {
 
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                   <button 
+                    type="button"
                     key={page}
                     className={`unit-page-page-btn ${currentPage === page ? 'active' : ''}`}
                     onClick={() => setCurrentPage(page)}
@@ -466,6 +474,7 @@ const EditUnit = () => {
                 ))}
 
                 <button 
+                  type="button"
                   className="unit-page-page-btn"
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
