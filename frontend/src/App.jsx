@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Navbar from "./Components/Navbar/Navbar";
 import Footer from "./Components/Footer/Footer";
-
+ 
 // Pages
 import Home from "./Pages/Home/Home";
 import AboutUs from "./Pages/AboutUs/AboutUs";
@@ -26,13 +26,6 @@ import DeliveryTime from "./Components/DeliveryTime/DeliveryTime";
 import MyOrders from "./Components/MyOrders/MyOrders";
 import ListUpload from "./Components/ListUpload/ListUpload";
 
-
-
-
-
-
-
-
 const App = () => {
   return (
     <BrowserRouter>
@@ -40,35 +33,51 @@ const App = () => {
 
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/about-us" element={<AboutUs/>} />
-        <Route path="/AboutUsOurService" element={<AboutUsOurService/>} />
-        <Route path="/contact-us" element={<ContactUs/>} />
-        <Route path="/faq" element={<FaqSection/>} />
-        <Route path="terms-and-conditions" element={<TermAndCondition/>} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy/>} />
-        <Route path="/shipping-delivery" element={<ShippingAndDelivery/>} />
-        <Route path="/blogs" element={<BlogGrid/>} />
-        <Route path="/BlogReadmoreOne" element={<BlogReadmoreOne/>} />
-        <Route path="/BlogReadmoreTwo" element={<BlogReadmoreTwo/>} />
-        <Route path="/BlogReadmoreThree" element={<BlogReadmoreThree/>} />
-        <Route path="/BlogReadmoreFour" element={<BlogReadmoreFour/>} />
-        <Route path="/account" element={<LoginPage/>} />
-        <Route path="/cart" element={<CartSection/>} />
-         <Route path="/deliverytime" element={<DeliveryTime/>}/>
-         
-         <Route path="/myorders" element={<MyOrders/>}/>
-         <Route path="/listupload" element={<ListUpload/>}/>
-      
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route
+          path="/AboutUsOurService"
+          element={<AboutUsOurService />}
+        />
+        <Route path="/contact-us" element={<ContactUs />} />
+        <Route path="/faq" element={<FaqSection />} />
+        <Route
+          path="/terms-and-conditions"
+          element={<TermAndCondition />}
+        />
+        <Route
+          path="/privacy-policy"
+          element={<PrivacyPolicy />}
+        />
+        <Route
+          path="/shipping-delivery"
+          element={<ShippingAndDelivery />}
+        />
+        <Route path="/blogs" element={<BlogGrid />} />
+        <Route
+          path="/BlogReadmoreOne"
+          element={<BlogReadmoreOne />}
+        />
+        <Route
+          path="/BlogReadmoreTwo"
+          element={<BlogReadmoreTwo />}
+        />
+        <Route
+          path="/BlogReadmoreThree"
+          element={<BlogReadmoreThree />}
+        />
+        <Route
+          path="/BlogReadmoreFour"
+          element={<BlogReadmoreFour />}
+        />
+        <Route path="/account" element={<LoginPage />} />
+        <Route path="/cart" element={<CartSection />} />
+        <Route path="/deliverytime" element={<DeliveryTime />} />
+        <Route path="/myorders" element={<MyOrders />} />
+        <Route path="/listupload" element={<ListUpload />} />
+      </Routes>
 
-
-    
-      
-        
-        
-      </Routes> 
-      <FloatingForm/>
-      <FloatingButton/>
-
+      <FloatingForm />
+      <FloatingButton />
       <Footer />
     </BrowserRouter>
   );

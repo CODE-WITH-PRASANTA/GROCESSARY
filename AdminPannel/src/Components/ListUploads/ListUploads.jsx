@@ -687,7 +687,7 @@ const ListUploads = () => {
               <div className="brand-box">
                 <div className="brand-logo">🛍️</div>
                 <div>
-                  <h2 className="brand-title">Groicessary<br/><span>Sathiu</span></h2>
+                  <h2 className="brand-title">Groicessary<br/><span>Sathi</span></h2>
                   <p className="brand-sub">Your Grocery, Our Responsibility</p>
                 </div>
               </div>
@@ -871,7 +871,7 @@ const ListUploads = () => {
                 </div>
 
                 <p className="trust-note">
-                  Thank you for trusting Groicessary Sathiu.<br/>
+                  Thank you for trusting Groicessary Sathi.<br/>
                   We look forward to serving you!
                 </p>
               </div>
@@ -913,13 +913,13 @@ const ListUploads = () => {
               <div className="footer-support-card">
                 <h5>Need Help?</h5>
                 <p>📞 +91 98765 43210</p>
-                <p>✉️ support@groicessarysathiu.com</p>
-                <p>🌐 www.groicessarysathiu.com</p>
+                <p>✉️ support@groicessarysathi.com</p>
+                <p>🌐 www.groicessarysathi.com</p>
               </div>
 
               <div className="footer-gratitude">
                 <h3>Thank You! ♥</h3>
-                <p>We appreciate your trust in Groicessary Sathiu.</p>
+                <p>We appreciate your trust in Groicessary Sathi.</p>
                 <div className="stars">★★★★★</div>
               </div>
 
