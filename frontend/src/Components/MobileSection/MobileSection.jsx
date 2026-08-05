@@ -17,11 +17,13 @@ import bgImage from '../../assets/grocory-bg.png';
 import './MobileSection.css';
 import DeliveryTime from "../DeliveryTime/DeliveryTime";
 import ListUpload from "../ListUpload/ListUpload";
+import MyOrders from '../MyOrders/MyOrders';
 
 const MobileSection = () => {
   const navigate = useNavigate();
   const [isDeliveryTimeOpen, setIsDeliveryTimeOpen] = useState(false);
   const [isListUploadOpen, setIsListUploadOpen] = useState(false);
+  const [isMyOrdersOpen, setIsMyOrdersOpen] = useState(false); // Added state for My Orders popup
 
   // Mouse Parallax Motion Values
   const x = useMotionValue(0);
@@ -252,14 +254,14 @@ const MobileSection = () => {
                 </motion.button>
               </motion.div>
 
-              {/* My Orders Button */}
+              {/* My Orders Button - Connected to popup state */}
               <motion.div
                 animate={{ y: [0, -6, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
               >
                <motion.button
                   className="MobileSection-btn-3d btn-orders"
-                  onClick={() => navigate("/myorders")}
+                  onClick={() => setIsMyOrdersOpen(true)}
                   whileHover={{ y: -12, rotateX: 15, scale: 1.05 }}
                   whileTap={{ y: 8, scale: 0.96 }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
@@ -277,7 +279,6 @@ const MobileSection = () => {
                     </motion.div>
 
                     <span>My Orders</span>
-
                     <motion.div
                       className="MobileSection-shine"
                       animate={{ x: ['-250%', '250%'] }}
@@ -362,7 +363,7 @@ const MobileSection = () => {
               >
                 <FaFileUpload /> List Upload
               </div>
-              <div className="MobileSection-phone-mini-btn phone-btn-3" onClick={() => navigate("/myorders")} style={{ cursor: "pointer" }}>
+              <div className="MobileSection-phone-mini-btn phone-btn-3" onClick={() => setIsMyOrdersOpen(true)} style={{ cursor: "pointer" }}>
                 <FaReceipt /> My Orders
               </div>
               <div
@@ -413,6 +414,12 @@ const MobileSection = () => {
       {isListUploadOpen && (
         <ListUpload
           onClose={() => setIsListUploadOpen(false)}
+        />
+      )}
+
+      {isMyOrdersOpen && (
+        <MyOrders
+          onClose={() => setIsMyOrdersOpen(false)}
         />
       )}
     </section>
