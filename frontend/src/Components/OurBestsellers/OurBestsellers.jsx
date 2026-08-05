@@ -15,7 +15,6 @@ import {
 } from "react-icons/fa";
 import "./OurBestsellers.css";
 
-// Dummy Data with multiple items per category and images
 const bestsellerData = [
   {
     id: 1,
@@ -28,63 +27,66 @@ const bestsellerData = [
     label: "Color:",
     selectedOption: "Red",
     options: ["Red", "Yellow", "Green"],
-    image: "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=600&auto=format&fit=crop",
     description: "Bell pepper, (Capsicum annuum), also called sweet pepper or capsicum, pepper cultivar in the nightshade family (Solanaceae), grown for its thick, mild fruits. Bell peppers are used in salads and in cooked dishes.",
     gallery: [
-      "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1618897996318-5a901fa6ca71?auto=format&fit=crop&w=600&q=80"
+      "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1618897996318-5a901fa6ca71?w=600&auto=format&fit=crop"
     ]
   },
   {
     id: 2,
     category: "Bakery",
     badge: "New",
-    name: "Crunchy Healthy &...",
+    name: "Crunchy Healthy Cookies",
     rating: 5,
     price: 41500,
     originalPrice: 58000,
     label: "Material:",
     selectedOption: "Choco",
     options: ["Choco", "Vanilla", "Strawberry"],
-    image: "https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=600&auto=format&fit=crop",
     description: "Deliciously crunchy healthy cookies packed with rich flavor and wholesome ingredients, perfect for a guilt-free snack any time of the day.",
     gallery: [
-      "https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=600&q=80"
+      "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=600&auto=format&fit=crop"
     ]
   },
   {
     id: 3,
     category: "Accessories",
     badge: "New",
-    name: "Stainless-Steel-...",
-    rating: 0,
+    name: "Stainless Steel Electric Chopper",
+    rating: 3,
     price: 46700,
     originalPrice: 49800,
     label: "Style:",
     selectedOption: "300 Watt",
     options: ["300 Watt", "500 Watt", "750 Watt"],
-    image: "https://images.unsplash.com/photo-1570222094114-d02fcf42d2e0?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1585515320310-259814833e62?w=600&auto=format&fit=crop",
     description: "High-grade stainless steel electric chopper and blender designed for fast and efficient kitchen food preparation.",
     gallery: [
-      "https://images.unsplash.com/photo-1570222094114-d02fcf42d2e0?auto=format&fit=crop&w=600&q=80"
+      "https://images.unsplash.com/photo-1585515320310-259814833e62?w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1570222094114-d02fcf42d2e0?w=600&auto=format&fit=crop"
     ]
   },
   {
     id: 4,
     category: "Bakery",
     badge: "New",
-    name: "Spicy puff",
-    rating: 0,
+    name: "Spicy Puff Pastry",
+    rating: 4,
     price: 19100,
     originalPrice: 24900,
     label: "Material:",
     selectedOption: "Almond",
     options: ["Almond", "Cashew", "Plain"],
-    image: "https://images.unsplash.com/photo-1621236378699-8597feb4c1ab?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&auto=format&fit=crop",
     description: "Flaky, buttery puff pastry filled with a delectable spicy kick, freshly baked to absolute golden perfection.",
     gallery: [
-      "https://images.unsplash.com/photo-1621236378699-8597feb4c1ab?auto=format&fit=crop&w=600&q=80"
+      "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600&auto=format&fit=crop"
     ]
   },
   {
@@ -98,10 +100,11 @@ const bestsellerData = [
     label: "Size:",
     selectedOption: "Medium",
     options: ["Small", "Medium", "Large"],
-    image: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=600&auto=format&fit=crop",
     description: "Crisp, juicy organic apples handpicked from premium orchards, loaded with essential nutrients and vitamins.",
     gallery: [
-      "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=600&q=80"
+      "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?w=600&auto=format&fit=crop"
     ]
   },
   {
@@ -115,10 +118,11 @@ const bestsellerData = [
     label: "Weight:",
     selectedOption: "250g",
     options: ["250g", "500g", "1kg"],
-    image: "https://images.unsplash.com/photo-1452195100486-9cc805987862?auto=format&fit=crop&w=600&q=80",
+    image: "https://images.unsplash.com/photo-1452195100486-9cc805987862?w=600&auto=format&fit=crop",
     description: "Aged artisan cheddar cheese with a sharp, rich flavor profile and smooth creamy texture.",
     gallery: [
-      "https://images.unsplash.com/photo-1452195100486-9cc805987862?auto=format&fit=crop&w=600&q=80"
+      "https://images.unsplash.com/photo-1452195100486-9cc805987862?w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=600&auto=format&fit=crop"
     ]
   }
 ];
@@ -135,7 +139,6 @@ export const OurBestsellers = () => {
 
   const categories = ["All Categories", "Vegetables", "Fruits", "Accessories", "Cheeses", "Bakery"];
 
-  // Filter items based on active category
   const filteredItems = activeCategory === "All Categories" 
     ? bestsellerData 
     : bestsellerData.filter(item => item.category === activeCategory);
@@ -156,11 +159,17 @@ export const OurBestsellers = () => {
     return `₹${amount.toLocaleString('en-IN')}`;
   };
 
+  const handleImageError = (e) => {
+    e.target.src = "https://via.placeholder.com/600x400?text=Grocery+Sathi+Product";
+  };
+
   return (
-    <div className="OurBestsellers-container">
+    <section className="OurBestsellers-container" aria-labelledby="bestsellers-heading">
       <div className="OurBestsellers-header-wrap">
-        <h2 className="OurBestsellers-title">Our Bestsellers</h2>
-        <div className="OurBestsellers-categories">
+        <h2 id="bestsellers-heading" className="OurBestsellers-title">
+          Grocery Sathi Bestsellers
+        </h2>
+        <nav className="OurBestsellers-categories" aria-label="Bestseller Categories">
           {categories.map((cat) => (
             <button
               key={cat}
@@ -169,26 +178,40 @@ export const OurBestsellers = () => {
                 setActiveCategory(cat);
                 setCurrentIndex(0);
               }}
+              aria-pressed={activeCategory === cat}
             >
               {cat}
             </button>
           ))}
-        </div>
+        </nav>
       </div>
 
       <div className="OurBestsellers-slider-section">
-        <button className="OurBestsellers-arrow left" onClick={handlePrev}>
-          <FaChevronLeft />
+        <button className="OurBestsellers-arrow left" onClick={handlePrev} aria-label="Previous products">
+          <FaChevronLeft aria-hidden="true" />
         </button>
 
         <div className="OurBestsellers-grid">
           {filteredItems.slice(currentIndex, currentIndex + 4).map((item) => (
-            <div className="OurBestsellers-card" key={item.id}>
+            <article 
+              key={item.id} 
+              className="OurBestsellers-card"
+              itemScope
+              itemType="https://schema.org/Product"
+            >
               <div className="OurBestsellers-img-box">
-                {item.badge && <span className="OurBestsellers-badge">{item.badge}</span>}
+                {item.badge && (
+                  <span className="OurBestsellers-badge" aria-label={`Status: ${item.badge}`}>
+                    {item.badge}
+                  </span>
+                )}
                 <div className="OurBestsellers-action-icons">
-                  <button className="OurBestsellers-icon-btn"><FaHeart /></button>
-                  <button className="OurBestsellers-icon-btn"><FaExchangeAlt /></button>
+                  <button className="OurBestsellers-icon-btn" aria-label={`Add ${item.name} to wishlist`}>
+                    <FaHeart aria-hidden="true" />
+                  </button>
+                  <button className="OurBestsellers-icon-btn" aria-label={`Compare ${item.name}`}>
+                    <FaExchangeAlt aria-hidden="true" />
+                  </button>
                   <button 
                     className="OurBestsellers-icon-btn" 
                     onClick={() => {
@@ -196,93 +219,139 @@ export const OurBestsellers = () => {
                       setModalImageIndex(0);
                       setQuantity(1);
                     }}
+                    aria-label={`Quick view details for ${item.name}`}
                   >
-                    <FaEye />
+                    <FaEye aria-hidden="true" />
                   </button>
                 </div>
-                <img src={item.image} alt={item.name} className="OurBestsellers-product-img" />
+                <img 
+                  src={item.image} 
+                  alt={`Buy ${item.name} online from Grocery Sathi`} 
+                  className="OurBestsellers-product-img" 
+                  onError={handleImageError}
+                  itemProp="image"
+                />
               </div>
 
               <div className="OurBestsellers-content">
-                <span className="OurBestsellers-cat-label">{item.category}</span>
-                <h3 className="OurBestsellers-prod-name">{item.name}</h3>
+                <span className="OurBestsellers-cat-label" itemProp="category">{item.category}</span>
+                <h3 className="OurBestsellers-prod-name" itemProp="name">
+                  {item.name}
+                </h3>
                 
-                <div className="OurBestsellers-rating">
+                <div 
+                  className="OurBestsellers-rating" 
+                  aria-label={`Rated ${item.rating} out of 5 stars`}
+                >
                   {[...Array(5)].map((_, i) => (
-                    i < item.rating ? <FaStar key={i} className="star filled" /> : <FaRegStar key={i} className="star" />
+                    i < item.rating ? (
+                      <FaStar key={i} className="star filled" aria-hidden="true" />
+                    ) : (
+                      <FaRegStar key={i} className="star" aria-hidden="true" />
+                    )
                   ))}
                 </div>
 
-                <div className="OurBestsellers-price-box">
+                <div 
+                  className="OurBestsellers-price-box"
+                  itemProp="offers"
+                  itemScope
+                  itemType="https://schema.org/Offer"
+                >
+                  <meta itemProp="priceCurrency" content="INR" />
+                  <meta itemProp="price" content={item.price} />
                   <span className="OurBestsellers-current-price">{formatINR(item.price)}</span>
-                  <span className="OurBestsellers-original-price">{formatINR(item.originalPrice)}</span>
+                  <span className="OurBestsellers-original-price" aria-label={`Original price: ${formatINR(item.originalPrice)}`}>
+                    {formatINR(item.originalPrice)}
+                  </span>
                 </div>
 
                 <div className="OurBestsellers-dropdown-group">
-                  <label className="OurBestsellers-drop-label">{item.label}</label>
+                  <label htmlFor={`select-option-${item.id}`} className="OurBestsellers-drop-label">
+                    {item.label}
+                  </label>
                   <div className="OurBestsellers-select-wrapper">
                     <select 
+                      id={`select-option-${item.id}`}
                       value={selectedDropdowns[item.id]} 
                       onChange={(e) => handleDropdownChange(item.id, e.target.value)}
                       className="OurBestsellers-select"
+                      aria-label={`Select ${item.label}`}
                     >
                       {item.options.map((opt, idx) => (
                         <option key={idx} value={opt}>{opt}</option>
                       ))}
                     </select>
-                    <FaChevronDown className="OurBestsellers-select-icon" />
+                    <FaChevronDown className="OurBestsellers-select-icon" aria-hidden="true" />
                   </div>
                 </div>
 
-                <button className="OurBestsellers-cart-btn">
-                  Add to Cart <FaChevronRight className="btn-arrow-icon" />
+                <button className="OurBestsellers-cart-btn" aria-label={`Add ${item.name} to Cart`}>
+                  <span>Add to Cart</span> 
+                  <FaChevronRight className="btn-arrow-icon" aria-hidden="true" />
                 </button>
               </div>
-            </div>
+            </article>
           ))}
         </div>
 
-        <button className="OurBestsellers-arrow right" onClick={handleNext}>
-          <FaChevronRight />
+        <button className="OurBestsellers-arrow right" onClick={handleNext} aria-label="Next products">
+          <FaChevronRight aria-hidden="true" />
         </button>
       </div>
 
-      {/* Quick View Modal (Matches 2nd Reference Image Layout) */}
+      {/* Quick View Modal */}
       {quickViewItem && (
-        <div className="OurBestsellers-modal-overlay">
+        <div className="OurBestsellers-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-product-title">
           <div className="OurBestsellers-modal-content">
-            <button className="OurBestsellers-modal-close" onClick={() => setQuickViewItem(null)}>
-              <FaTimes />
+            <button className="OurBestsellers-modal-close" onClick={() => setQuickViewItem(null)} aria-label="Close modal">
+              <FaTimes aria-hidden="true" />
             </button>
 
             <div className="OurBestsellers-modal-body">
               <div className="OurBestsellers-modal-img-col">
                 <div className="OurBestsellers-modal-main-img-wrap">
-                  <button className="modal-arr left" onClick={() => setModalImageIndex(prev => prev === 0 ? quickViewItem.gallery.length - 1 : prev - 1)}>
-                    <FaChevronLeft />
+                  <button 
+                    className="modal-arr left" 
+                    onClick={() => setModalImageIndex(prev => prev === 0 ? quickViewItem.gallery.length - 1 : prev - 1)}
+                    aria-label="Previous gallery image"
+                  >
+                    <FaChevronLeft aria-hidden="true" />
                   </button>
-                  <img src={quickViewItem.gallery[modalImageIndex] || quickViewItem.image} alt="Modal Preview" />
-                  <button className="modal-arr right" onClick={() => setModalImageIndex(prev => prev === quickViewItem.gallery.length - 1 ? 0 : prev + 1)}>
-                    <FaChevronRight />
+                  <img 
+                    src={quickViewItem.gallery[modalImageIndex] || quickViewItem.image} 
+                    alt={`${quickViewItem.name} detailed view`} 
+                    onError={handleImageError}
+                  />
+                  <button 
+                    className="modal-arr right" 
+                    onClick={() => setModalImageIndex(prev => prev === quickViewItem.gallery.length - 1 ? 0 : prev + 1)}
+                    aria-label="Next gallery image"
+                  >
+                    <FaChevronRight aria-hidden="true" />
                   </button>
                 </div>
               </div>
 
               <div className="OurBestsellers-modal-info-col">
-                <h2 className="modal-title">{quickViewItem.name}</h2>
+                <h3 id="modal-product-title" className="modal-title">{quickViewItem.name}</h3>
                 <p className="modal-desc">{quickViewItem.description}</p>
 
                 <div className="modal-option-picker">
-                  <span className="modal-opt-title">{quickViewItem.label} {selectedDropdowns[quickViewItem.id]}</span>
+                  <span className="modal-opt-title">
+                    {quickViewItem.label} {selectedDropdowns[quickViewItem.id]}
+                  </span>
                   <div className="modal-thumb-row">
                     {quickViewItem.gallery.map((img, i) => (
-                      <div 
+                      <button 
                         key={i} 
+                        type="button"
                         className={`modal-thumb-box ${modalImageIndex === i ? "active" : ""}`}
                         onClick={() => setModalImageIndex(i)}
+                        aria-label={`Show image variation ${i + 1}`}
                       >
-                        <img src={img} alt="thumb" />
-                      </div>
+                        <img src={img} alt="thumbnail" onError={handleImageError} />
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -293,13 +362,17 @@ export const OurBestsellers = () => {
                 </div>
 
                 <div className="modal-actions-row">
-                  <button className="modal-add-cart-btn">
-                    Add to Cart <FaShoppingBag />
+                  <button className="modal-add-cart-btn" aria-label="Confirm add to cart">
+                    <span>Add to Cart</span> <FaShoppingBag aria-hidden="true" />
                   </button>
                   <div className="modal-qty-counter">
-                    <button onClick={() => setQuantity(q => Math.max(1, q - 1))}><FaMinus /></button>
-                    <span>{quantity}</span>
-                    <button onClick={() => setQuantity(q => q + 1)}><FaPlus /></button>
+                    <button onClick={() => setQuantity(q => Math.max(1, q - 1))} aria-label="Decrease quantity">
+                      <FaMinus aria-hidden="true" />
+                    </button>
+                    <span aria-label={`Current quantity: ${quantity}`}>{quantity}</span>
+                    <button onClick={() => setQuantity(q => q + 1)} aria-label="Increase quantity">
+                      <FaPlus aria-hidden="true" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -307,7 +380,7 @@ export const OurBestsellers = () => {
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 

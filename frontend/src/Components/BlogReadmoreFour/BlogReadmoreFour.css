@@ -1,0 +1,568 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600&display=swap');
+
+/* Main Page Layout */
+.blog-readmore-four-page {
+  width: 100%;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #102a27;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   HERO / BREADCRUMB SECTION
+   ========================================================================== */
+.blog-readmore-four-hero {
+  width: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 60px 20px;
+  color: #ffffff;
+  text-align: center;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.blog-readmore-four-hero-container {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Back Link Button */
+.blog-readmore-four-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 30px;
+  transition: opacity 0.3s ease;
+}
+
+.blog-readmore-four-arrow-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.blog-readmore-four-back-btn:hover .blog-readmore-four-arrow-circle {
+  background-color: #ffffff;
+  color: #102a27;
+  border-color: #ffffff;
+  transform: translateX(-3px);
+}
+
+.blog-readmore-four-back-btn:hover {
+  opacity: 0.95;
+}
+
+/* Meta Pills (Featured, Category, Date) */
+.blog-readmore-four-hero-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.blog-readmore-four-badge-featured {
+  background-color: #fbbd23;
+  color: #102a27;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 20px;
+  border-radius: 20px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.blog-readmore-four-badge-featured:hover {
+  background-color: #e5aa1c;
+  transform: translateY(-1px);
+}
+
+.blog-readmore-four-meta-pill {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+.blog-readmore-four-meta-pill strong {
+  font-weight: 700;
+}
+
+.blog-readmore-four-meta-pill:hover {
+  color: #102a27;
+  background-color: rgba(241, 199, 33, 0.947);
+  border-radius: 20px;
+}
+
+/* Titles */
+.blog-readmore-four-hero-title {
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1.15;
+  margin: 0 0 18px 0;
+  letter-spacing: -1px;
+  color: #ffffff;
+}
+
+.blog-readmore-four-hero-desc {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.88);
+  max-width: 680px;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ==========================================================================
+   MAIN CONTENT & SIDEBAR CONTAINER
+   ========================================================================== */
+.blog-readmore-four-main {
+  width: 100%;
+  padding: 60px 20px;
+  box-sizing: border-box;
+}
+
+.blog-readmore-four-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 370px;
+  gap: 40px;
+}
+
+/* ==========================================================================
+   LEFT COLUMN: ARTICLE BODY
+   ========================================================================== */
+
+/* Sub-header Meta Bar */
+.blog-readmore-four-author-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.blog-readmore-four-meta-group {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+
+.blog-readmore-four-author {
+  font-weight: 900;
+  font-size: 18px;
+  color: #102a27;
+}
+
+.blog-readmore-four-meta-item {
+  color: #102a27;
+  font-weight: 500;
+}
+
+.blog-readmore-four-meta-item strong {
+  font-weight: 700;
+}
+
+/* Share Button */
+.blog-readmore-four-share-btn {
+  background: transparent;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #102a27;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.blog-readmore-four-share-btn:hover {
+  color: #fbbd23;
+}
+
+/* Article Heading */
+.blog-readmore-four-article-title {
+  font-size: 38px;
+  font-weight: 900;
+  color: #102a27;
+  line-height: 1.15;
+  margin: 0 0 28px 0;
+  letter-spacing: -0.8px;
+}
+
+/* Featured Image */
+.blog-readmore-four-feature-img-wrapper {
+  width: 100%;
+  height: 500px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.blog-readmore-four-feature-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Text Content */
+.blog-readmore-four-text {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #555555;
+  margin-bottom: 24px;
+  font-weight: 400;
+}
+
+.blog-readmore-four-bold-heading {
+  font-size: 20px;
+  font-weight: 800;
+  color: #102a27;
+  line-height: 1.45;
+  margin: 28px 0;
+  letter-spacing: -0.3px;
+}
+
+/* Blockquote */
+.blog-readmore-four-quote {
+  position: relative;
+  margin: 40px 0;
+  padding-left: 50px;
+  border: none;
+}
+
+.blog-readmore-four-quote-icon {
+  position: absolute;
+  left: 0;
+  top: -15px;
+  font-size: 70px;
+  line-height: 1;
+  font-family: Georgia, serif;
+  color: #102a27;
+}
+
+.blog-readmore-four-quote p {
+  font-size: 22px;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #102a27;
+  margin: 0;
+}
+
+/* Tags Footer */
+.blog-readmore-four-tags {
+  margin-top: 35px;
+  font-size: 14px;
+  color: #102a27;
+  padding-top: 20px;
+  border-top: 1px solid #eaeaea;
+}
+
+.blog-readmore-four-tags strong {
+  font-weight: 800;
+  margin-right: 6px;
+}
+
+.blog-readmore-four-tag-item {
+  color: #555555;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.blog-readmore-four-tag-item:hover {
+  color: #102a27;
+  text-decoration: underline;
+}
+
+.blog-readmore-four-tag-comma {
+  margin-right: 4px;
+  color: #555555;
+}
+
+/* ==========================================================================
+   RIGHT COLUMN: SIDEBAR
+   ========================================================================== */
+
+/* Sidebar Titles */
+.blog-readmore-four-sidebar-title {
+  font-size: 26px;
+  font-weight: 900;
+  color: #102a27;
+  margin: 0 0 20px 0;
+  letter-spacing: -0.5px;
+}
+
+/* Related Article Cards */
+.blog-readmore-four-related-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #eaeaea;
+  overflow: hidden;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  transition: transform 0.2s ease;
+}
+
+.blog-readmore-four-related-card:hover {
+  transform: translateY(-2px);
+}
+
+.blog-readmore-four-card-img-wrapper {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+}
+
+.blog-readmore-four-card-img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.blog-readmore-four-card-tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background-color: #fbbd23;
+  color: #102a27;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.blog-readmore-four-card-body {
+  padding: 18px;
+}
+
+.blog-readmore-four-card-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #102a27;
+  margin: 0 0 10px 0;
+  line-height: 1.3;
+}
+
+.blog-readmore-four-card-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #556663;
+  margin-bottom: 20px;
+}
+
+.blog-readmore-four-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Read More Button */
+.blog-readmore-four-read-more-btn {
+  background-color: #fbbd23;
+  color: #102a27;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.blog-readmore-four-read-more-btn:hover {
+  background-color: #102a27;
+  color: #fbbd23;
+}
+
+.blog-readmore-four-card-author-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.blog-readmore-four-card-author {
+  font-weight: 700;
+  color: #102a27;
+}
+
+.blog-readmore-four-card-date {
+  color: #777777;
+}
+
+/* ==========================================================================
+   LEAVE A COMMENT FORM
+   ========================================================================== */
+.blog-readmore-four-comment-box {
+  background-color: #fafbfc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 28px;
+  margin-top: 32px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.blog-readmore-four-comment-title {
+  font-size: 26px;
+  font-weight: 900;
+  color: #102a27;
+  margin: 0 0 24px 0;
+  letter-spacing: -0.6px;
+}
+
+.blog-readmore-four-form-group {
+  margin-bottom: 16px;
+}
+
+.blog-readmore-four-input,
+.blog-readmore-four-textarea {
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid #d2d6dc;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #102a27;
+  background-color: #ffffff;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.blog-readmore-four-input::placeholder,
+.blog-readmore-four-textarea::placeholder {
+  color: #556663;
+  font-weight: 500;
+}
+
+.blog-readmore-four-input:focus,
+.blog-readmore-four-textarea:focus {
+  border-color: #102a27;
+  box-shadow: 0 0 0 3px rgba(16, 42, 39, 0.1);
+}
+
+.blog-readmore-four-submit-btn {
+  width: 100%;
+  background-color: #fbbd23;
+  color: #102a27;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 6px;
+}
+
+.blog-readmore-four-submit-btn:hover {
+  background-color: #102a27;
+  color: #fbbd23;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (All Devices)
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .blog-readmore-four-container {
+    grid-template-columns: 1fr;
+    gap: 50px;
+  }
+
+  .blog-readmore-four-hero-title {
+    font-size: 38px;
+  }
+
+  .blog-readmore-four-article-title {
+    font-size: 32px;
+  }
+
+  .blog-readmore-four-feature-img-wrapper {
+    height: 350px;
+  }
+}
+
+@media (max-width: 768px) {
+  .blog-readmore-four-hero {
+    padding: 40px 16px;
+  }
+
+  .blog-readmore-four-hero-title {
+    font-size: 30px;
+  }
+
+  .blog-readmore-four-article-title {
+    font-size: 26px;
+  }
+
+  .blog-readmore-four-bold-heading {
+    font-size: 17px;
+  }
+
+  .blog-readmore-four-quote p {
+    font-size: 18px;
+  }
+
+  .blog-readmore-four-author-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .blog-readmore-four-hero-title {
+    font-size: 25px;
+  }
+
+  .blog-readmore-four-hero-meta {
+    gap: 10px;
+  }
+
+  .blog-readmore-four-feature-img-wrapper {
+    height: 240px;
+  }
+
+  .blog-readmore-four-comment-box {
+    padding: 20px 16px;
+  }
+
+  .blog-readmore-four-comment-title {
+    font-size: 24px;
+  }
+}

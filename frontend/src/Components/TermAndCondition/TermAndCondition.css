@@ -1,0 +1,206 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* Main Page Wrapper */
+.term-and-condition-page {
+  width: 100%;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #102a27;
+  background-color: #ffffff;
+}
+
+/* ==========================================================================
+   BREADCRUMB / BANNER SECTION (#f2f3f5 Light Gray Background matching Contact Us)
+   ========================================================================== */
+.term-and-condition-breadcrumb {
+  background-color: #f2f3f5;
+  width: 100%;
+  padding: 80px 20px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.term-and-condition-breadcrumb-container {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Back Link & Circle Button */
+.term-and-condition-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  margin-bottom: 24px;
+}
+
+.term-and-condition-arrow-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #102a27;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #102a27;
+  transition: all 0.3s ease;
+}
+
+.term-and-condition-arrow-icon {
+  display: block;
+}
+
+.term-and-condition-back-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #102a27;
+  transition: color 0.3s ease;
+}
+
+/* Arrow Hover Animations */
+.term-and-condition-back-link:hover .term-and-condition-arrow-circle {
+  background-color: #102a27;
+  color: #ffffff;
+  transform: translateX(-3px);
+}
+
+.term-and-condition-back-link:hover .term-and-condition-back-text {
+  color: #0b1c1a;
+}
+
+/* Banner Title (H1) */
+.term-and-condition-banner-title {
+  font-size: 52px;
+  font-weight: 800;
+  color: #102a27;
+  margin: 0 0 20px 0;
+  letter-spacing: -1.2px;
+  line-height: 1.1;
+}
+
+/* Banner Description */
+.term-and-condition-banner-desc {
+  font-size: 15px;
+  line-height: 1.65;
+  color: #3b4d4a;
+  max-width: 580px;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   MAIN CONTENT SECTION
+   ========================================================================== */
+.term-and-condition-main {
+  width: 100%;
+  padding: 80px 20px;
+  box-sizing: border-box;
+}
+
+.term-and-condition-main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Primary Section Title inside main */
+.term-and-condition-section-title {
+  font-size: 40px;
+  font-weight: 800;
+  color: #102a27;
+  letter-spacing: -1px;
+  margin: 0 0 40px 0;
+  line-height: 1.1;
+}
+
+/* Section Grouping */
+.term-and-condition-block {
+  margin-bottom: 40px;
+}
+
+/* Section Subtitle (e.g. 1. GENERAL CONDITIONS) */
+.term-and-condition-subtitle {
+  font-size: 20px;
+  font-weight: 800;
+  color: #102a27;
+  letter-spacing: -0.3px;
+  margin: 0 0 16px 0;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+/* Content Body Paragraphs */
+.term-and-condition-text {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.7;
+  color: #3b4d4a;
+  margin: 0 0 16px 0;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (All Devices)
+   ========================================================================== */
+
+/* Tablet Devices (<= 768px) */
+@media (max-width: 768px) {
+  .term-and-condition-breadcrumb,
+  .term-and-condition-main {
+    padding: 50px 20px;
+  }
+
+  .term-and-condition-banner-title {
+    font-size: 40px;
+  }
+
+  .term-and-condition-section-title {
+    font-size: 34px;
+  }
+
+  .term-and-condition-subtitle {
+    font-size: 18px;
+  }
+
+  .term-and-condition-banner-desc,
+  .term-and-condition-text {
+    font-size: 15px;
+    max-width: 100%;
+  }
+}
+
+/* Mobile Devices (<= 480px) */
+@media (max-width: 480px) {
+  .term-and-condition-breadcrumb,
+  .term-and-condition-main {
+    padding: 36px 16px;
+  }
+
+  .term-and-condition-banner-title {
+    font-size: 32px;
+    letter-spacing: -0.5px;
+  }
+
+  .term-and-condition-section-title {
+    font-size: 28px;
+  }
+
+  .term-and-condition-subtitle {
+    font-size: 16px;
+  }
+
+  .term-and-condition-banner-desc,
+  .term-and-condition-text {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .term-and-condition-arrow-circle {
+    width: 32px;
+    height: 32px;
+  }
+
+  .term-and-condition-back-text {
+    font-size: 13px;
+  }
+}

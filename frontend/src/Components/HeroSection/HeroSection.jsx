@@ -16,7 +16,7 @@ const slidesData = [
     discount: '-30%\nOFF',
     title: 'Healthful\nIngredients',
     description:
-      'Step into a world of fresh produce, vibrant colors, and enticing aromas at our grocery store. We offer a wide selection of fruits, vegetables, and organic products for health-conscious shoppers.',
+      'Step into a world of farm-fresh produce, vibrant colors, and authentic organic groceries at Grocery Sathi. We offer a wide selection of healthy fruits, vegetables, and daily essentials for health-conscious shoppers.',
   },
   {
     id: 2,
@@ -24,7 +24,7 @@ const slidesData = [
     discount: '-30%\nOFF',
     title: 'Exquisite\nTaste',
     description:
-      "These superfoods are packed with vital nutrients, including vitamins and minerals that can help keep you healthy. Plus, they're easy to enjoy - just add water and let the magic happen!",
+      "Explore nutrient-packed superfoods loaded with vital vitamins and minerals to keep your family healthy. Enjoy effortless online grocery shopping with quick doorstep delivery.",
   },
   {
     id: 3,
@@ -32,7 +32,7 @@ const slidesData = [
     discount: '-30%\nOFF',
     title: 'Convenience\nand Quality',
     description:
-      'Discover a treasure trove of gourmet ingredients at our grocery store. From artisanal cheeses and imported chocolates to exotic spices and rare oils, we have everything you need to elevate your culinary creations.',
+      'Discover a treasure trove of gourmet ingredients, artisanal cheeses, imported chocolates, and rare spices at Grocery Sathi. Everything you need to elevate your culinary creations in one place.',
   },
   {
     id: 4,
@@ -40,7 +40,7 @@ const slidesData = [
     discount: '-30%\nOFF',
     title: 'Dessert\nWonderland',
     description:
-      'Experience the convenience of one-stop shopping at our grocery store. With aisles stocked with pantry staples, household essentials, and personal care items, we make it easy to check off your entire shopping list.',
+      'Experience the true convenience of one-stop online grocery shopping. From pantry staples and household essentials to personal care items, we make checking off your grocery list seamless.',
   },
 ];
 
@@ -58,47 +58,48 @@ const HeroSection = () => {
   const slide = slidesData[currentSlide];
 
   return (
-    <section className="hero-container">
-      {/* Background Image Layer */}
+    <section className="hero-container" aria-label="Grocery Sathi Featured Deals and Highlights">
+      {/* Background Image Layer with SEO-friendly role configuration */}
       <div
         className="hero-background-image"
         style={{ backgroundImage: `url(${mainBannerBg})` }}
-        aria-hidden="true"
+        role="img"
+        aria-label="Fresh organic grocery produce and ingredients banner"
       />
 
       {/* Main Content Wrapper */}
       <div className="hero-content">
         <main className="hero-main-slider">
-          <div className="slider-content-wrapper" key={slide.id}>
+          <div className="slider-content-wrapper" key={slide.id} aria-live="polite">
             
             {/* Badges Header */}
             <div className="badge-wrapper">
               <span className="badge">{slide.tag}</span>
-              <div className="discount-badge">
+              <div className="discount-badge" aria-label="30 percent off discount">
                 <span className="discount-text">{slide.discount}</span>
               </div>
             </div>
 
-            {/* Typography */}
+            {/* SEO Structured Typography */}
             <h1 className="hero-title">{slide.title}</h1>
             <p className="hero-description">{slide.description}</p>
 
             {/* Action Button */}
             <button className="btn-show-products" type="button">
-              <FaThLarge className="btn-grid-icon" />
+              <FaThLarge className="btn-grid-icon" aria-hidden="true" />
               <span>Show products</span>
-              <FaChevronRight className="btn-arrow" />
+              <FaChevronRight className="btn-arrow" aria-hidden="true" />
             </button>
 
-            {/* Navigation Arrows */}
-            <div className="slider-navigation">
+            {/* Navigation Controls */}
+            <nav className="slider-navigation" aria-label="Hero Slider Navigation">
               <button
                 className="nav-btn"
                 onClick={handlePrev}
                 aria-label="Previous slide"
                 type="button"
               >
-                <FaChevronLeft />
+                <FaChevronLeft aria-hidden="true" />
               </button>
               <button
                 className="nav-btn"
@@ -106,9 +107,9 @@ const HeroSection = () => {
                 aria-label="Next slide"
                 type="button"
               >
-                <FaChevronRight />
+                <FaChevronRight aria-hidden="true" />
               </button>
-            </div>
+            </nav>
 
           </div>
         </main>

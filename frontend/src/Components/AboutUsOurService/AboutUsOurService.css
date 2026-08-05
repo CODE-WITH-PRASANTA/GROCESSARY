@@ -1,0 +1,163 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* Main Section Wrapper */
+.our-services-container {
+  width: 100%;
+  background-color: #ffffff;
+  padding: 80px 24px;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #102a27;
+}
+
+.our-services-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Header Section Styling */
+.services-header {
+  text-align: center;
+  max-width: 760px;
+  margin-bottom: 56px;
+}
+
+.services-title {
+  font-size: 52px;
+  font-weight: 800;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  color: #102a27;
+  letter-spacing: -1px;
+  line-height: 1.15;
+  margin: 0 0 20px 0;
+}
+
+.services-subtitle {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #2c3e3b;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Services Cards Grid Layout */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  width: 100%;
+}
+
+/* Individual Card Design */
+.service-card {
+  border: 1px solid #102a27;
+  border-radius: 16px;
+  padding: 32px 28px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-sizing: border-box;
+}
+
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(16, 42, 39, 0.08);
+}
+
+/* Top Header Row in Card */
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+
+.card-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #102a27;
+  letter-spacing: -0.5px;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.card-icon {
+  color: #102a27;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+/* Card Body Description */
+.card-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #3b4d4a;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1024px) {
+  .services-title {
+    font-size: 42px;
+  }
+
+  .card-title {
+    font-size: 26px;
+  }
+
+  .services-grid {
+    gap: 16px;
+  }
+  
+  .service-card {
+    padding: 24px 20px;
+  }
+}
+
+@media (max-width: 868px) {
+  .services-grid {
+    grid-template-columns: 1fr;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .services-header {
+    margin-bottom: 40px;
+  }
+
+  .services-title {
+    font-size: 36px;
+  }
+
+  .card-title {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .our-services-container {
+    padding: 50px 16px;
+  }
+
+  .services-title {
+    font-size: 30px;
+  }
+
+  .services-subtitle {
+    font-size: 14px;
+  }
+
+  .card-title {
+    font-size: 24px;
+  }
+}
