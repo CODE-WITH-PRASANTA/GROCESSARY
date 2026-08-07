@@ -19,12 +19,6 @@ import {
 
 import "./MyOrders.css";
 
-// ========================================
-// AXIOS INSTANCE
-// Change path only if your axios file
-// is in a different location
-// ========================================
-
 import API from "../../api/axios";
 
 const MyOrders = ({ onClose }) => {
@@ -33,24 +27,14 @@ const MyOrders = ({ onClose }) => {
   // ========================================
 
   const [orderId, setOrderId] = useState("");
-
-  const [showStatus, setShowStatus] =
-    useState(false);
-
-  const [copied, setCopied] =
-    useState(false);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
-
-  const [order, setOrder] =
-    useState(null);
+  const [showStatus, setShowStatus] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [order, setOrder] = useState(null);
 
   // ========================================
-  // BACKEND ORDER STATUS
+  // ORDER STATUS
   // ========================================
 
   const statusSteps = [
@@ -62,7 +46,7 @@ const MyOrders = ({ onClose }) => {
   ];
 
   // ========================================
-  // GET CURRENT STATUS INDEX
+  // CURRENT STATUS INDEX
   // ========================================
 
   const getCurrentStatusIndex = () => {
@@ -70,17 +54,12 @@ const MyOrders = ({ onClose }) => {
       return -1;
     }
 
-    return statusSteps.indexOf(
-      order.status
-    );
+    return statusSteps.indexOf(order.status);
   };
 
   // ========================================
-  // GET TIMELINE STEP STATE
-  //
-  // completed
-  // active
-  // pending
+  // GET STEP STATE
+  // completed / active / pending
   // ========================================
 
   const getStepState = (step) => {
@@ -88,16 +67,12 @@ const MyOrders = ({ onClose }) => {
       return "pending";
     }
 
-    // If order is cancelled
     if (order.status === "Cancelled") {
       return "pending";
     }
 
-    const currentIndex =
-      getCurrentStatusIndex();
-
-    const stepIndex =
-      statusSteps.indexOf(step);
+    const currentIndex = getCurrentStatusIndex();
+    const stepIndex = statusSteps.indexOf(step);
 
     if (stepIndex < currentIndex) {
       return "completed";
@@ -115,7 +90,7 @@ const MyOrders = ({ onClose }) => {
   };
 
   // ========================================
-  // CHECK STEP COMPLETED
+  // CHECK COMPLETED
   // ========================================
 
   const isStepCompleted = (step) => {
@@ -127,17 +102,14 @@ const MyOrders = ({ onClose }) => {
       return false;
     }
 
-    const currentIndex =
-      getCurrentStatusIndex();
-
-    const stepIndex =
-      statusSteps.indexOf(step);
+    const currentIndex = getCurrentStatusIndex();
+    const stepIndex = statusSteps.indexOf(step);
 
     return stepIndex < currentIndex;
   };
 
   // ========================================
-  // CHECK ACTIVE STEP
+  // CHECK ACTIVE
   // ========================================
 
   const isStepActive = (step) => {
@@ -157,60 +129,123 @@ const MyOrders = ({ onClose }) => {
       return "";
     }
 
-    const parsedDate =
-      new Date(date);
+    const parsedDate = new Date(date);
 
-    if (
-      Number.isNaN(
-        parsedDate.getTime()
-      )
-    ) {
+    if (Number.isNaN(parsedDate.getTime())) {
       return "";
     }
 
-    return parsedDate.toLocaleString(
-      "en-IN",
-      {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
+    return parsedDate.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // ========================================
+  // GET STATUS DATE/TIME
+  // ========================================
+
+  const getStatusDate = (status) => {
+    if (!order) {
+      return null;
+    }
+
+    // ----------------------------------------
+    // First try statusHistory from backend
+    // ----------------------------------------
+
+    if (
+      Array.isArray(order.statusHistory) &&
+      order.statusHistory.length > 0
+    ) {
+      const historyItem = order.statusHistory.find(
+        (item) => item.status === status
+      );
+
+      if (historyItem?.date) {
+        return historyItem.date;
       }
-    );
+
+      // Support statusHistory using changedAt
+      if (historyItem?.changedAt) {
+        return historyItem.changedAt;
+      }
+
+      // Support statusHistory using createdAt
+      if (historyItem?.createdAt) {
+        return historyItem.createdAt;
+      }
+    }
+
+    // ----------------------------------------
+    // Received fallback
+    // ----------------------------------------
+
+    if (status === "Received") {
+      return order.createdAt || null;
+    }
+
+    // ----------------------------------------
+    // Delivered fallback
+    // ----------------------------------------
+
+    if (
+      status === "Delivered" &&
+      order.status === "Delivered"
+    ) {
+      return order.updatedAt || null;
+    }
+
+    return null;
+  };
+
+  // ========================================
+  // STATUS TIME OR PENDING
+  // ========================================
+
+  const getStatusTimeText = (status) => {
+    const date = getStatusDate(status);
+
+    if (date) {
+      return formatDate(date);
+    }
+
+    if (isStepActive(status)) {
+      return "In Progress";
+    }
+
+    if (isStepCompleted(status)) {
+      return "Completed";
+    }
+
+    return "Pending";
   };
 
   // ========================================
   // TRACK ORDER
-  // GET:
-  // /api/list-upload/track/:orderId
   // ========================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const cleanedOrderId =
-      orderId.trim();
+    const cleanedOrderId = orderId.trim();
 
     if (!cleanedOrderId) {
-      setError(
-        "Please enter your Order ID"
-      );
-
+      setError("Please enter your Order ID");
       return;
     }
 
     try {
       setLoading(true);
-
       setError("");
-
       setOrder(null);
-
       setShowStatus(false);
 
       // ====================================
-      // API CALL
+      // API
       // ====================================
 
       const response = await API.get(
@@ -224,29 +259,15 @@ const MyOrders = ({ onClose }) => {
         response.data
       );
 
-      // ====================================
-      // CHECK RESPONSE
-      // ====================================
-
       if (
         !response.data?.success ||
         !response.data?.data
       ) {
-        throw new Error(
-          "Order data not found"
-        );
+        throw new Error("Order data not found");
       }
 
-      // ====================================
-      // SAVE ORDER
-      // ====================================
-
-      setOrder(
-        response.data.data
-      );
-
+      setOrder(response.data.data);
       setShowStatus(true);
-
     } catch (error) {
       console.error(
         "Track Order Error:",
@@ -254,21 +275,16 @@ const MyOrders = ({ onClose }) => {
       );
 
       setOrder(null);
-
       setShowStatus(false);
 
-      if (
-        error.response?.status === 404
-      ) {
+      if (error.response?.status === 404) {
         setError(
-          error.response?.data
-            ?.message ||
+          error.response?.data?.message ||
             "Order not found. Please check your Order ID."
         );
       } else {
         setError(
-          error.response?.data
-            ?.message ||
+          error.response?.data?.message ||
             error.message ||
             "Unable to track your order. Please try again."
         );
@@ -284,8 +300,7 @@ const MyOrders = ({ onClose }) => {
 
   const handleCopy = async () => {
     const valueToCopy =
-      order?.orderId ||
-      orderId;
+      order?.orderId || orderId;
 
     if (!valueToCopy) {
       return;
@@ -301,7 +316,6 @@ const MyOrders = ({ onClose }) => {
       setTimeout(() => {
         setCopied(false);
       }, 2000);
-
     } catch (error) {
       console.error(
         "Copy Order ID Error:",
@@ -311,27 +325,21 @@ const MyOrders = ({ onClose }) => {
   };
 
   // ========================================
-  // BACK TO SEARCH
+  // BACK
   // ========================================
 
   const handleBack = () => {
     setShowStatus(false);
-
     setOrder(null);
-
     setError("");
   };
 
   // ========================================
-  // INPUT CHANGE
+  // ORDER ID CHANGE
   // ========================================
 
-  const handleOrderIdChange = (
-    e
-  ) => {
-    setOrderId(
-      e.target.value
-    );
+  const handleOrderIdChange = (e) => {
+    setOrderId(e.target.value);
 
     if (error) {
       setError("");
@@ -339,40 +347,121 @@ const MyOrders = ({ onClose }) => {
   };
 
   // ========================================
-  // ESTIMATED DELIVERY
-  //
-  // Until you save estimatedDelivery
-  // in MongoDB, this shows status-based text.
+  // DELIVERY DATE/TIME
   // ========================================
 
-  const getEstimatedDeliveryText =
-    () => {
-      if (!order) {
-        return "";
+  const getEstimatedDeliveryText = () => {
+    if (!order) {
+      return "";
+    }
+
+    if (order.status === "Delivered") {
+      if (getStatusDate("Delivered")) {
+        return `Delivered on ${formatDate(
+          getStatusDate("Delivered")
+        )}`;
       }
 
-      if (
-        order.status === "Delivered"
-      ) {
-        return "Your order has been delivered";
-      }
+      return "Your order has been delivered";
+    }
 
-      if (
-        order.status === "Cancelled"
-      ) {
-        return "Order Cancelled";
-      }
+    if (order.status === "Cancelled") {
+      return "Order Cancelled";
+    }
 
-      if (
+    // New backend field
+    if (order.deliveryDateTime) {
+      return formatDate(
+        order.deliveryDateTime
+      );
+    }
+
+    // Support old field also
+    if (order.estimatedDelivery) {
+      return formatDate(
         order.estimatedDelivery
-      ) {
-        return formatDate(
-          order.estimatedDelivery
-        );
-      }
+      );
+    }
 
-      return "Delivery time will be updated shortly";
-    };
+    return "Delivery time will be updated shortly";
+  };
+
+  // ========================================
+  // CAN DOWNLOAD RECEIPT
+  //
+  // Show when status reaches:
+  // Out for Delivery
+  // Delivered
+  // ========================================
+
+  const canDownloadReceipt = () => {
+    if (!order) {
+      return false;
+    }
+
+    return [
+      "Out for Delivery",
+      "Delivered",
+    ].includes(order.status);
+  };
+
+  // ========================================
+  // GET RECEIPT URL
+  // ========================================
+
+  const getReceiptUrl = () => {
+    if (!order) {
+      return "";
+    }
+
+    // If you save separate receipt file
+    if (order.receiptFile?.url) {
+      return order.receiptFile.url;
+    }
+
+    // Currently use uploaded list file
+    if (order.uploadedFile?.url) {
+      return order.uploadedFile.url;
+    }
+
+    return "";
+  };
+
+  // ========================================
+  // DOWNLOAD RECEIPT
+  // ========================================
+
+  const handleDownloadReceipt = () => {
+    const fileUrl = getReceiptUrl();
+
+    if (!fileUrl) {
+      setError(
+        "Receipt file is not available."
+      );
+
+      return;
+    }
+
+    const link =
+      document.createElement("a");
+
+    link.href = fileUrl;
+
+    link.target = "_blank";
+
+    link.rel = "noopener noreferrer";
+
+    link.download =
+      order?.receiptFile?.fileName ||
+      order?.uploadedFile?.fileName ||
+      `${order?.orderId || "order"}-receipt`;
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+  };
 
   // ========================================
   // UI
@@ -380,8 +469,6 @@ const MyOrders = ({ onClose }) => {
 
   return (
     <div className="MyOrders-app-background">
-
-      {/* Pop-up Modal Component for Tracking / Status */}
 
       <AnimatePresence>
 
@@ -414,9 +501,9 @@ const MyOrders = ({ onClose }) => {
 
               {!showStatus ? (
 
-                /* ====================================== */
-                /* TRACK MY ORDER FORM CARD */
-                /* ====================================== */
+                // =====================================
+                // TRACK FORM
+                // =====================================
 
                 <motion.div
                   key="track-form"
@@ -444,10 +531,6 @@ const MyOrders = ({ onClose }) => {
                     <FaTimes />
                   </button>
 
-                  {/* ========================== */}
-                  {/* HEADER ICON */}
-                  {/* ========================== */}
-
                   <div className="MyOrders-header-icon">
                     <FaShoppingBag />
                   </div>
@@ -460,10 +543,6 @@ const MyOrders = ({ onClose }) => {
                     Enter your Order ID to check real-time status
                   </p>
 
-                  {/* ========================== */}
-                  {/* ILLUSTRATION */}
-                  {/* ========================== */}
-
                   <div className="MyOrders-illustration">
 
                     <div className="MyOrders-scooter-scene">
@@ -471,23 +550,15 @@ const MyOrders = ({ onClose }) => {
                       <div className="MyOrders-sun-spot" />
 
                       <div className="MyOrders-scooter-icon-wrap">
-
                         <FaTruck className="MyOrders-scooter-icon" />
-
                       </div>
 
                     </div>
 
                   </div>
 
-                  {/* ========================== */}
-                  {/* FORM */}
-                  {/* ========================== */}
-
                   <form
-                    onSubmit={
-                      handleSubmit
-                    }
+                    onSubmit={handleSubmit}
                     className="MyOrders-form"
                   >
 
@@ -505,9 +576,7 @@ const MyOrders = ({ onClose }) => {
                           id="orderIdInput"
                           type="text"
                           placeholder="Enter your Order ID"
-                          value={
-                            orderId
-                          }
+                          value={orderId}
                           onChange={
                             handleOrderIdChange
                           }
@@ -519,10 +588,6 @@ const MyOrders = ({ onClose }) => {
 
                     </div>
 
-                    {/* ========================== */}
-                    {/* SECURITY NOTE */}
-                    {/* ========================== */}
-
                     <div className="MyOrders-security-note">
 
                       <FaShieldAlt className="MyOrders-security-icon" />
@@ -533,55 +598,38 @@ const MyOrders = ({ onClose }) => {
 
                     </div>
 
-                    {/* ========================== */}
-                    {/* ERROR */}
-                    {/* ========================== */}
-
                     {error && (
                       <div
                         style={{
-                          color:
-                            "#dc2626",
-                          fontSize:
-                            "13px",
-                          textAlign:
-                            "center",
-                          marginBottom:
-                            "12px",
+                          color: "#dc2626",
+                          fontSize: "13px",
+                          textAlign: "center",
+                          marginBottom: "12px",
                         }}
                       >
                         {error}
                       </div>
                     )}
 
-                    {/* ========================== */}
-                    {/* SUBMIT */}
-                    {/* ========================== */}
-
                     <motion.button
                       type="submit"
                       className="MyOrders-submit-btn"
                       whileHover={{
-                        scale:
-                          loading
-                            ? 1
-                            : 1.02,
+                        scale: loading
+                          ? 1
+                          : 1.02,
                       }}
                       whileTap={{
-                        scale:
-                          loading
-                            ? 1
-                            : 0.98,
+                        scale: loading
+                          ? 1
+                          : 0.98,
                       }}
-                      disabled={
-                        loading
-                      }
+                      disabled={loading}
                     >
 
                       {loading ? (
                         <>
                           <FaSpinner className="spin-anim" />
-
                           <span>
                             Tracking...
                           </span>
@@ -589,7 +637,6 @@ const MyOrders = ({ onClose }) => {
                       ) : (
                         <>
                           <FaPaperPlane />
-
                           <span>
                             Submit
                           </span>
@@ -599,10 +646,6 @@ const MyOrders = ({ onClose }) => {
                     </motion.button>
 
                   </form>
-
-                  {/* ========================== */}
-                  {/* HELP */}
-                  {/* ========================== */}
 
                   <div className="MyOrders-help-footer">
 
@@ -615,7 +658,6 @@ const MyOrders = ({ onClose }) => {
                       className="MyOrders-phone-link"
                     >
                       <FaPhoneAlt />
-
                       +9111234567890
                     </a>
 
@@ -625,9 +667,9 @@ const MyOrders = ({ onClose }) => {
 
               ) : (
 
-                /* ====================================== */
-                /* ORDER STATUS INLINE CARD */
-                /* ====================================== */
+                // =====================================
+                // ORDER STATUS
+                // =====================================
 
                 <motion.div
                   key="status-card"
@@ -646,25 +688,15 @@ const MyOrders = ({ onClose }) => {
                   }}
                 >
 
-                  {/* ========================== */}
-                  {/* BACK */}
-                  {/* ========================== */}
-
                   <button
                     className="MyOrders-close-btn"
-                    onClick={
-                      handleBack
-                    }
+                    onClick={handleBack}
                     aria-label="Back to Form"
                     title="Back"
                     type="button"
                   >
                     <FaArrowLeft />
                   </button>
-
-                  {/* ========================== */}
-                  {/* SUCCESS ICON */}
-                  {/* ========================== */}
 
                   <div className="MyOrders-header-icon success-icon">
                     <FaCheckCircle />
@@ -678,9 +710,9 @@ const MyOrders = ({ onClose }) => {
                     Here is the latest update for your order
                   </p>
 
-                  {/* ========================== */}
+                  {/* ================================= */}
                   {/* ORDER ID */}
-                  {/* ========================== */}
+                  {/* ================================= */}
 
                   <div className="MyOrders-id-display-box">
 
@@ -699,9 +731,7 @@ const MyOrders = ({ onClose }) => {
 
                     <button
                       className="MyOrders-copy-btn"
-                      onClick={
-                        handleCopy
-                      }
+                      onClick={handleCopy}
                       title="Copy Order ID"
                       type="button"
                     >
@@ -721,34 +751,28 @@ const MyOrders = ({ onClose }) => {
 
                   </div>
 
-                  {/* ========================== */}
-                  {/* CANCELLED MESSAGE */}
-                  {/* ========================== */}
+                  {/* ================================= */}
+                  {/* CANCELLED */}
+                  {/* ================================= */}
 
                   {order?.status ===
                     "Cancelled" && (
+
                     <div
                       style={{
-                        padding:
-                          "12px",
-                        marginBottom:
-                          "15px",
-                        borderRadius:
-                          "8px",
-                        background:
-                          "#fee2e2",
-                        color:
-                          "#dc2626",
-                        textAlign:
-                          "center",
-                        fontSize:
-                          "13px",
-                        fontWeight:
-                          "600",
+                        padding: "12px",
+                        marginBottom: "15px",
+                        borderRadius: "8px",
+                        background: "#fee2e2",
+                        color: "#dc2626",
+                        textAlign: "center",
+                        fontSize: "13px",
+                        fontWeight: "600",
                       }}
                     >
                       This order has been cancelled.
                     </div>
+
                   )}
 
                   {/* ================================= */}
@@ -757,9 +781,7 @@ const MyOrders = ({ onClose }) => {
 
                   <div className="MyOrders-timeline">
 
-                    {/* ============================== */}
                     {/* RECEIVED */}
-                    {/* ============================== */}
 
                     <div
                       className={`MyOrders-timeline-item ${getStepState(
@@ -797,21 +819,17 @@ const MyOrders = ({ onClose }) => {
                           Your order has been placed successfully
                         </p>
 
-                        {order?.createdAt && (
-                          <span className="MyOrders-time">
-                            {formatDate(
-                              order.createdAt
-                            )}
-                          </span>
-                        )}
+                        <span className="MyOrders-time">
+                          {getStatusTimeText(
+                            "Received"
+                          )}
+                        </span>
 
                       </div>
 
                     </div>
 
-                    {/* ============================== */}
                     {/* REVIEWING LIST */}
-                    {/* ============================== */}
 
                     <div
                       className={`MyOrders-timeline-item ${getStepState(
@@ -853,21 +871,17 @@ const MyOrders = ({ onClose }) => {
                           Your order has been confirmed
                         </p>
 
-                        {isStepActive(
-                          "Reviewing List"
-                        ) && (
-                          <span className="MyOrders-time">
-                            Reviewing your grocery list
-                          </span>
-                        )}
+                        <span className="MyOrders-time">
+                          {getStatusTimeText(
+                            "Reviewing List"
+                          )}
+                        </span>
 
                       </div>
 
                     </div>
 
-                    {/* ============================== */}
                     {/* PACKING */}
-                    {/* ============================== */}
 
                     <div
                       className={`MyOrders-timeline-item ${getStepState(
@@ -909,21 +923,17 @@ const MyOrders = ({ onClose }) => {
                           We are preparing your items
                         </p>
 
-                        {isStepActive(
-                          "Packing"
-                        ) && (
-                          <span className="MyOrders-time">
-                            Your grocery items are being packed
-                          </span>
-                        )}
+                        <span className="MyOrders-time">
+                          {getStatusTimeText(
+                            "Packing"
+                          )}
+                        </span>
 
                       </div>
 
                     </div>
 
-                    {/* ============================== */}
                     {/* OUT FOR DELIVERY */}
-                    {/* ============================== */}
 
                     <div
                       className={`MyOrders-timeline-item ${getStepState(
@@ -965,21 +975,17 @@ const MyOrders = ({ onClose }) => {
                           Your order is on the way
                         </p>
 
-                        {isStepActive(
-                          "Out for Delivery"
-                        ) && (
-                          <span className="MyOrders-time">
-                            Delivery in progress
-                          </span>
-                        )}
+                        <span className="MyOrders-time">
+                          {getStatusTimeText(
+                            "Out for Delivery"
+                          )}
+                        </span>
 
                       </div>
 
                     </div>
 
-                    {/* ============================== */}
                     {/* DELIVERED */}
-                    {/* ============================== */}
 
                     <div
                       className={`MyOrders-timeline-item ${getStepState(
@@ -1015,15 +1021,11 @@ const MyOrders = ({ onClose }) => {
                           Your order has been delivered
                         </p>
 
-                        {order?.status ===
-                          "Delivered" &&
-                          order?.updatedAt && (
-                            <span className="MyOrders-time">
-                              {formatDate(
-                                order.updatedAt
-                              )}
-                            </span>
+                        <span className="MyOrders-time">
+                          {getStatusTimeText(
+                            "Delivered"
                           )}
+                        </span>
 
                       </div>
 
@@ -1032,7 +1034,7 @@ const MyOrders = ({ onClose }) => {
                   </div>
 
                   {/* ================================= */}
-                  {/* ESTIMATED DELIVERY */}
+                  {/* DELIVERY DATE/TIME */}
                   {/* ================================= */}
 
                   <div className="MyOrders-estimated-box">
@@ -1042,6 +1044,7 @@ const MyOrders = ({ onClose }) => {
                     <div className="MyOrders-est-text">
 
                       <span className="MyOrders-est-label">
+
                         {order?.status ===
                         "Delivered"
                           ? "Delivery Status"
@@ -1049,6 +1052,7 @@ const MyOrders = ({ onClose }) => {
                               "Cancelled"
                             ? "Order Status"
                             : "Estimated Delivery"}
+
                       </span>
 
                       <span className="MyOrders-est-value">
@@ -1059,7 +1063,42 @@ const MyOrders = ({ onClose }) => {
 
                   </div>
 
+                  {/* ================================= */}
+                  {/* DOWNLOAD RECEIPT */}
+                  {/* SHOW AFTER OUT FOR DELIVERY */}
+                  {/* ================================= */}
+
+                  {canDownloadReceipt() &&
+                    getReceiptUrl() && (
+
+                    <motion.button
+                      type="button"
+                      className="MyOrders-submit-btn"
+                      onClick={
+                        handleDownloadReceipt
+                      }
+                      whileHover={{
+                        scale: 1.02,
+                      }}
+                      whileTap={{
+                        scale: 0.98,
+                      }}
+                      style={{
+                        marginTop: "15px",
+                      }}
+                    >
+                      <FaPaperPlane />
+
+                      <span>
+                        Download Receipt
+                      </span>
+
+                    </motion.button>
+
+                  )}
+
                 </motion.div>
+
               )}
 
             </AnimatePresence>

@@ -41,9 +41,17 @@ const mapBackendItem = (item) => {
 
     status: item.status || "Received",
 
+    // ==========================================
+    // ADD THIS
+    // ==========================================
+
+    statusHistory: item.statusHistory || [],
+    deliveryDateTime: item.deliveryDateTime || "",
     date: createdDate.toLocaleString(),
 
     createdAt: item.createdAt,
+
+    updatedAt: item.updatedAt,
 
     orderId: item.orderId || "",
 
@@ -110,6 +118,7 @@ const ListUploads = () => {
     serviceCharge: "",
     handlingCharge: "",
     gst: "",
+    deliveryDateTime: "",
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -283,6 +292,9 @@ const ListUploads = () => {
         status: newStatus,
       });
 
+      console.log("STATUS UPDATE RESPONSE:", response.data);
+      console.log("STATUS HISTORY:", response.data?.statusHistory);
+
       const updated = mapBackendItem(response.data.data);
 
       setLists((prev) => prev.map((item) => (item.id === id ? updated : item)));
@@ -330,6 +342,23 @@ const ListUploads = () => {
   const handleEdit = (item) => {
     setEditingId(item.id);
 
+    // Convert backend date to datetime-local format
+    let formattedDeliveryDateTime = "";
+
+    if (item.deliveryDateTime) {
+      const date = new Date(item.deliveryDateTime);
+
+      // datetime-local requires:
+      // YYYY-MM-DDTHH:mm
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+
+      formattedDeliveryDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
     setFormData({
       title: item.name,
 
@@ -338,6 +367,11 @@ const ListUploads = () => {
       phone: item.phoneNumber || item.phone,
 
       items: item.items || "",
+
+      // ============================
+      // DELIVERY DATE & TIME
+      // ============================
+      deliveryDateTime: formattedDeliveryDateTime,
 
       file: null,
 
@@ -493,7 +527,7 @@ const ListUploads = () => {
       payload.append("deliveryAddress", editingId ? "" : "Admin Upload");
 
       payload.append("items", formData.items);
-
+      payload.append("deliveryDateTime", formData.deliveryDateTime);
       payload.append("price", formData.price);
 
       payload.append("serviceCharge", formData.serviceCharge);
@@ -587,6 +621,30 @@ const ListUploads = () => {
     (total, item) => total + Number(item.downloads || 0),
     0,
   );
+
+  const getStatusDateTime = (status) => {
+    if (!downloadInvoiceModal) {
+      return "Pending";
+    }
+
+    const history = downloadInvoiceModal.statusHistory || [];
+
+    const statusItem = history.find((item) => item.status === status);
+
+    if (!statusItem?.date) {
+      return "Pending";
+    }
+
+    return new Date(statusItem.date).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+  };
 
   // ======================================================
   // UI
@@ -1225,13 +1283,18 @@ const ListUploads = () => {
 
       {/* ================= MODAL 1: UPLOAD / EDIT LIST ================= */}
 
+      {/* ================= MODAL: UPLOAD / EDIT LIST ================= */}
+
       {isUploadModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content modal-custom-styled">
+            {/* ================= HEADER ================= */}
+
             <div className="modal-header">
               <h3>{editingId ? "Edit List Details" : "Upload New List"}</h3>
 
               <button
+                type="button"
                 className="close-btn"
                 onClick={() => setIsUploadModalOpen(false)}
               >
@@ -1239,7 +1302,11 @@ const ListUploads = () => {
               </button>
             </div>
 
+            {/* ================= FORM ================= */}
+
             <form onSubmit={handleUploadSubmit} className="ref-modal-form">
+              {/* ================= LIST TITLE ================= */}
+
               <div className="form-group">
                 <label>
                   List Title <span className="req-asterisk">*</span>
@@ -1258,6 +1325,8 @@ const ListUploads = () => {
                   }
                 />
               </div>
+
+              {/* ================= UPLOADED BY ================= */}
 
               <div className="form-group">
                 <label>
@@ -1278,6 +1347,8 @@ const ListUploads = () => {
                 />
               </div>
 
+              {/* ================= PHONE ================= */}
+
               <div className="form-group">
                 <label>Phone Number</label>
 
@@ -1293,6 +1364,8 @@ const ListUploads = () => {
                   }
                 />
               </div>
+
+              {/* ================= ITEMS ================= */}
 
               <div className="form-group">
                 <label>
@@ -1313,6 +1386,30 @@ const ListUploads = () => {
                   }
                 />
               </div>
+
+              {/* ============================================= */}
+              {/* DELIVERY DATE & TIME */}
+              {/* ============================================= */}
+
+              <div className="form-group">
+                <label>
+                  Delivery Date & Time <span className="req-asterisk">*</span>
+                </label>
+
+                <input
+                  type="datetime-local"
+                  required
+                  value={formData.deliveryDateTime}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      deliveryDateTime: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              {/* ================= FILE ================= */}
 
               <div className="form-group">
                 <label>
@@ -1344,6 +1441,8 @@ const ListUploads = () => {
                 </div>
               </div>
 
+              {/* ================= PRICE ================= */}
+
               <div className="form-group">
                 <label>
                   Price <span className="req-asterisk">*</span>
@@ -1366,6 +1465,8 @@ const ListUploads = () => {
                   />
                 </div>
               </div>
+
+              {/* ================= SERVICE CHARGE ================= */}
 
               <div className="form-group">
                 <label>
@@ -1390,6 +1491,8 @@ const ListUploads = () => {
                 </div>
               </div>
 
+              {/* ================= HANDLING CHARGE ================= */}
+
               <div className="form-group">
                 <label>
                   Handling Charge <span className="req-asterisk">*</span>
@@ -1412,6 +1515,8 @@ const ListUploads = () => {
                   />
                 </div>
               </div>
+
+              {/* ================= GST ================= */}
 
               <div className="form-group">
                 <label>
@@ -1436,11 +1541,15 @@ const ListUploads = () => {
                 </div>
               </div>
 
+              {/* ================= FOOTER ================= */}
+
               <div className="modal-footer ref-modal-footer">
                 <button
                   type="button"
                   className="btn-ref-cancel"
-                  onClick={() => setIsUploadModalOpen(false)}
+                  onClick={() => {
+                    setIsUploadModalOpen(false);
+                  }}
                   disabled={saving}
                 >
                   Cancel
@@ -1617,12 +1726,16 @@ const ListUploads = () => {
         </div>
       )}
 
-      {/* ================= MODAL 3: INVOICE / RECEIPT DOWNLOAD ================= */}
+      {/* ====================================================== */}
+      {/* MODAL 3: INVOICE / RECEIPT DOWNLOAD */}
+      {/* ====================================================== */}
 
       {downloadInvoiceModal && (
         <div className="modal-overlay print-modal-overlay">
           <div className="invoice-container printable-area">
-            {/* Non-printable Control Header */}
+            {/* ================================================== */}
+            {/* NON-PRINTABLE CONTROL HEADER */}
+            {/* ================================================== */}
 
             <div className="invoice-controls no-print">
               <span>Receipt Preview</span>
@@ -1631,6 +1744,7 @@ const ListUploads = () => {
                 <button
                   className="btn-primary print-trigger-btn"
                   onClick={handlePrintReceipt}
+                  type="button"
                 >
                   🖨️ Print / Save PDF
                 </button>
@@ -1638,15 +1752,20 @@ const ListUploads = () => {
                 <button
                   className="close-btn modal-close-icon"
                   onClick={() => setDownloadInvoiceModal(null)}
+                  type="button"
                 >
                   ×
                 </button>
               </div>
             </div>
 
-            {/* Receipt Header Branding */}
+            {/* ================================================== */}
+            {/* RECEIPT HEADER */}
+            {/* ================================================== */}
 
             <div className="invoice-header">
+              {/* BRAND */}
+
               <div className="brand-box">
                 <div className="brand-logo">🛍️</div>
 
@@ -1661,6 +1780,8 @@ const ListUploads = () => {
                 </div>
               </div>
 
+              {/* INVOICE INFORMATION */}
+
               <div className="invoice-meta-box">
                 <h1 className="invoice-title-badge">INVOICE / RECEIPT</h1>
 
@@ -1668,6 +1789,8 @@ const ListUploads = () => {
 
                 <table className="meta-table">
                   <tbody>
+                    {/* INVOICE DATE */}
+
                     <tr>
                       <td>Invoice Date</td>
 
@@ -1681,6 +1804,8 @@ const ListUploads = () => {
                           : "N/A"}
                       </td>
                     </tr>
+
+                    {/* INVOICE TIME */}
 
                     <tr>
                       <td>Invoice Time</td>
@@ -1696,6 +1821,8 @@ const ListUploads = () => {
                       </td>
                     </tr>
 
+                    {/* RECEIPT NUMBER */}
+
                     <tr>
                       <td>Receipt No.</td>
 
@@ -1704,6 +1831,8 @@ const ListUploads = () => {
                       <td>{downloadInvoiceModal.receiptNo || "N/A"}</td>
                     </tr>
 
+                    {/* PAYMENT / ORDER STATUS */}
+
                     <tr>
                       <td>Payment Status</td>
 
@@ -1711,13 +1840,15 @@ const ListUploads = () => {
 
                       <td>
                         <span className="badge-green-pill">
-                          {downloadInvoiceModal.status}
+                          {downloadInvoiceModal.status || "Received"}
                         </span>
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
+
+              {/* CONFIRMED SEAL */}
 
               <div className="confirmed-seal">
                 <span>ORDER CONFIRMED</span>
@@ -1726,7 +1857,9 @@ const ListUploads = () => {
               </div>
             </div>
 
-            {/* Order Banner */}
+            {/* ================================================== */}
+            {/* ORDER ID BANNER */}
+            {/* ================================================== */}
 
             <div className="order-id-banner">
               <div className="order-id-icon">📄</div>
@@ -1747,12 +1880,20 @@ const ListUploads = () => {
               <div className="handwritten-thankyou">Thank You! ♥</div>
             </div>
 
-            {/* Middle Grid */}
+            {/* ================================================== */}
+            {/* INVOICE BODY */}
+            {/* ================================================== */}
 
             <div className="invoice-body-grid">
-              {/* Left Column */}
+              {/* ================================================= */}
+              {/* LEFT COLUMN */}
+              {/* ================================================= */}
 
               <div className="invoice-left-col">
+                {/* =============================================== */}
+                {/* CUSTOMER DETAILS */}
+                {/* =============================================== */}
+
                 <div className="info-block">
                   <h4>👤 CUSTOMER DETAILS</h4>
 
@@ -1764,7 +1905,7 @@ const ListUploads = () => {
                         <td>:</td>
 
                         <td>
-                          <strong>{downloadInvoiceModal.user}</strong>
+                          <strong>{downloadInvoiceModal.user || "N/A"}</strong>
                         </td>
                       </tr>
 
@@ -1773,7 +1914,7 @@ const ListUploads = () => {
 
                         <td>:</td>
 
-                        <td>{downloadInvoiceModal.phone}</td>
+                        <td>{downloadInvoiceModal.phone || "N/A"}</td>
                       </tr>
 
                       <tr>
@@ -1781,11 +1922,17 @@ const ListUploads = () => {
 
                         <td>:</td>
 
-                        <td>customer@example.com</td>
+                        <td>
+                          {downloadInvoiceModal.email || "customer@example.com"}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
+
+                {/* =============================================== */}
+                {/* DELIVERY ADDRESS */}
+                {/* =============================================== */}
 
                 <div className="info-block">
                   <h4>📍 DELIVERY ADDRESS</h4>
@@ -1796,28 +1943,38 @@ const ListUploads = () => {
                   </p>
                 </div>
 
+                {/* =============================================== */}
+                {/* UPLOADED LIST */}
+                {/* =============================================== */}
+
                 <div className="info-block">
                   <h4>📋 UPLOADED LIST</h4>
 
                   <table className="details-table">
                     <tbody>
+                      {/* LIST NAME */}
+
                       <tr>
                         <td>List Name</td>
 
                         <td>:</td>
 
                         <td>
-                          <strong>{downloadInvoiceModal.name}</strong>
+                          <strong>{downloadInvoiceModal.name || "N/A"}</strong>
                         </td>
                       </tr>
+
+                      {/* FILE NAME */}
 
                       <tr>
                         <td>File Name</td>
 
                         <td>:</td>
 
-                        <td>{downloadInvoiceModal.file}</td>
+                        <td>{downloadInvoiceModal.file || "N/A"}</td>
                       </tr>
+
+                      {/* FILE TYPE */}
 
                       <tr>
                         <td>File Type</td>
@@ -1835,6 +1992,8 @@ const ListUploads = () => {
                         </td>
                       </tr>
 
+                      {/* UPLOAD STATUS */}
+
                       <tr>
                         <td>Upload Status</td>
 
@@ -1849,10 +2008,12 @@ const ListUploads = () => {
                     </tbody>
                   </table>
 
+                  {/* VIEW FILE */}
+
                   {downloadInvoiceModal.fileUrl && (
                     <button
                       type="button"
-                      className="btn-primary"
+                      className="btn-primary no-print"
                       onClick={() =>
                         handleOpenUploadedFile(downloadInvoiceModal)
                       }
@@ -1861,6 +2022,10 @@ const ListUploads = () => {
                     </button>
                   )}
                 </div>
+
+                {/* =============================================== */}
+                {/* ESTIMATED RESPONSE TIME */}
+                {/* =============================================== */}
 
                 <div className="response-time-card">
                   <span className="clock-icon">🕒</span>
@@ -1873,9 +2038,15 @@ const ListUploads = () => {
                 </div>
               </div>
 
-              {/* Right Column - Billing Calculations */}
+              {/* ================================================= */}
+              {/* RIGHT COLUMN */}
+              {/* ================================================= */}
 
               <div className="invoice-right-col">
+                {/* =============================================== */}
+                {/* PRICE TABLE */}
+                {/* =============================================== */}
+
                 <table className="price-breakdown-table">
                   <thead>
                     <tr>
@@ -1892,6 +2063,8 @@ const ListUploads = () => {
                   </thead>
 
                   <tbody>
+                    {/* ITEMS TOTAL */}
+
                     <tr>
                       <td>Items Total (As per List)</td>
 
@@ -1903,6 +2076,8 @@ const ListUploads = () => {
                         ₹{Number(downloadInvoiceModal.price || 0).toFixed(2)}
                       </td>
                     </tr>
+
+                    {/* SERVICE CHARGE */}
 
                     <tr>
                       <td>Service Charge</td>
@@ -1919,6 +2094,8 @@ const ListUploads = () => {
                       </td>
                     </tr>
 
+                    {/* HANDLING */}
+
                     <tr>
                       <td>Handling & Packing</td>
 
@@ -1934,6 +2111,8 @@ const ListUploads = () => {
                       </td>
                     </tr>
 
+                    {/* DELIVERY */}
+
                     <tr>
                       <td>Delivery Charge</td>
 
@@ -1946,17 +2125,32 @@ const ListUploads = () => {
                       </td>
                     </tr>
 
+                    {/* GST */}
+
                     <tr>
-                      <td>GST ({downloadInvoiceModal.gst || 0}%)</td>
+                      <td>
+                        GST ({downloadInvoiceModal.gst || 0}
+                        %)
+                      </td>
 
                       <td
                         style={{
                           textAlign: "right",
                         }}
                       >
-                        ₹0.00
+                        ₹
+                        {(
+                          (Number(downloadInvoiceModal.price || 0) +
+                            Number(downloadInvoiceModal.serviceCharge || 0) +
+                            Number(downloadInvoiceModal.handlingCharge || 0)) *
+                          (Number(downloadInvoiceModal.gst || 0) / 100)
+                        ).toFixed(2)}
                       </td>
                     </tr>
+
+                    {/* =========================================== */}
+                    {/* TOTAL */}
+                    {/* =========================================== */}
 
                     <tr className="total-row">
                       <td>TOTAL AMOUNT</td>
@@ -1973,12 +2167,20 @@ const ListUploads = () => {
                           Number(downloadInvoiceModal.price || 0) +
                           Number(downloadInvoiceModal.serviceCharge || 0) +
                           Number(downloadInvoiceModal.handlingCharge || 0) +
-                          30
+                          30 +
+                          (Number(downloadInvoiceModal.price || 0) +
+                            Number(downloadInvoiceModal.serviceCharge || 0) +
+                            Number(downloadInvoiceModal.handlingCharge || 0)) *
+                            (Number(downloadInvoiceModal.gst || 0) / 100)
                         ).toFixed(2)}
                       </td>
                     </tr>
                   </tbody>
                 </table>
+
+                {/* =============================================== */}
+                {/* AMOUNT RECEIVED */}
+                {/* =============================================== */}
 
                 <div className="amount-received-card">
                   <div className="wallet-icon">👛</div>
@@ -1992,11 +2194,19 @@ const ListUploads = () => {
                         Number(downloadInvoiceModal.price || 0) +
                         Number(downloadInvoiceModal.serviceCharge || 0) +
                         Number(downloadInvoiceModal.handlingCharge || 0) +
-                        30
+                        30 +
+                        (Number(downloadInvoiceModal.price || 0) +
+                          Number(downloadInvoiceModal.serviceCharge || 0) +
+                          Number(downloadInvoiceModal.handlingCharge || 0)) *
+                          (Number(downloadInvoiceModal.gst || 0) / 100)
                       ).toFixed(2)}
                     </h3>
                   </div>
                 </div>
+
+                {/* =============================================== */}
+                {/* TRUST NOTE */}
+                {/* =============================================== */}
 
                 <p className="trust-note">
                   Thank you for trusting Groicessary Sathi.
@@ -2006,102 +2216,137 @@ const ListUploads = () => {
               </div>
             </div>
 
-            {/* Order Progress Line */}
+            {/* ================================================== */}
+            {/* ORDER PROGRESS */}
+            {/* ================================================== */}
 
-            <div className="order-progress-wrapper">
-              <h4 className="progress-title">ORDER PROGRESS</h4>
+            {/* ====================================================== */}
+            {/* ORDER PROGRESS */}
+            {/* ====================================================== */}
 
-              <div className="progress-steps">
-                <div className="step active">
-                  <div className="step-icon">📋</div>
+            <div className="order-progress-section">
+              <h4 className="order-progress-title">ORDER PROGRESS</h4>
+
+              <div className="order-progress">
+                {/* =============================================== */}
+                {/* RECEIVED */}
+                {/* =============================================== */}
+
+                <div
+                  className={`progress-step ${
+                    downloadInvoiceModal.status === "Received"
+                      ? "active"
+                      : downloadInvoiceModal.status === "Cancelled"
+                        ? "pending"
+                        : "completed"
+                  }`}
+                >
+                  <div className="progress-icon">📋</div>
 
                   <strong>Received</strong>
 
-                  <small>
-                    {downloadInvoiceModal.createdAt
-                      ? new Date(
-                          downloadInvoiceModal.createdAt,
-                        ).toLocaleString()
-                      : ""}
-                  </small>
+                  <small>{getStatusDateTime("Received")}</small>
                 </div>
 
-                <div className="step-line">➔</div>
+                <div className="progress-arrow">➜</div>
+
+                {/* =============================================== */}
+                {/* REVIEWING LIST */}
+                {/* =============================================== */}
 
                 <div
-                  className={`step ${
-                    [
-                      "Reviewing List",
-                      "Packing",
-                      "Out for Delivery",
-                      "Delivered",
-                    ].includes(downloadInvoiceModal.status)
+                  className={`progress-step ${
+                    downloadInvoiceModal.status === "Reviewing List"
                       ? "active"
-                      : ""
+                      : ["Packing", "Out for Delivery", "Delivered"].includes(
+                            downloadInvoiceModal.status,
+                          )
+                        ? "completed"
+                        : "pending"
                   }`}
                 >
-                  <div className="step-icon">🔍</div>
+                  <div className="progress-icon">🔍</div>
 
                   <strong>Reviewing List</strong>
 
-                  <small>
-                    {downloadInvoiceModal.status === "Reviewing List"
-                      ? "In Progress"
-                      : "Pending"}
-                  </small>
+                  <small>{getStatusDateTime("Reviewing List")}</small>
                 </div>
 
-                <div className="step-line">➔</div>
+                <div className="progress-arrow">➜</div>
+
+                {/* =============================================== */}
+                {/* PACKING */}
+                {/* =============================================== */}
 
                 <div
-                  className={`step ${
-                    ["Packing", "Out for Delivery", "Delivered"].includes(
-                      downloadInvoiceModal.status,
-                    )
+                  className={`progress-step ${
+                    downloadInvoiceModal.status === "Packing"
                       ? "active"
-                      : ""
+                      : ["Out for Delivery", "Delivered"].includes(
+                            downloadInvoiceModal.status,
+                          )
+                        ? "completed"
+                        : "pending"
                   }`}
                 >
-                  <div className="step-icon">📦</div>
+                  <div className="progress-icon">📦</div>
 
                   <strong>Packing</strong>
 
-                  <small>
-                    {downloadInvoiceModal.status === "Packing"
-                      ? "In Progress"
-                      : "Pending"}
-                  </small>
+                  <small>{getStatusDateTime("Packing")}</small>
                 </div>
 
-                <div className="step-line">➔</div>
+                <div className="progress-arrow">➜</div>
+
+                {/* =============================================== */}
+                {/* OUT FOR DELIVERY */}
+                {/* =============================================== */}
 
                 <div
-                  className={`step ${
-                    ["Out for Delivery", "Delivered"].includes(
-                      downloadInvoiceModal.status,
-                    )
+                  className={`progress-step ${
+                    downloadInvoiceModal.status === "Out for Delivery"
                       ? "active"
-                      : ""
+                      : downloadInvoiceModal.status === "Delivered"
+                        ? "completed"
+                        : "pending"
                   }`}
                 >
-                  <div className="step-icon">🛵</div>
+                  <div className="progress-icon">🛵</div>
 
                   <strong>Out for Delivery</strong>
 
-                  <small>
-                    {downloadInvoiceModal.status === "Out for Delivery"
-                      ? "In Progress"
-                      : downloadInvoiceModal.status === "Delivered"
-                        ? "Delivered"
-                        : "Pending"}
-                  </small>
+                  <small>{getStatusDateTime("Out for Delivery")}</small>
+                </div>
+
+                <div className="progress-arrow">➜</div>
+
+                {/* =============================================== */}
+                {/* DELIVERED */}
+                {/* =============================================== */}
+
+                <div
+                  className={`progress-step ${
+                    downloadInvoiceModal.status === "Delivered"
+                      ? "completed"
+                      : "pending"
+                  }`}
+                >
+                  <div className="progress-icon">🏠</div>
+
+                  <strong>Delivered</strong>
+
+                  <small>{getStatusDateTime("Delivered")}</small>
                 </div>
               </div>
             </div>
 
-            {/* Receipt Footer */}
+            {/* ================================================== */}
+            {/* RECEIPT FOOTER */}
+            {/* ================================================== */}
 
             <div className="invoice-footer-bar">
+              {/* SUPPORT */}
+
               <div className="footer-support-card">
                 <h5>Need Help?</h5>
 
@@ -2112,6 +2357,8 @@ const ListUploads = () => {
                 <p>🌐 www.groicessarysathi.com</p>
               </div>
 
+              {/* GRATITUDE */}
+
               <div className="footer-gratitude">
                 <h3>Thank You! ♥</h3>
 
@@ -2119,6 +2366,8 @@ const ListUploads = () => {
 
                 <div className="stars">★★★★★</div>
               </div>
+
+              {/* QR CODE */}
 
               <div className="footer-qr-card">
                 <small>Scan to Track Your Order</small>
@@ -2131,6 +2380,10 @@ const ListUploads = () => {
                 </div>
               </div>
             </div>
+
+            {/* ================================================== */}
+            {/* GREEN BOTTOM STRIP */}
+            {/* ================================================== */}
 
             <div className="green-bottom-strip">
               <span>🔒 100% Secure & Private</span>
