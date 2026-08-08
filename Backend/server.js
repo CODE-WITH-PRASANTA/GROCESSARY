@@ -16,6 +16,7 @@ const listUploadRoutes = require(
 const brandRoutes = require(
   "./routes/brandRoutes"
 );
+const coldLeadRoutes = require("./routes/coldLeadRoutes");
 
 
 // Load environment variables
@@ -49,6 +50,7 @@ app.use(
 );
 
 app.use('/api/brands', require('./routes/brandRoutes'));
+app.use("/api/cold-leads", coldLeadRoutes);
 
 
 
