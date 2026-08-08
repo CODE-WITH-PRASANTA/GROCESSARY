@@ -9,7 +9,7 @@
 }
 
 /* ==========================================================================
-   BREADCRUMB / HERO BANNER SECTION
+   BREADCRUMB / HERO BANNER SECTION (#f2f3f5 Light Gray Background matching Contact Us & Terms)
    ========================================================================== */
 .privacy-policy-breadcrumb {
   background-color: #f2f3f5;
@@ -72,20 +72,20 @@
 
 /* Banner Title (H1) */
 .privacy-policy-banner-title {
-  font-size: 40px;
+  font-size: 52px;
   font-weight: 800;
   color: #102a27;
   margin: 0 0 20px 0;
-  letter-spacing: -1px;
+  letter-spacing: -1.2px;
   line-height: 1.1;
 }
 
 /* Banner Description */
 .privacy-policy-banner-desc {
-  font-size: 16px;
-  line-height: 1.6;
-  color: #2c3e3b;
-  max-width: 540px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: #3b4d4a;
+  max-width: 580px;
   margin: 0;
   font-weight: 500;
 }
@@ -106,29 +106,29 @@
 
 /* Primary Title in Main Area (H2) */
 .privacy-policy-section-title {
-  font-size: 45px;
+  font-size: 40px;
   font-weight: 800;
   color: #102a27;
-  letter-spacing: -1.2px;
+  letter-spacing: -1px;
   margin: 0 0 28px 0;
   line-height: 1.1;
 }
 
 /* Intro paragraph (bold) */
 .privacy-policy-intro-text {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  line-height: 1.65;
+  line-height: 1.7;
   color: #102a27;
   margin-bottom: 24px;
 }
 
 /* Standard Paragraph */
 .privacy-policy-text {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
-  line-height: 1.65;
-  color: #2c3e3b;
+  line-height: 1.7;
+  color: #3b4d4a;
   margin-bottom: 20px;
 }
 
@@ -140,12 +140,13 @@
 
 /* Subtitle Heading (H3) */
 .privacy-policy-subtitle {
-  font-size: 38px;
+  font-size: 20px;
   font-weight: 800;
   color: #102a27;
-  letter-spacing: -0.8px;
-  margin: 44px 0 24px 0;
-  line-height: 1.2;
+  letter-spacing: -0.3px;
+  margin: 40px 0 16px 0;
+  line-height: 1.3;
+  text-transform: uppercase;
 }
 
 /* Bullet Points */
@@ -156,10 +157,10 @@
 }
 
 .privacy-policy-list li {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   line-height: 1.7;
-  color: #2c3e3b;
+  color: #3b4d4a;
   margin-bottom: 10px;
 }
 
@@ -178,14 +179,17 @@
     padding: 50px 20px;
   }
 
-  .privacy-policy-banner-title,
+  .privacy-policy-banner-title {
+    font-size: 40px;
+  }
+
   .privacy-policy-section-title {
-    font-size: 38px;
+    font-size: 34px;
   }
 
   .privacy-policy-subtitle {
-    font-size: 28px;
-    margin: 32px 0 18px 0;
+    font-size: 18px;
+    margin: 32px 0 16px 0;
   }
 
   .privacy-policy-banner-desc,
@@ -204,15 +208,17 @@
     padding: 36px 16px;
   }
 
-  .privacy-policy-banner-title,
-  .privacy-policy-section-title {
-    font-size: 30px;
+  .privacy-policy-banner-title {
+    font-size: 32px;
     letter-spacing: -0.5px;
   }
 
+  .privacy-policy-section-title {
+    font-size: 28px;
+  }
+
   .privacy-policy-subtitle {
-    font-size: 22px;
-    letter-spacing: -0.3px;
+    font-size: 16px;
   }
 
   .privacy-policy-banner-desc,

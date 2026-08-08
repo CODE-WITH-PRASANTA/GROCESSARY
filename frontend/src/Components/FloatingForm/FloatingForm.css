@@ -1,0 +1,242 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+/* ==========================================================================
+   1. OVERLAY & BACKDROP BLUR
+   ========================================================================== */
+.floating-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(16, 42, 39, 0.6); /* Grocery Sathi dark theme tint */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  z-index: 99999;
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* ==========================================================================
+   2. MAIN FORM CARD CONTAINER
+   ========================================================================== */
+.floating-form-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 20px 35px -5px rgba(16, 42, 39, 0.15), 0 8px 15px -6px rgba(16, 42, 39, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Close Button */
+.floating-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 34px;
+  height: 34px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  color: #102a27;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.floating-close-btn:hover {
+  background: #e2e8f0;
+  color: #0d1b1a;
+}
+
+/* ==========================================================================
+   3. HEADER SECTION
+   ========================================================================== */
+.floating-form-header {
+  margin-bottom: 20px;
+  text-align: center;
+  padding-right: 24px;
+}
+
+.floating-form-header h3 {
+  margin: 0 0 6px 0;
+  font-size: 22px;
+  font-weight: 900;
+  color: #102a27;
+  letter-spacing: -0.4px;
+}
+
+.floating-form-header p {
+  margin: 0;
+  font-size: 13.5px;
+  color: #64748b;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   4. FORM ELEMENTS & INPUTS
+   ========================================================================== */
+.floating-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #102a27;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #102a27;
+  background-color: #f8fafc;
+  box-sizing: border-box;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+
+/* Prevents iOS Safari automatic zoom on focus */
+@media screen and (max-width: 768px) {
+  .form-group input,
+  .form-group textarea {
+    font-size: 16px;
+  }
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #102a27;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(16, 42, 39, 0.12);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 65px;
+}
+
+/* ==========================================================================
+   5. ACTION BUTTONS LAYOUT
+   ========================================================================== */
+.action-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.btn-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 6px;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-action:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.btn-action:active {
+  transform: translateY(0);
+}
+
+.btn-submit {
+  background-color: #ffc220;
+  color: #102a27;
+  box-shadow: 0 4px 12px rgba(255, 194, 32, 0.3);
+}
+
+.btn-call {
+  background-color: #102a27;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 42, 39, 0.2);
+}
+
+.btn-whatsapp {
+  background-color: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
+}
+
+/* ==========================================================================
+   6. RESPONSIVE BREAKPOINTS & ANIMATIONS
+   ========================================================================== */
+@media (max-width: 480px) {
+  .floating-form-card {
+    padding: 18px 16px;
+    border-radius: 16px;
+  }
+
+  .action-buttons {
+    grid-template-columns: 1fr; /* Stacks buttons neatly on compact mobile devices */
+    gap: 8px;
+  }
+
+  .btn-action {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

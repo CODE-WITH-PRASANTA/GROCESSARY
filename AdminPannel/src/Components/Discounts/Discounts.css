@@ -1,0 +1,588 @@
+/* Base Layout & General Reset */
+.dsc-container {
+  padding: 24px;
+  background-color: #f8fafc;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1e293b;
+  box-sizing: border-box;
+}
+
+.dsc-container * {
+  box-sizing: border-box;
+}
+
+/* 1. Top Cards Grid */
+.dsc-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dsc-stat-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.dsc-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+.dsc-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.dsc-stat-icon.green { background: #e6f4ea; color: #1e8e3e; }
+.dsc-stat-icon.blue { background: #e8f0fe; color: #1a73e8; }
+.dsc-stat-icon.orange { background: #fef7e0; color: #f2994a; }
+.dsc-stat-icon.purple { background: #f3e8fd; color: #9333ea; }
+
+.dsc-stat-info h2 {
+  margin: 4px 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dsc-stat-title {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.dsc-stat-sub {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+/* 2. Main 50/50 Split Layout */
+.dsc-main-content {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.dsc-form-section,
+.dsc-table-section {
+  flex: 1 1 50%;
+  width: 50%;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Form Styling */
+.dsc-form-section h3,
+.dsc-table-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.dsc-subtitle {
+  margin: 4px 0 20px 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.dsc-form-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dsc-form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #334155;
+}
+
+.dsc-form-group label .req {
+  color: #ef4444;
+}
+
+.dsc-form-group input[type="text"],
+.dsc-form-group input[type="number"],
+.dsc-form-group input[type="datetime-local"],
+.dsc-form-group select,
+.dsc-form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.dsc-form-group input:focus,
+.dsc-form-group select:focus,
+.dsc-form-group textarea:focus {
+  border-color: #004d40;
+}
+
+.dsc-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.dsc-radio-group {
+  display: flex;
+  gap: 20px;
+}
+
+.dsc-radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dsc-input-suffix {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.dsc-input-suffix span {
+  position: absolute;
+  right: 12px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+/* Upload Banner Box */
+.dsc-upload-box {
+  border: 2px dashed #cbd5e1;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  background: #f8fafc;
+  transition: background 0.2s;
+}
+
+.dsc-upload-box:hover {
+  background: #f1f5f9;
+}
+
+.dsc-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.dsc-upload-icon {
+  font-size: 24px;
+  color: #004d40;
+}
+
+.dsc-banner-preview img {
+  margin-top: 10px;
+  max-width: 100%;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.dsc-form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.dsc-form-row .dsc-form-group {
+  flex: 1;
+}
+
+/* Status Toggle */
+.dsc-status-toggle {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.dsc-btn-toggle {
+  border: none;
+  background: transparent;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.dsc-btn-toggle.active {
+  background: #ffffff;
+  color: #004d40;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.dsc-char-count {
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: right;
+  margin-top: 2px;
+}
+
+.dsc-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.dsc-btn-reset {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #475569;
+}
+
+.dsc-btn-save {
+  background: #004d40;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dsc-btn-save:hover {
+  background: #00332c;
+}
+
+/* 3. Table Styling */
+.dsc-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.dsc-table-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.dsc-filter-box {
+  display: flex;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 10px;
+  gap: 6px;
+  background: #fff;
+}
+
+.dsc-filter-box select {
+  border: none;
+  outline: none;
+  font-size: 12px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dsc-btn-icon {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #475569;
+}
+
+.dsc-btn-icon:hover {
+  background: #f1f5f9;
+}
+
+.dsc-table-wrapper {
+  overflow-x: auto;
+}
+
+.dsc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.dsc-table th {
+  text-align: left;
+  padding: 10px 8px;
+  color: #64748b;
+  font-weight: 600;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dsc-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+/* Badge Banner in Table */
+.dsc-item-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dsc-badge-preview {
+  width: 60px;
+  height: 36px;
+  border-radius: 4px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 8px;
+  text-align: center;
+  line-height: 1;
+  font-weight: bold;
+}
+
+.dsc-item-details strong {
+  display: block;
+  color: #1e293b;
+}
+
+.dsc-item-details span {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.dsc-duration span {
+  display: block;
+}
+
+.dsc-duration small {
+  color: #94a3b8;
+}
+
+.dsc-status-tag {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.dsc-status-tag.active { background: #dcfce7; color: #15803d; }
+.dsc-status-tag.upcoming { background: #fef3c7; color: #b45309; }
+.dsc-status-tag.expired { background: #f1f5f9; color: #64748b; }
+.dsc-status-tag.inactive { background: #fee2e2; color: #b91c1c; }
+
+/* Action Buttons & Dropdown */
+.dsc-action-btns {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.dsc-act-btn {
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.dsc-act-btn.edit { background: #004d40; color: #fff; }
+.dsc-act-btn.delete { background: #fef2f2; color: #ef4444; border: 1px solid #fca5a5; }
+.dsc-act-btn.menu { background: #f1f5f9; color: #475569; }
+
+.dsc-dropdown-container {
+  position: relative;
+}
+
+.dsc-dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 32px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  width: 100px;
+}
+
+.dsc-dropdown-menu button {
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.dsc-dropdown-menu button:hover {
+  background: #f8fafc;
+}
+
+/* Pagination */
+.dsc-pagination-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.dsc-pagination {
+  display: flex;
+  gap: 4px;
+}
+
+.dsc-pagination button {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.dsc-pagination button.active {
+  background: #004d40;
+  color: #fff;
+  border-color: #004d40;
+}
+
+.dsc-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 4. Lower Insights Section */
+.dsc-insights-section {
+  margin-top: 24px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  border: 1px solid #e2e8f0;
+}
+
+.dsc-insights-title {
+  margin: 0 0 16px 0;
+  color: #004d40;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dsc-insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.dsc-insight-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.dsc-insight-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border-color: #cbd5e1;
+}
+
+.dsc-insight-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.dsc-insight-icon.green { background: #e6f4ea; color: #1e8e3e; }
+
+.dsc-insight-label {
+  font-size: 11px;
+  color: #64748b;
+  display: block;
+}
+
+.dsc-insight-value {
+  margin: 2px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dsc-insight-card small {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.dsc-empty {
+  text-align: center;
+  padding: 24px !important;
+  color: #94a3b8;
+}
+
+/* 5. Responsive Behavior */
+@media (max-width: 1024px) {
+  .dsc-main-content {
+    flex-direction: column;
+  }
+  
+  .dsc-form-section,
+  .dsc-table-section {
+    width: 100%;
+    flex: none;
+  }
+}

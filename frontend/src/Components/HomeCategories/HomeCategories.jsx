@@ -11,65 +11,75 @@ const HomeCategories = () => {
   const categories = [
     {
       id: 'bakers',
-      title: 'Bakers',
-      description: 'our menu features all of the best fruits and vegetables in the market. With just a slide of your finger.',
+      title: 'Bakery & Breads',
+      description: 'Explore Grocery Sathi’s freshly baked artisan breads, pastries, and treats made with wholesome daily ingredients.',
       image: bakersImg,
       link: '/category/bakers'
     },
     {
       id: 'fruits',
-      title: 'Fruits',
-      description: "So whether you're looking for fresh produce meals, Fruits has you covered!",
+      title: 'Fresh Fruits',
+      description: "Enjoy sweet, farm-fresh seasonal fruits packed with natural vitamins for healthy living delivered straight to your door.",
       image: fruitsImg,
       link: '/category/fruits'
     },
     {
       id: 'vegetables',
-      title: 'Vegetables',
-      description: 'Vegetables has the perfect healthy option for you. crunchy bell peppers, earthy mushrooms,',
+      title: 'Organic Vegetables',
+      description: 'Discover crunchy bell peppers, earthy mushrooms, and 100% fresh organic vegetables for your daily nutritious meals.',
       image: vegetablesImg,
       link: '/category/vegetables'
     },
     {
       id: 'accessories',
-      title: 'Accessories',
-      description: "you'll never run out of ideas for how to enjoy these amazing fruits & vegetables.",
+      title: 'Grocery Essentials',
+      description: 'Find all your kitchen accessories, household pantry staples, and cooking essentials in one single place.',
       image: accessoriesImg,
       link: '/category/accessories'
     },
   ];
 
-  const handleCategoryClick = (link) => {
-    // Handle navigation logic here (e.g., using react-router useNavigate)
+  const handleCategoryClick = (e, link) => {
+    e.preventDefault();
+    // Replace with standard router navigation if using react-router-dom (e.g., navigate(link))
     window.location.href = link;
   };
 
   return (
-    <section className="HomeCategories">
+    <section className="HomeCategories" aria-labelledby="home-categories-heading">
       <div className="HomeCategories__container">
-        <h2 className="HomeCategories__title">Love our categories</h2>
+        <h2 id="home-categories-heading" className="HomeCategories__title">
+          Explore Grocery Sathi Categories
+        </h2>
         
         <div className="HomeCategories__grid">
           {categories.map((category) => (
-            <div 
+            <article 
               key={category.id} 
               className="HomeCategories__card"
               style={{ backgroundImage: `url(${category.image})` }}
+              role="region"
+              aria-label={category.title}
             >
               {/* Dark overlay for text readability */}
-              <div className="HomeCategories__overlay" />
+              <div className="HomeCategories__overlay" aria-hidden="true" />
 
               <div className="HomeCategories__card-content">
                 <h3 className="HomeCategories__card-title">{category.title}</h3>
                 <p className="HomeCategories__card-description">{category.description}</p>
-                <button 
+                
+                {/* SEO-Friendly Semantic Anchor Link */}
+                <a 
+                  href={category.link}
                   className="HomeCategories__card-button"
-                  onClick={() => handleCategoryClick(category.link)}
+                  onClick={(e) => handleCategoryClick(e, category.link)}
+                  aria-label={`Browse ${category.title} category`}
                 >
-                  Go to Category <span className="HomeCategories__card-button-icon">&rsaquo;</span>
-                </button>
+                  <span>Go to Category</span> 
+                  <span className="HomeCategories__card-button-icon" aria-hidden="true">&rsaquo;</span>
+                </a>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </div>

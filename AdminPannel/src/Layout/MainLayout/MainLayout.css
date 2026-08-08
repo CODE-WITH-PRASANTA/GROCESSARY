@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+
+/* ==========================================================================
+   Step 17, 18, 19, 20: Theme Variables & Reset
+   ========================================================================== */
+:root {
+  /* Theme Colors */
+  --bg-main: #F5F7FA;
+  --bg-sidebar: #08392E;
+  --bg-sidebar-hover: #0D4A3A;
+  --bg-active: #2E8B57;
+  --primary-green: #22C55E;
+  --success: #16A34A;
+  --danger: #EF4444;
+  --orange: #F59E0B;
+  --blue: #2563EB;
+  --text-main: #1E293B;
+  --text-secondary: #64748B;
+  --border-color: #E5E7EB;
+  --card-bg: #FFFFFF;
+
+  /* Fonts */
+  --font-family: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Border Radius */
+  --radius-card: 18px;
+  --radius-btn: 12px;
+  --radius-input: 12px;
+  --radius-popup: 16px;
+
+  /* Shadows */
+  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.05);
+  --shadow-popup: 0 15px 45px rgba(0, 0, 0, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   Step 4 & 15: Main Layout
+   ========================================================================== */
+.MainLayout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--bg-main);
+  overflow: hidden;
+}
+
+.MainContent-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  height: 100vh;
+  transition: margin-left 300ms ease;
+  overflow-y: auto;
+}
+
+/* Desktop Sidebar Offset Adjustment */
+@media (min-width: 1024px) {
+  .MainContent-wrapper.expanded {
+    margin-left: 260px;
+  }
+
+  .MainContent-wrapper.collapsed {
+    margin-left: 80px;
+  }
+}
+
+.MainContent {
+  padding: 86px 24px 24px 24px;
+  flex: 1;
+}
+
+.MainContent-outlet {
+  margin-top: 16px;
+}
+
+/* ==========================================================================
+   Step 16: Breadcrumb Styling
+   ========================================================================== */
+.Breadcrumb {
+  margin-bottom: 20px;
+}
+
+.Breadcrumb-list {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* .Breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+} */
+
+.Breadcrumb-link {
+  text-decoration: none;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+.Breadcrumb-link:hover {
+  color: var(--primary-green);
+}
+
+.Breadcrumb-separator {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.Breadcrumb-current {
+  color: var(--text-main);
+  font-weight: 600;
+}

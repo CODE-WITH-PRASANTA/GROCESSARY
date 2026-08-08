@@ -134,6 +134,17 @@
   margin: 0;
 }
 
+.info-link {
+  color: #102a27;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.info-link:hover {
+  color: #2b6cb0;
+  text-decoration: underline;
+}
+
 /* Form Styling */
 .form-card-wrapper {
   background: #ffffff;

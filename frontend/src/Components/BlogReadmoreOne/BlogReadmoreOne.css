@@ -17,7 +17,7 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  padding: 60px 20px;
+  padding: 70px 20px;
   color: #ffffff;
   text-align: center;
   box-sizing: border-box;
@@ -41,13 +41,13 @@
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
   transition: opacity 0.3s ease;
 }
 
 .blog-readmore-one-arrow-circle {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.6);
   display: flex;
@@ -75,7 +75,7 @@
   justify-content: center;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .blog-readmore-one-badge-featured {
@@ -83,7 +83,7 @@
   color: #102a27;
   font-size: 13px;
   font-weight: 700;
-  padding: 6px 20px;
+  padding: 6px 18px;
   border-radius: 20px;
   transition: background-color 0.3s ease, transform 0.2s ease;
   cursor: pointer;
@@ -101,8 +101,8 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
   transition: color 0.3s ease, background-color 0.3s ease;
 }
 
@@ -111,24 +111,23 @@
 }
 
 .blog-readmore-one-meta-pill:hover {
-  color: #0e0d0d;
-  background-color: rgba(241, 199, 33, 0.947);
-  border-radius: 20px;
+  color: #102a27;
+  background-color: #fbbd23;
 }
 
 /* Titles */
 .blog-readmore-one-hero-title {
-  font-size: 48px;
+  font-size: 46px;
   font-weight: 900;
   line-height: 1.15;
-  margin: 0 0 18px 0;
+  margin: 0 0 16px 0;
   letter-spacing: -1px;
   color: #ffffff;
 }
 
 .blog-readmore-one-hero-desc {
-  font-size: 14.5px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.65;
   color: rgba(255, 255, 255, 0.88);
   max-width: 680px;
   margin: 0;
@@ -140,7 +139,7 @@
    ========================================================================== */
 .blog-readmore-one-main {
   width: 100%;
-  padding: 60px 20px;
+  padding: 70px 20px;
   box-sizing: border-box;
 }
 
@@ -148,8 +147,8 @@
   max-width: 1240px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 370px;
-  gap: 40px;
+  grid-template-columns: 1fr 380px;
+  gap: 48px;
 }
 
 /* ==========================================================================
@@ -162,46 +161,51 @@
   align-items: center;
   justify-content: space-between;
   padding-bottom: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid #eaeaea;
 }
 
 .blog-readmore-one-meta-group {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 18px;
   font-size: 14px;
 }
 
 .blog-readmore-one-author {
   font-weight: 900;
-  font-size: 18px;
+  font-size: 17px;
   color: #102a27;
 }
 
 .blog-readmore-one-meta-item {
-  color: #102a27;
+  color: #556663;
   font-weight: 500;
 }
 
 .blog-readmore-one-meta-item strong {
   font-weight: 700;
+  color: #102a27;
 }
 
 /* Share Button */
 .blog-readmore-one-share-btn {
-  background: transparent;
+  background: #f2f3f5;
   border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 14px;
+  gap: 8px;
+  font-size: 13.5px;
   font-weight: 700;
   color: #102a27;
   cursor: pointer;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .blog-readmore-one-share-btn:hover {
+  background-color: #102a27;
   color: #fbbd23;
 }
 
@@ -210,18 +214,19 @@
   font-size: 38px;
   font-weight: 900;
   color: #102a27;
-  line-height: 1.15;
-  margin: 0 0 28px 0;
+  line-height: 1.2;
+  margin: 0 0 24px 0;
   letter-spacing: -0.8px;
 }
 
 /* Featured Image */
 .blog-readmore-one-feature-img-wrapper {
   width: 100%;
-  height: 500px;
+  height: 460px;
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 28px;
+  background-color: #f4f4f4;
 }
 
 .blog-readmore-one-feature-img {
@@ -232,44 +237,47 @@
 
 /* Text Content */
 .blog-readmore-one-text {
-  font-size: 15px;
+  font-size: 15.5px;
   line-height: 1.8;
-  color: #555555;
+  color: #445552;
   margin-bottom: 24px;
   font-weight: 400;
 }
 
 .blog-readmore-one-bold-heading {
-  font-size: 20px;
+  font-size: 21px;
   font-weight: 800;
   color: #102a27;
   line-height: 1.45;
-  margin: 28px 0;
-  letter-spacing: -0.3px;
+  margin: 32px 0 20px 0;
+  letter-spacing: -0.4px;
 }
 
 /* Blockquote */
 .blog-readmore-one-quote {
   position: relative;
   margin: 40px 0;
-  padding-left: 50px;
-  border: none;
+  padding: 24px 28px 24px 60px;
+  background-color: #f9fafb;
+  border-left: 4px solid #fbbd23;
+  border-radius: 0 12px 12px 0;
 }
 
 .blog-readmore-one-quote-icon {
   position: absolute;
-  left: 0;
-  top: -15px;
-  font-size: 70px;
+  left: 20px;
+  top: 10px;
+  font-size: 60px;
   line-height: 1;
   font-family: Georgia, serif;
   color: #102a27;
+  opacity: 0.2;
 }
 
 .blog-readmore-one-quote p {
-  font-size: 22px;
+  font-size: 20px;
   font-style: italic;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.5;
   color: #102a27;
   margin: 0;
@@ -277,19 +285,22 @@
 
 /* Tags Footer */
 .blog-readmore-one-tags {
-  margin-top: 35px;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #eaeaea;
   font-size: 14px;
   color: #102a27;
 }
 
 .blog-readmore-one-tags strong {
   font-weight: 800;
-  margin-right: 6px;
+  margin-right: 8px;
 }
 
 .blog-readmore-one-tag-item {
-  color: #555555;
+  color: #556663;
   cursor: pointer;
+  font-weight: 600;
   transition: color 0.2s ease;
 }
 
@@ -299,22 +310,27 @@
 }
 
 .blog-readmore-one-tag-comma {
-  margin-right: 4px;
-  color: #555555;
+  margin-right: 6px;
+  color: #777777;
 }
 
 /* ==========================================================================
    RIGHT COLUMN: SIDEBAR
    ========================================================================== */
 
+.blog-readmore-one-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
 /* Sidebar Titles */
 .blog-readmore-one-sidebar-title {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 900;
   color: #102a27;
   margin: 0 0 20px 0;
   letter-spacing: -0.5px;
-  margin-top: 85px;
 }
 
 /* Related Article Cards */
@@ -323,7 +339,13 @@
   border-radius: 12px;
   border: 1px solid #eaeaea;
   overflow: hidden;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.blog-readmore-one-related-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(16, 42, 39, 0.07);
 }
 
 .blog-readmore-one-card-img-wrapper {
@@ -331,12 +353,18 @@
   width: 100%;
   height: 180px;
   overflow: hidden;
+  background-color: #f4f4f4;
 }
 
 .blog-readmore-one-card-img-wrapper img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.blog-readmore-one-related-card:hover .blog-readmore-one-card-img-wrapper img {
+  transform: scale(1.04);
 }
 
 .blog-readmore-one-card-tag {
@@ -349,6 +377,7 @@
   font-weight: 700;
   padding: 4px 12px;
   border-radius: 6px;
+  text-transform: lowercase;
 }
 
 .blog-readmore-one-card-body {
@@ -356,7 +385,7 @@
 }
 
 .blog-readmore-one-card-title {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 800;
   color: #102a27;
   margin: 0 0 10px 0;
@@ -368,6 +397,7 @@
   line-height: 1.6;
   color: #556663;
   margin-bottom: 20px;
+  font-weight: 500;
 }
 
 .blog-readmore-one-card-footer {
@@ -383,7 +413,7 @@
   color: #102a27;
   border: none;
   border-radius: 8px;
-  padding: 8px 16px;
+  padding: 8px 14px;
   font-size: 12.5px;
   font-weight: 700;
   cursor: pointer;
@@ -413,6 +443,7 @@
 
 .blog-readmore-one-card-date {
   color: #777777;
+  font-weight: 500;
 }
 
 /* ==========================================================================
@@ -420,19 +451,18 @@
    ========================================================================== */
 .blog-readmore-one-comment-box {
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #eaeaea;
   border-radius: 16px;
   padding: 28px;
-  margin-top: 32px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
 }
 
 .blog-readmore-one-comment-title {
-  font-size: 30px;
+  font-size: 26px;
   font-weight: 900;
   color: #102a27;
-  margin: 0 0 24px 0;
-  letter-spacing: -0.6px;
+  margin: 0 0 20px 0;
+  letter-spacing: -0.5px;
 }
 
 .blog-readmore-one-form-group {
@@ -456,7 +486,7 @@
 
 .blog-readmore-one-input::placeholder,
 .blog-readmore-one-textarea::placeholder {
-  color: #556663;
+  color: #7b8b88;
   font-weight: 500;
 }
 
@@ -510,7 +540,7 @@
 
 @media (max-width: 768px) {
   .blog-readmore-one-hero {
-    padding: 40px 16px;
+    padding: 50px 20px;
   }
 
   .blog-readmore-one-hero-title {
@@ -522,11 +552,11 @@
   }
 
   .blog-readmore-one-bold-heading {
-    font-size: 17px;
+    font-size: 18px;
   }
 
   .blog-readmore-one-quote p {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .blog-readmore-one-author-bar {
@@ -538,11 +568,7 @@
 
 @media (max-width: 480px) {
   .blog-readmore-one-hero-title {
-    font-size: 25px;
-  }
-
-  .blog-readmore-one-hero-meta {
-    gap: 10px;
+    font-size: 26px;
   }
 
   .blog-readmore-one-feature-img-wrapper {
@@ -554,6 +580,6 @@
   }
 
   .blog-readmore-one-comment-title {
-    font-size: 24px;
+    font-size: 22px;
   }
 }
