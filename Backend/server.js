@@ -8,6 +8,10 @@ const connectDB = require("./config/db");
 
 
 
+const bannerRoutes = require('./routes/bannerRoutes');
+
+
+
 
 const listUploadRoutes = require(
   "./routes/listUploadRoutes"
@@ -44,7 +48,8 @@ app.use(
   listUploadRoutes
 );
 
-
+// Routes
+app.use('/api/banners', bannerRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
