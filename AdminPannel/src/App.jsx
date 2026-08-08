@@ -34,6 +34,7 @@ import Discounts from "./Components/Discounts/Discounts";
 
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import Order from "./Pages/Order/Order";
+import ColdLeadManagement from "./Components/ColdLeadManagement/ColdLeadManagement";
 
 const App = () => {
   return (
@@ -47,6 +48,7 @@ const App = () => {
 
           {/* Dashboard */}
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="/coldlead" element={<ColdLeadManagement />} />
 
           {/* Blog & Testimonials */}
           <Route path="blog" element={<BlogPosting />} />

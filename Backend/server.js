@@ -13,6 +13,8 @@ const listUploadRoutes = require(
   "./routes/listUploadRoutes"
 );
 
+const coldLeadRoutes = require("./routes/coldLeadRoutes");
+
 
 // Load environment variables
 dotenv.config();
@@ -43,6 +45,8 @@ app.use(
   "/api/list-upload",
   listUploadRoutes
 );
+
+app.use("/api/cold-leads", coldLeadRoutes);
 
 
 
