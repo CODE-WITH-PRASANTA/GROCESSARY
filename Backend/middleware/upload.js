@@ -12,8 +12,10 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 const allowedMimeTypes = {
   "image/jpeg": ".jpg",
+  "image/jpg": ".jpg",
   "image/png": ".png",
   "image/webp": ".webp",
+  "image/avif": ".avif",
   "application/pdf": ".pdf",
 };
 
@@ -37,10 +39,11 @@ const getFileType = (file) => {
 // CREATE UPLOAD DIRECTORY
 // ======================================================
 
-const createUploadDirectory = (fileType) => {
+const createUploadDirectory = (file) => {
   const now = new Date();
   const year = now.getFullYear().toString();
   const month = String(now.getMonth() + 1).padStart(2, "0");
+  const fileType = getFileType(file);
 
   const uploadDirectory = path.join(
     __dirname,
@@ -73,7 +76,7 @@ const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
   if (!allowedMimeTypes[file.mimetype]) {
     return cb(
-      new Error("Only JPG, JPEG, PNG, WEBP and PDF files are allowed."),
+      new Error("Only JPG, JPEG, PNG, WEBP, AVIF and PDF files are allowed."),
       false
     );
   }
@@ -95,15 +98,17 @@ const upload = multer({
 });
 
 // ======================================================
-// PROCESS & SAVE FILE MIDDLEWARE (Sharp WebP conversion)
+// CONVERT TO WEBP / SAVE FILE MIDDLEWARE
 // ======================================================
 
-const processAndSaveFile = async (req, res, next) => {
-  if (!req.file) return next();
-
+const convertToWebp = async (req, res, next) => {
   try {
+    if (!req.file) {
+      return next();
+    }
+
     const fileType = getFileType(req.file);
-    const directory = createUploadDirectory(fileType);
+    const directory = createUploadDirectory(req.file);
 
     const randomId = crypto.randomBytes(8).toString("hex");
     const timestamp = Date.now();
@@ -115,24 +120,26 @@ const processAndSaveFile = async (req, res, next) => {
       .replace(/^-|-$/g, "")
       .substring(0, 50);
 
-    const safeBaseName = originalBaseName || "banner-file";
+    const safeBaseName = originalBaseName || "uploaded-file";
 
     if (fileType === "images") {
-      // Force conversion of any uploaded image to optimized WebP format
       const fileName = `${safeBaseName}-${timestamp}-${randomId}.webp`;
       const absolutePath = path.join(directory, fileName);
 
       await sharp(req.file.buffer)
-        .resize(1920, 600, { fit: "inside", withoutEnlargement: true })
+        .resize(1920, 1080, { fit: "inside", withoutEnlargement: true })
         .webp({ quality: 80 })
         .toFile(absolutePath);
 
       req.file.filename = fileName;
       req.file.path = absolutePath;
+      req.file.destination = directory;
       req.file.mimetype = "image/webp";
       req.file.size = fs.statSync(absolutePath).size;
+
+      console.log(`Image converted to WebP: ${fileName}`);
     } else {
-      // Save PDFs directly
+      // Save PDFs directly from buffer
       const extension = allowedMimeTypes[req.file.mimetype];
       const fileName = `${safeBaseName}-${timestamp}-${randomId}${extension}`;
       const absolutePath = path.join(directory, fileName);
@@ -141,11 +148,21 @@ const processAndSaveFile = async (req, res, next) => {
 
       req.file.filename = fileName;
       req.file.path = absolutePath;
+      req.file.destination = directory;
+      req.file.size = fs.statSync(absolutePath).size;
+
+      console.log(`PDF saved: ${fileName}`);
     }
 
     next();
   } catch (error) {
-    return res.status(500).json({ error: "File processing & conversion error: " + error.message });
+    console.error("File processing & conversion error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "File processing & conversion error",
+      error: error.message,
+    });
   }
 };
 
@@ -153,7 +170,7 @@ const processAndSaveFile = async (req, res, next) => {
 // MAP UPLOADED FILE
 // ======================================================
 
-const mapUploadedFile = (file, req) => {
+const mapUploadedFile = (file) => {
   if (!file) {
     return null;
   }
@@ -173,7 +190,7 @@ const mapUploadedFile = (file, req) => {
     size: file.size,
     sizeMB: Number((file.size / (1024 * 1024)).toFixed(2)),
     path: relativePath,
-    url: `${req.protocol}://${req.get("host")}/${relativePath}`,
+    url: file.path, // Adjust according to your server configuration if req is needed
   };
 };
 
@@ -208,6 +225,7 @@ const deleteUploadedFile = (fileData) => {
       filePath
     );
 
+    // Security check against directory traversal
     if (
       absolutePath !== uploadRoot &&
       !absolutePath.startsWith(
@@ -236,7 +254,8 @@ const deleteUploadedFile = (fileData) => {
 
 module.exports = {
   upload,
-  processAndSaveFile,
+  processAndSaveFile: convertToWebp, // Alias for backward compatibility if needed
+  convertToWebp,
   mapUploadedFile,
   deleteUploadedFile,
 };

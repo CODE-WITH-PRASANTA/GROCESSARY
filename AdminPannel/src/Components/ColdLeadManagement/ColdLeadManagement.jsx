@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import API from '../../api/axios';
 import './ColdLeadManagement.css';
 
 // SVG Icons
@@ -103,23 +104,12 @@ const TrashIcon = () => (
   </svg>
 );
 
-const initialLeads = [
-  { id: 1, name: 'Aakash Mattoo', phone: '9887868746', email: 'aakash.mattoo@example.com', lookingFor: 'Fresh Vegetables', source: 'Website', date: '2025-05-06', status: 'New' },
-  { id: 2, name: 'Neha Sharma', phone: '9876543210', email: 'neha.s@example.com', lookingFor: 'Fruits & Vegetables', source: 'WhatsApp', date: '2025-05-05', status: 'Contacted' },
-  { id: 3, name: 'Rohit Verma', phone: '9123456780', email: 'rohit.v@example.com', lookingFor: 'Organic Items', source: 'Website', date: '2025-05-04', status: 'Follow Up' },
-  { id: 4, name: 'Pooja Singh', phone: '9988776655', email: 'pooja.s@example.com', lookingFor: 'Fresh Fruits', source: 'Referral', date: '2025-05-03', status: 'Converted' },
-  { id: 5, name: 'Aman Kumar', phone: '9871122334', email: 'aman.k@example.com', lookingFor: 'Vegetables', source: 'WhatsApp', date: '2025-05-02', status: 'New' },
-  { id: 6, name: 'Simran Kaur', phone: '9001122334', email: 'simran.k@example.com', lookingFor: 'Organic Vegetables', source: 'Website', date: '2025-05-01', status: 'Contacted' },
-  { id: 7, name: 'Vikram Jaiswal', phone: '9812345678', email: 'vikram.j@example.com', lookingFor: 'Fruits', source: 'Referral', date: '2025-04-30', status: 'Follow Up' },
-  { id: 8, name: 'Anjali Mehta', phone: '9911223344', email: 'anjali.m@example.com', lookingFor: 'Fresh Vegetables', source: 'WhatsApp', date: '2025-04-29', status: 'Converted' },
-  { id: 9, name: 'Suresh Raina', phone: '9811122233', email: 'suresh.r@example.com', lookingFor: 'Organic Items', source: 'Website', date: '2025-04-28', status: 'New' },
-  { id: 10, name: 'Priya Patel', phone: '9822233344', email: 'priya.p@example.com', lookingFor: 'Fresh Fruits', source: 'Referral', date: '2025-04-27', status: 'Contacted' },
-  { id: 11, name: 'Karan Johar', phone: '9833344455', email: 'karan.j@example.com', lookingFor: 'Vegetables', source: 'WhatsApp', date: '2025-04-26', status: 'Follow Up' },
-  { id: 12, name: 'Ritu Phogat', phone: '9844455566', email: 'ritu.p@example.com', lookingFor: 'Fresh Vegetables', source: 'Website', date: '2025-04-25', status: 'Converted' }
-];
-
 const ColdLeadManagement = () => {
-  const [leads, setLeads] = useState(initialLeads);
+  const API_URL = '/cold-leads';
+
+  const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLeadId, setEditingLeadId] = useState(null);
@@ -137,11 +127,36 @@ const ColdLeadManagement = () => {
     email: '',
     lookingFor: 'Fresh Vegetables',
     source: 'Website',
-    date: '2025-05-08',
+    date: new Date().toISOString().split('T')[0],
     status: 'New',
     notes: ''
   };
   const [formData, setFormData] = useState(defaultFormState);
+
+  // Fetch leads from backend
+  const fetchLeads = async () => {
+    try {
+      setLoading(true);
+
+      const response = await API.get(API_URL);
+
+      if (response.data.success) {
+        setLeads(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Fetch Leads Error:', error);
+      alert(
+        error.response?.data?.message ||
+        'Unable to fetch leads. Please make sure the backend server is running.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeads();
+  }, []);
 
   // Calculations for current page rows
   const totalLeads = leads.length;
@@ -149,13 +164,17 @@ const ColdLeadManagement = () => {
   const startIndex = (currentPage - 1) * pageSize;
   const currentLeads = leads.slice(startIndex, startIndex + pageSize);
 
+  const newLeads = leads.filter(lead => lead.status === 'New').length;
+  const contactedLeads = leads.filter(lead => lead.status === 'Contacted').length;
+  const convertedLeads = leads.filter(lead => lead.status === 'Converted').length;
+
   // Handle Select All (for current visible page)
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      const pageIds = currentLeads.map(lead => lead.id);
+      const pageIds = currentLeads.map(lead => lead._id);
       setSelectedIds(Array.from(new Set([...selectedIds, ...pageIds])));
     } else {
-      const pageIds = currentLeads.map(lead => lead.id);
+      const pageIds = currentLeads.map(lead => lead._id);
       setSelectedIds(selectedIds.filter(id => !pageIds.includes(id)));
     }
   };
@@ -185,50 +204,126 @@ const ColdLeadManagement = () => {
 
   // Open Modal for Edit
   const handleOpenEditModal = (lead) => {
-    setEditingLeadId(lead.id);
+    setEditingLeadId(lead._id);
+
     setFormData({
-      name: lead.name,
-      phone: lead.phone,
-      email: lead.email,
-      lookingFor: lead.lookingFor,
-      source: lead.source,
-      date: lead.date,
-      status: lead.status,
+      name: lead.name || '',
+      phone: lead.phone || '',
+      email: lead.email || '',
+      lookingFor: lead.lookingFor || 'Fresh Vegetables',
+      source: lead.source || 'Website',
+      date: lead.date || new Date().toISOString().split('T')[0],
+      status: lead.status || 'New',
       notes: lead.notes || ''
     });
+
     setActiveActionMenu(null);
     setIsModalOpen(true);
   };
 
   // Handle Delete Lead
-  const handleDeleteLead = (id) => {
-    setLeads(leads.filter(l => l.id !== id));
-    setSelectedIds(selectedIds.filter(selectedId => selectedId !== id));
-    setActiveActionMenu(null);
+  const handleDeleteLead = async (id) => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this lead?'
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await API.delete(`${API_URL}/${id}`);
+
+      setLeads(previous =>
+        previous.filter(lead => lead._id !== id)
+      );
+
+      setSelectedIds(previous =>
+        previous.filter(selectedId => selectedId !== id)
+      );
+
+      setActiveActionMenu(null);
+
+      // Keep pagination valid after deletion
+      setCurrentPage(previousPage => {
+        const remaining = leads.length - 1;
+        const newTotalPages = Math.ceil(remaining / pageSize) || 1;
+        return Math.min(previousPage, newTotalPages);
+      });
+
+      alert('Lead deleted successfully.');
+    } catch (error) {
+      console.error('Delete Lead Error:', error);
+      alert(
+        error.response?.data?.message ||
+        'Unable to delete lead.'
+      );
+    }
   };
 
   // Handle Add/Edit Form Submission
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.phone || !formData.email) return;
 
-    if (editingLeadId !== null) {
-      // Edit existing lead
-      setLeads(leads.map(lead => 
-        lead.id === editingLeadId ? { ...lead, ...formData } : lead
-      ));
-    } else {
-      // Add new lead
-      const newLeadItem = {
-        id: Date.now(),
-        ...formData
-      };
-      setLeads([newLeadItem, ...leads]);
+    if (!formData.name || !formData.phone || !formData.email) {
+      alert('Please fill all required fields.');
+      return;
     }
 
-    setIsModalOpen(false);
-    setEditingLeadId(null);
-    setFormData(defaultFormState);
+    try {
+      setSubmitLoading(true);
+
+      if (editingLeadId) {
+        // UPDATE
+        const response = await API.put(
+          `${API_URL}/${editingLeadId}`,
+          formData
+        );
+
+        if (response.data.success) {
+          setLeads(previous =>
+            previous.map(lead =>
+              lead._id === editingLeadId
+                ? response.data.data
+                : lead
+            )
+          );
+
+          alert('Lead updated successfully.');
+        }
+      } else {
+        // CREATE
+        const response = await API.post(
+          API_URL,
+          formData
+        );
+
+        if (response.data.success) {
+          setLeads(previous => [
+            response.data.data,
+            ...previous
+          ]);
+
+          setCurrentPage(1);
+
+          alert('Lead added successfully.');
+        }
+      }
+
+      setIsModalOpen(false);
+      setEditingLeadId(null);
+      setFormData({
+        ...defaultFormState,
+        date: new Date().toISOString().split('T')[0]
+      });
+    } catch (error) {
+      console.error('Save Lead Error:', error);
+
+      alert(
+        error.response?.data?.message ||
+        'Unable to save lead.'
+      );
+    } finally {
+      setSubmitLoading(false);
+    }
   };
 
   return (
@@ -241,7 +336,7 @@ const ColdLeadManagement = () => {
           </div>
           <div className="ColdLeadManagement-card-content">
             <span className="ColdLeadManagement-card-title">Total Leads</span>
-            <span className="ColdLeadManagement-card-value">128</span>
+            <span className="ColdLeadManagement-card-value">{totalLeads}</span>
             <span className="ColdLeadManagement-card-sub">All time leads</span>
           </div>
         </div>
@@ -252,7 +347,7 @@ const ColdLeadManagement = () => {
           </div>
           <div className="ColdLeadManagement-card-content">
             <span className="ColdLeadManagement-card-title">New Leads</span>
-            <span className="ColdLeadManagement-card-value">32</span>
+            <span className="ColdLeadManagement-card-value">{newLeads}</span>
             <span className="ColdLeadManagement-card-sub">This month</span>
           </div>
         </div>
@@ -263,7 +358,7 @@ const ColdLeadManagement = () => {
           </div>
           <div className="ColdLeadManagement-card-content">
             <span className="ColdLeadManagement-card-title">Contacted</span>
-            <span className="ColdLeadManagement-card-value">56</span>
+            <span className="ColdLeadManagement-card-value">{contactedLeads}</span>
             <span className="ColdLeadManagement-card-sub">Total contacted</span>
           </div>
         </div>
@@ -274,7 +369,7 @@ const ColdLeadManagement = () => {
           </div>
           <div className="ColdLeadManagement-card-content">
             <span className="ColdLeadManagement-card-title">Converted</span>
-            <span className="ColdLeadManagement-card-value">12</span>
+            <span className="ColdLeadManagement-card-value">{convertedLeads}</span>
             <span className="ColdLeadManagement-card-sub">Successful</span>
           </div>
         </div>
@@ -312,7 +407,7 @@ const ColdLeadManagement = () => {
               <th>
                 <input 
                   type="checkbox" 
-                  checked={currentLeads.length > 0 && currentLeads.every(l => selectedIds.includes(l.id))} 
+                  checked={currentLeads.length > 0 && currentLeads.every(l => selectedIds.includes(l._id))} 
                   onChange={handleSelectAll} 
                   className="ColdLeadManagement-checkbox"
                 />
@@ -329,13 +424,25 @@ const ColdLeadManagement = () => {
             </tr>
           </thead>
           <tbody>
-            {currentLeads.map((lead, index) => (
-              <tr key={lead.id} className={selectedIds.includes(lead.id) ? 'selected-row' : ''}>
+            {loading ? (
+              <tr>
+                <td colSpan="10" style={{ textAlign: 'center', padding: '30px' }}>
+                  Loading leads...
+                </td>
+              </tr>
+            ) : currentLeads.length === 0 ? (
+              <tr>
+                <td colSpan="10" style={{ textAlign: 'center', padding: '30px' }}>
+                  No leads found.
+                </td>
+              </tr>
+            ) : currentLeads.map((lead, index) => (
+              <tr key={lead._id} className={selectedIds.includes(lead._id) ? 'selected-row' : ''}>
                 <td>
                   <input 
                     type="checkbox" 
-                    checked={selectedIds.includes(lead.id)} 
-                    onChange={() => handleSelectRow(lead.id)} 
+                    checked={selectedIds.includes(lead._id)} 
+                    onChange={() => handleSelectRow(lead._id)} 
                     className="ColdLeadManagement-checkbox"
                   />
                 </td>
@@ -354,16 +461,16 @@ const ColdLeadManagement = () => {
                 <td className="ColdLeadManagement-actions-cell">
                   <button 
                     className="ColdLeadManagement-action-trigger"
-                    onClick={() => setActiveActionMenu(activeActionMenu === lead.id ? null : lead.id)}
+                    onClick={() => setActiveActionMenu(activeActionMenu === lead._id ? null : lead._id)}
                   >
                     <MoreVerticalIcon />
                   </button>
-                  {activeActionMenu === lead.id && (
+                  {activeActionMenu === lead._id && (
                     <div className="ColdLeadManagement-dropdown">
                       <button className="edit-btn" onClick={() => handleOpenEditModal(lead)}>
                         <EditIcon /> Edit
                       </button>
-                      <button className="delete-btn" onClick={() => handleDeleteLead(lead.id)}>
+                      <button className="delete-btn" onClick={() => handleDeleteLead(lead._id)}>
                         <TrashIcon /> Delete
                       </button>
                     </div>
@@ -444,10 +551,10 @@ const ColdLeadManagement = () => {
                     <span className="input-icon"><UserIcon /></span>
                     <input 
                       type="text" 
-                      placeholder="Enter your name" 
+                      name="name" placeholder="Enter your name" 
                       required 
                       value={formData.name} 
-                      onChange={e => setFormData({...formData, name: e.target.value})}
+                      onChange={e => setFormData(previous => ({...previous, name: e.target.value}))}
                     />
                   </div>
                   <span className="ColdLeadManagement-field-hint">Enter the complete name</span>
@@ -459,10 +566,10 @@ const ColdLeadManagement = () => {
                     <span className="input-icon"><PhoneIcon /></span>
                     <input 
                       type="text" 
-                      placeholder="Enter phone number" 
+                      name="phone" placeholder="Enter phone number" 
                       required 
                       value={formData.phone} 
-                      onChange={e => setFormData({...formData, phone: e.target.value})}
+                      onChange={e => setFormData(previous => ({...previous, phone: e.target.value}))}
                     />
                   </div>
                   <span className="ColdLeadManagement-field-hint">Enter a valid 10-digit mobile number</span>
@@ -474,10 +581,10 @@ const ColdLeadManagement = () => {
                     <span className="input-icon"><MailIcon /></span>
                     <input 
                       type="email" 
-                      placeholder="Enter email address" 
+                      name="email" placeholder="Enter email address" 
                       required 
                       value={formData.email} 
-                      onChange={e => setFormData({...formData, email: e.target.value})}
+                      onChange={e => setFormData(previous => ({...previous, email: e.target.value}))}
                     />
                   </div>
                   <span className="ColdLeadManagement-field-hint">Enter a valid email address</span>
@@ -486,8 +593,8 @@ const ColdLeadManagement = () => {
                 <div className="ColdLeadManagement-form-group">
                   <label>Looking For <span className="required">*</span></label>
                   <select 
-                    value={formData.lookingFor} 
-                    onChange={e => setFormData({...formData, lookingFor: e.target.value})}
+                    name="lookingFor" value={formData.lookingFor} 
+                    onChange={e => setFormData(previous => ({...previous, lookingFor: e.target.value}))}
                   >
                     <option value="Fresh Vegetables">Fresh Vegetables</option>
                     <option value="Fruits & Vegetables">Fruits & Vegetables</option>
@@ -500,8 +607,8 @@ const ColdLeadManagement = () => {
                 <div className="ColdLeadManagement-form-group">
                   <label>Lead Source <span className="required">*</span></label>
                   <select 
-                    value={formData.source} 
-                    onChange={e => setFormData({...formData, source: e.target.value})}
+                    name="source" value={formData.source} 
+                    onChange={e => setFormData(previous => ({...previous, source: e.target.value}))}
                   >
                     <option value="Website">Website</option>
                     <option value="WhatsApp">WhatsApp</option>
@@ -516,8 +623,9 @@ const ColdLeadManagement = () => {
                     <span className="input-icon"><CalendarIcon /></span>
                     <input 
                       type="date" 
+                      name="date"
                       value={formData.date} 
-                      onChange={e => setFormData({...formData, date: e.target.value})}
+                      onChange={e => setFormData(previous => ({...previous, date: e.target.value}))}
                     />
                   </div>
                   <span className="ColdLeadManagement-field-hint">Select the date</span>
@@ -526,8 +634,8 @@ const ColdLeadManagement = () => {
                 <div className="ColdLeadManagement-form-group ColdLeadManagement-full-width">
                   <label>Status <span className="required">*</span></label>
                   <select 
-                    value={formData.status} 
-                    onChange={e => setFormData({...formData, status: e.target.value})}
+                    name="status" value={formData.status} 
+                    onChange={e => setFormData(previous => ({...previous, status: e.target.value}))}
                   >
                     <option value="New">New</option>
                     <option value="Contacted">Contacted</option>
@@ -542,8 +650,8 @@ const ColdLeadManagement = () => {
                   <textarea 
                     rows="3" 
                     placeholder="Enter any additional notes here..." 
-                    value={formData.notes} 
-                    onChange={e => setFormData({...formData, notes: e.target.value})}
+                    name="notes" value={formData.notes} 
+                    onChange={e => setFormData(previous => ({...previous, notes: e.target.value}))}
                   ></textarea>
                   <span className="ColdLeadManagement-field-hint">Add any extra information about this lead</span>
                 </div>
@@ -561,7 +669,7 @@ const ColdLeadManagement = () => {
                   type="submit" 
                   className="ColdLeadManagement-btn-submit"
                 >
-                  <SendIcon /> {editingLeadId ? 'Update' : 'Submit'}
+                  <SendIcon /> {submitLoading ? 'Saving...' : editingLeadId ? 'Update' : 'Submit'}
                 </button>
               </div>
             </form>

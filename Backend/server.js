@@ -17,6 +17,11 @@ const listUploadRoutes = require(
   "./routes/listUploadRoutes"
 );
 
+const brandRoutes = require(
+  "./routes/brandRoutes"
+);
+const coldLeadRoutes = require("./routes/coldLeadRoutes");
+
 
 // Load environment variables
 dotenv.config();
@@ -50,6 +55,10 @@ app.use(
 
 // Routes
 app.use('/api/banners', bannerRoutes);
+app.use('/api/brands', require('./routes/brandRoutes'));
+app.use("/api/cold-leads", coldLeadRoutes);
+
+
 
 // Test Route
 app.get("/", (req, res) => {

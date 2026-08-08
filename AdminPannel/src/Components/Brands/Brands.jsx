@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './Brands.css';
 import { 
   Search, 
@@ -11,31 +11,18 @@ import {
   Save,
   MoreVertical,
   CheckCircle,
-  XCircle
+  XCircle,
+  Loader2
 } from 'lucide-react';
 import { Editor } from '@tinymce/tinymce-react';
 
-const initialBrands = [
-  { id: 1, name: 'Nestlé', tagline: 'Good Food, Good Life', category: 'Food & Beverages', catColor: 'green', products: 120, order: 1, status: 'Active', logoUrl: null },
-  { id: 2, name: 'Amul', tagline: 'The Taste of India', category: 'Dairy & Dairy Products', catColor: 'blue', products: 85, order: 2, status: 'Active', logoUrl: null },
-  { id: 3, name: 'Tata Salt', tagline: 'Desh Ka Namak', category: 'Grocery Essentials', catColor: 'orange', products: 45, order: 3, status: 'Active', logoUrl: null },
-  { id: 4, name: 'Fortune', tagline: 'Pure and Healthy', category: 'Cooking Oils', catColor: 'red', products: 38, order: 4, status: 'Active', logoUrl: null },
-  { id: 5, name: 'Bourn Vita', tagline: 'Tayyari Jeet Ki', category: 'Health & Nutrition', catColor: 'purple', products: 32, order: 5, status: 'Active', logoUrl: null },
-  { id: 6, name: 'Maggi', tagline: 'Taste Bhi, Health Bhi', category: 'Food & Beverages', catColor: 'green', products: 28, order: 6, status: 'Active', logoUrl: null },
-  { id: 7, name: 'Dabur', tagline: 'Celebrating Life!', category: 'Personal Care', catColor: 'teal', products: 60, order: 7, status: 'Inactive', logoUrl: null },
-  { id: 8, name: 'Patanjali', tagline: 'Prakriti Ka Aashirwad', category: 'Health & Wellness', catColor: 'peach', products: 52, order: 8, status: 'Active', logoUrl: null },
-  { id: 9, name: 'Britannia', tagline: 'Eat Healthy, Think Better', category: 'Food & Beverages', catColor: 'green', products: 95, order: 9, status: 'Active', logoUrl: null },
-  { id: 10, name: 'Cadbury', tagline: 'Free the Joy', category: 'Snacks & Sweets', catColor: 'purple', products: 110, order: 10, status: 'Active', logoUrl: null },
-  { id: 11, name: 'Lays', tagline: 'Betcha Can\'t Eat Just One', category: 'Snacks & Sweets', catColor: 'orange', products: 40, order: 11, status: 'Inactive', logoUrl: null },
-  { id: 12, name: 'Nivea', tagline: 'Care for Skin', category: 'Personal Care', catColor: 'blue', products: 75, order: 12, status: 'Active', logoUrl: null }
-];
-
+const API_BASE_URL = 'http://localhost:5000';
 const ITEMS_PER_PAGE = 8;
 
 const Brands = () => {
   // --- Form States ---
   const [formData, setFormData] = useState({
-    id: null,
+    _id: null,
     name: '',
     tagline: '',
     slug: '',
@@ -43,19 +30,46 @@ const Brands = () => {
     description: '',
     order: 0,
     status: true,
-    logoUrl: null
+    logoUrl: null,
+    logoFile: null
   });
 
   const fileInputRef = useRef(null);
   const editorRef = useRef(null);
 
-  // --- List, Search, Filter & Pagination States ---
-  const [brandsList, setBrandsList] = useState(initialBrands);
+  // --- List, Search, Filter, Pagination & Loading States ---
+  const [brandsList, setBrandsList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [activeDropdownId, setActiveDropdownId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // --- Fetch Brands from API ---
+  const fetchBrands = useCallback(async () => {
+    setLoading(true);
+    try {
+      const queryParams = new URLSearchParams();
+      if (searchQuery) queryParams.append('search', searchQuery);
+      if (statusFilter !== 'All') queryParams.append('status', statusFilter);
+
+      const res = await fetch(`${API_BASE_URL}/api/brands?${queryParams.toString()}`);
+      if (!res.ok) throw new Error('Failed to fetch brands');
+      const data = await res.json();
+      setBrandsList(data);
+    } catch (err) {
+      console.error('Error loading brands:', err);
+      alert('Could not connect to server or load brands.');
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, statusFilter]);
+
+  useEffect(() => {
+    fetchBrands();
+  }, [fetchBrands]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -71,23 +85,24 @@ const Brands = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  // Handle Logo Upload
+  // Handle Logo File Upload (Client side preview)
   const handleLogoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert('File size exceeds 2MB limit!');
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size exceeds 5MB limit!');
         return;
       }
-      const imageUrl = URL.createObjectURL(file);
+      const previewUrl = URL.createObjectURL(file);
       setFormData(prev => ({
         ...prev,
-        logoUrl: imageUrl
+        logoFile: file,
+        logoUrl: previewUrl
       }));
     }
   };
 
-  // Auto-generate Slug
+  // Auto-generate Slug from Brand Name
   const handleNameChange = (e) => {
     const val = e.target.value;
     const generatedSlug = val.toLowerCase().trim().replace(/[\s\W-]+/g, '-');
@@ -117,7 +132,7 @@ const Brands = () => {
   // Reset Form
   const handleReset = () => {
     setFormData({
-      id: null,
+      _id: null,
       name: '',
       tagline: '',
       slug: '',
@@ -125,7 +140,8 @@ const Brands = () => {
       description: '',
       order: 0,
       status: true,
-      logoUrl: null
+      logoUrl: null,
+      logoFile: null
     });
     if (editorRef.current) {
       editorRef.current.setContent('');
@@ -137,99 +153,130 @@ const Brands = () => {
   const handleRefresh = () => {
     setSearchQuery('');
     setStatusFilter('All');
-    setBrandsList(initialBrands);
     setCurrentPage(1);
+    fetchBrands();
   };
 
-  // Save / Update Brand
-  const handleSaveBrand = (e) => {
+  // Save / Update Brand via Backend API
+  const handleSaveBrand = async (e) => {
     e.preventDefault();
     if (!formData.name) return alert('Please enter a Brand Name');
+    if (!formData.slug) return alert('Please enter a valid Slug');
 
-    if (formData.id) {
-      // Edit
-      setBrandsList(prev =>
-        prev.map(b => b.id === formData.id 
-          ? { 
-              ...b, 
-              name: formData.name,
-              slug: formData.slug,
-              category: formData.category || 'General',
-              order: formData.order, 
-              status: formData.status ? 'Active' : 'Inactive',
-              logoUrl: formData.logoUrl || b.logoUrl
-            } 
-          : b
-        )
-      );
-    } else {
-      // Add
-      const newBrand = {
-        id: Date.now(),
-        name: formData.name,
-        tagline: 'Brand Tagline',
-        category: formData.category || 'General',
-        catColor: 'green',
-        products: 0,
-        order: Number(formData.order) || brandsList.length + 1,
-        status: formData.status ? 'Active' : 'Inactive',
-        logoUrl: formData.logoUrl
-      };
-      setBrandsList(prev => [...prev, newBrand]);
+    setSubmitting(true);
+    try {
+      const bodyData = new FormData();
+      bodyData.append('name', formData.name);
+      bodyData.append('tagline', formData.tagline || '');
+      bodyData.append('slug', formData.slug);
+      bodyData.append('category', formData.category || 'General');
+      bodyData.append('description', formData.description || '');
+      bodyData.append('order', formData.order);
+      bodyData.append('status', formData.status);
+
+      if (formData.logoFile) {
+        bodyData.append('logo', formData.logoFile);
+      }
+
+      const isEdit = Boolean(formData._id);
+      const url = isEdit 
+        ? `${API_BASE_URL}/api/brands/${formData._id}` 
+        : `${API_BASE_URL}/api/brands`;
+
+      const res = await fetch(url, {
+        method: isEdit ? 'PUT' : 'POST',
+        body: bodyData,
+      });
+
+      const responseData = await res.json();
+
+      if (!res.ok) {
+        throw new Error(responseData.message || 'Operation failed');
+      }
+
+      alert(`Brand ${isEdit ? 'updated' : 'added'} successfully!`);
+      handleReset();
+      fetchBrands();
+    } catch (err) {
+      console.error('Error saving brand:', err);
+      alert(err.message || 'Error saving brand.');
+    } finally {
+      setSubmitting(false);
     }
-
-    handleReset();
   };
 
-  // Status Change via Dropdown
-  const handleStatusChange = (id, newStatus) => {
-    setBrandsList(prev =>
-      prev.map(b => b.id === id ? { ...b, status: newStatus } : b)
-    );
+  // Status Change via Dropdown (Active / Inactive)
+  const handleStatusChange = async (id, newStatus) => {
     setActiveDropdownId(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/brands/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) throw new Error('Failed to update status');
+
+      setBrandsList(prev =>
+        prev.map(b => (b._id === id ? { ...b, status: newStatus } : b))
+      );
+    } catch (err) {
+      console.error('Error updating status:', err);
+      alert('Could not update status');
+    }
   };
 
   // Edit action
   const handleEdit = (brand) => {
+    const fullLogoUrl = brand.logoUrl 
+      ? brand.logoUrl.startsWith('http') ? brand.logoUrl : `${API_BASE_URL}${brand.logoUrl}` 
+      : null;
+
     setFormData({
-      id: brand.id,
+      _id: brand._id,
       name: brand.name,
       tagline: brand.tagline || '',
-      slug: brand.name.toLowerCase().trim().replace(/[\s\W-]+/g, '-'),
-      category: brand.category,
-      description: '',
-      order: brand.order,
+      slug: brand.slug || brand.name.toLowerCase().trim().replace(/[\s\W-]+/g, '-'),
+      category: brand.category || '',
+      description: brand.description || '',
+      order: brand.order || 0,
       status: brand.status === 'Active',
-      logoUrl: brand.logoUrl
+      logoUrl: fullLogoUrl,
+      logoFile: null
     });
 
     if (editorRef.current) {
-      editorRef.current.setContent('');
+      editorRef.current.setContent(brand.description || '');
     }
     setActiveDropdownId(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Delete action
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this brand?')) {
-      setBrandsList(prev => prev.filter(b => b.id !== id));
-    }
+  const handleDelete = async (id) => {
     setActiveDropdownId(null);
+    if (!window.confirm('Are you sure you want to delete this brand?')) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/brands/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) throw new Error('Failed to delete brand');
+
+      setBrandsList(prev => prev.filter(b => b._id !== id));
+      alert('Brand deleted successfully');
+    } catch (err) {
+      console.error('Error deleting brand:', err);
+      alert('Failed to delete brand');
+    }
   };
 
-  // Filter Logic
-  const filteredBrands = brandsList.filter(b => {
-    const matchesSearch = b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          b.category.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || b.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  // Pagination Logic (8 items per page)
-  const totalEntries = filteredBrands.length;
+  // Pagination Logic
+  const totalEntries = brandsList.length;
   const totalPages = Math.ceil(totalEntries / ITEMS_PER_PAGE) || 1;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentBrands = filteredBrands.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const currentBrands = brandsList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
     <div className="brand-page-container">
@@ -238,7 +285,7 @@ const Brands = () => {
         {/* ================= LEFT SECTION (50%) ================= */}
         <div className="brand-card brand-form-section">
           <div className="brand-header">
-            <h2>{formData.id ? 'Edit Brand' : 'Add / Edit Brand'}</h2>
+            <h2>{formData._id ? 'Edit Brand' : 'Add / Edit Brand'}</h2>
             <p>Fill in the details to create or update a brand.</p>
           </div>
 
@@ -251,7 +298,7 @@ const Brands = () => {
                   type="file" 
                   ref={fileInputRef} 
                   onChange={handleLogoUpload} 
-                  accept="image/png, image/jpeg, image/svg+xml" 
+                  accept="image/png, image/jpeg, image/jpg, image/webp, image/avif, image/svg+xml" 
                   style={{ display: 'none' }} 
                 />
                 <div 
@@ -260,20 +307,20 @@ const Brands = () => {
                   title="Click to upload logo"
                 >
                   {formData.logoUrl ? (
-                    <img src={formData.logoUrl} alt="Logo" className="brand-preview-img" />
+                    <img src={formData.logoUrl} alt="Logo Preview" className="brand-preview-img" />
                   ) : (
                     <UploadCloud className="brand-upload-icon" size={24} />
                   )}
                 </div>
                 <div className="brand-upload-info">
                   <p className="brand-upload-title">Upload Logo</p>
-                  <span>JPG, PNG or SVG</span>
-                  <span>Max size 2MB</span>
+                  <span>JPG, PNG, AVIF or SVG</span>
+                  <span className="brand-convert-badge">Auto-converts to .WEBP</span>
                   {formData.logoUrl && (
                     <button 
                       type="button" 
                       className="brand-remove-btn"
-                      onClick={() => setFormData(prev => ({ ...prev, logoUrl: null }))}
+                      onClick={() => setFormData(prev => ({ ...prev, logoUrl: null, logoFile: null }))}
                     >
                       Remove Logo
                     </button>
@@ -292,6 +339,18 @@ const Brands = () => {
                 value={formData.name}
                 onChange={handleNameChange}
                 required
+              />
+            </div>
+
+            {/* Tagline */}
+            <div className="brand-form-group">
+              <label>Tagline</label>
+              <input 
+                type="text" 
+                name="tagline"
+                placeholder="Enter brand tagline" 
+                value={formData.tagline}
+                onChange={handleInputChange}
               />
             </div>
 
@@ -325,6 +384,8 @@ const Brands = () => {
                   <option value="Cooking Oils">Cooking Oils</option>
                   <option value="Health & Nutrition">Health & Nutrition</option>
                   <option value="Personal Care">Personal Care</option>
+                  <option value="Health & Wellness">Health & Wellness</option>
+                  <option value="Snacks & Sweets">Snacks & Sweets</option>
                 </select>
                 <ChevronDown className="brand-select-arrow" size={16} />
               </div>
@@ -390,11 +451,21 @@ const Brands = () => {
 
             {/* Actions */}
             <div className="brand-form-actions">
-              <button type="button" className="brand-btn brand-btn-outline" onClick={handleReset}>
+              <button 
+                type="button" 
+                className="brand-btn brand-btn-outline" 
+                onClick={handleReset}
+                disabled={submitting}
+              >
                 <RotateCcw size={16} /> Reset
               </button>
-              <button type="submit" className="brand-btn brand-btn-primary">
-                <Save size={16} /> Save Brand
+              <button 
+                type="submit" 
+                className="brand-btn brand-btn-primary"
+                disabled={submitting}
+              >
+                {submitting ? <Loader2 size={16} className="brand-spinner" /> : <Save size={16} />} 
+                {formData._id ? 'Update Brand' : 'Save Brand'}
               </button>
             </div>
           </form>
@@ -411,6 +482,7 @@ const Brands = () => {
               </div>
 
               <div className="brand-controls">
+                {/* Search */}
                 <div className="brand-search-box">
                   <Search size={16} className="brand-search-icon" />
                   <input 
@@ -421,7 +493,7 @@ const Brands = () => {
                   />
                 </div>
 
-                {/* Filter */}
+                {/* Filter Dropdown */}
                 <div className="brand-filter-container">
                   <button 
                     type="button"
@@ -433,9 +505,27 @@ const Brands = () => {
                   {showFilterDropdown && (
                     <div className="brand-filter-dropdown">
                       <p className="brand-filter-title">Filter Status</p>
-                      <button type="button" className={statusFilter === 'All' ? 'selected' : ''} onClick={() => { setStatusFilter('All'); setShowFilterDropdown(false); }}>All Brands</button>
-                      <button type="button" className={statusFilter === 'Active' ? 'selected' : ''} onClick={() => { setStatusFilter('Active'); setShowFilterDropdown(false); }}>Active</button>
-                      <button type="button" className={statusFilter === 'Inactive' ? 'selected' : ''} onClick={() => { setStatusFilter('Inactive'); setShowFilterDropdown(false); }}>Inactive</button>
+                      <button 
+                        type="button" 
+                        className={statusFilter === 'All' ? 'selected' : ''} 
+                        onClick={() => { setStatusFilter('All'); setCurrentPage(1); setShowFilterDropdown(false); }}
+                      >
+                        All Brands
+                      </button>
+                      <button 
+                        type="button" 
+                        className={statusFilter === 'Active' ? 'selected' : ''} 
+                        onClick={() => { setStatusFilter('Active'); setCurrentPage(1); setShowFilterDropdown(false); }}
+                      >
+                        Active
+                      </button>
+                      <button 
+                        type="button" 
+                        className={statusFilter === 'Inactive' ? 'selected' : ''} 
+                        onClick={() => { setStatusFilter('Inactive'); setCurrentPage(1); setShowFilterDropdown(false); }}
+                      >
+                        Inactive
+                      </button>
                     </div>
                   )}
                 </div>
@@ -456,92 +546,104 @@ const Brands = () => {
                     <th>Logo</th>
                     <th>Brand Name</th>
                     <th>Category</th>
-                    <th>Products</th>
                     <th>Order</th>
                     <th>Status</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {currentBrands.length > 0 ? (
-                    currentBrands.map((item) => (
-                      <tr key={item.id}>
-                        <td>{item.id}</td>
-                        <td>
-                          <div className="brand-logo-circle">
-                            {item.logoUrl ? (
-                              <img src={item.logoUrl} alt={item.name} className="brand-table-logo" />
-                            ) : (
-                              <span className="brand-logo-text">{item.name.charAt(0)}</span>
-                            )}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="brand-name-group">
-                            <span className="brand-title-text">{item.name}</span>
-                            <span className="brand-sub-text">{item.tagline}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className={`brand-cat-tag ${item.catColor}`}>
-                            {item.category}
-                          </span>
-                        </td>
-                        <td>{item.products}</td>
-                        <td>{item.order}</td>
-                        <td>
-                          <span className={`brand-badge ${item.status.toLowerCase()}`}>
-                            {item.status}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="brand-action-wrapper">
-                            <button 
-                              type="button"
-                              className="brand-action-btn brand-edit-btn" 
-                              onClick={() => handleEdit(item)}
-                              title="Edit"
-                            >
-                              <Edit3 size={14} />
-                            </button>
-                            <button 
-                              type="button"
-                              className="brand-action-btn brand-delete-btn" 
-                              onClick={() => handleDelete(item.id)}
-                              title="Delete"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="7" className="brand-no-data">
+                        <div className="brand-loading-flex">
+                          <Loader2 className="brand-spinner" size={20} /> Loading brands...
+                        </div>
+                      </td>
+                    </tr>
+                  ) : currentBrands.length > 0 ? (
+                    currentBrands.map((item, index) => {
+                      const logoSrc = item.logoUrl 
+                        ? item.logoUrl.startsWith('http') ? item.logoUrl : `${API_BASE_URL}${item.logoUrl}` 
+                        : null;
 
-                            {/* Three Dots Dropdown */}
-                            <div className="brand-dropdown-container">
-                              <button 
-                                type="button"
-                                className="brand-action-btn brand-more-btn"
-                                onClick={() => setActiveDropdownId(activeDropdownId === item.id ? null : item.id)}
-                                title="More Options"
-                              >
-                                <MoreVertical size={14} />
-                              </button>
-
-                              {activeDropdownId === item.id && (
-                                <div className="brand-action-dropdown">
-                                  <button type="button" onClick={() => handleStatusChange(item.id, 'Active')}>
-                                    <CheckCircle size={14} className="icon-green" /> Set Active
-                                  </button>
-                                  <button type="button" onClick={() => handleStatusChange(item.id, 'Inactive')}>
-                                    <XCircle size={14} className="icon-red" /> Set Inactive
-                                  </button>
-                                </div>
+                      return (
+                        <tr key={item._id}>
+                          <td>{startIndex + index + 1}</td>
+                          <td>
+                            <div className="brand-logo-circle">
+                              {logoSrc ? (
+                                <img src={logoSrc} alt={item.name} className="brand-table-logo" />
+                              ) : (
+                                <span className="brand-logo-text">{item.name.charAt(0)}</span>
                               )}
                             </div>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td>
+                            <div className="brand-name-group">
+                              <span className="brand-title-text">{item.name}</span>
+                              {item.tagline && <span className="brand-sub-text">{item.tagline}</span>}
+                            </div>
+                          </td>
+                          <td>
+                            <span className="brand-cat-tag">
+                              {item.category}
+                            </span>
+                          </td>
+                          <td>{item.order}</td>
+                          <td>
+                            <span className={`brand-badge ${item.status ? item.status.toLowerCase() : ''}`}>
+                              {item.status}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="brand-action-wrapper">
+                              <button 
+                                type="button"
+                                className="brand-action-btn brand-edit-btn" 
+                                onClick={() => handleEdit(item)}
+                                title="Edit"
+                              >
+                                <Edit3 size={14} />
+                              </button>
+                              <button 
+                                type="button"
+                                className="brand-action-btn brand-delete-btn" 
+                                onClick={() => handleDelete(item._id)}
+                                title="Delete"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+
+                              {/* Three Dots Dropdown */}
+                              <div className="brand-dropdown-container">
+                                <button 
+                                  type="button"
+                                  className="brand-action-btn brand-more-btn"
+                                  onClick={() => setActiveDropdownId(activeDropdownId === item._id ? null : item._id)}
+                                  title="More Options"
+                                >
+                                  <MoreVertical size={14} />
+                                </button>
+
+                                {activeDropdownId === item._id && (
+                                  <div className="brand-action-dropdown">
+                                    <button type="button" onClick={() => handleStatusChange(item._id, 'Active')}>
+                                      <CheckCircle size={14} className="icon-green" /> Set Active
+                                    </button>
+                                    <button type="button" onClick={() => handleStatusChange(item._id, 'Inactive')}>
+                                      <XCircle size={14} className="icon-red" /> Set Inactive
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
-                      <td colSpan="8" className="brand-no-data">No brands found.</td>
+                      <td colSpan="7" className="brand-no-data">No brands found.</td>
                     </tr>
                   )}
                 </tbody>
@@ -578,7 +680,7 @@ const Brands = () => {
               <button 
                 type="button"
                 className="brand-page-btn"
-                disabled={currentPage === totalPages}
+                disabled={currentPage === totalPages || totalPages === 0}
                 onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
               >
                 Next
