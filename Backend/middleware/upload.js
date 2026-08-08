@@ -2,6 +2,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
+const sharp = require("sharp");
 
 // ======================================================
 // CONFIG
@@ -11,8 +12,10 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 const allowedMimeTypes = {
   "image/jpeg": ".jpg",
+  "image/jpg": ".jpg",
   "image/png": ".png",
   "image/webp": ".webp",
+  "image/avif": ".avif",
   "application/pdf": ".pdf",
 };
 
@@ -34,8 +37,6 @@ const getFileType = (file) => {
 
 // ======================================================
 // CREATE UPLOAD DIRECTORY
-// uploads/images/2026/08/
-// uploads/pdfs/2026/08/
 // ======================================================
 
 const createUploadDirectory = (file) => {
@@ -43,9 +44,7 @@ const createUploadDirectory = (file) => {
 
   const year = now.getFullYear().toString();
 
-  const month = String(
-    now.getMonth() + 1
-  ).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
 
   const fileType = getFileType(file);
 
@@ -74,8 +73,7 @@ const createUploadDirectory = (file) => {
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     try {
-      const directory =
-        createUploadDirectory(file);
+      const directory = createUploadDirectory(file);
 
       cb(null, directory);
     } catch (error) {
@@ -125,7 +123,7 @@ const fileFilter = (req, file, cb) => {
   if (!allowedMimeTypes[file.mimetype]) {
     return cb(
       new Error(
-        "Only JPG, JPEG, PNG, WEBP and PDF files are allowed."
+        "Only JPG, JPEG, PNG, WEBP, AVIF and PDF files are allowed."
       ),
       false
     );
@@ -148,6 +146,119 @@ const upload = multer({
     files: 1,
   },
 });
+
+// ======================================================
+// CONVERT IMAGE TO WEBP
+// ======================================================
+
+const convertToWebp = async (req, res, next) => {
+  try {
+    // No file uploaded
+    if (!req.file) {
+      return next();
+    }
+
+    // PDF -> don't convert
+    if (req.file.mimetype === "application/pdf") {
+      return next();
+    }
+
+    const oldFilePath = req.file.path;
+    const oldFileName = req.file.filename;
+
+    const directory = path.dirname(oldFilePath);
+
+    const originalName = path
+      .basename(
+        req.file.originalname,
+        path.extname(req.file.originalname)
+      )
+      .replace(/[^a-zA-Z0-9-_]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .substring(0, 50);
+
+    const safeBaseName =
+      originalName || "grocery-list";
+
+    const randomId = crypto
+      .randomBytes(8)
+      .toString("hex");
+
+    const webpFileName =
+      `${safeBaseName}-${Date.now()}-${randomId}.webp`;
+
+    const webpPath = path.join(
+      directory,
+      webpFileName
+    );
+
+    // Convert to WebP
+    await sharp(oldFilePath)
+      .webp({
+        quality: 85,
+      })
+      .toFile(webpPath);
+
+    // Delete original JPG/PNG/AVIF/etc.
+    if (
+      fs.existsSync(oldFilePath) &&
+      oldFilePath !== webpPath
+    ) {
+      fs.unlinkSync(oldFilePath);
+    }
+
+    // Update req.file
+    req.file.filename = webpFileName;
+
+    req.file.path = webpPath;
+
+    req.file.destination = directory;
+
+    req.file.mimetype = "image/webp";
+
+    req.file.originalname =
+      req.file.originalname;
+
+    // Recalculate size
+    const stats = fs.statSync(webpPath);
+
+    req.file.size = stats.size;
+
+    console.log(
+      `Image converted: ${oldFileName} -> ${webpFileName}`
+    );
+
+    next();
+  } catch (error) {
+    console.error(
+      "WebP conversion error:",
+      error
+    );
+
+    // Delete uploaded original if conversion failed
+    if (
+      req.file &&
+      req.file.path &&
+      fs.existsSync(req.file.path)
+    ) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (deleteError) {
+        console.error(
+          "Failed to delete uploaded file:",
+          deleteError.message
+        );
+      }
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Image conversion to WebP failed",
+      error: error.message,
+    });
+  }
+};
 
 // ======================================================
 // MAP UPLOADED FILE
@@ -192,14 +303,6 @@ const mapUploadedFile = (file, req) => {
 
 // ======================================================
 // DELETE FILE
-// Accepts:
-// "uploads/images/.../image.jpg"
-//
-// OR:
-//
-// {
-//    path: "uploads/images/.../image.jpg"
-// }
 // ======================================================
 
 const deleteUploadedFile = (fileData) => {
@@ -229,8 +332,7 @@ const deleteUploadedFile = (fileData) => {
       filePath
     );
 
-    // Security check:
-    // only delete files from uploads folder
+    // Security check
     if (
       absolutePath !== uploadRoot &&
       !absolutePath.startsWith(
@@ -277,6 +379,7 @@ const deleteUploadedFile = (fileData) => {
 
 module.exports = {
   upload,
+  convertToWebp,
   mapUploadedFile,
   deleteUploadedFile,
 };

@@ -13,6 +13,10 @@ const listUploadRoutes = require(
   "./routes/listUploadRoutes"
 );
 
+const brandRoutes = require(
+  "./routes/brandRoutes"
+);
+
 
 // Load environment variables
 dotenv.config();
@@ -43,6 +47,8 @@ app.use(
   "/api/list-upload",
   listUploadRoutes
 );
+
+app.use('/api/brands', require('./routes/brandRoutes'));
 
 
 
