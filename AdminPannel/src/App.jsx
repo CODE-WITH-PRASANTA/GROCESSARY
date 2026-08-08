@@ -26,15 +26,22 @@ import Discounts from "./Components/Discounts/Discounts";
 import EditUnit from "./Components/EditUnit/EditUnit";
 import ListUploads from "./Components/ListUploads/ListUploads";
 import Banners from "./Components/Banners/Banners";
+import Login from "./Components/Login/Login";
+import ProtectedRoute from "./Components/ProtectedRoute/ProtectedRoute";
+
 
  
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-
+        <Route path="/login" element={<Login/>} />
         {/* Main Layout */}
-        <Route path="/" element={<MainLayout />}>
+        <Route path="/" element={
+              <ProtectedRoute>
+                <MainLayout />
+             </ProtectedRoute>
+         }>
         <Route path="/blog" element={<Blog/>}/>
          <Route path="/blogmanagement" element={<BlogManagement/>}/>
          <Route path="/testimonialmanagement" element={<TestimonialManagement/>}/>
