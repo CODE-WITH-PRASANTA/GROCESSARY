@@ -1,37 +1,47 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Editor } from '@tinymce/tinymce-react';
+import {
+  ArrowLeft,
+  FileText,
+  Tag,
+  Image as ImageIcon,
+  UploadCloud,
+  RotateCcw,
+  Save,
+  X,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
 import './AddProducts.css';
 
 const AddProducts = () => {
   const navigate = useNavigate();
 
-  // Form State Management
-  const [formData, setFormData] = useState({
+  // Initial state for easy resetting
+  const initialFormState = {
     productName: '',
     category: '',
+    subCategory: '',
     brand: '',
-    unit: '',
-    productType: 'Simple',
     sku: '',
-    barcode: '',
+    unit: '',
+    tags: '',
     shortDescription: '',
     fullDescription: '',
-    regularPrice: '',
+    price: '',
     discountPrice: '',
-    tax: '0',
+    costPrice: '',
     stockQuantity: '',
     lowStockAlert: '',
-    allowBackorders: false,
-    status: true, // Active
-    featuredProduct: false,
-    newArrival: false,
-  });
+    tax: '',
+    isOutOfStock: false,
+    status: 'active', // 'active' | 'inactive'
+  };
 
-  const [mainImage, setMainImage] = useState(null);
-  const [galleryImages, setGalleryImages] = useState([]);
+  const [formData, setFormData] = useState(initialFormState);
+  const [productImages, setProductImages] = useState([]);
 
-  // Handle Standard Input Changes
+  // Handle Text/Select/Checkbox Inputs
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -40,455 +50,444 @@ const AddProducts = () => {
     }));
   };
 
-  // Handle TinyMCE Description Change
-  const handleEditorChange = (content) => {
-    setFormData((prev) => ({
-      ...prev,
-      fullDescription: content,
-    }));
-  };
-
-  // Handle Main Image Upload
-  const handleMainImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setMainImage(URL.createObjectURL(file));
-    }
-  };
-
-  // Handle Gallery Images Upload
-  const handleGalleryUpload = (e) => {
+  // Handle File Uploads (Limit to 5)
+  const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length + galleryImages.length > 5) {
-      alert('You can upload up to 5 images in gallery.');
+    if (files.length + productImages.length > 5) {
+      alert('You can upload up to 5 images only.');
       return;
     }
-    const newImages = files.map((file) => URL.createObjectURL(file));
-    setGalleryImages((prev) => [...prev, ...newImages]);
+
+    const newImages = files.map((file) => ({
+      file,
+      url: URL.createObjectURL(file),
+    }));
+
+    setProductImages((prev) => [...prev, ...newImages]);
+  };
+
+  // Remove Single Image
+  const handleRemoveImage = (indexToRemove) => {
+    setProductImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   // Reset Form
   const handleReset = () => {
-    setFormData({
-      productName: '',
-      category: '',
-      brand: '',
-      unit: '',
-      productType: 'Simple',
-      sku: '',
-      barcode: '',
-      shortDescription: '',
-      fullDescription: '',
-      regularPrice: '',
-      discountPrice: '',
-      tax: '0',
-      stockQuantity: '',
-      lowStockAlert: '',
-      allowBackorders: false,
-      status: true,
-      featuredProduct: false,
-      newArrival: false,
-    });
-    setMainImage(null);
-    setGalleryImages([]);
+    setFormData(initialFormState);
+    setProductImages([]);
   };
 
-  // Save Handlers
-  const handleSaveProduct = (e) => {
+  // Submit Handler
+  const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Saved Product Data:', { ...formData, mainImage, galleryImages });
+    console.log('Form Data Submitted:', formData);
+    console.log('Uploaded Images:', productImages);
     alert('Product Saved Successfully!');
   };
 
-  const handleSaveDraft = () => {
-    alert('Product Saved as Draft!');
-  };
-
-  // Back Button Navigation
-  const handleBackToProducts = () => {
-    if (navigate) {
-      navigate('/products'); // Adjust target path as needed
+  // Navigation Back
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
     } else {
-      window.history.back();
+      navigate('/products');
     }
   };
 
   return (
-    <div className="an-page-container">
-      {/* Top Header Section */}
-      <div className="an-header-bar">
-        <div className="an-header-title-group">
+    <div className="gs-add-product-container">
+      {/* Top Bar Header */}
+      <div className="gs-header-bar">
+        <div className="gs-header-title-group">
           <h1>Add New Product</h1>
-          <div className="an-breadcrumb">
-            <span>Dashboard</span> &gt; <span>Products</span> &gt; <span className="active">Add New Product</span>
+          <div className="gs-breadcrumb">
+            <span>Dashboard</span> &gt; <span>Products</span> &gt;{' '}
+            <span className="active">Add New Product</span>
           </div>
         </div>
-        <button className="an-btn-back" type="button" onClick={handleBackToProducts}>
-          &larr; Back to Products
+        <button type="button" className="gs-btn-back" onClick={handleBack}>
+          <ArrowLeft size={16} /> Back to Products
         </button>
       </div>
 
-      <form onSubmit={handleSaveProduct} className="an-main-layout-grid">
-        {/* LEFT COLUMN: 50% Width */}
-        <div className="an-left-column">
-          
-          {/* Product Information Card */}
-          <div className="an-card">
-            <h2 className="an-card-title">Product Information</h2>
-            
-            <div className="an-form-row col-2">
-              <div className="an-form-group">
-                <label>Product Name <span className="an-required">*</span></label>
-                <input
-                  type="text"
-                  name="productName"
-                  placeholder="Enter product name"
-                  value={formData.productName}
-                  onChange={handleChange}
-                  required
-                />
+      <form onSubmit={handleSubmit} className="gs-main-layout-grid gs-grid-50-50">
+        {/* LEFT COLUMN (50%) */}
+        <div className="gs-column">
+          <div className="gs-card">
+            <div className="gs-card-header">
+              <div className="gs-card-icon-wrap">
+                <FileText size={18} />
               </div>
-
-              <div className="an-form-group">
-                <label>Category <span className="an-required">*</span></label>
-                <select name="category" value={formData.category} onChange={handleChange} required>
-                  <option value="">Select category</option>
-                  <option value="Electronics">Electronics</option>
-                  <option value="Water Bottles">Water Bottles</option>
-                  <option value="Beverages">Beverages</option>
-                </select>
-              </div>
+              <h2>Product Information</h2>
             </div>
 
-            <div className="an-form-row col-3-custom">
-              <div className="an-form-group">
-                <label>Brand</label>
-                <select name="brand" value={formData.brand} onChange={handleChange}>
-                  <option value="">Select brand</option>
-                  <option value="AquaPure">AquaPure</option>
-                  <option value="Bisleri">Bisleri</option>
-                  <option value="Kinley">Kinley</option>
-                </select>
-              </div>
-
-              <div className="an-form-group">
-                <label>Unit <span className="an-required">*</span></label>
-                <select name="unit" value={formData.unit} onChange={handleChange} required>
-                  <option value="">Select unit</option>
-                  <option value="Pcs">Pcs</option>
-                  <option value="Box">Box</option>
-                  <option value="Ltr">Ltr</option>
-                </select>
-              </div>
-
-              <div className="an-form-group">
-                <label>Product Type</label>
-                <div className="an-radio-group">
-                  <label className="an-radio-label">
-                    <input
-                      type="radio"
-                      name="productType"
-                      value="Simple"
-                      checked={formData.productType === 'Simple'}
-                      onChange={handleChange}
-                    />
-                    <span className="radio-custom green-dot"></span> Simple
-                  </label>
-                  <label className="an-radio-label">
-                    <input
-                      type="radio"
-                      name="productType"
-                      value="Variable"
-                      checked={formData.productType === 'Variable'}
-                      onChange={handleChange}
-                    />
-                    <span className="radio-custom"></span> Variable
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div className="an-form-row col-2">
-              <div className="an-form-group">
-                <label>SKU (Stock Keeping Unit) <span className="an-required">*</span></label>
-                <input
-                  type="text"
-                  name="sku"
-                  placeholder="Enter SKU"
-                  value={formData.sku}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="an-form-group">
-                <label>Barcode</label>
-                <input
-                  type="text"
-                  name="barcode"
-                  placeholder="Enter barcode (optional)"
-                  value={formData.barcode}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
-            <div className="an-form-group">
-              <label>Short Description</label>
-              <textarea
-                name="shortDescription"
-                rows="3"
-                placeholder="Enter short description about the product"
-                value={formData.shortDescription}
+            {/* Product Name */}
+            <div className="gs-form-group">
+              <label>
+                Product Name <span className="gs-required">*</span>
+              </label>
+              <input
+                type="text"
+                name="productName"
+                placeholder="Enter product name"
+                value={formData.productName}
                 onChange={handleChange}
-              ></textarea>
+                required
+              />
             </div>
 
-            {/* TinyMCE Rich Text Editor */}
-            <div className="an-form-group">
-              <label>Full Description</label>
-              <div className="an-tinymce-container">
-                <Editor
-                  apiKey="8hswbe7bfeeneui9eb9gjgsym8ku30nx5gwre9808ajdzniu" 
-                  value={formData.fullDescription}
-                  onEditorChange={handleEditorChange}
-                  init={{
-                    height: 280,
-                    menubar: false,
-                    plugins: [
-                      'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                      'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                      'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
-                    ],
-                    toolbar: 'undo redo | blocks | ' +
-                      'bold italic forecolor | alignleft aligncenter ' +
-                      'alignright alignjustify | bullist numlist outdent indent | ' +
-                      'removeformat | help',
-                    content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px }',
-                    skin: 'oxide',
-                    border: '1px solid #cbd5e1'
-                  }}
+            {/* Category & Sub Category */}
+            <div className="gs-form-row col-2">
+              <div className="gs-form-group">
+                <label>
+                  Category <span className="gs-required">*</span>
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Select Category</option>
+                  <option value="vegetables">Vegetables</option>
+                  <option value="fruits">Fresh Fruits</option>
+                  <option value="dairy">Dairy & Bakery</option>
+                  <option value="beverages">Beverages</option>
+                </select>
+              </div>
+
+              <div className="gs-form-group">
+                <label>Sub Category</label>
+                <select
+                  name="subCategory"
+                  value={formData.subCategory}
+                  onChange={handleChange}
+                >
+                  <option value="">Select Sub Category</option>
+                  <option value="leafy">Leafy Greens</option>
+                  <option value="exotic">Exotic Veggies</option>
+                  <option value="organic">Organic</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Brand */}
+            <div className="gs-form-group">
+              <label>Brand</label>
+              <input
+                type="text"
+                name="brand"
+                placeholder="Enter brand name"
+                value={formData.brand}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* SKU */}
+            <div className="gs-form-group">
+              <label>
+                SKU (Stock Keeping Unit) <span className="gs-required">*</span>
+              </label>
+              <input
+                type="text"
+                name="sku"
+                placeholder="Enter SKU code"
+                value={formData.sku}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            {/* Unit & Tags */}
+            <div className="gs-form-row col-2">
+              <div className="gs-form-group">
+                <label>
+                  Unit <span className="gs-required">*</span>
+                </label>
+                <select
+                  name="unit"
+                  value={formData.unit}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Select Unit</option>
+                  <option value="kg">Kg</option>
+                  <option value="gm">Gram</option>
+                  <option value="ltr">Litre</option>
+                  <option value="pcs">Pcs</option>
+                  <option value="pack">Pack</option>
+                </select>
+              </div>
+
+              <div className="gs-form-group">
+                <label>Tags</label>
+                <input
+                  type="text"
+                  name="tags"
+                  placeholder="Enter tags (e.g. organic, fresh)"
+                  value={formData.tags}
+                  onChange={handleChange}
                 />
+              </div>
+            </div>
+
+            {/* Short Description */}
+            <div className="gs-form-group">
+              <label>Short Description</label>
+              <div className="gs-textarea-wrapper">
+                <textarea
+                  name="shortDescription"
+                  rows="3"
+                  maxLength="200"
+                  placeholder="Enter short description about the product..."
+                  value={formData.shortDescription}
+                  onChange={handleChange}
+                ></textarea>
+                <span className="gs-char-counter">
+                  {formData.shortDescription.length}/200
+                </span>
+              </div>
+            </div>
+
+            {/* Full Description */}
+            <div className="gs-form-group">
+              <label>Full Description</label>
+              <div className="gs-textarea-wrapper">
+                <textarea
+                  name="fullDescription"
+                  rows="5"
+                  maxLength="1000"
+                  placeholder="Enter full description about the product..."
+                  value={formData.fullDescription}
+                  onChange={handleChange}
+                ></textarea>
+                <span className="gs-char-counter">
+                  {formData.fullDescription.length}/1000
+                </span>
               </div>
             </div>
           </div>
+        </div>
 
+        {/* RIGHT COLUMN (50%) */}
+        <div className="gs-column">
           {/* Pricing & Stock Card */}
-          <div className="an-card">
-            <h2 className="an-card-title">Pricing &amp; Stock</h2>
+          <div className="gs-card">
+            <div className="gs-card-header">
+              <div className="gs-card-icon-wrap">
+                <Tag size={18} />
+              </div>
+              <h2>Pricing &amp; Stock</h2>
+            </div>
 
-            <div className="an-form-row col-3">
-              <div className="an-form-group">
-                <label>Regular Price (USD) <span className="an-required">*</span></label>
+            <div className="gs-form-row col-2">
+              <div className="gs-form-group">
+                <label>
+                  Price (₹) <span className="gs-required">*</span>
+                </label>
                 <input
-                  type="text"
-                  name="regularPrice"
+                  type="number"
+                  step="0.01"
+                  name="price"
                   placeholder="0.00"
-                  value={formData.regularPrice}
+                  value={formData.price}
                   onChange={handleChange}
                   required
                 />
               </div>
 
-              <div className="an-form-group">
-                <label>Discount Price (USD)</label>
+              <div className="gs-form-group">
+                <label>Discount Price (₹)</label>
                 <input
-                  type="text"
+                  type="number"
+                  step="0.01"
                   name="discountPrice"
                   placeholder="0.00"
                   value={formData.discountPrice}
                   onChange={handleChange}
                 />
               </div>
-
-              <div className="an-form-group">
-                <label>Tax (%)</label>
-                <div className="an-input-suffix-wrap">
-                  <input
-                    type="text"
-                    name="tax"
-                    placeholder="0"
-                    value={formData.tax}
-                    onChange={handleChange}
-                  />
-                  <span className="suffix">%</span>
-                </div>
-              </div>
             </div>
 
-            <div className="an-form-row col-2">
-              <div className="an-form-group">
-                <label>Stock Quantity <span className="an-required">*</span></label>
+            <div className="gs-form-row col-2">
+              <div className="gs-form-group">
+                <label>Cost Price (₹)</label>
                 <input
-                  type="text"
+                  type="number"
+                  step="0.01"
+                  name="costPrice"
+                  placeholder="0.00"
+                  value={formData.costPrice}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="gs-form-group">
+                <label>
+                  Stock Quantity <span className="gs-required">*</span>
+                </label>
+                <input
+                  type="number"
                   name="stockQuantity"
-                  placeholder="Enter stock quantity"
+                  placeholder="0"
                   value={formData.stockQuantity}
                   onChange={handleChange}
                   required
                 />
               </div>
+            </div>
 
-              <div className="an-form-group">
+            <div className="gs-form-row col-2">
+              <div className="gs-form-group">
                 <label>Low Stock Alert</label>
                 <input
-                  type="text"
+                  type="number"
                   name="lowStockAlert"
-                  placeholder="Enter low stock alert"
+                  placeholder="Enter minimum stock level"
                   value={formData.lowStockAlert}
                   onChange={handleChange}
                 />
               </div>
-            </div>
 
-            <div className="an-checkbox-group">
-              <label className="an-checkbox-label">
+              <div className="gs-form-group">
+                <label>Tax (%)</label>
                 <input
-                  type="checkbox"
-                  name="allowBackorders"
-                  checked={formData.allowBackorders}
+                  type="number"
+                  name="tax"
+                  placeholder="0"
+                  value={formData.tax}
                   onChange={handleChange}
                 />
-                <span className="checkbox-text">Allow Backorders</span>
+              </div>
+            </div>
+
+            <div className="gs-checkbox-group">
+              <label className="gs-checkbox-label">
+                <input
+                  type="checkbox"
+                  name="isOutOfStock"
+                  checked={formData.isOutOfStock}
+                  onChange={handleChange}
+                />
+                <span>This product is out of stock</span>
               </label>
-              <small className="an-help-text">Allow customers to order even if product is out of stock</small>
             </div>
           </div>
-        </div>
 
-        {/* RIGHT COLUMN: 50% Width */}
-        <div className="an-right-column">
-          
           {/* Product Images Card */}
-          <div className="an-card">
-            <h2 className="an-card-title">Product Images</h2>
-
-            {/* Main Image Upload */}
-            <div className="an-upload-box-wrapper">
-              <label className="an-upload-label-title">Main Image <span className="an-required">*</span></label>
-              <label htmlFor="main-image-file" className="an-dropzone">
-                {mainImage ? (
-                  <img src={mainImage} alt="Main Preview" className="an-image-preview" />
-                ) : (
-                  <div className="an-dropzone-content">
-                    <div className="an-cloud-icon">&#9729;</div>
-                    <p className="an-dropzone-title">Upload main image</p>
-                    <p className="an-dropzone-sub">PNG, JPG or WEBP (Max. 2MB)</p>
-                  </div>
-                )}
-              </label>
-              <input
-                id="main-image-file"
-                type="file"
-                accept="image/*"
-                onChange={handleMainImageUpload}
-                style={{ display: 'none' }}
-              />
+          <div className="gs-card">
+            <div className="gs-card-header">
+              <div className="gs-card-icon-wrap">
+                <ImageIcon size={18} />
+              </div>
+              <h2>Product Images</h2>
             </div>
 
-            {/* Gallery Images Upload */}
-            <div className="an-upload-box-wrapper">
-              <label className="an-upload-label-title">Gallery Images</label>
-              <label htmlFor="gallery-images-file" className="an-dropzone">
-                <div className="an-dropzone-content">
-                  <div className="an-cloud-icon">&#9729;</div>
-                  <p className="an-dropzone-title">Upload gallery images</p>
-                  <p className="an-dropzone-sub">You can upload up to 5 images</p>
+            <div className="gs-upload-zone-container">
+              <label htmlFor="gs-file-input" className="gs-dropzone">
+                <div className="gs-upload-circle-icon">
+                  <UploadCloud size={24} />
                 </div>
+                <h3 className="gs-upload-title">Upload Product Images</h3>
+                <p className="gs-upload-desc">
+                  Drag &amp; drop images here or click to browse<br />
+                  JPG, PNG or WEBP (Max. 5MB each)
+                </p>
+                <span className="gs-upload-note">You can upload up to 5 images</span>
               </label>
               <input
-                id="gallery-images-file"
+                id="gs-file-input"
                 type="file"
-                accept="image/*"
+                accept="image/png, image/jpeg, image/webp"
                 multiple
-                onChange={handleGalleryUpload}
+                onChange={handleImageUpload}
                 style={{ display: 'none' }}
               />
-
-              {galleryImages.length > 0 && (
-                <div className="an-gallery-previews">
-                  {galleryImages.map((img, idx) => (
-                    <img key={idx} src={img} alt={`Gallery ${idx}`} className="an-gallery-thumb" />
-                  ))}
-                </div>
-              )}
             </div>
-          </div>
 
-          {/* Product Variants Card */}
-          <div className="an-card">
-            <h2 className="an-card-title">Product Variants (Optional)</h2>
-            <p className="an-card-subtitle">This is a variable product with options like size, color, etc.</p>
-            <button type="button" className="an-btn-add-variant" onClick={() => alert('Add variant modal triggered')}>
-              + Add Variant
-            </button>
+            {/* Image Preview List */}
+            {productImages.length > 0 && (
+              <div className="gs-image-preview-grid">
+                {productImages.map((imgObj, idx) => (
+                  <div key={idx} className="gs-preview-item">
+                    <img src={imgObj.url} alt={`Product ${idx + 1}`} />
+                    <button
+                      type="button"
+                      className="gs-remove-img-btn"
+                      onClick={() => handleRemoveImage(idx)}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Status Card */}
-          <div className="an-card">
-            <h2 className="an-card-title">Product Status</h2>
-
-            <div className="an-status-row">
-              <span className="an-status-label">Status <span className="an-required">*</span></span>
-              <div className="an-toggle-flex">
-                <label className="an-switch">
-                  <input
-                    type="checkbox"
-                    name="status"
-                    checked={formData.status}
-                    onChange={handleChange}
-                  />
-                  <span className="an-slider round"></span>
-                </label>
-                <span className="an-toggle-text">{formData.status ? 'Active' : 'Inactive'}</span>
+          <div className="gs-card">
+            <div className="gs-card-header">
+              <div className="gs-card-icon-wrap">
+                <Tag size={18} />
               </div>
+              <h2>Product Status</h2>
             </div>
 
-            <div className="an-status-row">
-              <span className="an-status-label">Featured Product</span>
-              <div className="an-toggle-flex">
-                <label className="an-switch">
-                  <input
-                    type="checkbox"
-                    name="featuredProduct"
-                    checked={formData.featuredProduct}
-                    onChange={handleChange}
-                  />
-                  <span className="an-slider round"></span>
-                </label>
-                <span className="an-toggle-text">{formData.featuredProduct ? 'Yes' : 'No'}</span>
-              </div>
-            </div>
+            <div className="gs-status-options-grid">
+              {/* Active Option */}
+              <label
+                className={`gs-status-card ${
+                  formData.status === 'active' ? 'selected-active' : ''
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="status"
+                  value="active"
+                  checked={formData.status === 'active'}
+                  onChange={handleChange}
+                />
+                <div className="gs-status-radio-icon">
+                  <CheckCircle size={20} />
+                </div>
+                <div className="gs-status-info">
+                  <div className="gs-status-title">Active</div>
+                  <div className="gs-status-sub">Product is available</div>
+                </div>
+              </label>
 
-            <div className="an-status-row">
-              <span className="an-status-label">New Arrival</span>
-              <div className="an-toggle-flex">
-                <label className="an-switch">
-                  <input
-                    type="checkbox"
-                    name="newArrival"
-                    checked={formData.newArrival}
-                    onChange={handleChange}
-                  />
-                  <span className="an-slider round"></span>
-                </label>
-                <span className="an-toggle-text">{formData.newArrival ? 'Yes' : 'No'}</span>
-              </div>
+              {/* Inactive Option */}
+              <label
+                className={`gs-status-card ${
+                  formData.status === 'inactive' ? 'selected-inactive' : ''
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="status"
+                  value="inactive"
+                  checked={formData.status === 'inactive'}
+                  onChange={handleChange}
+                />
+                <div className="gs-status-radio-icon">
+                  <XCircle size={20} />
+                </div>
+                <div className="gs-status-info">
+                  <div className="gs-status-title">Inactive</div>
+                  <div className="gs-status-sub">Product is not available</div>
+                </div>
+              </label>
             </div>
           </div>
-
         </div>
 
-        {/* BOTTOM ACTION BUTTONS ROW */}
-        <div className="an-footer-actions-row">
-          <button type="button" className="an-btn-draft" onClick={handleSaveDraft}>
-            Save as Draft
+        {/* BOTTOM FULL WIDTH ACTION BUTTONS */}
+        <div className="gs-footer-actions-row">
+          <button type="button" className="gs-btn-reset" onClick={handleReset}>
+            <RotateCcw size={16} /> Reset
           </button>
-          <button type="button" className="an-btn-reset" onClick={handleReset}>
-            Reset
-          </button>
-          <button type="submit" className="an-btn-save-product">
-            <span className="save-icon">&#128190;</span> Save Product
+          <button type="submit" className="gs-btn-save">
+            <Save size={16} /> Save Product
           </button>
         </div>
       </form>
