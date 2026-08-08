@@ -23,7 +23,8 @@ import {
   Settings,
   ShoppingBasket,
   Notebook,
-  Book
+  Book,
+  NotebookPen
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -34,6 +35,15 @@ const menuSections = [
       { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard }
     ]
   },
+
+  {
+    title: null,
+    items: [
+      { label: 'Cold Lead', path: '/coldlead', icon: NotebookPen }
+    ]
+  },
+
+
   {
     title: 'PRODUCTS',
     items: [
