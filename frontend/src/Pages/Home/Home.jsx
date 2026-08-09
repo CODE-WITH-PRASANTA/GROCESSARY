@@ -15,14 +15,14 @@ const Home = () => {
   return (
     <div>
       <MobileSection />
-      <HeroSection/>
-      <HomeCategories/>
-      <HomeDailyDiscounts/>
-      <HomeTodayDiscounts/>
+      {/* <HeroSection/> */}
+      {/* <HomeCategories/> */}
+      {/* <HomeDailyDiscounts/> */}
+      {/* <HomeTodayDiscounts/> */}
       
-      <OurBestsellers />
-      <NourishSection />
-      <FreashItem />
+      {/* <OurBestsellers /> */}
+      {/* <NourishSection /> */}
+      {/* <FreashItem /> */}
       <Testimonial />
       {/* <Blog /> */}
     </div>

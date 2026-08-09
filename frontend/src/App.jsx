@@ -29,7 +29,7 @@ import ListUpload from "./Components/ListUpload/ListUpload";
 const App = () => {
   return (
     <BrowserRouter>
-      <Navbar />
+      {/* <Navbar /> */}
 
       <Routes>
         <Route path="/" element={<Home />} />
