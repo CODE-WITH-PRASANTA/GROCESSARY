@@ -2,6 +2,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
+const sharp = require("sharp");
 
 // ======================================================
 // CONFIG
@@ -11,8 +12,10 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 const allowedMimeTypes = {
   "image/jpeg": ".jpg",
+  "image/jpg": ".jpg",
   "image/png": ".png",
   "image/webp": ".webp",
+  "image/avif": ".avif",
   "application/pdf": ".pdf",
 };
 
@@ -34,19 +37,12 @@ const getFileType = (file) => {
 
 // ======================================================
 // CREATE UPLOAD DIRECTORY
-// uploads/images/2026/08/
-// uploads/pdfs/2026/08/
 // ======================================================
 
 const createUploadDirectory = (file) => {
   const now = new Date();
-
   const year = now.getFullYear().toString();
-
-  const month = String(
-    now.getMonth() + 1
-  ).padStart(2, "0");
-
+  const month = String(now.getMonth() + 1).padStart(2, "0");
   const fileType = getFileType(file);
 
   const uploadDirectory = path.join(
@@ -68,54 +64,10 @@ const createUploadDirectory = (file) => {
 };
 
 // ======================================================
-// STORAGE
+// STORAGE (Using memoryStorage to allow Sharp processing)
 // ======================================================
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    try {
-      const directory =
-        createUploadDirectory(file);
-
-      cb(null, directory);
-    } catch (error) {
-      cb(error);
-    }
-  },
-
-  filename: (req, file, cb) => {
-    try {
-      const randomId = crypto
-        .randomBytes(8)
-        .toString("hex");
-
-      const timestamp = Date.now();
-
-      const extension =
-        allowedMimeTypes[file.mimetype];
-
-      const originalBaseName = path
-        .basename(
-          file.originalname,
-          path.extname(file.originalname)
-        )
-        .replace(/[^a-zA-Z0-9-_]/g, "-")
-        .replace(/-+/g, "-")
-        .replace(/^-|-$/g, "")
-        .substring(0, 50);
-
-      const safeBaseName =
-        originalBaseName || "grocery-list";
-
-      const fileName =
-        `${safeBaseName}-${timestamp}-${randomId}${extension}`;
-
-      cb(null, fileName);
-    } catch (error) {
-      cb(error);
-    }
-  },
-});
+const storage = multer.memoryStorage();
 
 // ======================================================
 // FILE FILTER
@@ -124,9 +76,7 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
   if (!allowedMimeTypes[file.mimetype]) {
     return cb(
-      new Error(
-        "Only JPG, JPEG, PNG, WEBP and PDF files are allowed."
-      ),
+      new Error("Only JPG, JPEG, PNG, WEBP, AVIF and PDF files are allowed."),
       false
     );
   }
@@ -135,14 +85,12 @@ const fileFilter = (req, file, cb) => {
 };
 
 // ======================================================
-// MULTER
+// MULTER INSTANCE
 // ======================================================
 
 const upload = multer({
   storage,
-
   fileFilter,
-
   limits: {
     fileSize: MAX_FILE_SIZE,
     files: 1,
@@ -150,12 +98,89 @@ const upload = multer({
 });
 
 // ======================================================
+// CONVERT TO WEBP / SAVE FILE MIDDLEWARE
+// ======================================================
+
+const convertToWebp = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return next();
+    }
+
+    const fileType = getFileType(req.file);
+    const directory = createUploadDirectory(req.file);
+
+    const randomId = crypto.randomBytes(8).toString("hex");
+    const timestamp = Date.now();
+
+    const originalBaseName = path
+      .basename(req.file.originalname, path.extname(req.file.originalname))
+      .replace(/[^a-zA-Z0-9-_]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .substring(0, 50);
+
+    const safeBaseName = originalBaseName || "uploaded-file";
+
+    if (fileType === "images") {
+      const fileName = `${safeBaseName}-${timestamp}-${randomId}.webp`;
+      const absolutePath = path.join(directory, fileName);
+
+      await sharp(req.file.buffer)
+        .resize(1920, 1080, { fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .toFile(absolutePath);
+
+      req.file.filename = fileName;
+      req.file.path = absolutePath;
+      req.file.destination = directory;
+      req.file.mimetype = "image/webp";
+      req.file.size = fs.statSync(absolutePath).size;
+
+      console.log(`Image converted to WebP: ${fileName}`);
+    } else {
+      // Save PDFs directly from buffer
+      const extension = allowedMimeTypes[req.file.mimetype];
+      const fileName = `${safeBaseName}-${timestamp}-${randomId}${extension}`;
+      const absolutePath = path.join(directory, fileName);
+
+      fs.writeFileSync(absolutePath, req.file.buffer);
+
+      req.file.filename = fileName;
+      req.file.path = absolutePath;
+      req.file.destination = directory;
+      req.file.size = fs.statSync(absolutePath).size;
+
+      console.log(`PDF saved: ${fileName}`);
+    }
+
+    next();
+  } catch (error) {
+    console.error("File processing & conversion error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "File processing & conversion error",
+      error: error.message,
+    });
+  }
+};
+
+// ======================================================
 // MAP UPLOADED FILE
 // ======================================================
 
-const mapUploadedFile = (file, req) => {
+const mapUploadedFile = (file) => {
+  // Guard 1: Ensure file exists
   if (!file) {
     return null;
+  }
+
+  // Guard 2: Ensure file.path was set by convertToWebp
+  if (!file.path) {
+    throw new Error(
+      "file.path is undefined. Ensure 'convertToWebp' middleware is included in your route before the controller."
+    );
   }
 
   const relativePath = path
@@ -167,39 +192,18 @@ const mapUploadedFile = (file, req) => {
 
   return {
     originalName: file.originalname,
-
     fileName: file.filename,
-
     mimeType: file.mimetype,
-
-    fileType:
-      getFileType(file) === "images"
-        ? "image"
-        : "pdf",
-
+    fileType: getFileType(file) === "images" ? "image" : "pdf",
     size: file.size,
-
-    sizeMB: Number(
-      (file.size / (1024 * 1024)).toFixed(2)
-    ),
-
+    sizeMB: Number((file.size / (1024 * 1024)).toFixed(2)),
     path: relativePath,
-
-    url:
-      `${req.protocol}://${req.get("host")}/${relativePath}`,
+    url: relativePath, // Standard relative path or construct full URL here
   };
 };
 
 // ======================================================
 // DELETE FILE
-// Accepts:
-// "uploads/images/.../image.jpg"
-//
-// OR:
-//
-// {
-//    path: "uploads/images/.../image.jpg"
-// }
 // ======================================================
 
 const deleteUploadedFile = (fileData) => {
@@ -229,44 +233,25 @@ const deleteUploadedFile = (fileData) => {
       filePath
     );
 
-    // Security check:
-    // only delete files from uploads folder
+    // Security check against directory traversal
     if (
       absolutePath !== uploadRoot &&
       !absolutePath.startsWith(
         uploadRoot + path.sep
       )
     ) {
-      console.error(
-        "Delete blocked: file is outside uploads directory"
-      );
-
+      console.error("Delete blocked: file is outside uploads directory");
       return false;
     }
 
     if (!fs.existsSync(absolutePath)) {
-      console.log(
-        "File does not exist:",
-        absolutePath
-      );
-
       return false;
     }
 
     fs.unlinkSync(absolutePath);
-
-    console.log(
-      "Old uploaded file deleted:",
-      absolutePath
-    );
-
     return true;
   } catch (error) {
-    console.error(
-      "File deletion error:",
-      error.message
-    );
-
+    console.error("File deletion error:", error.message);
     return false;
   }
 };
@@ -277,6 +262,8 @@ const deleteUploadedFile = (fileData) => {
 
 module.exports = {
   upload,
+  processAndSaveFile: convertToWebp, // Alias for backward compatibility if needed
+  convertToWebp,
   mapUploadedFile,
   deleteUploadedFile,
 };

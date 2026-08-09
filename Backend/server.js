@@ -8,10 +8,19 @@ const connectDB = require("./config/db");
 
 
 
+const bannerRoutes = require('./routes/bannerRoutes');
+
+
+
 
 const listUploadRoutes = require(
   "./routes/listUploadRoutes"
 );
+
+const brandRoutes = require(
+  "./routes/brandRoutes"
+);
+const coldLeadRoutes = require("./routes/coldLeadRoutes");
 
 
 // Load environment variables
@@ -43,6 +52,11 @@ app.use(
   "/api/list-upload",
   listUploadRoutes
 );
+
+// Routes
+app.use('/api/banners', bannerRoutes);
+app.use('/api/brands', require('./routes/brandRoutes'));
+app.use("/api/cold-leads", coldLeadRoutes);
 
 
 
