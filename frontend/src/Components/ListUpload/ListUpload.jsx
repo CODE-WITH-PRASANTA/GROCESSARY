@@ -843,7 +843,7 @@ const ListUpload = ({ onClose, onSubmit }) => {
 
             <div className="success-action-buttons">
 
-              <button
+              {/* <button
                 type="button"
                 className="action-btn download-btn"
                 onClick={() =>
@@ -857,7 +857,7 @@ const ListUpload = ({ onClose, onSubmit }) => {
 
                 Download Receipt
 
-              </button>
+              </button> */}
 
               <button
                 type="button"
