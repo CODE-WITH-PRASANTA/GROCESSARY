@@ -78,7 +78,7 @@ const App = () => {
 
       <FloatingForm />
       <FloatingButton />
-      <Footer />
+      {/* <Footer /> */}
     </BrowserRouter>
   );
 };
