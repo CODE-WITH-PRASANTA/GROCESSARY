@@ -12,6 +12,8 @@ const connectDB = require("./config/db");
 const listUploadRoutes = require(
   "./routes/listUploadRoutes"
 );
+const productRoutes = require('./routes/productRoutes');
+
 
 
 // Load environment variables
@@ -44,6 +46,7 @@ app.use(
   listUploadRoutes
 );
 
+app.use('/api/products', productRoutes);
 
 
 // Test Route

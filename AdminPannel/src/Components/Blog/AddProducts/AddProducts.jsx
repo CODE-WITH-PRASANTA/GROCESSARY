@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
   FileText,
@@ -11,37 +11,52 @@ import {
   X,
   CheckCircle,
   XCircle,
+  Loader,
 } from 'lucide-react';
 import './AddProducts.css';
 
+const API_BASE_URL = 'http://localhost:5000';
+
 const AddProducts = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Initial state for easy resetting
+  // Check if we navigated with a product object for editing
+  const editingProduct = location.state?.product || null;
+
   const initialFormState = {
-    productName: '',
-    category: '',
-    subCategory: '',
-    brand: '',
-    sku: '',
-    unit: '',
-    tags: '',
-    shortDescription: '',
-    fullDescription: '',
-    price: '',
-    discountPrice: '',
-    costPrice: '',
-    stockQuantity: '',
-    lowStockAlert: '',
-    tax: '',
-    isOutOfStock: false,
-    status: 'active', // 'active' | 'inactive'
+    productName: editingProduct?.productName || '',
+    category: editingProduct?.category || '',
+    subCategory: editingProduct?.subCategory || '',
+    brand: editingProduct?.brand || '',
+    sku: editingProduct?.sku || '',
+    unit: editingProduct?.unit || '',
+    tags: editingProduct?.tags || '',
+    shortDescription: editingProduct?.shortDescription || '',
+    fullDescription: editingProduct?.fullDescription || '',
+    price: editingProduct?.price || '',
+    discountPrice: editingProduct?.discountPrice || '',
+    costPrice: editingProduct?.costPrice || '',
+    stockQuantity: editingProduct?.stockQuantity || '',
+    lowStockAlert: editingProduct?.lowStockAlert || '',
+    tax: editingProduct?.tax || '',
+    isOutOfStock: editingProduct?.isOutOfStock || false,
+    status: editingProduct?.status || 'active',
   };
 
   const [formData, setFormData] = useState(initialFormState);
   const [productImages, setProductImages] = useState([]);
+  const [existingImages, setExistingImages] = useState(editingProduct?.images || []);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  // Handle Text/Select/Checkbox Inputs
+  // Revoke object URLs to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      productImages.forEach((img) => URL.revokeObjectURL(img.url));
+    };
+  }, [productImages]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -50,10 +65,9 @@ const AddProducts = () => {
     }));
   };
 
-  // Handle File Uploads (Limit to 5)
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length + productImages.length > 5) {
+    if (files.length + productImages.length + existingImages.length > 5) {
       alert('You can upload up to 5 images only.');
       return;
     }
@@ -66,43 +80,81 @@ const AddProducts = () => {
     setProductImages((prev) => [...prev, ...newImages]);
   };
 
-  // Remove Single Image
-  const handleRemoveImage = (indexToRemove) => {
+  const handleRemoveNewImage = (indexToRemove) => {
+    URL.revokeObjectURL(productImages[indexToRemove].url);
     setProductImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
-  // Reset Form
+  const handleRemoveExistingImage = (indexToRemove) => {
+    setExistingImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
   const handleReset = () => {
+    productImages.forEach((img) => URL.revokeObjectURL(img.url));
     setFormData(initialFormState);
     setProductImages([]);
+    setExistingImages(editingProduct?.images || []);
+    setErrorMsg('');
   };
 
-  // Submit Handler
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form Data Submitted:', formData);
-    console.log('Uploaded Images:', productImages);
-    alert('Product Saved Successfully!');
+    setIsSubmitting(true);
+    setErrorMsg('');
+
+    try {
+      const data = new FormData();
+
+      Object.keys(formData).forEach((key) => {
+        data.append(key, formData[key]);
+      });
+
+      // Append new file uploads
+      productImages.forEach((imgObj) => {
+        data.append('images', imgObj.file);
+      });
+
+      // Append retained existing image paths
+      data.append('existingImages', JSON.stringify(existingImages));
+
+      const isEditMode = Boolean(editingProduct?._id);
+      const url = isEditMode
+        ? `${API_BASE_URL}/api/products/${editingProduct._id}`
+        : `${API_BASE_URL}/api/products`;
+
+      const response = await fetch(url, {
+        method: isEditMode ? 'PUT' : 'POST',
+        body: data,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to save product');
+      }
+
+      alert(`Product ${isEditMode ? 'Updated' : 'Created'} Successfully!`);
+      handleReset();
+      navigate('/products');
+    } catch (err) {
+      setErrorMsg(err.message || 'Something went wrong while saving.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // Navigation Back
   const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate('/products');
-    }
+    navigate('/products');
   };
 
   return (
     <div className="gs-add-product-container">
-      {/* Top Bar Header */}
       <div className="gs-header-bar">
         <div className="gs-header-title-group">
-          <h1>Add New Product</h1>
+          <h1>{editingProduct ? 'Edit Product' : 'Add New Product'}</h1>
           <div className="gs-breadcrumb">
             <span>Dashboard</span> &gt; <span>Products</span> &gt;{' '}
-            <span className="active">Add New Product</span>
+            <span className="active">{editingProduct ? 'Edit Product' : 'Add New Product'}</span>
           </div>
         </div>
         <button type="button" className="gs-btn-back" onClick={handleBack}>
@@ -110,8 +162,14 @@ const AddProducts = () => {
         </button>
       </div>
 
+      {errorMsg && (
+        <div className="gs-error-alert" style={{ color: 'red', marginBottom: '1rem', fontWeight: 'bold' }}>
+          {errorMsg}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="gs-main-layout-grid gs-grid-50-50">
-        {/* LEFT COLUMN (50%) */}
+        {/* LEFT COLUMN */}
         <div className="gs-column">
           <div className="gs-card">
             <div className="gs-card-header">
@@ -121,7 +179,6 @@ const AddProducts = () => {
               <h2>Product Information</h2>
             </div>
 
-            {/* Product Name */}
             <div className="gs-form-group">
               <label>
                 Product Name <span className="gs-required">*</span>
@@ -136,7 +193,6 @@ const AddProducts = () => {
               />
             </div>
 
-            {/* Category & Sub Category */}
             <div className="gs-form-row col-2">
               <div className="gs-form-group">
                 <label>
@@ -151,7 +207,7 @@ const AddProducts = () => {
                   <option value="">Select Category</option>
                   <option value="vegetables">Vegetables</option>
                   <option value="fruits">Fresh Fruits</option>
-                  <option value="dairy">Dairy & Bakery</option>
+                  <option value="dairy">Dairy &amp; Bakery</option>
                   <option value="beverages">Beverages</option>
                 </select>
               </div>
@@ -171,7 +227,6 @@ const AddProducts = () => {
               </div>
             </div>
 
-            {/* Brand */}
             <div className="gs-form-group">
               <label>Brand</label>
               <input
@@ -183,7 +238,6 @@ const AddProducts = () => {
               />
             </div>
 
-            {/* SKU */}
             <div className="gs-form-group">
               <label>
                 SKU (Stock Keeping Unit) <span className="gs-required">*</span>
@@ -198,7 +252,6 @@ const AddProducts = () => {
               />
             </div>
 
-            {/* Unit & Tags */}
             <div className="gs-form-row col-2">
               <div className="gs-form-group">
                 <label>
@@ -231,7 +284,6 @@ const AddProducts = () => {
               </div>
             </div>
 
-            {/* Short Description */}
             <div className="gs-form-group">
               <label>Short Description</label>
               <div className="gs-textarea-wrapper">
@@ -239,7 +291,7 @@ const AddProducts = () => {
                   name="shortDescription"
                   rows="3"
                   maxLength="200"
-                  placeholder="Enter short description about the product..."
+                  placeholder="Enter short description..."
                   value={formData.shortDescription}
                   onChange={handleChange}
                 ></textarea>
@@ -249,7 +301,6 @@ const AddProducts = () => {
               </div>
             </div>
 
-            {/* Full Description */}
             <div className="gs-form-group">
               <label>Full Description</label>
               <div className="gs-textarea-wrapper">
@@ -257,7 +308,7 @@ const AddProducts = () => {
                   name="fullDescription"
                   rows="5"
                   maxLength="1000"
-                  placeholder="Enter full description about the product..."
+                  placeholder="Enter full description..."
                   value={formData.fullDescription}
                   onChange={handleChange}
                 ></textarea>
@@ -269,9 +320,8 @@ const AddProducts = () => {
           </div>
         </div>
 
-        {/* RIGHT COLUMN (50%) */}
+        {/* RIGHT COLUMN */}
         <div className="gs-column">
-          {/* Pricing & Stock Card */}
           <div className="gs-card">
             <div className="gs-card-header">
               <div className="gs-card-icon-wrap">
@@ -343,7 +393,7 @@ const AddProducts = () => {
                 <input
                   type="number"
                   name="lowStockAlert"
-                  placeholder="Enter minimum stock level"
+                  placeholder="Minimum stock level"
                   value={formData.lowStockAlert}
                   onChange={handleChange}
                 />
@@ -374,7 +424,6 @@ const AddProducts = () => {
             </div>
           </div>
 
-          {/* Product Images Card */}
           <div className="gs-card">
             <div className="gs-card-header">
               <div className="gs-card-icon-wrap">
@@ -391,9 +440,8 @@ const AddProducts = () => {
                 <h3 className="gs-upload-title">Upload Product Images</h3>
                 <p className="gs-upload-desc">
                   Drag &amp; drop images here or click to browse<br />
-                  JPG, PNG or WEBP (Max. 5MB each)
+                  JPG, PNG or WEBP (Max 5MB each)
                 </p>
-                <span className="gs-upload-note">You can upload up to 5 images</span>
               </label>
               <input
                 id="gs-file-input"
@@ -405,16 +453,31 @@ const AddProducts = () => {
               />
             </div>
 
-            {/* Image Preview List */}
-            {productImages.length > 0 && (
+            {/* Existing + New Image Previews */}
+            {(existingImages.length > 0 || productImages.length > 0) && (
               <div className="gs-image-preview-grid">
-                {productImages.map((imgObj, idx) => (
-                  <div key={idx} className="gs-preview-item">
-                    <img src={imgObj.url} alt={`Product ${idx + 1}`} />
+                {/* Existing Images */}
+                {existingImages.map((imgPath, idx) => (
+                  <div key={`existing-${idx}`} className="gs-preview-item">
+                    <img src={`${API_BASE_URL}${imgPath}`} alt={`Existing ${idx}`} />
                     <button
                       type="button"
                       className="gs-remove-img-btn"
-                      onClick={() => handleRemoveImage(idx)}
+                      onClick={() => handleRemoveExistingImage(idx)}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+
+                {/* New Images */}
+                {productImages.map((imgObj, idx) => (
+                  <div key={`new-${idx}`} className="gs-preview-item">
+                    <img src={imgObj.url} alt={`New upload ${idx}`} />
+                    <button
+                      type="button"
+                      className="gs-remove-img-btn"
+                      onClick={() => handleRemoveNewImage(idx)}
                     >
                       <X size={14} />
                     </button>
@@ -424,7 +487,6 @@ const AddProducts = () => {
             )}
           </div>
 
-          {/* Product Status Card */}
           <div className="gs-card">
             <div className="gs-card-header">
               <div className="gs-card-icon-wrap">
@@ -434,7 +496,6 @@ const AddProducts = () => {
             </div>
 
             <div className="gs-status-options-grid">
-              {/* Active Option */}
               <label
                 className={`gs-status-card ${
                   formData.status === 'active' ? 'selected-active' : ''
@@ -452,11 +513,10 @@ const AddProducts = () => {
                 </div>
                 <div className="gs-status-info">
                   <div className="gs-status-title">Active</div>
-                  <div className="gs-status-sub">Product is available</div>
+                  <div className="gs-status-sub">Product is visible in shop</div>
                 </div>
               </label>
 
-              {/* Inactive Option */}
               <label
                 className={`gs-status-card ${
                   formData.status === 'inactive' ? 'selected-inactive' : ''
@@ -474,20 +534,32 @@ const AddProducts = () => {
                 </div>
                 <div className="gs-status-info">
                   <div className="gs-status-title">Inactive</div>
-                  <div className="gs-status-sub">Product is not available</div>
+                  <div className="gs-status-sub">Product is hidden from shop</div>
                 </div>
               </label>
             </div>
           </div>
         </div>
 
-        {/* BOTTOM FULL WIDTH ACTION BUTTONS */}
         <div className="gs-footer-actions-row">
-          <button type="button" className="gs-btn-reset" onClick={handleReset}>
+          <button
+            type="button"
+            className="gs-btn-reset"
+            onClick={handleReset}
+            disabled={isSubmitting}
+          >
             <RotateCcw size={16} /> Reset
           </button>
-          <button type="submit" className="gs-btn-save">
-            <Save size={16} /> Save Product
+          <button type="submit" className="gs-btn-save" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader size={16} className="spin" /> Saving...
+              </>
+            ) : (
+              <>
+                <Save size={16} /> {editingProduct ? 'Update Product' : 'Save Product'}
+              </>
+            )}
           </button>
         </div>
       </form>
