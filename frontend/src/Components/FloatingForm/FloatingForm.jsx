@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import API from '../../api/axios'; // Adjust path according to your project structure
 import './FloatingForm.css';
 import { FaPhoneAlt, FaWhatsapp, FaPaperPlane, FaTimes } from 'react-icons/fa';
 
 const FloatingForm = () => {
   const [isOpen, setIsOpen] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -16,19 +18,57 @@ const FloatingForm = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Process lead data or trigger API call here
-    console.log('Grocery Sathi Lead Captured:', formData);
-    alert('Thank you! Your request has been submitted to Grocery Sathi.');
-    setIsOpen(false);
+
+    if (!formData.fullName || !formData.phone) {
+      alert('Please fill in your name and phone number.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Payload matching the schema expected by ColdLeadManagement
+      const payload = {
+        name: formData.fullName,
+        phone: formData.phone,
+        email: formData.email || 'N/A',
+        lookingFor: formData.notes || 'Fresh Vegetables',
+        source: 'Website',
+        date: new Date().toISOString().split('T')[0],
+        status: 'New',
+        notes: formData.notes
+      };
+
+      const response = await API.post('/cold-leads', payload);
+
+      if (response.data.success || response.status === 200 || response.status === 201) {
+        alert('Thank you! Your inquiry has been submitted to Grocery Sathi.');
+        setFormData({
+          fullName: '',
+          phone: '',
+          email: '',
+          notes: ''
+        });
+        setIsOpen(false);
+      }
+    } catch (error) {
+      console.error('Lead Submission Error:', error);
+      alert(
+        error.response?.data?.message || 
+        'Failed to submit your request. Please try again later.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
 
   return (
     <>
-      {/* SEO Structured Data for Lead Form Web Application */}
+      {/* SEO Structured Data */}
       <script type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
@@ -66,7 +106,7 @@ const FloatingForm = () => {
 
           <form onSubmit={handleSubmit} className="floating-form-body">
             <div className="form-group">
-              <label htmlFor="fullName">Full Name</label>
+              <label htmlFor="fullName">Full Name *</label>
               <input
                 type="text"
                 id="fullName"
@@ -79,7 +119,7 @@ const FloatingForm = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="phone">Phone Number</label>
+              <label htmlFor="phone">Phone Number *</label>
               <input
                 type="tel"
                 id="phone"
@@ -116,8 +156,14 @@ const FloatingForm = () => {
             </div>
 
             <div className="action-buttons">
-              <button type="submit" className="btn-action btn-submit" aria-label="Submit inquiry">
-                <FaPaperPlane aria-hidden="true" /> <span>Submit</span>
+              <button 
+                type="submit" 
+                className="btn-action btn-submit" 
+                disabled={loading}
+                aria-label="Submit inquiry"
+              >
+                <FaPaperPlane aria-hidden="true" /> 
+                <span>{loading ? 'Submitting...' : 'Submit'}</span>
               </button>
 
               <a 

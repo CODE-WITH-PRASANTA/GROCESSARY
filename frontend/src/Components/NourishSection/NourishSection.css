@@ -1153,12 +1153,11 @@
 
   .grocery-goodies-section {
     padding: 42px 15px 55px;
-    background:
-      linear-gradient(
-        to bottom,
-        #ffc233 190px,
-        #182a2f 190px
-      );
+    background: linear-gradient(
+      to bottom,
+      #ffc233 190px,
+      #182a2f 190px
+    );
   }
 
   .grocery-goodies-header {
@@ -1196,9 +1195,6 @@
   .grocery-nourish-modal-backdrop {
     padding: 12px;
   }
-<<<<<<< HEAD
-}
-=======
 
   .grocery-nourish-modal-content {
     max-height: 94vh;
@@ -1237,6 +1233,43 @@
     width: 100%;
   }
 }
+  .grocery-nourish-modal-content {
+    max-height: 94vh;
+    padding: 22px;
+    border-radius: 18px;
+  }
+
+  .grocery-nourish-modal-grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .grocery-nourish-modal-image-col {
+    height: 210px;
+    padding: 15px;
+  }
+
+  .grocery-nourish-modal-title {
+    font-size: 23px;
+  }
+
+  .grocery-nourish-modal-description {
+    font-size: 13px;
+  }
+
+  .grocery-nourish-modal-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .grocery-nourish-quantity-selector {
+    justify-content: center;
+  }
+
+  .grocery-nourish-modal-cart-btn {
+    width: 100%;
+  }
+
 
 /* =========================================================
    SMALL MOBILE
@@ -1309,4 +1342,3 @@
   }
 }
 
->>>>>>> e66d91b506c67cf12e50aeb0b8ccbfcb1c917be4
