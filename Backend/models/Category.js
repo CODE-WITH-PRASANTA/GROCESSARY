@@ -1,16 +1,10 @@
 const mongoose = require("mongoose");
 
-const brandSchema = new mongoose.Schema(
+const categorySchema = new mongoose.Schema(
   {
     name: {
       type: String,
       required: true,
-      trim: true,
-    },
-
-    tagline: {
-      type: String,
-      default: "",
       trim: true,
     },
 
@@ -22,16 +16,15 @@ const brandSchema = new mongoose.Schema(
       lowercase: true,
     },
 
-    category: {
+    parent: {
       type: String,
-      default: "General",
+      default: "",
       trim: true,
     },
 
     description: {
       type: String,
       default: "",
-      trim: true,
     },
 
     order: {
@@ -45,19 +38,22 @@ const brandSchema = new mongoose.Schema(
       default: "Active",
     },
 
-    logoUrl: {
+    icon: {
+      type: String,
+      default: "📦",
+    },
+
+    iconUrl: {
       type: String,
       default: null,
     },
   },
-
   {
     timestamps: true,
   }
 );
 
-
 module.exports = mongoose.model(
-  "Brand",
-  brandSchema
+  "Category",
+  categorySchema
 );
