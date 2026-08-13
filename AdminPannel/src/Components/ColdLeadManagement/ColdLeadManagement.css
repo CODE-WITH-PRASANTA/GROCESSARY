@@ -1,0 +1,497 @@
+/* Container & General Layout */
+.ColdLeadManagement-container {
+  padding: 24px;
+  background-color: #f7f9fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #333333;
+  box-sizing: border-box;
+}
+
+/* 4 Stat Cards */
+.ColdLeadManagement-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ColdLeadManagement-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+}
+
+.ColdLeadManagement-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.ColdLeadManagement-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ColdLeadManagement-bg-green { background-color: #e8f5e9; }
+.ColdLeadManagement-bg-orange { background-color: #fff3e0; }
+.ColdLeadManagement-bg-purple { background-color: #f3e5f5; }
+.ColdLeadManagement-bg-lightgreen { background-color: #e8f5e9; }
+
+.ColdLeadManagement-card-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.ColdLeadManagement-card-title {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.ColdLeadManagement-card-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111;
+  margin: 2px 0;
+}
+
+.ColdLeadManagement-card-sub {
+  font-size: 11px;
+  color: #888;
+}
+
+/* Toolbar Controls */
+.ColdLeadManagement-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.ColdLeadManagement-toolbar-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.ColdLeadManagement-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.ColdLeadManagement-btn-primary {
+  background-color: #0b5c33;
+  color: #ffffff;
+}
+
+.ColdLeadManagement-btn-primary:hover {
+  background-color: #05381e; /* Deep green */
+}
+
+.ColdLeadManagement-btn-outline {
+  background-color: #ffffff;
+  border-color: #e0e0e0;
+  color: #333333;
+}
+
+.ColdLeadManagement-btn-outline:hover,
+.ColdLeadManagement-btn-outline.active {
+  background-color: #f5f5f5;
+  border-color: #cccccc;
+}
+
+/* Table Design */
+.ColdLeadManagement-table-wrapper {
+  background: #ffffff;
+  border-radius: 8px;
+  overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.ColdLeadManagement-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13.5px;
+}
+
+.ColdLeadManagement-table th {
+  background-color: #f1f8f3;
+  color: #0b5c33;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2ece4;
+}
+
+.ColdLeadManagement-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #eeeeee;
+  color: #444444;
+  transition: background-color 0.15s ease;
+}
+
+.ColdLeadManagement-table tbody tr:hover {
+  background-color: #f9fbf9;
+}
+
+.ColdLeadManagement-table tbody tr.selected-row {
+  background-color: #f0f7f2;
+}
+
+.ColdLeadManagement-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #0b5c33;
+}
+
+.ColdLeadManagement-font-medium {
+  font-weight: 600;
+  color: #111;
+}
+
+/* Badges */
+.ColdLeadManagement-status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-new { background-color: #e8f5e9; color: #2e7d32; }
+.status-contacted { background-color: #e3f2fd; color: #1565c0; }
+.status-followup { background-color: #fff3e0; color: #ef6c00; }
+.status-converted { background-color: #e8f5e9; color: #1b5e20; }
+
+/* Action Menu & Dropdown */
+.ColdLeadManagement-actions-cell {
+  position: relative;
+}
+
+.ColdLeadManagement-action-trigger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ColdLeadManagement-action-trigger:hover {
+  background-color: #f0f0f0;
+}
+
+.ColdLeadManagement-dropdown {
+  position: absolute;
+  right: 12px;
+  top: 36px;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  padding: 4px;
+}
+
+.ColdLeadManagement-dropdown button {
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.ColdLeadManagement-dropdown button.edit-btn:hover {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.ColdLeadManagement-dropdown button.delete-btn:hover {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+/* Footer Page Select & Pagination Buttons */
+.ColdLeadManagement-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ColdLeadManagement-footer-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: #666;
+}
+
+.ColdLeadManagement-page-selector select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  outline: none;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.ColdLeadManagement-page-selector select:focus {
+  border-color: #0b5c33;
+}
+
+.ColdLeadManagement-pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ColdLeadManagement-page-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  color: #333;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ColdLeadManagement-page-btn:hover:not(:disabled) {
+  border-color: #0b5c33;
+  color: #0b5c33;
+  background-color: #f1f8f3;
+}
+
+.ColdLeadManagement-page-btn.active {
+  background-color: #0b5c33;
+  color: #ffffff;
+  border-color: #0b5c33;
+}
+
+.ColdLeadManagement-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Popup Modal Styling */
+.ColdLeadManagement-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.ColdLeadManagement-modal-content {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.25s ease-out;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.ColdLeadManagement-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.ColdLeadManagement-modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #111;
+}
+
+.ColdLeadManagement-modal-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: #777;
+}
+
+.ColdLeadManagement-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.ColdLeadManagement-full-width {
+  grid-column: span 2;
+}
+
+.ColdLeadManagement-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ColdLeadManagement-form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+}
+
+.ColdLeadManagement-form-group label .required {
+  color: #d32f2f;
+}
+
+.ColdLeadManagement-input-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ColdLeadManagement-input-icon-wrapper .input-icon {
+  position: absolute;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.ColdLeadManagement-form-group input,
+.ColdLeadManagement-form-group select,
+.ColdLeadManagement-form-group textarea {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.ColdLeadManagement-form-group select {
+  padding-left: 12px;
+}
+
+.ColdLeadManagement-form-group textarea {
+  padding: 8px 12px;
+  resize: vertical;
+}
+
+.ColdLeadManagement-form-group input:focus,
+.ColdLeadManagement-form-group select:focus,
+.ColdLeadManagement-form-group textarea:focus {
+  border-color: #0b5c33;
+}
+
+.ColdLeadManagement-field-hint {
+  font-size: 11px;
+  color: #888888;
+}
+
+/* Modal Actions */
+.ColdLeadManagement-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.ColdLeadManagement-btn-cancel {
+  background-color: #ffffff;
+  border: 1px solid #d0d0d0;
+  color: #333;
+  padding: 8px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.ColdLeadManagement-btn-cancel:hover {
+  background-color: #ffebee;
+  color: #d32f2f; /* Red on Cancel Hover */
+  border-color: #ef9a9a;
+}
+
+.ColdLeadManagement-btn-submit {
+  background-color: #0b5c33;
+  color: #ffffff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.2s ease;
+  font-weight: 500;
+}
+
+.ColdLeadManagement-btn-submit:hover {
+  background-color: #05381e; /* Deep green on Submit Hover */
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .ColdLeadManagement-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .ColdLeadManagement-full-width {
+    grid-column: span 1;
+  }
+  .ColdLeadManagement-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

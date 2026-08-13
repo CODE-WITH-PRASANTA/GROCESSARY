@@ -1,596 +1,2443 @@
-import React, { useState, useRef, useEffect } from 'react';
-import './Brands.css';
-import { 
-  Search, 
-  Filter, 
-  RotateCcw, 
-  Edit3, 
-  Trash2, 
-  UploadCloud, 
-  ChevronDown, 
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
+
+import "./Brands.css";
+
+import {
+  Search,
+  Filter,
+  RotateCcw,
+  Edit3,
+  Trash2,
+  UploadCloud,
+  ChevronDown,
   Save,
   MoreVertical,
   CheckCircle,
-  XCircle
-} from 'lucide-react';
-import { Editor } from '@tinymce/tinymce-react';
+  XCircle,
+  Loader2,
+} from "lucide-react";
 
-const initialBrands = [
-  { id: 1, name: 'Nestlé', tagline: 'Good Food, Good Life', category: 'Food & Beverages', catColor: 'green', products: 120, order: 1, status: 'Active', logoUrl: null },
-  { id: 2, name: 'Amul', tagline: 'The Taste of India', category: 'Dairy & Dairy Products', catColor: 'blue', products: 85, order: 2, status: 'Active', logoUrl: null },
-  { id: 3, name: 'Tata Salt', tagline: 'Desh Ka Namak', category: 'Grocery Essentials', catColor: 'orange', products: 45, order: 3, status: 'Active', logoUrl: null },
-  { id: 4, name: 'Fortune', tagline: 'Pure and Healthy', category: 'Cooking Oils', catColor: 'red', products: 38, order: 4, status: 'Active', logoUrl: null },
-  { id: 5, name: 'Bourn Vita', tagline: 'Tayyari Jeet Ki', category: 'Health & Nutrition', catColor: 'purple', products: 32, order: 5, status: 'Active', logoUrl: null },
-  { id: 6, name: 'Maggi', tagline: 'Taste Bhi, Health Bhi', category: 'Food & Beverages', catColor: 'green', products: 28, order: 6, status: 'Active', logoUrl: null },
-  { id: 7, name: 'Dabur', tagline: 'Celebrating Life!', category: 'Personal Care', catColor: 'teal', products: 60, order: 7, status: 'Inactive', logoUrl: null },
-  { id: 8, name: 'Patanjali', tagline: 'Prakriti Ka Aashirwad', category: 'Health & Wellness', catColor: 'peach', products: 52, order: 8, status: 'Active', logoUrl: null },
-  { id: 9, name: 'Britannia', tagline: 'Eat Healthy, Think Better', category: 'Food & Beverages', catColor: 'green', products: 95, order: 9, status: 'Active', logoUrl: null },
-  { id: 10, name: 'Cadbury', tagline: 'Free the Joy', category: 'Snacks & Sweets', catColor: 'purple', products: 110, order: 10, status: 'Active', logoUrl: null },
-  { id: 11, name: 'Lays', tagline: 'Betcha Can\'t Eat Just One', category: 'Snacks & Sweets', catColor: 'orange', products: 40, order: 11, status: 'Inactive', logoUrl: null },
-  { id: 12, name: 'Nivea', tagline: 'Care for Skin', category: 'Personal Care', catColor: 'blue', products: 75, order: 12, status: 'Active', logoUrl: null }
-];
+import { Editor } from "@tinymce/tinymce-react";
+
+import API, { BASE_URL } from "../../api/axios";
+
+
+// ==========================================================
+// CONSTANTS
+// ==========================================================
 
 const ITEMS_PER_PAGE = 8;
 
+
+// ==========================================================
+// COMPONENT
+// ==========================================================
+
 const Brands = () => {
-  // --- Form States ---
+
+  // ========================================================
+  // FORM STATES
+  // ========================================================
+
   const [formData, setFormData] = useState({
-    id: null,
-    name: '',
-    tagline: '',
-    slug: '',
-    category: '',
-    description: '',
+    _id: null,
+    name: "",
+    tagline: "",
+    slug: "",
+    category: "",
+    description: "",
     order: 0,
     status: true,
-    logoUrl: null
+    logoUrl: null,
+    logoFile: null,
   });
 
+
+  // ========================================================
+  // REFS
+  // ========================================================
+
   const fileInputRef = useRef(null);
+
   const editorRef = useRef(null);
 
-  // --- List, Search, Filter & Pagination States ---
-  const [brandsList, setBrandsList] = useState(initialBrands);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
-  const [activeDropdownId, setActiveDropdownId] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
 
-  // Close dropdowns on outside click
+  // ========================================================
+  // LIST STATES
+  // ========================================================
+
+  const [brandsList, setBrandsList] = useState([]);
+
+  const [loading, setLoading] = useState(false);
+
+  const [submitting, setSubmitting] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [statusFilter, setStatusFilter] =
+    useState("All");
+
+  const [showFilterDropdown, setShowFilterDropdown] =
+    useState(false);
+
+  const [activeDropdownId, setActiveDropdownId] =
+    useState(null);
+
+  const [currentPage, setCurrentPage] =
+    useState(1);
+
+
+  // ========================================================
+  // FETCH BRANDS
+  // ========================================================
+
+  const fetchBrands = useCallback(async () => {
+
+    try {
+
+      setLoading(true);
+
+
+      const params = {};
+
+
+      // ----------------------------------------------------
+      // SEARCH
+      // ----------------------------------------------------
+
+      if (searchQuery.trim()) {
+        params.search = searchQuery.trim();
+      }
+
+
+      // ----------------------------------------------------
+      // STATUS FILTER
+      // ----------------------------------------------------
+
+      if (statusFilter !== "All") {
+        params.status = statusFilter;
+      }
+
+
+      // ----------------------------------------------------
+      // API
+      // ----------------------------------------------------
+
+      const res = await API.get(
+        "/brands",
+        {
+          params,
+        }
+      );
+
+
+      /*
+        Backend response:
+
+        {
+          success: true,
+          data: [...]
+        }
+
+        So we read res.data.data.
+      */
+
+      const brands =
+        res.data?.data || [];
+
+
+      setBrandsList(brands);
+
+
+      /*
+        If current page becomes invalid
+        after search/delete, reset to page 1.
+      */
+
+      setCurrentPage((previousPage) => {
+
+        const calculatedPages =
+          Math.ceil(
+            brands.length /
+              ITEMS_PER_PAGE
+          ) || 1;
+
+
+        if (
+          previousPage >
+          calculatedPages
+        ) {
+          return 1;
+        }
+
+
+        return previousPage;
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Error loading brands:",
+        error
+      );
+
+
+      alert(
+        error.response?.data?.message ||
+        "Could not connect to server or load brands."
+      );
+
+    } finally {
+
+      setLoading(false);
+    }
+
+  }, [
+    searchQuery,
+    statusFilter,
+  ]);
+
+
+  // ========================================================
+  // FETCH ON SEARCH / FILTER
+  // ========================================================
+
   useEffect(() => {
+
+    fetchBrands();
+
+  }, [fetchBrands]);
+
+
+  // ========================================================
+  // CLOSE DROPDOWNS
+  // ========================================================
+
+  useEffect(() => {
+
     const handleClickOutside = (e) => {
-      if (!e.target.closest('.brand-dropdown-container')) {
+
+      // ----------------------------------------------------
+      // ACTION DROPDOWN
+      // ----------------------------------------------------
+
+      if (
+        !e.target.closest(
+          ".brand-dropdown-container"
+        )
+      ) {
+
         setActiveDropdownId(null);
       }
-      if (!e.target.closest('.brand-filter-container')) {
+
+
+      // ----------------------------------------------------
+      // FILTER DROPDOWN
+      // ----------------------------------------------------
+
+      if (
+        !e.target.closest(
+          ".brand-filter-container"
+        )
+      ) {
+
         setShowFilterDropdown(false);
       }
     };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+
+
+    document.addEventListener(
+      "click",
+      handleClickOutside
+    );
+
+
+    return () => {
+
+      document.removeEventListener(
+        "click",
+        handleClickOutside
+      );
+
+    };
+
   }, []);
 
-  // Handle Logo Upload
+
+  // ========================================================
+  // LOGO FILE UPLOAD
+  // ========================================================
+
   const handleLogoUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert('File size exceeds 2MB limit!');
-        return;
-      }
-      const imageUrl = URL.createObjectURL(file);
-      setFormData(prev => ({
-        ...prev,
-        logoUrl: imageUrl
-      }));
+
+    const file =
+      e.target.files?.[0];
+
+
+    if (!file) {
+      return;
     }
+
+
+    // ------------------------------------------------------
+    // CLIENT SIDE SIZE CHECK
+    // ------------------------------------------------------
+
+    if (
+      file.size >
+      5 * 1024 * 1024
+    ) {
+
+      alert(
+        "File size exceeds 5MB limit!"
+      );
+
+
+      e.target.value = "";
+
+      return;
+    }
+
+
+    // ------------------------------------------------------
+    // FILE TYPE CHECK
+    // ------------------------------------------------------
+
+    const allowedTypes = [
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/webp",
+      "image/avif",
+      "image/svg+xml",
+    ];
+
+
+    /*
+      Your current backend middleware does NOT allow SVG.
+      Therefore don't allow it from the frontend either.
+    */
+
+    if (
+      !allowedTypes.includes(
+        file.type
+      ) ||
+      file.type === "image/svg+xml"
+    ) {
+
+      alert(
+        "Please select JPG, PNG, WEBP or AVIF image."
+      );
+
+
+      e.target.value = "";
+
+      return;
+    }
+
+
+    // ------------------------------------------------------
+    // PREVIEW
+    // ------------------------------------------------------
+
+    const previewUrl =
+      URL.createObjectURL(file);
+
+
+    setFormData((prev) => ({
+
+      ...prev,
+
+      logoFile: file,
+
+      logoUrl: previewUrl,
+
+    }));
+
   };
 
-  // Auto-generate Slug
+
+  // ========================================================
+  // AUTO GENERATE SLUG
+  // ========================================================
+
   const handleNameChange = (e) => {
-    const val = e.target.value;
-    const generatedSlug = val.toLowerCase().trim().replace(/[\s\W-]+/g, '-');
-    setFormData(prev => ({
+
+    const val =
+      e.target.value;
+
+
+    const generatedSlug =
+      val
+        .toLowerCase()
+        .trim()
+        .replace(/[\s\W-]+/g, "-");
+
+
+    setFormData((prev) => ({
+
       ...prev,
+
       name: val,
-      slug: generatedSlug
+
+      slug: generatedSlug,
+
     }));
+
   };
+
+
+  // ========================================================
+  // INPUT CHANGE
+  // ========================================================
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+
+    const {
+      name,
+      value,
+      type,
+      checked,
+    } = e.target;
+
+
+    setFormData((prev) => ({
+
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+
+      [name]:
+        type === "checkbox"
+          ? checked
+          : value,
+
     }));
+
   };
 
-  // Handle TinyMCE Editor Change
-  const handleEditorChange = (content) => {
-    setFormData(prev => ({
+
+  // ========================================================
+  // TINYMCE CHANGE
+  // ========================================================
+
+  const handleEditorChange = (
+    content
+  ) => {
+
+    setFormData((prev) => ({
+
       ...prev,
-      description: content
+
+      description: content,
+
     }));
+
   };
 
-  // Reset Form
+
+  // ========================================================
+  // RESET FORM
+  // ========================================================
+
   const handleReset = () => {
+
     setFormData({
-      id: null,
-      name: '',
-      tagline: '',
-      slug: '',
-      category: '',
-      description: '',
+
+      _id: null,
+
+      name: "",
+
+      tagline: "",
+
+      slug: "",
+
+      category: "",
+
+      description: "",
+
       order: 0,
+
       status: true,
-      logoUrl: null
+
+      logoUrl: null,
+
+      logoFile: null,
+
     });
+
+
+    // ------------------------------------------------------
+    // RESET TINYMCE
+    // ------------------------------------------------------
+
     if (editorRef.current) {
-      editorRef.current.setContent('');
+
+      editorRef.current.setContent("");
+
     }
-    if (fileInputRef.current) fileInputRef.current.value = '';
+
+
+    // ------------------------------------------------------
+    // RESET FILE INPUT
+    // ------------------------------------------------------
+
+    if (fileInputRef.current) {
+
+      fileInputRef.current.value = "";
+
+    }
+
   };
 
-  // Refresh Table and Controls
-  const handleRefresh = () => {
-    setSearchQuery('');
-    setStatusFilter('All');
-    setBrandsList(initialBrands);
+
+  // ========================================================
+  // REFRESH
+  // ========================================================
+
+  const handleRefresh = async () => {
+
+    setSearchQuery("");
+
+    setStatusFilter("All");
+
     setCurrentPage(1);
-  };
 
-  // Save / Update Brand
-  const handleSaveBrand = (e) => {
-    e.preventDefault();
-    if (!formData.name) return alert('Please enter a Brand Name');
+    setActiveDropdownId(null);
 
-    if (formData.id) {
-      // Edit
-      setBrandsList(prev =>
-        prev.map(b => b.id === formData.id 
-          ? { 
-              ...b, 
-              name: formData.name,
-              slug: formData.slug,
-              category: formData.category || 'General',
-              order: formData.order, 
-              status: formData.status ? 'Active' : 'Inactive',
-              logoUrl: formData.logoUrl || b.logoUrl
-            } 
-          : b
-        )
+    setShowFilterDropdown(false);
+
+
+    /*
+      Fetch current data from backend.
+    */
+
+    try {
+
+      setLoading(true);
+
+
+      const res =
+        await API.get(
+          "/brands"
+        );
+
+
+      setBrandsList(
+        res.data?.data || []
       );
-    } else {
-      // Add
-      const newBrand = {
-        id: Date.now(),
-        name: formData.name,
-        tagline: 'Brand Tagline',
-        category: formData.category || 'General',
-        catColor: 'green',
-        products: 0,
-        order: Number(formData.order) || brandsList.length + 1,
-        status: formData.status ? 'Active' : 'Inactive',
-        logoUrl: formData.logoUrl
-      };
-      setBrandsList(prev => [...prev, newBrand]);
+
+    } catch (error) {
+
+      console.error(
+        "Refresh Brands Error:",
+        error
+      );
+
+
+      alert(
+        error.response?.data?.message ||
+        "Failed to refresh brands"
+      );
+
+    } finally {
+
+      setLoading(false);
     }
 
-    handleReset();
   };
 
-  // Status Change via Dropdown
-  const handleStatusChange = (id, newStatus) => {
-    setBrandsList(prev =>
-      prev.map(b => b.id === id ? { ...b, status: newStatus } : b)
-    );
+
+  // ========================================================
+  // SAVE / UPDATE BRAND
+  // ========================================================
+
+  const handleSaveBrand = async (
+    e
+  ) => {
+
+    e.preventDefault();
+
+
+    // ------------------------------------------------------
+    // VALIDATION
+    // ------------------------------------------------------
+
+    if (!formData.name.trim()) {
+
+      alert(
+        "Please enter a Brand Name"
+      );
+
+      return;
+    }
+
+
+    if (!formData.slug.trim()) {
+
+      alert(
+        "Please enter a valid Slug"
+      );
+
+      return;
+    }
+
+
+    try {
+
+      setSubmitting(true);
+
+
+      // ====================================================
+      // FORMDATA
+      // ====================================================
+
+      const bodyData =
+        new FormData();
+
+
+      bodyData.append(
+        "name",
+        formData.name.trim()
+      );
+
+
+      bodyData.append(
+        "tagline",
+        formData.tagline || ""
+      );
+
+
+      bodyData.append(
+        "slug",
+        formData.slug.trim()
+      );
+
+
+      bodyData.append(
+        "category",
+        formData.category ||
+          "General"
+      );
+
+
+      bodyData.append(
+        "description",
+        formData.description || ""
+      );
+
+
+      bodyData.append(
+        "order",
+        Number(formData.order) || 0
+      );
+
+
+      bodyData.append(
+        "status",
+        formData.status
+      );
+
+
+      // ----------------------------------------------------
+      // LOGO
+      // ----------------------------------------------------
+
+      if (formData.logoFile) {
+
+        bodyData.append(
+          "logo",
+          formData.logoFile
+        );
+
+      }
+
+
+      // ====================================================
+      // CREATE / UPDATE
+      // ====================================================
+
+      let response;
+
+
+      if (formData._id) {
+
+        // --------------------------------------------------
+        // UPDATE
+        // --------------------------------------------------
+
+        response =
+          await API.put(
+            `/brands/${formData._id}`,
+            bodyData
+          );
+
+      } else {
+
+        // --------------------------------------------------
+        // CREATE
+        // --------------------------------------------------
+
+        response =
+          await API.post(
+            "/brands",
+            bodyData
+          );
+
+      }
+
+
+      // ====================================================
+      // SUCCESS
+      // ====================================================
+
+      console.log(
+        "Brand saved:",
+        response.data
+      );
+
+
+      alert(
+        formData._id
+          ? "Brand updated successfully!"
+          : "Brand added successfully!"
+      );
+
+
+      // ----------------------------------------------------
+      // RESET FORM
+      // ----------------------------------------------------
+
+      handleReset();
+
+
+      // ----------------------------------------------------
+      // RESET PAGE
+      // ----------------------------------------------------
+
+      setCurrentPage(1);
+
+
+      // ----------------------------------------------------
+      // REFRESH FROM DATABASE
+      // ----------------------------------------------------
+
+      await fetchBrands();
+
+    } catch (error) {
+
+      console.error(
+        "Error saving brand:",
+        error
+      );
+
+
+      alert(
+        error.response?.data?.message ||
+        error.message ||
+        "Error saving brand."
+      );
+
+    } finally {
+
+      setSubmitting(false);
+    }
+
+  };
+
+
+  // ========================================================
+  // STATUS CHANGE
+  // ========================================================
+
+  const handleStatusChange = async (
+    id,
+    newStatus
+  ) => {
+
     setActiveDropdownId(null);
+
+
+    try {
+
+      const response =
+        await API.patch(
+          `/brands/${id}/status`,
+          {
+            status: newStatus,
+          }
+        );
+
+
+      console.log(
+        "Status updated:",
+        response.data
+      );
+
+
+      /*
+        Update UI immediately.
+      */
+
+      setBrandsList(
+        (previousBrands) =>
+          previousBrands.map(
+            (brand) =>
+              brand._id === id
+                ? {
+                    ...brand,
+                    status: newStatus,
+                  }
+                : brand
+          )
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Error updating status:",
+        error
+      );
+
+
+      alert(
+        error.response?.data?.message ||
+        "Could not update status"
+      );
+
+    }
+
   };
 
-  // Edit action
-  const handleEdit = (brand) => {
+
+  // ========================================================
+  // EDIT BRAND
+  // ========================================================
+
+  const handleEdit = (
+    brand
+  ) => {
+
+    // ------------------------------------------------------
+    // LOGO URL
+    // ------------------------------------------------------
+
+    let fullLogoUrl =
+      null;
+
+
+    if (brand.logoUrl) {
+
+      if (
+        brand.logoUrl.startsWith(
+          "http"
+        )
+      ) {
+
+        fullLogoUrl =
+          brand.logoUrl;
+
+      } else {
+
+        fullLogoUrl =
+          `${BASE_URL}/${brand.logoUrl.replace(
+            /^\/+/,
+            ""
+          )}`;
+
+      }
+
+    }
+
+
+    // ------------------------------------------------------
+    // FORM DATA
+    // ------------------------------------------------------
+
     setFormData({
-      id: brand.id,
-      name: brand.name,
-      tagline: brand.tagline || '',
-      slug: brand.name.toLowerCase().trim().replace(/[\s\W-]+/g, '-'),
-      category: brand.category,
-      description: '',
-      order: brand.order,
-      status: brand.status === 'Active',
-      logoUrl: brand.logoUrl
+
+      _id:
+        brand._id,
+
+      name:
+        brand.name || "",
+
+      tagline:
+        brand.tagline || "",
+
+      slug:
+        brand.slug ||
+        brand.name
+          ?.toLowerCase()
+          .trim()
+          .replace(
+            /[\s\W-]+/g,
+            "-"
+          ),
+
+      category:
+        brand.category || "",
+
+      description:
+        brand.description || "",
+
+      order:
+        brand.order || 0,
+
+      status:
+        brand.status === "Active",
+
+      logoUrl:
+        fullLogoUrl,
+
+      logoFile:
+        null,
+
     });
 
+
+    // ------------------------------------------------------
+    // TINYMCE
+    // ------------------------------------------------------
+
     if (editorRef.current) {
-      editorRef.current.setContent('');
+
+      editorRef.current.setContent(
+        brand.description || ""
+      );
+
     }
+
+
+    // ------------------------------------------------------
+    // CLOSE DROPDOWN
+    // ------------------------------------------------------
+
     setActiveDropdownId(null);
+
+
+    // ------------------------------------------------------
+    // SCROLL TOP
+    // ------------------------------------------------------
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+
   };
 
-  // Delete action
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this brand?')) {
-      setBrandsList(prev => prev.filter(b => b.id !== id));
-    }
+
+  // ========================================================
+  // DELETE BRAND
+  // ========================================================
+
+  const handleDelete = async (
+    id
+  ) => {
+
     setActiveDropdownId(null);
+
+
+    // ------------------------------------------------------
+    // CONFIRM
+    // ------------------------------------------------------
+
+    const confirmed =
+      window.confirm(
+        "Are you sure you want to delete this brand?"
+      );
+
+
+    if (!confirmed) {
+      return;
+    }
+
+
+    try {
+
+      setLoading(true);
+
+
+      // ----------------------------------------------------
+      // DELETE
+      // ----------------------------------------------------
+
+      await API.delete(
+        `/brands/${id}`
+      );
+
+
+      alert(
+        "Brand deleted successfully"
+      );
+
+
+      // ----------------------------------------------------
+      // REFRESH DATABASE DATA
+      // ----------------------------------------------------
+
+      await fetchBrands();
+
+    } catch (error) {
+
+      console.error(
+        "Error deleting brand:",
+        error
+      );
+
+
+      alert(
+        error.response?.data?.message ||
+        "Failed to delete brand"
+      );
+
+    } finally {
+
+      setLoading(false);
+    }
+
   };
 
-  // Filter Logic
-  const filteredBrands = brandsList.filter(b => {
-    const matchesSearch = b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          b.category.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || b.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
 
-  // Pagination Logic (8 items per page)
-  const totalEntries = filteredBrands.length;
-  const totalPages = Math.ceil(totalEntries / ITEMS_PER_PAGE) || 1;
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentBrands = filteredBrands.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  // ========================================================
+  // PAGINATION
+  // ========================================================
+
+  const totalEntries =
+    brandsList.length;
+
+
+  const totalPages =
+    Math.ceil(
+      totalEntries /
+        ITEMS_PER_PAGE
+    ) || 1;
+
+
+  const startIndex =
+    (currentPage - 1) *
+    ITEMS_PER_PAGE;
+
+
+  const currentBrands =
+    brandsList.slice(
+      startIndex,
+      startIndex +
+        ITEMS_PER_PAGE
+    );
+
+
+  // ========================================================
+  // UI
+  // ========================================================
 
   return (
+
     <div className="brand-page-container">
+
       <div className="brand-grid">
-        
-        {/* ================= LEFT SECTION (50%) ================= */}
+
+
+        {/* ==================================================
+            LEFT SECTION
+        ================================================== */}
+
         <div className="brand-card brand-form-section">
+
           <div className="brand-header">
-            <h2>{formData.id ? 'Edit Brand' : 'Add / Edit Brand'}</h2>
-            <p>Fill in the details to create or update a brand.</p>
+
+            <h2>
+              {formData._id
+                ? "Edit Brand"
+                : "Add / Edit Brand"}
+            </h2>
+
+            <p>
+              Fill in the details to create or
+              update a brand.
+            </p>
+
           </div>
 
-          <form onSubmit={handleSaveBrand} className="brand-form">
-            {/* Logo Upload Box */}
+
+          {/* ==================================================
+              FORM
+          ================================================== */}
+
+          <form
+            onSubmit={handleSaveBrand}
+            className="brand-form"
+          >
+
+
+            {/* ==================================================
+                LOGO UPLOAD
+            ================================================== */}
+
             <div className="brand-form-group">
-              <label>Brand Logo <span className="brand-required">*</span></label>
+
+              <label>
+                Brand Logo{" "}
+
+                <span className="brand-required">
+                  *
+                </span>
+              </label>
+
+
               <div className="brand-upload-box">
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleLogoUpload} 
-                  accept="image/png, image/jpeg, image/svg+xml" 
-                  style={{ display: 'none' }} 
+
+                <input
+                  type="file"
+
+                  ref={fileInputRef}
+
+                  onChange={
+                    handleLogoUpload
+                  }
+
+                  accept="
+                    image/png,
+                    image/jpeg,
+                    image/jpg,
+                    image/webp,
+                    image/avif
+                  "
+
+                  style={{
+                    display: "none",
+                  }}
                 />
-                <div 
-                  className="brand-upload-circle" 
-                  onClick={() => fileInputRef.current && fileInputRef.current.click()}
+
+
+                <div
+                  className="brand-upload-circle"
+
+                  onClick={() =>
+                    fileInputRef.current &&
+                    fileInputRef.current.click()
+                  }
+
                   title="Click to upload logo"
                 >
+
                   {formData.logoUrl ? (
-                    <img src={formData.logoUrl} alt="Logo" className="brand-preview-img" />
+
+                    <img
+                      src={formData.logoUrl}
+                      alt="Logo Preview"
+                      className="brand-preview-img"
+                    />
+
                   ) : (
-                    <UploadCloud className="brand-upload-icon" size={24} />
+
+                    <UploadCloud
+                      className="brand-upload-icon"
+                      size={24}
+                    />
+
                   )}
+
                 </div>
+
+
                 <div className="brand-upload-info">
-                  <p className="brand-upload-title">Upload Logo</p>
-                  <span>JPG, PNG or SVG</span>
-                  <span>Max size 2MB</span>
+
+                  <p className="brand-upload-title">
+                    Upload Logo
+                  </p>
+
+                  <span>
+                    JPG, PNG, WEBP or AVIF
+                  </span>
+
+                  <span className="brand-convert-badge">
+                    Auto-converts to .WEBP
+                  </span>
+
+
                   {formData.logoUrl && (
-                    <button 
-                      type="button" 
+
+                    <button
+                      type="button"
+
                       className="brand-remove-btn"
-                      onClick={() => setFormData(prev => ({ ...prev, logoUrl: null }))}
+
+                      onClick={() => {
+
+                        setFormData(
+                          (prev) => ({
+                            ...prev,
+
+                            logoUrl: null,
+
+                            logoFile: null,
+                          })
+                        );
+
+
+                        if (
+                          fileInputRef.current
+                        ) {
+
+                          fileInputRef.current.value =
+                            "";
+
+                        }
+
+                      }}
                     >
                       Remove Logo
                     </button>
+
                   )}
+
                 </div>
+
               </div>
+
             </div>
 
-            {/* Brand Name */}
+
+            {/* ==================================================
+                BRAND NAME
+            ================================================== */}
+
             <div className="brand-form-group">
-              <label>Brand Name <span className="brand-required">*</span></label>
-              <input 
-                type="text" 
+
+              <label>
+                Brand Name{" "}
+
+                <span className="brand-required">
+                  *
+                </span>
+              </label>
+
+
+              <input
+                type="text"
+
                 name="name"
-                placeholder="Enter brand name" 
-                value={formData.name}
-                onChange={handleNameChange}
+
+                placeholder="Enter brand name"
+
+                value={
+                  formData.name
+                }
+
+                onChange={
+                  handleNameChange
+                }
+
                 required
               />
+
             </div>
 
-            {/* Slug */}
+
+            {/* ==================================================
+                TAGLINE
+            ================================================== */}
+
             <div className="brand-form-group">
-              <label>Slug (URL Friendly) <span className="brand-required">*</span></label>
-              <input 
-                type="text" 
+
+              <label>
+                Tagline
+              </label>
+
+
+              <input
+                type="text"
+
+                name="tagline"
+
+                placeholder="Enter brand tagline"
+
+                value={
+                  formData.tagline
+                }
+
+                onChange={
+                  handleInputChange
+                }
+              />
+
+            </div>
+
+
+            {/* ==================================================
+                SLUG
+            ================================================== */}
+
+            <div className="brand-form-group">
+
+              <label>
+                Slug (URL Friendly){" "}
+
+                <span className="brand-required">
+                  *
+                </span>
+              </label>
+
+
+              <input
+                type="text"
+
                 name="slug"
-                placeholder="enter-brand-slug" 
-                value={formData.slug}
-                onChange={handleInputChange}
+
+                placeholder="enter-brand-slug"
+
+                value={
+                  formData.slug
+                }
+
+                onChange={
+                  handleInputChange
+                }
+
                 required
               />
-              <span className="brand-help-text">This will be used in the URL. Example: nestle</span>
+
+
+              <span className="brand-help-text">
+                This will be used in the URL.
+                Example: nestle
+              </span>
+
             </div>
 
-            {/* Category */}
+
+            {/* ==================================================
+                CATEGORY
+            ================================================== */}
+
             <div className="brand-form-group">
-              <label>Category (Optional)</label>
+
+              <label>
+                Category (Optional)
+              </label>
+
+
               <div className="brand-select-wrapper">
-                <select 
+
+                <select
                   name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
+
+                  value={
+                    formData.category
+                  }
+
+                  onChange={
+                    handleInputChange
+                  }
                 >
-                  <option value="">Select category</option>
-                  <option value="Food & Beverages">Food & Beverages</option>
-                  <option value="Dairy & Dairy Products">Dairy & Dairy Products</option>
-                  <option value="Grocery Essentials">Grocery Essentials</option>
-                  <option value="Cooking Oils">Cooking Oils</option>
-                  <option value="Health & Nutrition">Health & Nutrition</option>
-                  <option value="Personal Care">Personal Care</option>
+
+                  <option value="">
+                    Select category
+                  </option>
+
+                  <option value="Food & Beverages">
+                    Food & Beverages
+                  </option>
+
+                  <option value="Dairy & Dairy Products">
+                    Dairy & Dairy Products
+                  </option>
+
+                  <option value="Grocery Essentials">
+                    Grocery Essentials
+                  </option>
+
+                  <option value="Cooking Oils">
+                    Cooking Oils
+                  </option>
+
+                  <option value="Health & Nutrition">
+                    Health & Nutrition
+                  </option>
+
+                  <option value="Personal Care">
+                    Personal Care
+                  </option>
+
+                  <option value="Health & Wellness">
+                    Health & Wellness
+                  </option>
+
+                  <option value="Snacks & Sweets">
+                    Snacks & Sweets
+                  </option>
+
                 </select>
-                <ChevronDown className="brand-select-arrow" size={16} />
+
+
+                <ChevronDown
+                  className="brand-select-arrow"
+                  size={16}
+                />
+
               </div>
+
             </div>
 
-            {/* Description (TinyMCE Integration) */}
+
+            {/* ==================================================
+                DESCRIPTION
+            ================================================== */}
+
             <div className="brand-form-group">
-              <label>Description</label>
+
+              <label>
+                Description
+              </label>
+
+
               <div className="brand-editor-wrapper">
+
                 <Editor
                   apiKey="8hswbe7bfeeneui9eb9gjgsym8ku30nx5gwre9808ajdzniu"
-                  onInit={(evt, editor) => editorRef.current = editor}
-                  value={formData.description}
-                  onEditorChange={handleEditorChange}
+
+                  onInit={(
+                    evt,
+                    editor
+                  ) => {
+                    editorRef.current =
+                      editor;
+                  }}
+
+                  value={
+                    formData.description
+                  }
+
+                  onEditorChange={
+                    handleEditorChange
+                  }
+
                   init={{
                     height: 200,
+
                     menubar: false,
+
                     plugins: [
-                      'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
-                      'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                      'insertdatetime', 'table', 'code', 'help', 'wordcount'
+                      "advlist",
+                      "autolink",
+                      "lists",
+                      "link",
+                      "charmap",
+                      "preview",
+                      "searchreplace",
+                      "visualblocks",
+                      "code",
+                      "fullscreen",
+                      "insertdatetime",
+                      "table",
+                      "help",
+                      "wordcount",
                     ],
-                    toolbar: 'undo redo | blocks | ' +
-                      'bold italic forecolor | alignleft aligncenter ' +
-                      'alignright alignjustify | bullist numlist outdent indent | ' +
-                      'removeformat | help',
-                    content_style: 'body { font-family:Inter,sans-serif; font-size:14px }',
+
+                    toolbar:
+                      "undo redo | blocks | " +
+                      "bold italic forecolor | alignleft aligncenter " +
+                      "alignright alignjustify | bullist numlist outdent indent | " +
+                      "removeformat | help",
+
+                    content_style:
+                      "body { font-family:Inter,sans-serif; font-size:14px }",
+
                     statusbar: false,
-                    branding: false
+
+                    branding: false,
                   }}
                 />
+
               </div>
+
             </div>
 
-            {/* Display Order */}
+
+            {/* ==================================================
+                DISPLAY ORDER
+            ================================================== */}
+
             <div className="brand-form-group">
-              <label>Display Order</label>
-              <input 
-                type="number" 
+
+              <label>
+                Display Order
+              </label>
+
+
+              <input
+                type="number"
+
                 name="order"
-                value={formData.order}
-                onChange={handleInputChange}
+
+                value={
+                  formData.order
+                }
+
+                onChange={
+                  handleInputChange
+                }
               />
-              <span className="brand-help-text">Lower number shows first</span>
+
+
+              <span className="brand-help-text">
+                Lower number shows first
+              </span>
+
             </div>
 
-            {/* Status Switch */}
+
+            {/* ==================================================
+                STATUS
+            ================================================== */}
+
             <div className="brand-form-group">
-              <label>Status</label>
+
+              <label>
+                Status
+              </label>
+
+
               <div className="brand-toggle-wrapper">
+
                 <label className="brand-switch">
-                  <input 
-                    type="checkbox" 
+
+                  <input
+                    type="checkbox"
+
                     name="status"
-                    checked={formData.status} 
-                    onChange={handleInputChange} 
+
+                    checked={
+                      formData.status
+                    }
+
+                    onChange={
+                      handleInputChange
+                    }
                   />
+
+
                   <span className="brand-slider round"></span>
+
                 </label>
-                <span className="brand-status-label">{formData.status ? 'Active' : 'Inactive'}</span>
+
+
+                <span className="brand-status-label">
+
+                  {formData.status
+                    ? "Active"
+                    : "Inactive"}
+
+                </span>
+
               </div>
+
             </div>
 
-            {/* Actions */}
+
+            {/* ==================================================
+                FORM ACTIONS
+            ================================================== */}
+
             <div className="brand-form-actions">
-              <button type="button" className="brand-btn brand-btn-outline" onClick={handleReset}>
-                <RotateCcw size={16} /> Reset
+
+              <button
+                type="button"
+
+                className="brand-btn brand-btn-outline"
+
+                onClick={
+                  handleReset
+                }
+
+                disabled={
+                  submitting
+                }
+              >
+
+                <RotateCcw
+                  size={16}
+                />
+
+                Reset
+
               </button>
-              <button type="submit" className="brand-btn brand-btn-primary">
-                <Save size={16} /> Save Brand
+
+
+              <button
+                type="submit"
+
+                className="brand-btn brand-btn-primary"
+
+                disabled={
+                  submitting
+                }
+              >
+
+                {submitting ? (
+
+                  <Loader2
+                    size={16}
+                    className="brand-spinner"
+                  />
+
+                ) : (
+
+                  <Save size={16} />
+
+                )}
+
+
+                {formData._id
+                  ? "Update Brand"
+                  : "Save Brand"}
+
               </button>
+
             </div>
+
           </form>
+
         </div>
 
-        {/* ================= RIGHT SECTION (50%) ================= */}
+
+        {/* ==================================================
+            RIGHT SECTION
+        ================================================== */}
+
         <div className="brand-card brand-list-section">
+
           <div>
-            {/* Header Controls */}
+
+
+            {/* ==================================================
+                HEADER
+            ================================================== */}
+
             <div className="brand-list-header">
+
               <div>
-                <h2>All Brands</h2>
-                <p>Manage and organize all your brands</p>
+
+                <h2>
+                  All Brands
+                </h2>
+
+                <p>
+                  Manage and organize all your brands
+                </p>
+
               </div>
+
 
               <div className="brand-controls">
+
+
+                {/* ==================================================
+                    SEARCH
+                ================================================== */}
+
                 <div className="brand-search-box">
-                  <Search size={16} className="brand-search-icon" />
-                  <input 
-                    type="text" 
-                    placeholder="Search brands..." 
-                    value={searchQuery}
-                    onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+
+                  <Search
+                    size={16}
+                    className="brand-search-icon"
                   />
+
+
+                  <input
+                    type="text"
+
+                    placeholder="Search brands..."
+
+                    value={
+                      searchQuery
+                    }
+
+                    onChange={(e) => {
+
+                      setSearchQuery(
+                        e.target.value
+                      );
+
+                      setCurrentPage(
+                        1
+                      );
+
+                    }}
+                  />
+
                 </div>
 
-                {/* Filter */}
+
+                {/* ==================================================
+                    FILTER
+                ================================================== */}
+
                 <div className="brand-filter-container">
-                  <button 
+
+                  <button
                     type="button"
-                    className={`brand-btn-icon ${statusFilter !== 'All' ? 'active-filter' : ''}`}
-                    onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+
+                    className={`brand-btn-icon ${
+                      statusFilter !== "All"
+                        ? "active-filter"
+                        : ""
+                    }`}
+
+                    onClick={() =>
+                      setShowFilterDropdown(
+                        (prev) =>
+                          !prev
+                      )
+                    }
                   >
-                    <Filter size={16} /> Filter
+
+                    <Filter
+                      size={16}
+                    />
+
+                    Filter
+
                   </button>
+
+
                   {showFilterDropdown && (
+
                     <div className="brand-filter-dropdown">
-                      <p className="brand-filter-title">Filter Status</p>
-                      <button type="button" className={statusFilter === 'All' ? 'selected' : ''} onClick={() => { setStatusFilter('All'); setShowFilterDropdown(false); }}>All Brands</button>
-                      <button type="button" className={statusFilter === 'Active' ? 'selected' : ''} onClick={() => { setStatusFilter('Active'); setShowFilterDropdown(false); }}>Active</button>
-                      <button type="button" className={statusFilter === 'Inactive' ? 'selected' : ''} onClick={() => { setStatusFilter('Inactive'); setShowFilterDropdown(false); }}>Inactive</button>
+
+                      <p className="brand-filter-title">
+                        Filter Status
+                      </p>
+
+
+                      <button
+                        type="button"
+
+                        className={
+                          statusFilter ===
+                          "All"
+                            ? "selected"
+                            : ""
+                        }
+
+                        onClick={() => {
+
+                          setStatusFilter(
+                            "All"
+                          );
+
+                          setCurrentPage(
+                            1
+                          );
+
+                          setShowFilterDropdown(
+                            false
+                          );
+
+                        }}
+                      >
+                        All Brands
+                      </button>
+
+
+                      <button
+                        type="button"
+
+                        className={
+                          statusFilter ===
+                          "Active"
+                            ? "selected"
+                            : ""
+                        }
+
+                        onClick={() => {
+
+                          setStatusFilter(
+                            "Active"
+                          );
+
+                          setCurrentPage(
+                            1
+                          );
+
+                          setShowFilterDropdown(
+                            false
+                          );
+
+                        }}
+                      >
+                        Active
+                      </button>
+
+
+                      <button
+                        type="button"
+
+                        className={
+                          statusFilter ===
+                          "Inactive"
+                            ? "selected"
+                            : ""
+                        }
+
+                        onClick={() => {
+
+                          setStatusFilter(
+                            "Inactive"
+                          );
+
+                          setCurrentPage(
+                            1
+                          );
+
+                          setShowFilterDropdown(
+                            false
+                          );
+
+                        }}
+                      >
+                        Inactive
+                      </button>
+
                     </div>
+
                   )}
+
                 </div>
 
-                {/* Refresh */}
-                <button type="button" className="brand-btn-icon" onClick={handleRefresh} title="Refresh Table">
-                  <RotateCcw size={16} />
+
+                {/* ==================================================
+                    REFRESH
+                ================================================== */}
+
+                <button
+                  type="button"
+
+                  className="brand-btn-icon"
+
+                  onClick={
+                    handleRefresh
+                  }
+
+                  title="Refresh Table"
+
+                  disabled={
+                    loading
+                  }
+                >
+
+                  <RotateCcw
+                    size={16}
+                  />
+
                 </button>
+
               </div>
+
             </div>
 
-            {/* Table */}
+
+            {/* ==================================================
+                TABLE
+            ================================================== */}
+
             <div className="brand-table-wrapper">
+
               <table className="brand-table">
+
                 <thead>
+
                   <tr>
-                    <th>#</th>
-                    <th>Logo</th>
-                    <th>Brand Name</th>
-                    <th>Category</th>
-                    <th>Products</th>
-                    <th>Order</th>
-                    <th>Status</th>
-                    <th>Action</th>
+
+                    <th>
+                      #
+                    </th>
+
+                    <th>
+                      Logo
+                    </th>
+
+                    <th>
+                      Brand Name
+                    </th>
+
+                    <th>
+                      Category
+                    </th>
+
+                    <th>
+                      Order
+                    </th>
+
+                    <th>
+                      Status
+                    </th>
+
+                    <th>
+                      Action
+                    </th>
+
                   </tr>
+
                 </thead>
+
+
                 <tbody>
-                  {currentBrands.length > 0 ? (
-                    currentBrands.map((item) => (
-                      <tr key={item.id}>
-                        <td>{item.id}</td>
-                        <td>
-                          <div className="brand-logo-circle">
-                            {item.logoUrl ? (
-                              <img src={item.logoUrl} alt={item.name} className="brand-table-logo" />
-                            ) : (
-                              <span className="brand-logo-text">{item.name.charAt(0)}</span>
-                            )}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="brand-name-group">
-                            <span className="brand-title-text">{item.name}</span>
-                            <span className="brand-sub-text">{item.tagline}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className={`brand-cat-tag ${item.catColor}`}>
-                            {item.category}
-                          </span>
-                        </td>
-                        <td>{item.products}</td>
-                        <td>{item.order}</td>
-                        <td>
-                          <span className={`brand-badge ${item.status.toLowerCase()}`}>
-                            {item.status}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="brand-action-wrapper">
-                            <button 
-                              type="button"
-                              className="brand-action-btn brand-edit-btn" 
-                              onClick={() => handleEdit(item)}
-                              title="Edit"
-                            >
-                              <Edit3 size={14} />
-                            </button>
-                            <button 
-                              type="button"
-                              className="brand-action-btn brand-delete-btn" 
-                              onClick={() => handleDelete(item.id)}
-                              title="Delete"
-                            >
-                              <Trash2 size={14} />
-                            </button>
 
-                            {/* Three Dots Dropdown */}
-                            <div className="brand-dropdown-container">
-                              <button 
-                                type="button"
-                                className="brand-action-btn brand-more-btn"
-                                onClick={() => setActiveDropdownId(activeDropdownId === item.id ? null : item.id)}
-                                title="More Options"
-                              >
-                                <MoreVertical size={14} />
-                              </button>
+                  {loading ? (
 
-                              {activeDropdownId === item.id && (
-                                <div className="brand-action-dropdown">
-                                  <button type="button" onClick={() => handleStatusChange(item.id, 'Active')}>
-                                    <CheckCircle size={14} className="icon-green" /> Set Active
-                                  </button>
-                                  <button type="button" onClick={() => handleStatusChange(item.id, 'Inactive')}>
-                                    <XCircle size={14} className="icon-red" /> Set Inactive
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
                     <tr>
-                      <td colSpan="8" className="brand-no-data">No brands found.</td>
+
+                      <td
+                        colSpan="7"
+                        className="brand-no-data"
+                      >
+
+                        <div className="brand-loading-flex">
+
+                          <Loader2
+                            className="brand-spinner"
+                            size={20}
+                          />
+
+                          Loading brands...
+
+                        </div>
+
+                      </td>
+
                     </tr>
+
+                  ) : currentBrands.length > 0 ? (
+
+                    currentBrands.map(
+                      (
+                        item,
+                        index
+                      ) => {
+
+                        // ==================================================
+                        // LOGO URL
+                        // ==================================================
+
+                        let logoSrc =
+                          null;
+
+
+                        if (
+                          item.logoUrl
+                        ) {
+
+                          if (
+                            item.logoUrl.startsWith(
+                              "http"
+                            )
+                          ) {
+
+                            logoSrc =
+                              item.logoUrl;
+
+                          } else {
+
+                            logoSrc =
+                              `${BASE_URL}/${item.logoUrl.replace(
+                                /^\/+/,
+                                ""
+                              )}`;
+
+                          }
+
+                        }
+
+
+                        return (
+
+                          <tr
+                            key={
+                              item._id
+                            }
+                          >
+
+                            {/* ==================================================
+                                NUMBER
+                            ================================================== */}
+
+                            <td>
+                              {startIndex +
+                                index +
+                                1}
+                            </td>
+
+
+                            {/* ==================================================
+                                LOGO
+                            ================================================== */}
+
+                            <td>
+
+                              <div className="brand-logo-circle">
+
+                                {logoSrc ? (
+
+                                  <img
+                                    src={
+                                      logoSrc
+                                    }
+
+                                    alt={
+                                      item.name
+                                    }
+
+                                    className="brand-table-logo"
+
+                                    onError={(
+                                      e
+                                    ) => {
+
+                                      e.currentTarget.style.display =
+                                        "none";
+
+                                    }}
+                                  />
+
+                                ) : (
+
+                                  <span className="brand-logo-text">
+
+                                    {item.name
+                                      ?.charAt(
+                                        0
+                                      )
+                                      ?.toUpperCase()}
+
+                                  </span>
+
+                                )}
+
+                              </div>
+
+                            </td>
+
+
+                            {/* ==================================================
+                                BRAND NAME
+                            ================================================== */}
+
+                            <td>
+
+                              <div className="brand-name-group">
+
+                                <span className="brand-title-text">
+
+                                  {item.name}
+
+                                </span>
+
+
+                                {item.tagline && (
+
+                                  <span className="brand-sub-text">
+
+                                    {
+                                      item.tagline
+                                    }
+
+                                  </span>
+
+                                )}
+
+                              </div>
+
+                            </td>
+
+
+                            {/* ==================================================
+                                CATEGORY
+                            ================================================== */}
+
+                            <td>
+
+                              <span className="brand-cat-tag">
+
+                                {
+                                  item.category ||
+                                  "General"
+                                }
+
+                              </span>
+
+                            </td>
+
+
+                            {/* ==================================================
+                                ORDER
+                            ================================================== */}
+
+                            <td>
+                              {
+                                item.order
+                              }
+                            </td>
+
+
+                            {/* ==================================================
+                                STATUS
+                            ================================================== */}
+
+                            <td>
+
+                              <span
+                                className={`brand-badge ${
+                                  item.status
+                                    ? item.status.toLowerCase()
+                                    : ""
+                                }`}
+                              >
+
+                                {
+                                  item.status
+                                }
+
+                              </span>
+
+                            </td>
+
+
+                            {/* ==================================================
+                                ACTION
+                            ================================================== */}
+
+                            <td>
+
+                              <div className="brand-action-wrapper">
+
+
+                                {/* ==================================================
+                                    EDIT
+                                ================================================== */}
+
+                                <button
+                                  type="button"
+
+                                  className="brand-action-btn brand-edit-btn"
+
+                                  onClick={() =>
+                                    handleEdit(
+                                      item
+                                    )
+                                  }
+
+                                  title="Edit"
+                                >
+
+                                  <Edit3
+                                    size={14}
+                                  />
+
+                                </button>
+
+
+                                {/* ==================================================
+                                    DELETE
+                                ================================================== */}
+
+                                <button
+                                  type="button"
+
+                                  className="brand-action-btn brand-delete-btn"
+
+                                  onClick={() =>
+                                    handleDelete(
+                                      item._id
+                                    )
+                                  }
+
+                                  title="Delete"
+                                >
+
+                                  <Trash2
+                                    size={14}
+                                  />
+
+                                </button>
+
+
+                                {/* ==================================================
+                                    MORE DROPDOWN
+                                ================================================== */}
+
+                                <div className="brand-dropdown-container">
+
+                                  <button
+                                    type="button"
+
+                                    className="brand-action-btn brand-more-btn"
+
+                                    onClick={() =>
+                                      setActiveDropdownId(
+                                        activeDropdownId ===
+                                          item._id
+                                          ? null
+                                          : item._id
+                                      )
+                                    }
+
+                                    title="More Options"
+                                  >
+
+                                    <MoreVertical
+                                      size={14}
+                                    />
+
+                                  </button>
+
+
+                                  {activeDropdownId ===
+                                    item._id && (
+
+                                    <div className="brand-action-dropdown">
+
+
+                                      {/* ACTIVE */}
+
+                                      <button
+                                        type="button"
+
+                                        onClick={() =>
+                                          handleStatusChange(
+                                            item._id,
+                                            "Active"
+                                          )
+                                        }
+                                      >
+
+                                        <CheckCircle
+                                          size={14}
+                                          className="icon-green"
+                                        />
+
+                                        Set Active
+
+                                      </button>
+
+
+                                      {/* INACTIVE */}
+
+                                      <button
+                                        type="button"
+
+                                        onClick={() =>
+                                          handleStatusChange(
+                                            item._id,
+                                            "Inactive"
+                                          )
+                                        }
+                                      >
+
+                                        <XCircle
+                                          size={14}
+                                          className="icon-red"
+                                        />
+
+                                        Set Inactive
+
+                                      </button>
+
+                                    </div>
+
+                                  )}
+
+                                </div>
+
+                              </div>
+
+                            </td>
+
+                          </tr>
+
+                        );
+
+                      }
+                    )
+
+                  ) : (
+
+                    <tr>
+
+                      <td
+                        colSpan="7"
+                        className="brand-no-data"
+                      >
+                        No brands found.
+                      </td>
+
+                    </tr>
+
                   )}
+
                 </tbody>
+
               </table>
+
             </div>
+
           </div>
 
-          {/* Pagination */}
+
+          {/* ==================================================
+              PAGINATION
+          ================================================== */}
+
           <div className="brand-pagination-wrapper">
+
             <span className="brand-entries-info">
-              Showing {totalEntries > 0 ? startIndex + 1 : 0} to {Math.min(startIndex + ITEMS_PER_PAGE, totalEntries)} of {totalEntries} entries
+
+              Showing{" "}
+
+              {totalEntries > 0
+                ? startIndex + 1
+                : 0}
+
+              {" "}to{" "}
+
+              {Math.min(
+                startIndex +
+                  ITEMS_PER_PAGE,
+                totalEntries
+              )}
+
+              {" "}of{" "}
+
+              {totalEntries}
+
+              {" "}entries
+
             </span>
+
+
             <div className="brand-pagination">
-              <button 
+
+
+              {/* ==================================================
+                  PREVIOUS
+              ================================================== */}
+
+              <button
                 type="button"
-                className="brand-page-btn" 
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+
+                className="brand-page-btn"
+
+                disabled={
+                  currentPage === 1 ||
+                  loading
+                }
+
+                onClick={() =>
+                  setCurrentPage(
+                    (p) =>
+                      Math.max(
+                        p - 1,
+                        1
+                      )
+                  )
+                }
               >
                 Previous
               </button>
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <button 
+
+              {/* ==================================================
+                  PAGE NUMBERS
+              ================================================== */}
+
+              {Array.from(
+                {
+                  length:
+                    totalPages,
+                },
+
+                (_, i) =>
+                  i + 1
+
+              ).map((page) => (
+
+                <button
                   type="button"
+
                   key={page}
-                  className={`brand-page-btn ${currentPage === page ? 'active' : ''}`}
-                  onClick={() => setCurrentPage(page)}
+
+                  className={`brand-page-btn ${
+                    currentPage ===
+                    page
+                      ? "active"
+                      : ""
+                  }`}
+
+                  onClick={() =>
+                    setCurrentPage(
+                      page
+                    )
+                  }
+
+                  disabled={
+                    loading
+                  }
                 >
+
                   {page}
+
                 </button>
+
               ))}
 
-              <button 
+
+              {/* ==================================================
+                  NEXT
+              ================================================== */}
+
+              <button
                 type="button"
+
                 className="brand-page-btn"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+
+                disabled={
+                  currentPage ===
+                    totalPages ||
+                  totalPages === 0 ||
+                  loading
+                }
+
+                onClick={() =>
+                  setCurrentPage(
+                    (p) =>
+                      Math.min(
+                        p + 1,
+                        totalPages
+                      )
+                  )
+                }
               >
+
                 Next
+
               </button>
+
             </div>
+
           </div>
 
         </div>
 
       </div>
+
     </div>
   );
 };
+
 
 export default Brands;

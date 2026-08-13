@@ -3,11 +3,12 @@ const express = require("express");
 const router = express.Router();
 
 // ========================================
-// MULTER
+// MULTER & FILE PROCESSING MIDDLEWARE
 // ========================================
 
 const {
   upload,
+  convertToWebp, // <--- 1. Imported convertToWebp
 } = require("../middleware/upload");
 
 // ========================================
@@ -20,11 +21,10 @@ const {
   getListUploadById,
   updateListUpload,
   updateOrderStatus,
+  uploadOrderReceipt, // <--- Added receipt upload controller
   deleteListUpload,
   trackOrderByOrderId,
-} = require(
-  "../controllers/listUploadController"
-);
+} = require("../controllers/listUploadController");
 
 // ========================================
 // CREATE LIST ORDER
@@ -35,24 +35,19 @@ const {
 router.post(
   "/",
   upload.single("uploadedFile"),
+  convertToWebp, // <--- 2. Added convertToWebp here
   createListUpload
 );
 
 // ========================================
 // GET ALL LIST ORDERS
 // GET /api/list-upload
-//
-// Optional:
-// ?status=Received
-// ?search=weekly
 // ========================================
 
 router.get(
   "/",
   getAllListUploads
 );
-
-
 
 // ========================================
 // TRACK ORDER USING ORDER ID
@@ -76,28 +71,30 @@ router.get(
 // ========================================
 // UPDATE ORDER
 // PUT /api/list-upload/:id
-//
-// Can update:
-// - listName
-// - FullName
-// - countryCode
-// - phoneNumber
-// - deliveryAddress
-// - uploadedFile
-//
-// uploadedFile is optional.
-// If provided, old Image/PDF is replaced.
 // ========================================
 
 router.put(
   "/:id",
   upload.single("uploadedFile"),
+  convertToWebp, // <--- 3. Added convertToWebp here as well
   updateListUpload
 );
 
 // ========================================
+// UPLOAD RECEIPT
+// PUT /api/list-upload/:id/receipt
+// ========================================
+
+router.put(
+  "/:id/receipt",
+  upload.single("receiptFile"),
+  convertToWebp, // <--- Added convertToWebp for receipt uploads
+  uploadOrderReceipt
+);
+
+// ========================================
 // UPDATE ORDER STATUS
-// PATCH /api/list-upload/:id/status
+// PUT /api/list-upload/:id/status
 // ========================================
 
 router.put(
@@ -108,8 +105,6 @@ router.put(
 // ========================================
 // DELETE ORDER
 // DELETE /api/list-upload/:id
-//
-// Also deletes uploaded Image/PDF
 // ========================================
 
 router.delete(
