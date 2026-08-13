@@ -23,7 +23,8 @@ import {
   Settings,
   ShoppingBasket,
   Notebook,
-  Book
+  Book,
+  NotebookPen
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -34,6 +35,15 @@ const menuSections = [
       { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard }
     ]
   },
+
+  {
+    title: null,
+    items: [
+      { label: 'Cold Lead', path: '/coldlead', icon: NotebookPen }
+    ]
+  },
+
+
   {
     title: 'PRODUCTS',
     items: [
@@ -56,9 +66,9 @@ const menuSections = [
   {
     title: 'Blog',
     items: [
-      { label: 'blogposting', path: '/blog', icon: Book },
-      { label: 'blogmanagemnet', path: '/blogmanagement', icon: Notebook },
-      { label: 'testimonialmanagement', path: '/testimonialmanagement', icon: Book },
+      { label: 'Blog management', path: '/blogmanagement', icon: Notebook },
+      { label: 'Blog posting', path: '/blog', icon: Book },
+      { label: 'Testimonial', path: '/testimonialmanagement', icon: Book },
     ]
   },
 

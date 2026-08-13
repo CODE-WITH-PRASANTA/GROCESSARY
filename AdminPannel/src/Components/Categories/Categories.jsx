@@ -13,6 +13,7 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
+import { Editor } from '@tinymce/tinymce-react';
 
 const initialCategories = [
   { id: 1, name: 'Food Grains', parent: '—', order: 1, status: 'Active', icon: '🌾', iconUrl: null },
@@ -54,6 +55,7 @@ const Categories = () => {
   });
 
   const fileInputRef = useRef(null);
+  const editorRef = useRef(null);
 
   // --- Table, Search, Filter & Pagination States ---
   const [categoriesList, setCategoriesList] = useState(initialCategories);
@@ -112,6 +114,14 @@ const Categories = () => {
     }));
   };
 
+  // Handle TinyMCE Editor Change
+  const handleEditorChange = (content) => {
+    setFormData(prev => ({
+      ...prev,
+      description: content
+    }));
+  };
+
   // Reset Form
   const handleReset = () => {
     setFormData({
@@ -125,6 +135,9 @@ const Categories = () => {
       icon: '📦',
       iconUrl: null
     });
+    if (editorRef.current) {
+      editorRef.current.setContent('');
+    }
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -183,10 +196,11 @@ const Categories = () => {
 
   // Edit Action
   const handleEdit = (category) => {
+    const cleanSlug = category.name.toLowerCase().trim().replace(/[\s\W-]+/g, '-');
     setFormData({
       id: category.id,
       name: category.name,
-      slug: category.name.toLowerCase().trim().replace(/[\s\W-]+/g, '-'),
+      slug: cleanSlug,
       parent: category.parent === '—' ? '' : category.parent,
       description: '',
       order: category.order,
@@ -194,6 +208,10 @@ const Categories = () => {
       icon: category.icon,
       iconUrl: category.iconUrl
     });
+
+    if (editorRef.current) {
+      editorRef.current.setContent('');
+    }
     setActiveDropdownId(null);
   };
 
@@ -213,7 +231,7 @@ const Categories = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // Pagination (8 Items Per Page)
+  // Pagination
   const totalEntries = filteredCategories.length;
   const totalPages = Math.ceil(totalEntries / ITEMS_PER_PAGE) || 1;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -315,19 +333,32 @@ const Categories = () => {
               </div>
             </div>
 
-            {/* Description */}
+            {/* Description (TinyMCE Integration) */}
             <div className="cat-page-form-group">
               <label>Description</label>
-              <div className="cat-page-textarea-wrapper">
-                <textarea 
-                  name="description"
-                  placeholder="Enter category description..."
-                  rows="3"
-                  maxLength={160}
+              <div className="cat-page-editor-wrapper">
+                <Editor
+                  apiKey="8hswbe7bfeeneui9eb9gjgsym8ku30nx5gwre9808ajdzniu" 
+                  onInit={(evt, editor) => editorRef.current = editor}
                   value={formData.description}
-                  onChange={handleInputChange}
-                ></textarea>
-                <span className="cat-page-char-count">{formData.description.length} / 160</span>
+                  onEditorChange={handleEditorChange}
+                  init={{
+                    height: 220,
+                    menubar: false,
+                    plugins: [
+                      'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
+                      'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                      'insertdatetime', 'table', 'code', 'help', 'wordcount'
+                    ],
+                    toolbar: 'undo redo | blocks | ' +
+                      'bold italic forecolor | alignleft aligncenter ' +
+                      'alignright alignjustify | bullist numlist outdent indent | ' +
+                      'removeformat | help',
+                    content_style: 'body { font-family:Inter,sans-serif; font-size:14px }',
+                    statusbar: false,
+                    branding: false
+                  }}
+                />
               </div>
             </div>
 
@@ -374,144 +405,151 @@ const Categories = () => {
 
         {/* ================= RIGHT SECTION (50%) ================= */}
         <div className="cat-page-card cat-page-list-section">
-          {/* Header Bar */}
-          <div className="cat-page-list-header">
-            <div>
-              <h2>All Categories</h2>
-              <p>Manage your product categories</p>
-            </div>
-
-            <div className="cat-page-controls">
-              {/* Search Box */}
-              <div className="cat-page-search-box">
-                <Search size={16} className="cat-page-search-icon" />
-                <input 
-                  type="text" 
-                  placeholder="Search categories..." 
-                  value={searchQuery}
-                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                />
+          <div>
+            {/* Header Bar */}
+            <div className="cat-page-list-header">
+              <div>
+                <h2>All Categories</h2>
+                <p>Manage your product categories</p>
               </div>
 
-              {/* Filter */}
-              <div className="cat-page-filter-container">
-                <button 
-                  className={`cat-page-btn-icon ${statusFilter !== 'All' ? 'active-filter' : ''}`}
-                  onClick={() => setShowFilterDropdown(prev => !prev)}
-                >
-                  <Filter size={16} /> Filter
+              <div className="cat-page-controls">
+                {/* Search Box */}
+                <div className="cat-page-search-box">
+                  <Search size={16} className="cat-page-search-icon" />
+                  <input 
+                    type="text" 
+                    placeholder="Search categories..." 
+                    value={searchQuery}
+                    onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                  />
+                </div>
+
+                {/* Filter */}
+                <div className="cat-page-filter-container">
+                  <button 
+                    type="button"
+                    className={`cat-page-btn-icon ${statusFilter !== 'All' ? 'active-filter' : ''}`}
+                    onClick={() => setShowFilterDropdown(prev => !prev)}
+                  >
+                    <Filter size={16} /> Filter
+                  </button>
+                  {showFilterDropdown && (
+                    <div className="cat-page-filter-dropdown">
+                      <p className="cat-page-filter-title">Filter Status</p>
+                      <button type="button" className={statusFilter === 'All' ? 'selected' : ''} onClick={() => { setStatusFilter('All'); setShowFilterDropdown(false); }}>All</button>
+                      <button type="button" className={statusFilter === 'Active' ? 'selected' : ''} onClick={() => { setStatusFilter('Active'); setShowFilterDropdown(false); }}>Active</button>
+                      <button type="button" className={statusFilter === 'Inactive' ? 'selected' : ''} onClick={() => { setStatusFilter('Inactive'); setShowFilterDropdown(false); }}>Inactive</button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Refresh */}
+                <button type="button" className="cat-page-btn-icon" onClick={handleRefresh} title="Refresh Table">
+                  <RotateCcw size={16} />
                 </button>
-                {showFilterDropdown && (
-                  <div className="cat-page-filter-dropdown">
-                    <p className="cat-page-filter-title">Filter Status</p>
-                    <button className={statusFilter === 'All' ? 'selected' : ''} onClick={() => { setStatusFilter('All'); setShowFilterDropdown(false); }}>All</button>
-                    <button className={statusFilter === 'Active' ? 'selected' : ''} onClick={() => { setStatusFilter('Active'); setShowFilterDropdown(false); }}>Active</button>
-                    <button className={statusFilter === 'Inactive' ? 'selected' : ''} onClick={() => { setStatusFilter('Inactive'); setShowFilterDropdown(false); }}>Inactive</button>
-                  </div>
-                )}
               </div>
-
-              {/* Refresh */}
-              <button className="cat-page-btn-icon" onClick={handleRefresh} title="Refresh Table">
-                <RotateCcw size={16} />
-              </button>
             </div>
-          </div>
 
-          {/* Table */}
-          <div className="cat-page-table-wrapper">
-            <table className="cat-page-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Icon</th>
-                  <th>Category Name</th>
-                  <th>Parent Category</th>
-                  <th>Order</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentCategories.length > 0 ? (
-                  currentCategories.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.id}</td>
-                      <td>
-                        <div className="cat-page-table-icon">
-                          {item.iconUrl ? (
-                            <img src={item.iconUrl} alt={item.name} className="cat-page-table-img" />
-                          ) : (
-                            item.icon
-                          )}
-                        </div>
-                      </td>
-                      <td className="cat-page-font-semibold">{item.name}</td>
-                      <td className="cat-page-text-muted">{item.parent}</td>
-                      <td>{item.order}</td>
-                      <td>
-                        <span className={`cat-page-badge ${item.status.toLowerCase()}`}>
-                          {item.status}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="cat-page-action-wrapper">
-                          <button 
-                            className="cat-page-btn-action cat-page-edit-btn"
-                            onClick={() => handleEdit(item)}
-                            title="Edit"
-                          >
-                            <Edit3 size={14} />
-                          </button>
-                          <button 
-                            className="cat-page-btn-action cat-page-delete-btn"
-                            onClick={() => handleDelete(item.id)}
-                            title="Delete"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-
-                          {/* Three Dots Dropdown */}
-                          <div className="cat-page-dropdown-container">
-                            <button 
-                              className="cat-page-btn-action cat-page-more-btn"
-                              onClick={() => setActiveDropdownId(activeDropdownId === item.id ? null : item.id)}
-                              title="More Options"
-                            >
-                              <MoreVertical size={14} />
-                            </button>
-
-                            {activeDropdownId === item.id && (
-                              <div className="cat-page-action-dropdown">
-                                <button onClick={() => handleStatusChange(item.id, 'Active')}>
-                                  <CheckCircle size={14} className="cat-icon-active" /> Set Active
-                                </button>
-                                <button onClick={() => handleStatusChange(item.id, 'Inactive')}>
-                                  <XCircle size={14} className="cat-icon-inactive" /> Set Inactive
-                                </button>
-                              </div>
+            {/* Table */}
+            <div className="cat-page-table-wrapper">
+              <table className="cat-page-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Icon</th>
+                    <th>Category Name</th>
+                    <th>Parent Category</th>
+                    <th>Order</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentCategories.length > 0 ? (
+                    currentCategories.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.id}</td>
+                        <td>
+                          <div className="cat-page-table-icon">
+                            {item.iconUrl ? (
+                              <img src={item.iconUrl} alt={item.name} className="cat-page-table-img" />
+                            ) : (
+                              item.icon
                             )}
                           </div>
-                        </div>
-                      </td>
+                        </td>
+                        <td className="cat-page-font-semibold">{item.name}</td>
+                        <td className="cat-page-text-muted">{item.parent}</td>
+                        <td>{item.order}</td>
+                        <td>
+                          <span className={`cat-page-badge ${item.status.toLowerCase()}`}>
+                            {item.status}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="cat-page-action-wrapper">
+                            <button 
+                              type="button"
+                              className="cat-page-btn-action cat-page-edit-btn"
+                              onClick={() => handleEdit(item)}
+                              title="Edit"
+                            >
+                              <Edit3 size={14} />
+                            </button>
+                            <button 
+                              type="button"
+                              className="cat-page-btn-action cat-page-delete-btn"
+                              onClick={() => handleDelete(item.id)}
+                              title="Delete"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+
+                            {/* Three Dots Dropdown */}
+                            <div className="cat-page-dropdown-container">
+                              <button 
+                                type="button"
+                                className="cat-page-btn-action cat-page-more-btn"
+                                onClick={() => setActiveDropdownId(activeDropdownId === item.id ? null : item.id)}
+                                title="More Options"
+                              >
+                                <MoreVertical size={14} />
+                              </button>
+
+                              {activeDropdownId === item.id && (
+                                <div className="cat-page-action-dropdown">
+                                  <button type="button" onClick={() => handleStatusChange(item.id, 'Active')}>
+                                    <CheckCircle size={14} className="cat-icon-active" /> Set Active
+                                  </button>
+                                  <button type="button" onClick={() => handleStatusChange(item.id, 'Inactive')}>
+                                    <XCircle size={14} className="cat-icon-inactive" /> Set Inactive
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="7" className="cat-page-no-data">No categories found.</td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="7" className="cat-page-no-data">No categories found.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* Pagination (8 Items Per Page) */}
+          {/* Pagination */}
           <div className="cat-page-pagination-wrapper">
             <span className="cat-page-text-muted">
               Showing {totalEntries > 0 ? startIndex + 1 : 0} to {Math.min(startIndex + ITEMS_PER_PAGE, totalEntries)} of {totalEntries} entries
             </span>
             <div className="cat-page-pagination">
               <button 
+                type="button"
                 className="cat-page-page-btn" 
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
@@ -521,6 +559,7 @@ const Categories = () => {
 
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                 <button 
+                  type="button"
                   key={page}
                   className={`cat-page-page-btn ${currentPage === page ? 'active' : ''}`}
                   onClick={() => setCurrentPage(page)}
@@ -530,6 +569,7 @@ const Categories = () => {
               ))}
 
               <button 
+                type="button"
                 className="cat-page-page-btn"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}

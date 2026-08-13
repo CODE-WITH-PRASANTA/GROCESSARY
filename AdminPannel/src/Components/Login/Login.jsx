@@ -14,28 +14,27 @@ const Login = () => {
     e.preventDefault();
     setError('');
 
-    if (identifier.trim() === '' || password.trim() === '') {
+    if (!identifier.trim() || !password.trim()) {
       setError('Please fill in all required fields.');
       return;
     }
 
-    // Trigger full-page 3D success animation
+    // Trigger full-page 3D success animation overlay
     setIsSuccess(true);
 
-    // Save auth token for ProtectedRoute
+    // Save mock authorization token for protected route access
     localStorage.setItem('grocerySathiAuthToken', 'mock-admin-token-secure-123');
 
-    // Redirect after 3D animation sequence
+    // Redirect to dashboard after 3D animation sequence finishes
     setTimeout(() => {
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     }, 2500);
   };
 
   return (
     <div className="login-container">
-      
       {/* Background Decorative Grocery Elements */}
-      <div className="login-bg-pattern">
+      <div className="login-bg-pattern" aria-hidden="true">
         <span className="grocery-sketch item-broccoli-1">🥦</span>
         <span className="grocery-sketch item-tomato">🍅</span>
         <span className="grocery-sketch item-leaf-1">🍃</span>
@@ -62,7 +61,6 @@ const Login = () => {
 
       {/* Main 3D Card Container */}
       <div className="login-card">
-        
         {/* Header Section */}
         <div className="login-header">
           <div className="login-logo-box">
@@ -87,13 +85,12 @@ const Login = () => {
           </div>
 
           {error && (
-            <div className="login-error-box">
+            <div className="login-error-box" role="alert">
               {error}
             </div>
           )}
 
           <form onSubmit={handleLogin} className="login-form">
-            
             {/* Identifier Input */}
             <div className="login-input-group">
               <span className="login-input-icon">
@@ -107,6 +104,7 @@ const Login = () => {
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder="Email or Username"
                 className="login-input"
+                autoComplete="username"
               />
             </div>
 
@@ -123,11 +121,13 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 className="login-input pr-10"
+                autoComplete="current-password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="login-password-toggle"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -162,7 +162,7 @@ const Login = () => {
             onClick={(e) => e.preventDefault()}
             className="login-request-btn"
           >
-            <svg className="w-4 h-4 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ width: '18px', height: '18px', marginRight: '6px', verticalAlign: 'middle' }}>
+            <svg style={{ width: '18px', height: '18px', marginRight: '6px', verticalAlign: 'middle' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
             Request Access
@@ -172,10 +172,9 @@ const Login = () => {
         {/* Footer info */}
         <div className="login-footer">
           <p className="login-footer-text">
-            &copy; 2023 GrocerySathi Technologies. All rights reserved.
+            &copy; {new Date().getFullYear()} GrocerySathi Technologies. All rights reserved.
           </p>
         </div>
-
       </div>
     </div>
   );
