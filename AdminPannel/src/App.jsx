@@ -35,6 +35,8 @@ import Discounts from "./Components/Discounts/Discounts";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import Order from "./Pages/Order/Order";
 import ColdLeadManagement from "./Components/ColdLeadManagement/ColdLeadManagement";
+import Import from "./Components/Import/Import";
+import Catagory from "./Components/Catagory/Catagory";
 
 const App = () => {
   return (
@@ -87,6 +89,8 @@ const App = () => {
           <Route path="returns/pickup-management" element={<PickupManagement />} />
           <Route path="returns/inventory-adjustment" element={<InventoryAdjustment />} />
           <Route path="returns/activity-log" element={<ActivityLog />} />
+          <Route path="/import" element={<Import />} />
+          <Route path="/catagory" element={<Catagory />} />
 
           {/* Settings */}
          
