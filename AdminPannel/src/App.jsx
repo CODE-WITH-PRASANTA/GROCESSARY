@@ -1,8 +1,10 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-// Layout
+// Layout & Security
 import MainLayout from "./Layout/MainLayout/MainLayout";
+import ProtectedRoute from "./Components/ProtectedRoute/ProtectedRoute";
+import Login from "./Components/Login/Login";
 
 // Component / Page Imports
 import TestimonialManagement from "./Components/TestimonialManagement/TestimonialManagement";
@@ -24,14 +26,9 @@ import ListUploads from "./Components/ListUploads/ListUploads";
 import Banners from "./Components/Banners/Banners";
 import BlogPosting from "./Components/BlogPosting/BlogPosting";
 import BlogManagement from "./Components/BlogManagement/BlogManagement";
-
-// Previously Missing Imports (Update file paths according to your folder structure)
-
-
 import Categories from "./Components/Categories/Categories";
 import Brands from "./Components/Brands/Brands";
 import Discounts from "./Components/Discounts/Discounts";
-
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import Order from "./Pages/Order/Order";
 import ColdLeadManagement from "./Components/ColdLeadManagement/ColdLeadManagement";
@@ -42,42 +39,39 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Main Layout Wrap */}
-        <Route path="/" element={<MainLayout />}>
-          
-          {/* Default Redirect */}
-          <Route index element={<Navigate to="/dashboard" replace />} />
+        {/* Public Login Route - First point of entry if unauthenticated */}
+        <Route path="/login" element={<Login />} />
 
-          {/* Dashboard */}
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="/coldlead" element={<ColdLeadManagement />} />
+        {/* Root Redirect: Directs users to login by default if they visit the base URL */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
-          {/* Blog & Testimonials */}
-          <Route path="blog" element={<BlogPosting />} />
-          <Route path="blogmanagement" element={<BlogManagement />} />
-          <Route path="testimonialmanagement" element={<TestimonialManagement />} />
+        {/* Protected Admin Routes Wrapper */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
+            
+            {/* Dashboard (Loaded after successful login at /dashboard) */}
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="coldlead" element={<ColdLeadManagement />} />
 
-          {/* Products */}
-          <Route path="products/all-products" element={<Allproduct />} />
-          <Route path="products/add-product" element={<Addnew />} />
-          <Route path="products/categories" element={<Categories />} />
-          
-          <Route path="products/brands" element={<Brands />} />
-          <Route path="products/units" element={<EditUnit />} />
-          <Route path="products/list-uploads" element={<ListUploads />} />
+            {/* Blog & Testimonials */}
+            <Route path="blog" element={<BlogPosting />} />
+            <Route path="blogmanagement" element={<BlogManagement />} />
+            <Route path="testimonialmanagement" element={<TestimonialManagement />} />
 
-          {/* Orders */}
-          <Route path="orders/all-orders" element={<Order />} />
-          <Route path="orders/returns" element={<ReturnManagement />} />
+            {/* Products */}
+            <Route path="products/all-products" element={<Allproduct />} />
+            <Route path="products/add-product" element={<Addnew />} />
+            <Route path="products/categories" element={<Categories />} />
+            <Route path="products/brands" element={<Brands />} />
+            <Route path="products/units" element={<EditUnit />} />
+            <Route path="products/list-uploads" element={<ListUploads />} />
 
-          {/* Customers */}
-          
-          <Route path="customers/reviews" element={<ReviewsManagement />} />
+            {/* Orders */}
+            <Route path="orders/all-orders" element={<Order />} />
+            <Route path="orders/returns" element={<ReturnManagement />} />
 
-          {/* Marketing */}
-          <Route path="marketing/banners" element={<Banners />} />
-          <Route path="marketing/discounts" element={<Discounts />} />
-        
+            {/* Customers */}
+            <Route path="customers/reviews" element={<ReviewsManagement />} />
 
           {/* Returns */}
           <Route path="returns/details" element={<ReturnDetails />} />
@@ -91,11 +85,26 @@ const App = () => {
           <Route path="returns/activity-log" element={<ActivityLog />} />
           <Route path="/import" element={<Import />} />
           <Route path="/catagory" element={<Catagory />} />
+            {/* Marketing */}
+            <Route path="marketing/banners" element={<Banners />} />
+            <Route path="marketing/discounts" element={<Discounts />} />
 
-          {/* Settings */}
-         
+            {/* Returns */}
+            <Route path="returns/details" element={<ReturnDetails />} />
+            <Route path="returns/inspection" element={<QualityInspection />} />
+            <Route path="returns/refund" element={<RefundDetails />} />
+            <Route path="returns/product-info" element={<ProductInformation />} />
+            <Route path="returns/replacement-details" element={<ReplacementDetails />} />
+            <Route path="returns/approval" element={<ReturnApproval />} />
+            <Route path="returns/pickup-management" element={<PickupManagement />} />
+            <Route path="returns/inventory-adjustment" element={<InventoryAdjustment />} />
+            <Route path="returns/activity-log" element={<ActivityLog />} />
 
+          </Route>
         </Route>
+
+        {/* Global Fallback Catch-all: Redirects any faulty or unknown URL to /login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   );
