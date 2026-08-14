@@ -6,7 +6,7 @@ import HomeTodayDiscounts from '../../Components/HomeTodayDiscounts/HomeTodayDis
 import OurBestsellers from '../../Components/OurBestsellers/OurBestsellers'
 import FreashItem from '../../Components/FreashItem/FreashItem'
 import Testimonial from '../../Components/Testimonial/Testimonial'
-// import Blog from '../../Components/Blog/Blog'
+import Blog from '../../Components/BlogGrid/BlogGrid'
 
 import NourishSection from '../../Components/NourishSection/NourishSection'
 import MobileSection from '../../Components/MobileSection/MobileSection'
@@ -15,16 +15,16 @@ const Home = () => {
   return (
     <div>
       <MobileSection />
-      {/* <HeroSection/> */}
-      {/* <HomeCategories/> */}
-      {/* <HomeDailyDiscounts/> */}
-      {/* <HomeTodayDiscounts/> */}
+      <HeroSection/>
+      <HomeCategories/>
+      <HomeDailyDiscounts/>
+      <HomeTodayDiscounts/>
       
-      {/* <OurBestsellers /> */}
-      {/* <NourishSection /> */}
-      {/* <FreashItem /> */}
-      {/* <Testimonial /> */}
-      {/* <Blog /> */}
+      <OurBestsellers />
+      <NourishSection />
+      <FreashItem />
+      <Testimonial />
+      <Blog />
     </div>
   )
 }

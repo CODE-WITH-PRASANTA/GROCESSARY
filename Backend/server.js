@@ -5,25 +5,15 @@ const path = require("path");
 
 const connectDB = require("./config/db");
 
+const bannerRoutes = require("./routes/bannerRoutes");
 
+const listUploadRoutes = require("./routes/listUploadRoutes");
+const productRoutes = require("./routes/productRoutes");
 
-
-const bannerRoutes = require('./routes/bannerRoutes');
-
-
-
-
-const listUploadRoutes = require(
-  "./routes/listUploadRoutes"
-);
-const productRoutes = require('./routes/productRoutes');
-
-
-const brandRoutes = require(
-  "./routes/brandRoutes"
-);
+const brandRoutes = require("./routes/brandRoutes");
 const coldLeadRoutes = require("./routes/coldLeadRoutes");
-
+const unitRoutes = require("./routes/unit.routes");
+const categoryRoutes = require("./routes/categoryRoutes");
 
 // Load environment variables
 dotenv.config();
@@ -38,30 +28,19 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.use(
-  "/uploads",
-  express.static(
-    path.join(__dirname, "uploads")
-  )
-);
+app.use("/api/list-upload", listUploadRoutes);
 
+app.use("/api/units", unitRoutes);
+app.use("/api/categories", categoryRoutes);
 
-
-
-
-app.use(
-  "/api/list-upload",
-  listUploadRoutes
-);
-
-app.use('/api/products', productRoutes);
+app.use("/api/products", productRoutes);
 // Routes
-app.use('/api/banners', bannerRoutes);
-app.use('/api/brands', require('./routes/brandRoutes'));
+app.use("/api/banners", bannerRoutes);
+app.use("/api/brands", require("./routes/brandRoutes"));
+
 app.use("/api/cold-leads", coldLeadRoutes);
-
-
 
 // Test Route
 app.get("/", (req, res) => {
