@@ -1,0 +1,25 @@
+.MainLayout {
+  min-height: 100vh;
+  background: #f5f6fa;
+}
+
+.MainLayout_Content {
+  margin-left: 280px;
+  transition: .35s;
+}
+
+.MainLayout_ContentCollapsed {
+  margin-left: 85px;
+}
+
+.MainLayout_Page {
+  padding: 25px;
+}
+
+@media(max-width:768px){
+
+  .MainLayout_Content,
+  .MainLayout_ContentCollapsed{
+    margin-left: 0;
+  }
+}
