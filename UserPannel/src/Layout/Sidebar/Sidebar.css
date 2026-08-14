@@ -1,0 +1,136 @@
+.Sidebar {
+  width: 280px;
+  height: 100vh;
+  background:var(--bg-sidebar, #08392E);
+  color: white;
+  position: fixed;
+  left: 0;
+  top: 0;
+  transition: all 0.35s ease;
+  z-index: 1000;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.Sidebar_Collapsed {
+  width: 85px;
+}
+
+.Sidebar_Header {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  gap: 12px;
+  overflow: hidden;
+}
+
+.Sidebar_Header img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.Sidebar_Header h2 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.Sidebar_Menu {
+  padding: 20px 10px;
+  overflow-y: auto;
+  max-height: calc(100vh - 80px);
+}
+
+.Sidebar_Link {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: white;
+  text-decoration: none;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  padding: 0 18px;
+  transition: background 0.25s ease, transform 0.15s ease;
+  position: relative;
+}
+
+.Sidebar_Link:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.Sidebar_LinkActive {
+  background: rgba(255, 255, 255, 0.25);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.Sidebar_Icon {
+  font-size: 24px;
+  min-width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.Sidebar_Title {
+  font-size: 15px;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.Sidebar_Badge {
+  background: #ffffff;
+  color: #71b258;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: auto;
+}
+
+.Sidebar_Close {
+  display: none;
+}
+
+.Sidebar_Backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 999;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+  .Sidebar {
+    transform: translateX(-100%);
+  }
+
+  .Sidebar_MobileOpen {
+    transform: translateX(0);
+  }
+
+  .Sidebar_Close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    color: white;
+    font-size: 26px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+  }
+
+  .Sidebar_Close:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
