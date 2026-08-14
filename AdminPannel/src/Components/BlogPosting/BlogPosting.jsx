@@ -341,12 +341,8 @@ const BlogPosting = () => {
     <div className="BlogPosting">
 
       {/* Top Action Bar */}
-      <div className="BlogPosting__top-action">
-        <button className="BlogPosting__add-btn" onClick={handleOpenAddModal}>
-          <FiPlus /> Add New Blog
-        </button>
-      </div>
-
+      
+     
       {/* Top Metric Cards Row (With Hover Animations) */}
       <div className="BlogPosting__metrics-grid">
         <div className="BlogPosting__metric-card">

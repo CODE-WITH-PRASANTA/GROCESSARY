@@ -24,29 +24,6 @@
   margin-bottom: 20px;
 }
 
-.BlogPosting__add-btn {
-  background-color: #059669;
-  color: #ffffff;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.15s ease;
-}
-
-.BlogPosting__add-btn:hover {
-  background-color: #047857;
-}
-
-.BlogPosting__add-btn:active {
-  transform: scale(0.98);
-}
-
 /* ==========================================================================
    Top Metric Cards Row (With Smooth Hover Effects)
    ========================================================================== */
