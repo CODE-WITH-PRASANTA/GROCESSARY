@@ -255,6 +255,11 @@ const BlogPosting = () => {
   return (
     <div className="BlogPosting">
       {/* Top Metric Cards */}
+
+      {/* Top Action Bar */}
+      
+     
+      {/* Top Metric Cards Row (With Hover Animations) */}
       <div className="BlogPosting__metrics-grid">
         <div className="BlogPosting__metric-card">
           <div className="BlogPosting__metric-icon BlogPosting__metric-icon--green"><FiTag /></div>

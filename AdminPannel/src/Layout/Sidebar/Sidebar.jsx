@@ -43,6 +43,20 @@ const menuSections = [
     ]
   },
 
+  {
+    title: null,
+    items: [
+      { label: 'Import ', path: '/import', icon: NotebookPen }
+    ]
+  },
+
+  {
+    title: null,
+    items: [
+      { label: 'Catagory', path: '/catagory', icon: NotebookPen }
+    ]
+  },
+
 
   {
     title: 'PRODUCTS',

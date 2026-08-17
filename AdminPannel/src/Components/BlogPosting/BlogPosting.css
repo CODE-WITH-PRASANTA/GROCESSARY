@@ -17,6 +17,16 @@
 
 /* ==========================================================================
    Top Metric Cards Row
+   Top Action Bar
+   ========================================================================== */
+.BlogPosting__top-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+/* ==========================================================================
+   Top Metric Cards Row (With Smooth Hover Effects)
    ========================================================================== */
 .BlogPosting__metrics-grid {
   display: grid;
