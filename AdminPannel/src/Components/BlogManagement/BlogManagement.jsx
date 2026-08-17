@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -23,12 +22,15 @@ const BlogManagement = () => {
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef(null);
 
+  // Fetch blogs from API
   const loadBlogs = async () => {
     try {
       setIsLoading(true);
       const res = await fetch(API_BASE_URL);
       const json = await res.json();
-      if (json.success) setBlogs(json.data || []);
+      if (json.success) {
+        setBlogs(json.data || []);
+      }
     } catch (err) {
       console.error('Error fetching blogs:', err.message);
     } finally {
@@ -40,6 +42,7 @@ const BlogManagement = () => {
     loadBlogs();
   }, []);
 
+  // Close dropdown menu on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (containerRef.current && !containerRef.current.contains(event.target)) {
@@ -52,28 +55,32 @@ const BlogManagement = () => {
 
   const toggleMenu = (e, id) => {
     e.stopPropagation();
-    setActiveMenuId(prev => (prev === id ? null : id));
+    setActiveMenuId((prev) => (prev === id ? null : id));
   };
 
-  // Navigates directly to BlogPosting with the specific ID
+  // Navigate to edit page
   const handleEdit = (id) => {
     setActiveMenuId(null);
     navigate(`/blog/edit/${id}`);
   };
 
+  // Delete blog post
   const handleDelete = async (id) => {
     setActiveMenuId(null);
     if (window.confirm('Are you sure you want to delete this blog post?')) {
       try {
         const res = await fetch(`${API_BASE_URL}/${id}`, { method: 'DELETE' });
         const json = await res.json();
-        if (json.success) loadBlogs();
+        if (json.success) {
+          loadBlogs();
+        }
       } catch (err) {
         alert(`Error deleting blog: ${err.message}`);
       }
     }
   };
 
+  // Toggle publish / unpublish status
   const handleStatusChange = async (id, status) => {
     setActiveMenuId(null);
     try {
@@ -83,7 +90,9 @@ const BlogManagement = () => {
         body: JSON.stringify({ status })
       });
       const json = await res.json();
-      if (json.success) loadBlogs();
+      if (json.success) {
+        loadBlogs();
+      }
     } catch (err) {
       alert(`Error updating status: ${err.message}`);
     }
@@ -100,220 +109,19 @@ const BlogManagement = () => {
 
   return (
     <section className="BlogManagement" aria-labelledby="BlogManagement-section-title">
+      {/* Top Bar Header */}
       <div className="BlogManagement-top-row">
         <div className="BlogManagement-header">
           <span className="BlogManagement-subtitle">Our Journal</span>
-          <h2 id="BlogManagement-section-title" className="BlogManagement-title">Blog & Articles</h2>
+          <h2 id="BlogManagement-section-title" className="BlogManagement-title">
+            Blog & Articles
+          </h2>
           <p className="BlogManagement-section-desc">
             Stay updated with fresh produce tips, healthy recipes, and organic grocery insights.
           </p>
-=======
-import React, { useState, useRef, useEffect } from 'react';
-import './BlogManagement.css';
-
-const initialBlogData = [
-  {
-    id: 1,
-    tag: 'Fresh Tips',
-    title: 'Why Fresh Fruit Is Essential for Your Daily Nutrition',
-    description: 'Explore the world of culinary delights with the Grocery Sathi blog, where we highlight unique organic ingredients, share delicious recipes, and provide healthy living guides...',
-    author: 'Grocery Sathi Editorial',
-    date: '2026-06-05',
-    formattedDate: 'June 5, 2026',
-    image: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=600&auto=format&fit=crop'
-  },
-  {
-    id: 2,
-    tag: 'Storage Guide',
-    title: 'How to Keep Your Fruits & Vegetables Crispy Longer',
-    description: 'Different fruits and vegetables have unique storage requirements. Learn how to store produce properly at room temperature or in cold environments to retain peak freshness...',
-    author: 'Grocery Sathi Editorial',
-    date: '2026-06-05',
-    formattedDate: 'June 5, 2026',
-    image: 'https://images.unsplash.com/photo-1595855759920-86582396756a?w=600&auto=format&fit=crop'
-  },
-  {
-    id: 3,
-    tag: 'Health & Diet',
-    title: 'Tasty Berries & Organic Greens for Immunity',
-    description: 'Strawberries, blueberries, raspberries, and leafy greens are packed with antioxidants and vitamins. Discover how adding these to your daily diet boosts overall wellness...',
-    author: 'Grocery Sathi Editorial',
-    date: '2026-06-05',
-    formattedDate: 'June 5, 2026',
-    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop'
-  },
-  {
-    id: 4,
-    tag: 'Recipes',
-    title: 'Supercharge Your Morning Smoothies with Fresh Blueberries',
-    description: 'Fresh blueberries add a delightful and enticing flavor profile to your breakfast bowls and smoothies. Learn easy ways to incorporate farm-fresh berries into your daily routine...',
-    author: 'Grocery Sathi Editorial',
-    date: '2026-06-05',
-    formattedDate: 'June 5, 2026',
-    image: 'https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=600&auto=format&fit=crop'
-  },
-  {
-    id: 5,
-    tag: 'Organic Living',
-    title: 'The Ultimate Guide to Choosing Organic Green Leafy Vegetables',
-    description: 'Fresh leafy greens are a staple for every healthy household. Learn how to identify quality organic produce and keep them crisp for longer periods after home delivery...',
-    author: 'Grocery Sathi Editorial',
-    date: '2026-06-06',
-    formattedDate: 'June 6, 2026',
-    image: 'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600&auto=format&fit=crop'
-  }
-];
-
-const BlogManagement = () => {
-  const [blogs, setBlogs] = useState(initialBlogData);
-  const [activeMenuId, setActiveMenuId] = useState(null);
-  const sliderRef = useRef(null);
-
-  // Close dropdown menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.BlogManagement-menu-container')) {
-        setActiveMenuId(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const scroll = (direction) => {
-    if (sliderRef.current) {
-      const scrollAmount = 320;
-      sliderRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  const toggleMenu = (id, e) => {
-    e.stopPropagation();
-    setActiveMenuId(activeMenuId === id ? null : id);
-  };
-
-  const handleEdit = (blog) => {
-    setActiveMenuId(null);
-    alert(`Edit blog ID: ${blog.id} - "${blog.title}"`);
-    // Implement your edit routing or modal trigger here
-  };
-
-  const handleDelete = (id) => {
-    setActiveMenuId(null);
-    if (window.confirm('Are you sure you want to delete this blog post?')) {
-      setBlogs(blogs.filter((blog) => blog.id !== id));
-    }
-  };
-
-  return (
-    <section className="BlogManagement" aria-labelledby="BlogManagement-section-title">
-      {/* Top Header */}
-      <div className="BlogManagement-header">
-        <span className="BlogManagement-subtitle">Our Journal</span>
-        <h2 id="BlogManagement-section-title" className="BlogManagement-title">Blog & Articles</h2>
-        <p className="BlogManagement-section-desc">Stay updated with fresh produce tips, healthy recipes, and organic grocery insights from Grocery Sathi.</p>
-      </div>
-
-      {/* Main Content Area with Split Background */}
-      <div className="BlogManagement-content-wrapper">
-        <div className="BlogManagement-bg-split" aria-hidden="true"></div>
-
-        {/* Left Scroll Arrow */}
-        <button
-          className="BlogManagement-arrow BlogManagement-arrow-left"
-          onClick={() => scroll('left')}
-          aria-label="Scroll articles to the left"
-        >
-          &#10094;
-        </button>
-
-        {/* Scrollable Container */}
-        <div className="BlogManagement-slider" ref={sliderRef}>
-          {blogs.map((item) => (
-            <article
-              className="BlogManagement-card"
-              key={item.id}
-              itemScope
-              itemType="https://schema.org/BlogPosting"
-            >
-              <meta itemProp="mainEntityOfPage" content={`#blog-article-${item.id}`} />
-
-              {/* Image & Tag Badge */}
-              <div className="BlogManagement-card-image-wrapper">
-                <img
-                  src={item.image}
-                  alt={`Illustration for ${item.title}`}
-                  className="BlogManagement-card-image"
-                  itemProp="image"
-                  loading="lazy"
-                  onError={(e) => {
-                    e.target.src = "https://via.placeholder.com/600x400?text=Grocery+Sathi+Blog";
-                  }}
-                />
-                <span className="BlogManagement-card-tag">{item.tag}</span>
-
-                {/* Three-Dot Options Menu */}
-                <div className="BlogManagement-menu-container">
-                  <button
-                    className="BlogManagement-dots-btn"
-                    onClick={(e) => toggleMenu(item.id, e)}
-                    aria-label="Blog post options"
-                  >
-                    &#8230;
-                  </button>
-
-                  {activeMenuId === item.id && (
-                    <div className="BlogManagement-dropdown">
-                      <button 
-                        className="BlogManagement-dropdown-item edit"
-                        onClick={() => handleEdit(item)}
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit
-                      </button>
-                      <button 
-                        className="BlogManagement-dropdown-item delete"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Card Body */}
-              <div className="BlogManagement-card-body">
-                <div>
-                  <h3 className="BlogManagement-card-title" itemProp="headline">{item.title}</h3>
-                  <p className="BlogManagement-card-description" itemProp="description">{item.description}</p>
-                </div>
-
-                {/* Footer Section */}
-                <div className="BlogManagement-card-footer">
-                  <a href="#read-more" className="BlogManagement-card-button" aria-label={`Read full article: ${item.title}`}>
-                    Read more <span className="BlogManagement-card-button-icon" aria-hidden="true">&#10095;</span>
-                  </a>
-                  <div className="BlogManagement-card-meta" itemProp="author" itemScope itemType="https://schema.org/Person">
-                    <span className="BlogManagement-card-author" itemProp="name">{item.author},</span>
-                    <time className="BlogManagement-card-date" dateTime={item.date} itemProp="datePublished">{item.formattedDate}</time>
-                  </div>
-                </div>
-              </div>
-
-            </article>
-          ))}
->>>>>>> 57079aa73b68292f677927202fefd202b4ef9154
         </div>
 
+        {/* View Toggle (Grid / List) */}
         <div className="BlogManagement-view-toggle">
           <button
             type="button"
@@ -336,9 +144,12 @@ const BlogManagement = () => {
         </div>
       </div>
 
+      {/* Main Content Area */}
       <div className="BlogManagement-content-wrapper" ref={containerRef}>
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Loading posts...</div>
+          <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+            Loading posts...
+          </div>
         ) : blogs.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
             No blogs available. Add posts using the Blog Posting form.
@@ -348,8 +159,9 @@ const BlogManagement = () => {
             {blogs.map((item) => (
               <article
                 className={`BlogManagement-card BlogManagement-card--${viewMode}`}
-                key={item._id}
+                key={item._id || item.id}
               >
+                {/* Image & Category Tag */}
                 <div className="BlogManagement-card-image-wrapper">
                   <img
                     src={item.image}
@@ -357,22 +169,28 @@ const BlogManagement = () => {
                     className="BlogManagement-card-image"
                     loading="lazy"
                     onError={(e) => {
-                      e.target.src = "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop";
+                      e.target.src =
+                        'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop';
                     }}
                   />
-                  <span className="BlogManagement-card-tag">{item.category}</span>
+                  <span className="BlogManagement-card-tag">{item.category || item.tag || 'General'}</span>
                 </div>
 
+                {/* Card Body */}
                 <div className="BlogManagement-card-body">
                   <div className="BlogManagement-status-row">
-                    <span className={`BlogManagement-status-badge BlogManagement-status-badge--${(item.status || 'draft').toLowerCase()}`}>
+                    <span
+                      className={`BlogManagement-status-badge BlogManagement-status-badge--${(
+                        item.status || 'draft'
+                      ).toLowerCase()}`}
+                    >
                       {item.status || 'Draft'}
                     </span>
                   </div>
 
                   <div className="BlogManagement-card-text">
                     <h3 className="BlogManagement-card-title">{item.title}</h3>
-                    <p className="BlogManagement-card-description">{item.excerpt}</p>
+                    <p className="BlogManagement-card-description">{item.excerpt || item.description}</p>
                   </div>
 
                   <div className="BlogManagement-card-footer">
@@ -381,26 +199,29 @@ const BlogManagement = () => {
                     </a>
                     <div className="BlogManagement-card-meta">
                       <span className="BlogManagement-card-author">{item.author || 'Admin'},</span>
-                      <time className="BlogManagement-card-date">{formatDate(item.publishDate || item.createdAt)}</time>
+                      <time className="BlogManagement-card-date">
+                        {formatDate(item.publishDate || item.createdAt || item.date)}
+                      </time>
                     </div>
                   </div>
 
+                  {/* Actions Menu */}
                   <div className="BlogManagement-actions-menu">
                     <button
                       type="button"
                       className="BlogManagement-menu-trigger"
-                      onClick={(e) => toggleMenu(e, item._id)}
+                      onClick={(e) => toggleMenu(e, item._id || item.id)}
                       aria-label="Options"
                     >
                       <FiMoreVertical />
                     </button>
 
-                    {activeMenuId === item._id && (
+                    {activeMenuId === (item._id || item.id) && (
                       <div className="BlogManagement-dropdown-menu">
                         <button
                           type="button"
                           className="BlogManagement-dropdown-item"
-                          onClick={() => handleEdit(item._id)}
+                          onClick={() => handleEdit(item._id || item.id)}
                         >
                           <FiEdit2 className="BlogManagement-dropdown-icon" />
                           <span>Edit</span>
@@ -410,7 +231,7 @@ const BlogManagement = () => {
                           <button
                             type="button"
                             className="BlogManagement-dropdown-item"
-                            onClick={() => handleStatusChange(item._id, 'Unpublished')}
+                            onClick={() => handleStatusChange(item._id || item.id, 'Unpublished')}
                           >
                             <FiEyeOff className="BlogManagement-dropdown-icon" />
                             <span>Unpublish</span>
@@ -419,7 +240,7 @@ const BlogManagement = () => {
                           <button
                             type="button"
                             className="BlogManagement-dropdown-item"
-                            onClick={() => handleStatusChange(item._id, 'Published')}
+                            onClick={() => handleStatusChange(item._id || item.id, 'Published')}
                           >
                             <FiCheckCircle className="BlogManagement-dropdown-icon" />
                             <span>Publish</span>
@@ -431,7 +252,7 @@ const BlogManagement = () => {
                         <button
                           type="button"
                           className="BlogManagement-dropdown-item BlogManagement-dropdown-item--delete"
-                          onClick={() => handleDelete(item._id)}
+                          onClick={() => handleDelete(item._id || item.id)}
                         >
                           <FiTrash2 className="BlogManagement-dropdown-icon" />
                           <span>Delete</span>
@@ -439,7 +260,6 @@ const BlogManagement = () => {
                       </div>
                     )}
                   </div>
-
                 </div>
               </article>
             ))}
