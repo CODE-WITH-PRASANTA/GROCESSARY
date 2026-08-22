@@ -1,475 +1,1617 @@
-import React, { useState } from 'react';
-import './AllProduct.css';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import "./AllProduct.css";
 
-// Initial Mock Data
-const INITIAL_PRODUCTS = [
-  { id: 1, name: 'All Type Bell Pepper', sku: 'VGT-1001', category: 'Vegetables', price: 230.00, discountPrice: 175.00, stock: 120, status: 'Active', image: 'https://via.placeholder.com/40' },
-  { id: 2, name: 'Crunchy Healthy Cookies', sku: 'BAK-1002', category: 'Bakery', price: 700.00, discountPrice: 500.00, stock: 85, status: 'Active', image: 'https://via.placeholder.com/40' },
-  { id: 3, name: 'Raw Yellow Potato', sku: 'VGT-1003', category: 'Vegetables', price: 350.00, discountPrice: 300.00, stock: 200, status: 'Active', image: 'https://via.placeholder.com/40' },
-  { id: 4, name: 'Grater With 3 Blades', sku: 'KTN-1004', category: 'Kitchen', price: 680.00, discountPrice: 632.00, stock: 60, status: 'Active', image: 'https://via.placeholder.com/40' },
-  { id: 5, name: 'Organic Spinach', sku: 'ORG-1005', category: 'Organic Veggies', price: 120.00, discountPrice: 95.00, stock: 150, status: 'Active', image: 'https://via.placeholder.com/40' },
-  { id: 6, name: 'Fresh Green Apple', sku: 'FRT-1006', category: 'Fresh Fruits', price: 180.00, discountPrice: 150.00, stock: 90, status: 'Active', image: 'https://via.placeholder.com/40' },
-  { id: 7, name: 'Sweet Honey', sku: 'SWT-1007', category: 'Cookies and Sweetener', price: 400.00, discountPrice: 350.00, stock: 45, status: 'Inactive', image: 'https://via.placeholder.com/40' },
-  { id: 8, name: 'Carrot Bunch', sku: 'VGT-1008', category: 'Root Vegetables', price: 90.00, discountPrice: 70.00, stock: 0, status: 'Out of Stock', image: 'https://via.placeholder.com/40' },
-];
-
-const CATEGORIES = [
-  { name: 'All Categories', count: null, icon: '📁' },
-  { name: 'Vegetables', count: 32, icon: '🥦' },
-  { name: 'Fresh Fruits', count: 28, icon: '🍎' },
-  { name: 'Cookies and Sweetener', count: 18, icon: '🍪' },
-  { name: 'Home Accessories', count: 24, icon: '🏡' },
-  { name: 'Bestseller', count: 16, icon: '⭐' },
-  { name: 'Organic Veggies', count: 12, icon: '🌱' },
-  { name: 'Leafy Greens', count: 14, icon: '🥬' },
-  { name: 'Root Vegetables', count: 10, icon: '🥕' },
-  { name: 'Exotic Veggies', count: 8, icon: '🫑' },
-];
+const API_BASE_URL = "http://localhost:5000";
 
 const Allproduct = () => {
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
-  const [activeTab, setActiveTab] = useState('All Products');
-  const [selectedCategory, setSelectedCategory] = useState('All Categories');
-  
-  // Filter and Search State
-  const [showFilterBar, setShowFilterBar] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
 
-  // Pagination State (4 items per page)
-  const [currentPage, setCurrentPage] = useState(1);
+  // ======================================================
+  // API DATA
+  // ======================================================
+
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // ======================================================
+  // TAB & CATEGORY FILTER
+  // ======================================================
+
+  const [activeTab, setActiveTab] = useState(
+    "All Products"
+  );
+
+  const [selectedCategory, setSelectedCategory] =
+    useState("All Categories");
+
+  // ======================================================
+  // SEARCH & FILTER
+  // ======================================================
+
+  const [showFilterBar, setShowFilterBar] =
+    useState(false);
+
+  const [searchTerm, setSearchTerm] =
+    useState("");
+
+  // ======================================================
+  // PAGINATION
+  // ======================================================
+
+  const [currentPage, setCurrentPage] =
+    useState(1);
+
   const itemsPerPage = 4;
 
-  // Modal States
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  // ======================================================
+  // VIEW MODAL
+  // ======================================================
 
-  // Form State
-  const [formData, setFormData] = useState({
-    name: '',
-    sku: '',
-    category: 'Vegetables',
-    price: '',
-    discountPrice: '',
-    stock: '',
-    status: 'Active'
-  });
+  const [showViewModal, setShowViewModal] =
+    useState(false);
 
-  // Handle Input Changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+  const [selectedProduct, setSelectedProduct] =
+    useState(null);
+
+  // ======================================================
+  // GET ALL PRODUCTS
+  // GET /api/products
+  // ======================================================
+
+  const fetchProducts = async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/products?limit=1000`
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result?.message ||
+            "Failed to fetch products"
+        );
+      }
+
+      /*
+        Expected backend response:
+
+        {
+          success: true,
+          data: [],
+          pagination: {}
+        }
+      */
+
+      if (result?.success) {
+        setProducts(
+          Array.isArray(result.data)
+            ? result.data
+            : []
+        );
+      } else {
+        setProducts([]);
+        setErrorMessage(
+          result?.message ||
+            "Failed to load products"
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Fetch Products Error:",
+        error
+      );
+
+      setProducts([]);
+
+      setErrorMessage(
+        error.message ||
+          "Error connecting to server."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Open Add Modal
-  const openAddModal = () => {
-    setFormData({ name: '', sku: '', category: 'Vegetables', price: '', discountPrice: '', stock: '', status: 'Active' });
-    setShowAddModal(true);
+  // ======================================================
+  // INITIAL LOAD
+  // ======================================================
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  // ======================================================
+  // ADD PRODUCT ROUTE
+  // ======================================================
+
+  const handleAddProduct = () => {
+    navigate("/products/add-product");
   };
 
-  // Open Edit Modal
-  const openEditModal = (product) => {
-    setSelectedProduct(product);
-    setFormData({ ...product });
-    setShowEditModal(true);
+  // ======================================================
+  // EDIT PRODUCT ROUTE
+  // ======================================================
+
+  const handleEditProduct = (product) => {
+    navigate(
+      "/products/add-product",
+      {
+        state: {
+          product,
+        },
+      }
+    );
   };
 
-  // Open View Modal
+  // ======================================================
+  // VIEW PRODUCT
+  // ======================================================
+
   const openViewModal = (product) => {
     setSelectedProduct(product);
     setShowViewModal(true);
   };
 
-  // Add Product
-  const handleAddProduct = (e) => {
-    e.preventDefault();
-    const newProduct = {
-      id: Date.now(),
-      ...formData,
-      price: parseFloat(formData.price),
-      discountPrice: parseFloat(formData.discountPrice),
-      stock: parseInt(formData.stock),
-      image: 'https://via.placeholder.com/40'
-    };
-    setProducts([newProduct, ...products]);
-    setShowAddModal(false);
+  // ======================================================
+  // CLOSE VIEW MODAL
+  // ======================================================
+
+  const closeViewModal = () => {
+    setShowViewModal(false);
+    setSelectedProduct(null);
   };
 
-  // Edit Product
-  const handleUpdateProduct = (e) => {
-    e.preventDefault();
-    setProducts(products.map(p => p.id === selectedProduct.id ? { 
-      ...p, 
-      ...formData, 
-      price: parseFloat(formData.price), 
-      discountPrice: parseFloat(formData.discountPrice), 
-      stock: parseInt(formData.stock) 
-    } : p));
-    setShowEditModal(false);
+  // ======================================================
+  // IMAGE URL
+  // ======================================================
+
+  const getImageUrl = (imageArray) => {
+    if (
+      Array.isArray(imageArray) &&
+      imageArray.length > 0
+    ) {
+      const imgPath = imageArray[0];
+
+      if (!imgPath) {
+        return "https://via.placeholder.com/80";
+      }
+
+      if (
+        imgPath.startsWith("http://") ||
+        imgPath.startsWith("https://")
+      ) {
+        return imgPath;
+      }
+
+      return `${API_BASE_URL}${
+        imgPath.startsWith("/")
+          ? ""
+          : "/"
+      }${imgPath}`;
+    }
+
+    return "https://via.placeholder.com/80";
   };
 
-  // Delete Product
-  const handleDeleteProduct = (id) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      setProducts(products.filter(p => p.id !== id));
+  // ======================================================
+  // CATEGORY NAME
+  // ======================================================
+
+  const getCategoryName = (product) => {
+    if (!product) return "";
+
+    if (
+      product.category &&
+      typeof product.category ===
+        "object"
+    ) {
+      return (
+        product.category.name || ""
+      );
+    }
+
+    if (
+      typeof product.category ===
+      "string"
+    ) {
+      return product.category;
+    }
+
+    return "";
+  };
+
+  // ======================================================
+  // BRAND NAME
+  // ======================================================
+
+  const getBrandName = (product) => {
+    if (!product) return "";
+
+    if (
+      product.brand &&
+      typeof product.brand ===
+        "object"
+    ) {
+      return (
+        product.brand.name || ""
+      );
+    }
+
+    if (
+      typeof product.brand ===
+      "string"
+    ) {
+      return product.brand;
+    }
+
+    return "";
+  };
+
+  // ======================================================
+  // UNIT NAME
+  // ======================================================
+
+  const getUnitName = (product) => {
+    if (!product) return "";
+
+    if (
+      product.unit &&
+      typeof product.unit ===
+        "object"
+    ) {
+      return (
+        product.unit.shortName ||
+        product.unit.name ||
+        ""
+      );
+    }
+
+    if (
+      typeof product.unit ===
+      "string"
+    ) {
+      return product.unit;
+    }
+
+    return "";
+  };
+
+  // ======================================================
+  // DELETE PRODUCT
+  // DELETE /api/products/:id
+  // ======================================================
+
+  const handleDeleteProduct = async (id) => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this product?"
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/products/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const result =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result?.message ||
+            "Failed to delete product"
+        );
+      }
+
+      alert(
+        "Product deleted successfully!"
+      );
+
+      await fetchProducts();
+
+    } catch (error) {
+      console.error(
+        "Delete Product Error:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Failed to delete product"
+      );
     }
   };
 
-  // Export to CSV Functionality
-  const handleExportCSV = () => {
-    const headers = ["ID,Name,SKU,Category,Price,DiscountPrice,Stock,Status\n"];
-    const csvRows = filteredProducts.map(p => 
-      `${p.id},"${p.name}",${p.sku},${p.category},${p.price},${p.discountPrice},${p.stock},${p.status}`
-    ).join("\n");
+  // ======================================================
+  // EXPORT CSV
+  // ======================================================
 
-    const blob = new Blob([...headers, csvRows], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('href', url);
-    a.setAttribute('download', 'products_export.csv');
+  const handleExportCSV = () => {
+    if (
+      filteredProducts.length === 0
+    ) {
+      alert(
+        "No products available to export."
+      );
+      return;
+    }
+
+    const headers =
+      "ID,Name,SKU,Category,Brand,Unit,Price,DiscountPrice,Stock,Status\n";
+
+    const csvRows =
+      filteredProducts
+        .map((p) => {
+          const category =
+            getCategoryName(p);
+
+          const brand =
+            getBrandName(p);
+
+          const unit =
+            getUnitName(p);
+
+          return (
+            `"${p._id || ""}",` +
+            `"${p.productName || ""}",` +
+            `"${p.sku || ""}",` +
+            `"${category}",` +
+            `"${brand}",` +
+            `"${unit}",` +
+            `${p.price || 0},` +
+            `${p.discountPrice || 0},` +
+            `${p.stockQuantity || 0},` +
+            `"${p.status || ""}"`
+          );
+        })
+        .join("\n");
+
+    const blob = new Blob(
+      [
+        headers,
+        csvRows,
+      ],
+      {
+        type: "text/csv",
+      }
+    );
+
+    const url =
+      window.URL.createObjectURL(
+        blob
+      );
+
+    const a =
+      document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+      "products_export.csv";
+
+    document.body.appendChild(a);
+
     a.click();
+
+    document.body.removeChild(a);
+
+    window.URL.revokeObjectURL(
+      url
+    );
   };
 
-  // Filter Products Logic
-  const filteredProducts = products.filter(p => {
-    // Tab Filter
-    let matchesTab = true;
-    if (activeTab === 'Active') matchesTab = p.status === 'Active';
-    else if (activeTab === 'Inactive') matchesTab = p.status === 'Inactive';
-    else if (activeTab === 'Out of Stock') matchesTab = p.stock === 0 || p.status === 'Out of Stock';
-    else if (activeTab === 'Low Stock') matchesTab = p.stock > 0 && p.stock < 70;
+  // ======================================================
+  // FILTER PRODUCTS
+  // ======================================================
 
-    // Category Filter
-    let matchesCategory = selectedCategory === 'All Categories' || p.category === selectedCategory;
+  const filteredProducts =
+    products.filter((p) => {
+      const pStatus =
+        (
+          p.status || ""
+        ).toLowerCase();
 
-    // Search Term Filter
-    let matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          p.sku.toLowerCase().includes(searchTerm.toLowerCase());
+      const pName =
+        (
+          p.productName || ""
+        ).toLowerCase();
 
-    return matchesTab && matchesCategory && matchesSearch;
-  });
+      const pSku =
+        (
+          p.sku || ""
+        ).toLowerCase();
 
-  // Pagination Calculation (4 items per page)
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
+      const pCat =
+        getCategoryName(
+          p
+        ).toLowerCase();
+
+      const pBrand =
+        getBrandName(
+          p
+        ).toLowerCase();
+
+      const search =
+        searchTerm
+          .toLowerCase()
+          .trim();
+
+      // ================================================
+      // TAB
+      // ================================================
+
+      let matchesTab = true;
+
+      if (
+        activeTab ===
+        "Active"
+      ) {
+        matchesTab =
+          pStatus === "active";
+      }
+
+      if (
+        activeTab ===
+        "Inactive"
+      ) {
+        matchesTab =
+          pStatus ===
+          "inactive";
+      }
+
+      if (
+        activeTab ===
+        "Out of Stock"
+      ) {
+        matchesTab =
+          Number(
+            p.stockQuantity || 0
+          ) === 0 ||
+          p.isOutOfStock === true;
+      }
+
+      if (
+        activeTab ===
+        "Low Stock"
+      ) {
+        const stock =
+          Number(
+            p.stockQuantity || 0
+          );
+
+        const alertLevel =
+          Number(
+            p.lowStockAlert || 5
+          );
+
+        matchesTab =
+          stock > 0 &&
+          stock <= alertLevel;
+      }
+
+      // ================================================
+      // CATEGORY
+      // ================================================
+
+      const matchesCategory =
+        selectedCategory ===
+          "All Categories" ||
+        pCat ===
+          selectedCategory.toLowerCase();
+
+      // ================================================
+      // SEARCH
+      // ================================================
+
+      const matchesSearch =
+        !search ||
+        pName.includes(search) ||
+        pSku.includes(search) ||
+        pCat.includes(search) ||
+        pBrand.includes(search);
+
+      return (
+        matchesTab &&
+        matchesCategory &&
+        matchesSearch
+      );
+    });
+
+  // ======================================================
+  // PAGINATION
+  // ======================================================
+
+  const totalPages =
+    Math.ceil(
+      filteredProducts.length /
+        itemsPerPage
+    ) || 1;
+
+  useEffect(() => {
+    if (
+      currentPage > totalPages
+    ) {
+      setCurrentPage(
+        totalPages
+      );
+    }
+  }, [
+    currentPage,
+    totalPages,
+  ]);
+
+  const indexOfLastItem =
+    currentPage *
+    itemsPerPage;
+
+  const indexOfFirstItem =
+    indexOfLastItem -
+    itemsPerPage;
+
+  const currentProducts =
+    filteredProducts.slice(
+      indexOfFirstItem,
+      indexOfLastItem
+    );
+
+  // ======================================================
+  // CATEGORY COUNTS
+  // ======================================================
+
+  const getCategoryCount =
+    (categoryName) => {
+      if (
+        categoryName ===
+        "All Categories"
+      ) {
+        return products.length;
+      }
+
+      return products.filter(
+        (product) =>
+          getCategoryName(
+            product
+          ).toLowerCase() ===
+          categoryName.toLowerCase()
+      ).length;
+    };
+
+  // ======================================================
+  // CREATE CATEGORY LIST FROM PRODUCTS
+  // ======================================================
+
+  const uniqueCategoryMap =
+    new Map();
+
+  products.forEach(
+    (product) => {
+      const categoryName =
+        getCategoryName(
+          product
+        );
+
+      if (
+        categoryName &&
+        !uniqueCategoryMap.has(
+          categoryName.toLowerCase()
+        )
+      ) {
+        uniqueCategoryMap.set(
+          categoryName.toLowerCase(),
+          {
+            name:
+              categoryName,
+            icon: "📁",
+          }
+        );
+      }
+    }
+  );
+
+  const displayCategories = [
+    {
+      name: "All Categories",
+      icon: "📁",
+    },
+    ...Array.from(
+      uniqueCategoryMap.values()
+    ),
+  ];
+
+  // ======================================================
+  // RENDER
+  // ======================================================
 
   return (
     <div className="ap-container">
-      {/* Header Section */}
+
+      {/* HEADER */}
+
       <div className="ap-header">
+
         <div>
-          <h1 className="ap-title">Products</h1>
-          <p className="ap-breadcrumb">Dashboard &gt; Products &gt; <span>All Products</span></p>
+
+          <h1 className="ap-title">
+            Products
+          </h1>
+
+          <p className="ap-breadcrumb">
+            Dashboard &gt; Products &gt;{" "}
+            <span>
+              All Products
+            </span>
+          </p>
+
         </div>
-        <button className="ap-btn-primary" onClick={openAddModal}>
+
+        <button
+          className="ap-btn-primary"
+          onClick={
+            handleAddProduct
+          }
+        >
           + Add New Product
         </button>
+
       </div>
 
-      {/* Top 4 Metrics Cards with Hover Effects */}
+      {/* METRICS */}
+
       <div className="ap-metrics-grid">
-        <div className="ap-metric-card">
-          <div className="ap-metric-icon ap-icon-bg-1">🛒</div>
-          <div className="ap-metric-info">
-            <span className="ap-metric-label">Total Products</span>
-            <h2 className="ap-metric-value">{products.length}</h2>
-            <span className="ap-metric-trend ap-trend-up">↑ 12.5% this month</span>
-          </div>
-        </div>
 
         <div className="ap-metric-card">
-          <div className="ap-metric-icon ap-icon-bg-2">📁</div>
-          <div className="ap-metric-info">
-            <span className="ap-metric-label">Categories</span>
-            <h2 className="ap-metric-value">28</h2>
-            <span className="ap-metric-trend ap-trend-up">↑ 8.3% this month</span>
+
+          <div className="ap-metric-icon ap-icon-bg-1">
+            🛒
           </div>
+
+          <div className="ap-metric-info">
+
+            <span className="ap-metric-label">
+              Total Products
+            </span>
+
+            <h2 className="ap-metric-value">
+              {products.length}
+            </h2>
+
+            <span className="ap-metric-trend ap-trend-up">
+              ↑ Updated live
+            </span>
+
+          </div>
+
         </div>
 
-        <div className="ap-metric-card">
-          <div className="ap-metric-icon ap-icon-bg-3">👁️</div>
-          <div className="ap-metric-info">
-            <span className="ap-metric-label">Active Products</span>
-            <h2 className="ap-metric-value">{products.filter(p => p.status === 'Active').length}</h2>
-            <span className="ap-metric-trend ap-trend-up">↑ 10.2% this month</span>
-          </div>
-        </div>
 
         <div className="ap-metric-card">
-          <div className="ap-metric-icon ap-icon-bg-4">🚫</div>
-          <div className="ap-metric-info">
-            <span className="ap-metric-label">Inactive Products</span>
-            <h2 className="ap-metric-value">{products.filter(p => p.status === 'Inactive').length}</h2>
-            <span className="ap-metric-trend ap-trend-down">↓ 4.1% this month</span>
+
+          <div className="ap-metric-icon ap-icon-bg-2">
+            📁
           </div>
+
+          <div className="ap-metric-info">
+
+            <span className="ap-metric-label">
+              Categories
+            </span>
+
+            <h2 className="ap-metric-value">
+              {
+                new Set(
+                  products
+                    .map(
+                      (p) =>
+                        getCategoryName(
+                          p
+                        )
+                    )
+                    .filter(Boolean)
+                ).size
+              }
+            </h2>
+
+            <span className="ap-metric-trend ap-trend-up">
+              ↑ Active categories
+            </span>
+
+          </div>
+
         </div>
+
+
+        <div className="ap-metric-card">
+
+          <div className="ap-metric-icon ap-icon-bg-3">
+            👁️
+          </div>
+
+          <div className="ap-metric-info">
+
+            <span className="ap-metric-label">
+              Active Products
+            </span>
+
+            <h2 className="ap-metric-value">
+
+              {
+                products.filter(
+                  (p) =>
+                    (
+                      p.status ||
+                      ""
+                    ).toLowerCase() ===
+                    "active"
+                ).length
+              }
+
+            </h2>
+
+            <span className="ap-metric-trend ap-trend-up">
+              ↑ Live in store
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <div className="ap-metric-card">
+
+          <div className="ap-metric-icon ap-icon-bg-4">
+            🚫
+          </div>
+
+          <div className="ap-metric-info">
+
+            <span className="ap-metric-label">
+              Inactive Products
+            </span>
+
+            <h2 className="ap-metric-value">
+
+              {
+                products.filter(
+                  (p) =>
+                    (
+                      p.status ||
+                      ""
+                    ).toLowerCase() ===
+                    "inactive"
+                ).length
+              }
+
+            </h2>
+
+            <span className="ap-metric-trend ap-trend-down">
+              ↓ Drafts/Hidden
+            </span>
+
+          </div>
+
+        </div>
+
       </div>
 
-      {/* Main Content Area (50% Categories / 50% Products) */}
+
+      {/* MAIN CONTENT */}
+
       <div className="ap-main-content">
-        {/* Left Side: Categories Panel */}
+
+        {/* CATEGORY PANEL */}
+
         <div className="ap-categories-panel">
+
           <div className="ap-panel-header">
-            <h3>Categories</h3>
-            <button className="ap-btn-plus">+</button>
+
+            <h3>
+              Categories
+            </h3>
+
+            <button
+              className="ap-btn-plus"
+              onClick={
+                handleAddProduct
+              }
+            >
+              +
+            </button>
+
           </div>
+
           <ul className="ap-category-list">
-            {CATEGORIES.map((cat, index) => (
-              <li 
-                key={index} 
-                className={`ap-category-item ${selectedCategory === cat.name ? 'active' : ''}`}
-                onClick={() => { setSelectedCategory(cat.name); setCurrentPage(1); }}
-              >
-                <span className="ap-cat-name">
-                  <span className="ap-cat-icon">{cat.icon}</span> {cat.name}
-                </span>
-                {cat.count !== null && <span className="ap-cat-count">{cat.count}</span>}
-              </li>
-            ))}
+
+            {displayCategories.map(
+              (cat, index) => {
+
+                const catCount =
+                  getCategoryCount(
+                    cat.name
+                  );
+
+                return (
+                  <li
+                    key={`${cat.name}-${index}`}
+                    className={`ap-category-item ${
+                      selectedCategory ===
+                      cat.name
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      setSelectedCategory(
+                        cat.name
+                      );
+
+                      setCurrentPage(
+                        1
+                      );
+                    }}
+                  >
+
+                    <span className="ap-cat-name">
+
+                      <span className="ap-cat-icon">
+                        {cat.icon}
+                      </span>
+
+                      {" "}
+                      {cat.name}
+
+                    </span>
+
+                    <span className="ap-cat-count">
+                      {catCount}
+                    </span>
+
+                  </li>
+                );
+              }
+            )}
+
           </ul>
+
         </div>
 
-        {/* Right Side: Products Table Panel */}
+
+        {/* PRODUCTS PANEL */}
+
         <div className="ap-products-panel">
-          {/* Tabs and Action Bar */}
+
+          {/* FILTER BAR */}
+
           <div className="ap-filter-bar">
+
             <div className="ap-tabs">
-              {['All Products', 'Active', 'Inactive', 'Out of Stock', 'Low Stock'].map(tab => (
-                <button 
-                  key={tab} 
-                  className={`ap-tab ${activeTab === tab ? 'active' : ''}`}
-                  onClick={() => { setActiveTab(tab); setCurrentPage(1); }}
-                >
-                  {tab}
-                </button>
-              ))}
+
+              {[
+                "All Products",
+                "Active",
+                "Inactive",
+                "Out of Stock",
+                "Low Stock",
+              ].map(
+                (tab) => (
+
+                  <button
+                    key={tab}
+                    className={`ap-tab ${
+                      activeTab ===
+                      tab
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      setActiveTab(
+                        tab
+                      );
+
+                      setCurrentPage(
+                        1
+                      );
+                    }}
+                  >
+                    {tab}
+                  </button>
+
+                )
+              )}
+
             </div>
+
             <div className="ap-action-btns">
-              <button 
-                className={`ap-btn-outline ${showFilterBar ? 'active' : ''}`} 
-                onClick={() => setShowFilterBar(!showFilterBar)}
+
+              <button
+                className={`ap-btn-outline ${
+                  showFilterBar
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setShowFilterBar(
+                    !showFilterBar
+                  )
+                }
               >
                 ⚙️ Filters
               </button>
-              <button className="ap-btn-outline" onClick={handleExportCSV}>
+
+              <button
+                className="ap-btn-outline"
+                onClick={
+                  handleExportCSV
+                }
+              >
                 📥 Export
               </button>
+
             </div>
+
           </div>
 
-          {/* Collapsible Search/Filter Field */}
+
+          {/* SEARCH */}
+
           {showFilterBar && (
             <div className="ap-search-container">
-              <input 
-                type="text" 
-                placeholder="Search product by name or SKU..." 
-                value={searchTerm} 
-                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+
+              <input
+                type="text"
+                placeholder="Search product by name or SKU..."
+                value={
+                  searchTerm
+                }
+                onChange={(e) => {
+                  setSearchTerm(
+                    e.target.value
+                  );
+
+                  setCurrentPage(
+                    1
+                  );
+                }}
                 className="ap-search-input"
               />
+
             </div>
           )}
 
-          {/* Table */}
+
+          {/* TABLE */}
+
           <div className="ap-table-wrapper">
-            <table className="ap-table">
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Category</th>
-                  <th>Price</th>
-                  <th>Discount Price</th>
-                  <th>Stock</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentProducts.length > 0 ? (
-                  currentProducts.map((prod) => (
-                    <tr key={prod.id}>
-                      <td>
-                        <div className="ap-product-cell">
-                          <img src={prod.image} alt={prod.name} className="ap-product-img" />
-                          <div>
-                            <div className="ap-product-title">{prod.name}</div>
-                            <div className="ap-product-sku">SKU: {prod.sku}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span className="ap-badge-category">{prod.category}</span>
-                      </td>
-                      <td>${parseFloat(prod.price).toFixed(2)}</td>
-                      <td className="ap-text-success">${parseFloat(prod.discountPrice).toFixed(2)}</td>
-                      <td>{prod.stock}</td>
-                      <td>
-                        <span className={`ap-status-badge ${prod.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                          {prod.status}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="ap-action-icons">
-                          <button className="ap-icon-btn edit" title="Edit" onClick={() => openEditModal(prod)}>✏️</button>
-                          <button className="ap-icon-btn view" title="View" onClick={() => openViewModal(prod)}>👁️</button>
-                          <button className="ap-icon-btn delete" title="Delete" onClick={() => handleDeleteProduct(prod.id)}>🗑️</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
+
+            {isLoading ? (
+
+              <div
+                style={{
+                  padding:
+                    "2rem",
+                  textAlign:
+                    "center",
+                }}
+              >
+                Loading products...
+              </div>
+
+            ) : errorMessage ? (
+
+              <div
+                style={{
+                  padding:
+                    "2rem",
+                  textAlign:
+                    "center",
+                  color:
+                    "red",
+                }}
+              >
+
+                {errorMessage}
+
+                <br />
+
+                <button
+                  className="ap-btn-outline"
+                  style={{
+                    marginTop:
+                      "1rem",
+                  }}
+                  onClick={
+                    fetchProducts
+                  }
+                >
+                  Retry
+                </button>
+
+              </div>
+
+            ) : (
+
+              <table className="ap-table">
+
+                <thead>
+
                   <tr>
-                    <td colSpan="7" className="ap-no-data">No products found matching your criteria.</td>
+
+                    <th>
+                      Product
+                    </th>
+
+                    <th>
+                      Category
+                    </th>
+
+                    <th>
+                      Price
+                    </th>
+
+                    <th>
+                      Discount Price
+                    </th>
+
+                    <th>
+                      Stock
+                    </th>
+
+                    <th>
+                      Status
+                    </th>
+
+                    <th>
+                      Actions
+                    </th>
+
                   </tr>
-                )}
-              </tbody>
-            </table>
+
+                </thead>
+
+                <tbody>
+
+                  {currentProducts.length >
+                  0 ? (
+
+                    currentProducts.map(
+                      (prod) => (
+
+                        <tr
+                          key={
+                            prod._id
+                          }
+                        >
+
+                          <td>
+
+                            <div className="ap-product-cell">
+
+                              <img
+                                src={getImageUrl(
+                                  prod.images
+                                )}
+                                alt={
+                                  prod.productName
+                                }
+                                className="ap-product-img"
+                                onError={(e) => {
+                                  e.currentTarget.src =
+                                    "https://via.placeholder.com/80";
+                                }}
+                              />
+
+                              <div>
+
+                                <div className="ap-product-title">
+                                  {
+                                    prod.productName
+                                  }
+                                </div>
+
+                                <div className="ap-product-sku">
+                                  SKU:{" "}
+                                  {
+                                    prod.sku
+                                  }
+                                </div>
+
+                              </div>
+
+                            </div>
+
+                          </td>
+
+
+                          <td>
+
+                            <span className="ap-badge-category">
+
+                              {
+                                getCategoryName(
+                                  prod
+                                ) ||
+                                  "N/A"
+                              }
+
+                            </span>
+
+                          </td>
+
+
+                          <td>
+                            ₹
+                            {parseFloat(
+                              prod.price ||
+                                0
+                            ).toFixed(
+                              2
+                            )}
+                          </td>
+
+
+                          <td className="ap-text-success">
+                            ₹
+                            {parseFloat(
+                              prod.discountPrice ||
+                                0
+                            ).toFixed(
+                              2
+                            )}
+                          </td>
+
+
+                          <td>
+
+                            {
+                              prod.stockQuantity ||
+                              0
+                            }{" "}
+
+                            {
+                              getUnitName(
+                                prod
+                              )
+                            }
+
+                          </td>
+
+
+                          <td>
+
+                            <span
+                              className={`ap-status-badge ${
+                                (
+                                  prod.status ||
+                                  "active"
+                                )
+                                  .toLowerCase()
+                                  .replace(
+                                    /\s+/g,
+                                    "-"
+                                  )
+                              }`}
+                            >
+                              {
+                                prod.status ||
+                                "active"
+                              }
+                            </span>
+
+                          </td>
+
+
+                          <td>
+
+                            <div className="ap-action-icons">
+
+                              <button
+                                className="ap-icon-btn edit"
+                                title="Edit"
+                                onClick={() =>
+                                  handleEditProduct(
+                                    prod
+                                  )
+                                }
+                              >
+                                ✏️
+                              </button>
+
+
+                              <button
+                                className="ap-icon-btn view"
+                                title="View"
+                                onClick={() =>
+                                  openViewModal(
+                                    prod
+                                  )
+                                }
+                              >
+                                👁️
+                              </button>
+
+
+                              <button
+                                className="ap-icon-btn delete"
+                                title="Delete"
+                                onClick={() =>
+                                  handleDeleteProduct(
+                                    prod._id
+                                  )
+                                }
+                              >
+                                🗑️
+                              </button>
+
+                            </div>
+
+                          </td>
+
+                        </tr>
+
+                      )
+                    )
+
+                  ) : (
+
+                    <tr>
+
+                      <td
+                        colSpan="7"
+                        className="ap-no-data"
+                      >
+                        No products found.
+                      </td>
+
+                    </tr>
+
+                  )}
+
+                </tbody>
+
+              </table>
+
+            )}
+
           </div>
 
-          {/* Pagination (4 Items Per Page) */}
+
+          {/* PAGINATION */}
+
           <div className="ap-pagination">
-            <button 
-              disabled={currentPage === 1} 
-              onClick={() => setCurrentPage(p => p - 1)}
+
+            <button
+              disabled={
+                currentPage ===
+                1
+              }
+              onClick={() =>
+                setCurrentPage(
+                  (p) =>
+                    p - 1
+                )
+              }
               className="ap-page-btn"
             >
               Previous
             </button>
+
+
             <span className="ap-page-info">
-              Page {currentPage} of {totalPages}
+
+              Page{" "}
+              {currentPage}{" "}
+              of{" "}
+              {totalPages}
+
             </span>
-            <button 
-              disabled={currentPage === totalPages || totalPages === 0} 
-              onClick={() => setCurrentPage(p => p + 1)}
+
+
+            <button
+              disabled={
+                currentPage ===
+                  totalPages ||
+                totalPages === 0
+              }
+              onClick={() =>
+                setCurrentPage(
+                  (p) =>
+                    p + 1
+                )
+              }
               className="ap-page-btn"
             >
               Next
             </button>
+
           </div>
+
         </div>
+
       </div>
 
-      {/* --- POPUP MODALS --- */}
 
-      {/* Add / Edit Form Modal */}
-      {(showAddModal || showEditModal) && (
-        <div className="ap-modal-overlay">
-          <div className="ap-modal">
-            <div className="ap-modal-header">
-              <h3>{showAddModal ? 'Add New Product' : 'Edit Product'}</h3>
-              <button className="ap-close-btn" onClick={() => { setShowAddModal(false); setShowEditModal(false); }}>✕</button>
-            </div>
-            <form onSubmit={showAddModal ? handleAddProduct : handleUpdateProduct}>
-              <div className="ap-form-group">
-                <label>Product Name</label>
-                <input type="text" name="name" value={formData.name} onChange={handleInputChange} required placeholder="Enter product name" />
+      {/* VIEW MODAL */}
+
+      {showViewModal &&
+        selectedProduct && (
+
+          <div className="ap-modal-overlay">
+
+            <div className="ap-modal ap-view-modal">
+
+              <div className="ap-modal-header">
+
+                <h3>
+                  Product Details
+                </h3>
+
+                <button
+                  className="ap-close-btn"
+                  onClick={
+                    closeViewModal
+                  }
+                >
+                  ✕
+                </button>
+
               </div>
-              <div className="ap-form-group">
-                <label>SKU Code</label>
-                <input type="text" name="sku" value={formData.sku} onChange={handleInputChange} required placeholder="e.g. VGT-1001" />
-              </div>
-              <div className="ap-form-group">
-                <label>Category</label>
-                <select name="category" value={formData.category} onChange={handleInputChange}>
-                  <option value="Vegetables">Vegetables</option>
-                  <option value="Bakery">Bakery</option>
-                  <option value="Kitchen">Kitchen</option>
-                  <option value="Organic Veggies">Organic Veggies</option>
-                  <option value="Fresh Fruits">Fresh Fruits</option>
-                  <option value="Cookies and Sweetener">Cookies and Sweetener</option>
-                  <option value="Root Vegetables">Root Vegetables</option>
-                </select>
-              </div>
-              <div className="ap-form-row">
-                <div className="ap-form-group">
-                  <label>Price ($)</label>
-                  <input type="number" step="0.01" name="price" value={formData.price} onChange={handleInputChange} required />
+
+
+              <div className="ap-view-card">
+
+                <div className="ap-view-header">
+
+                  <img
+                    src={getImageUrl(
+                      selectedProduct.images
+                    )}
+                    alt={
+                      selectedProduct.productName
+                    }
+                    className="ap-view-img"
+                    onError={(e) => {
+                      e.currentTarget.src =
+                        "https://via.placeholder.com/100";
+                    }}
+                  />
+
+                  <div>
+
+                    <h4 className="ap-view-title">
+                      {
+                        selectedProduct.productName
+                      }
+                    </h4>
+
+                    <span className="ap-view-sku">
+                      SKU:{" "}
+                      {
+                        selectedProduct.sku
+                      }
+                    </span>
+
+                  </div>
+
                 </div>
-                <div className="ap-form-group">
-                  <label>Discount Price ($)</label>
-                  <input type="number" step="0.01" name="discountPrice" value={formData.discountPrice} onChange={handleInputChange} required />
+
+
+                <div className="ap-view-grid">
+
+                  <div className="ap-view-box">
+
+                    <span className="ap-view-label">
+                      Category
+                    </span>
+
+                    <span className="ap-view-val cat-badge">
+                      {
+                        getCategoryName(
+                          selectedProduct
+                        ) ||
+                          "N/A"
+                      }
+                    </span>
+
+                  </div>
+
+
+                  <div className="ap-view-box">
+
+                    <span className="ap-view-label">
+                      Brand
+                    </span>
+
+                    <span className="ap-view-val">
+                      {
+                        getBrandName(
+                          selectedProduct
+                        ) ||
+                          "N/A"
+                      }
+                    </span>
+
+                  </div>
+
+
+                  <div className="ap-view-box">
+
+                    <span className="ap-view-label">
+                      Unit
+                    </span>
+
+                    <span className="ap-view-val">
+                      {
+                        getUnitName(
+                          selectedProduct
+                        ) ||
+                          "N/A"
+                      }
+                    </span>
+
+                  </div>
+
+
+                  <div className="ap-view-box">
+
+                    <span className="ap-view-label">
+                      Status
+                    </span>
+
+                    <span
+                      className={`ap-status-badge ${
+                        (
+                          selectedProduct.status ||
+                          "active"
+                        )
+                          .toLowerCase()
+                          .replace(
+                            /\s+/g,
+                            "-"
+                          )
+                      }`}
+                    >
+                      {
+                        selectedProduct.status ||
+                        "active"
+                      }
+                    </span>
+
+                  </div>
+
+
+                  <div className="ap-view-box">
+
+                    <span className="ap-view-label">
+                      Regular Price
+                    </span>
+
+                    <span className="ap-view-val price-regular">
+
+                      ₹
+                      {parseFloat(
+                        selectedProduct.price ||
+                          0
+                      ).toFixed(
+                        2
+                      )}
+
+                    </span>
+
+                  </div>
+
+
+                  <div className="ap-view-box">
+
+                    <span className="ap-view-label">
+                      Discount Price
+                    </span>
+
+                    <span className="ap-view-val price-discount">
+
+                      ₹
+                      {parseFloat(
+                        selectedProduct.discountPrice ||
+                          0
+                      ).toFixed(
+                        2
+                      )}
+
+                    </span>
+
+                  </div>
+
+
+                  <div className="ap-view-box full-width">
+
+                    <span className="ap-view-label">
+                      Available Stock
+                    </span>
+
+                    <span className="ap-view-val stock-val">
+
+                      {
+                        selectedProduct.stockQuantity ||
+                        0
+                      }{" "}
+
+                      {
+                        getUnitName(
+                          selectedProduct
+                        ) ||
+                          "Items"
+                      }{" "}
+
+                      in Stock
+
+                    </span>
+
+                  </div>
+
+
+                  <div className="ap-view-box full-width">
+
+                    <span className="ap-view-label">
+                      Slug
+                    </span>
+
+                    <span className="ap-view-val">
+                      {
+                        selectedProduct.slug ||
+                        "N/A"
+                      }
+                    </span>
+
+                  </div>
+
+
+                  <div className="ap-view-box full-width">
+
+                    <span className="ap-view-label">
+                      Short Description
+                    </span>
+
+                    <span className="ap-view-val">
+                      {
+                        selectedProduct.shortDescription ||
+                        "N/A"
+                      }
+                    </span>
+
+                  </div>
+
                 </div>
+
               </div>
-              <div className="ap-form-row">
-                <div className="ap-form-group">
-                  <label>Stock</label>
-                  <input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required />
-                </div>
-                <div className="ap-form-group">
-                  <label>Status</label>
-                  <select name="status" value={formData.status} onChange={handleInputChange}>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Out of Stock">Out of Stock</option>
-                  </select>
-                </div>
-              </div>
+
+
               <div className="ap-modal-actions">
-                <button type="button" className="ap-btn-cancel" onClick={() => { setShowAddModal(false); setShowEditModal(false); }}>Cancel</button>
-                <button type="submit" className="ap-btn-primary">{showAddModal ? 'Add Product' : 'Save Changes'}</button>
+
+                <button
+                  className="ap-btn-primary"
+                  onClick={
+                    closeViewModal
+                  }
+                >
+                  Close
+                </button>
+
               </div>
-            </form>
+
+            </div>
+
           </div>
-        </div>
-      )}
 
-      {/* Enhanced Colorful View Product Details Modal */}
-      {showViewModal && selectedProduct && (
-        <div className="ap-modal-overlay">
-          <div className="ap-modal ap-view-modal">
-            <div className="ap-modal-header">
-              <h3>Product Details</h3>
-              <button className="ap-close-btn" onClick={() => setShowViewModal(false)}>✕</button>
-            </div>
-            
-            <div className="ap-view-card">
-              <div className="ap-view-header">
-                <img src={selectedProduct.image} alt={selectedProduct.name} className="ap-view-img" />
-                <div>
-                  <h4 className="ap-view-title">{selectedProduct.name}</h4>
-                  <span className="ap-view-sku">SKU: {selectedProduct.sku}</span>
-                </div>
-              </div>
+        )}
 
-              <div className="ap-view-grid">
-                <div className="ap-view-box">
-                  <span className="ap-view-label">Category</span>
-                  <span className="ap-view-val cat-badge">{selectedProduct.category}</span>
-                </div>
-
-                <div className="ap-view-box">
-                  <span className="ap-view-label">Status</span>
-                  <span className={`ap-status-badge ${selectedProduct.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                    {selectedProduct.status}
-                  </span>
-                </div>
-
-                <div className="ap-view-box">
-                  <span className="ap-view-label">Regular Price</span>
-                  <span className="ap-view-val price-regular">${parseFloat(selectedProduct.price).toFixed(2)}</span>
-                </div>
-
-                <div className="ap-view-box">
-                  <span className="ap-view-label">Discount Price</span>
-                  <span className="ap-view-val price-discount">${parseFloat(selectedProduct.discountPrice).toFixed(2)}</span>
-                </div>
-
-                <div className="ap-view-box full-width">
-                  <span className="ap-view-label">Available Stock</span>
-                  <span className="ap-view-val stock-val">{selectedProduct.stock} Items in Stock</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="ap-modal-actions">
-              <button className="ap-btn-primary" onClick={() => setShowViewModal(false)}>Close</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

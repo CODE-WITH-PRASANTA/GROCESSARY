@@ -1,0 +1,457 @@
+/* --- Global Styles --- */
+:root {
+  --color-primary: #16A34A; /* Green */
+  --color-primary-hover: #15803d;
+  --color-accent-orange: #FF8A00;
+  --color-accent-purple: #7C3AED;
+  --color-text-main: #1F2937; /* Dark Gray */
+  --color-text-sub: #6B7280; /* Lighter Gray */
+  --color-bg-main: #F9FAFB;
+  --color-white: #FFFFFF;
+  --font-family: 'Inter', sans-serif;
+}
+
+.wb-container {
+  font-family: var(--font-family);
+  background-color: var(--color-bg-main);
+  padding: 24px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+/* --- Header --- */
+.wb-header {
+  margin-bottom: 24px;
+}
+
+.wb-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text-main);
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+}
+
+.wb-wave {
+  margin-left: 8px;
+  font-size: 24px;
+}
+
+.wb-subtitle {
+  font-size: 16px;
+  color: var(--color-text-sub);
+  margin: 0;
+}
+
+/* --- Stat Cards Grid --- */
+.wb-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.wb-stat-card {
+  background-color: var(--color-white);
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.wb-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.wb-icon-container {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  flex-shrink: 0;
+}
+
+/* Specific Card Backgrounds and Borders */
+.wb-total-orders {
+  background-color: rgba(22, 163, 74, 0.03);
+  border-color: rgba(22, 163, 74, 0.1);
+}
+.wb-total-orders .wb-icon-container {
+  background-color: rgba(22, 163, 74, 0.1);
+}
+
+.wb-wallet-balance {
+  background-color: rgba(22, 163, 74, 0.03);
+  border-color: rgba(22, 163, 74, 0.1);
+}
+.wb-wallet-balance .wb-icon-container {
+  background-color: rgba(22, 163, 74, 0.1);
+}
+
+.wb-available-coupons {
+  background-color: rgba(255, 138, 0, 0.03);
+  border-color: rgba(255, 138, 0, 0.1);
+}
+.wb-available-coupons .wb-icon-container {
+  background-color: rgba(255, 138, 0, 0.1);
+}
+
+.wb-wishlist-items {
+  background-color: rgba(124, 58, 237, 0.03);
+  border-color: rgba(124, 58, 237, 0.1);
+}
+.wb-wishlist-items .wb-icon-container {
+  background-color: rgba(124, 58, 237, 0.1);
+}
+
+/* Stat Info Styling */
+.wb-stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.wb-stat-label {
+  font-size: 14px;
+  color: var(--color-text-sub);
+  margin-bottom: 4px;
+}
+
+.wb-stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-main);
+  margin-bottom: 8px;
+}
+
+.wb-stat-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.wb-stat-link span {
+  margin-left: 4px;
+  transition: transform 0.2s;
+}
+
+.wb-stat-link:hover {
+  color: var(--color-primary-hover);
+}
+
+.wb-stat-link:hover span {
+  transform: translateX(2px);
+}
+
+/* --- Main Content Grid --- */
+.wb-content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
+/* --- Banner Section --- */
+.wb-banner-section {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  display: flex;
+  min-height: 380px;
+}
+
+.wb-banner-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.wb-banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 40px;
+  background: linear-gradient(90deg, rgba(22, 163, 74, 0.85) 0%, rgba(22, 163, 74, 0.2) 70%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  color: var(--color-white);
+  box-sizing: border-box;
+}
+
+.wb-banner-title {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0 0 16px 0;
+}
+
+.wb-banner-text {
+  font-size: 16px;
+  margin: 0 0 24px 0;
+  max-width: 70%;
+}
+
+.wb-banner-button {
+  background-color: var(--color-white);
+  color: var(--color-primary);
+  border: none;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.wb-banner-button:hover {
+  background-color: #f8fafc;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.wb-banner-button:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* --- Recent Orders Section --- */
+.wb-recent-orders-section {
+  background-color: var(--color-white);
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.wb-recent-orders-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.wb-recent-orders-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-main);
+  margin: 0;
+}
+
+.wb-view-all-button {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.wb-view-all-button:hover {
+  color: var(--color-primary-hover);
+}
+
+.wb-view-all-button span {
+  margin-left: 4px;
+}
+
+/* --- Orders List with Scrollbar --- */
+.wb-recent-orders-list {
+  list-style: none;
+  padding: 0 8px 0 0;
+  margin: 0;
+  height: 290px;
+  overflow-y: hidden;
+  transition: all 0.3s ease;
+}
+
+.wb-recent-orders-list.scrollable {
+  overflow-y: auto;
+}
+
+/* Custom Scrollbar */
+.wb-recent-orders-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.wb-recent-orders-list::-webkit-scrollbar-track {
+  background: #F3F4F6;
+  border-radius: 8px;
+}
+
+.wb-recent-orders-list::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 8px;
+}
+
+.wb-recent-orders-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+.wb-order-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.wb-order-item:last-child {
+  border-bottom: none;
+}
+
+.wb-order-image-container {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  border: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  margin-right: 14px;
+  flex-shrink: 0;
+}
+
+.wb-order-image-container img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.wb-order-details {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.wb-order-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-main);
+  margin-bottom: 4px;
+}
+
+.wb-order-meta {
+  font-size: 12px;
+  color: var(--color-text-sub);
+}
+
+.wb-order-status {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+}
+
+.wb-status-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 4px;
+}
+
+.wb-date-text {
+  font-size: 12px;
+  color: var(--color-text-sub);
+}
+
+/* --- Responsive Media Queries --- */
+
+@media (max-width: 1100px) {
+  .wb-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wb-banner-section {
+    min-height: 300px;
+  }
+
+  .wb-banner-title {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 900px) {
+  .wb-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .wb-banner-overlay {
+    padding: 30px;
+  }
+}
+
+@media (max-width: 600px) {
+  .wb-container {
+    padding: 16px;
+  }
+
+  .wb-title {
+    font-size: 24px;
+  }
+
+  .wb-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wb-banner-overlay {
+    padding: 20px;
+    background: linear-gradient(0deg, rgba(22, 163, 74, 0.9) 0%, rgba(22, 163, 74, 0.7) 100%);
+    justify-content: flex-end;
+  }
+
+  .wb-banner-title {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+
+  .wb-banner-text {
+    font-size: 14px;
+    margin-bottom: 16px;
+    max-width: 100%;
+  }
+
+  .wb-order-item {
+    flex-wrap: wrap;
+  }
+
+  .wb-order-details {
+    width: calc(100% - 72px);
+    margin-bottom: 8px;
+  }
+
+  .wb-order-status {
+    width: 100%;
+    text-align: left;
+    margin-left: 72px;
+    flex-direction: row;
+    gap: 8px;
+  }
+}

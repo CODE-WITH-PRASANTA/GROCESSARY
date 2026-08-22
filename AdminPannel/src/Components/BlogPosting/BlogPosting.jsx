@@ -1,117 +1,34 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
-  FiPlus, FiTag, FiCheckCircle, FiFileText, FiCalendar, FiTrendingUp,
+  FiTag, FiCheckCircle, FiFileText, FiCalendar, FiTrendingUp,
   FiFilter, FiRefreshCw, FiEdit2, FiTrash2, FiUploadCloud, FiBold,
-  FiItalic, FiUnderline, FiList, FiAlignLeft, FiAlignCenter, FiAlignRight,
-  FiLink, FiImage, FiMoreHorizontal, FiChevronLeft, FiChevronRight, FiX, FiCheck,
-  FiMaximize, FiMinimize, FiCode, FiMinus
+  FiItalic, FiUnderline, FiList, FiAlignCenter,
+  FiChevronLeft, FiChevronRight, FiCheck,
+  FiMaximize, FiMinimize, FiCode, FiMinus, FiExternalLink
 } from 'react-icons/fi';
 import './BlogPosting.css';
 
-const BlogPosting = () => {
-  // Initial Blog List State
-  const [blogs, setBlogs] = useState([
-    {
-      id: 1,
-      title: "Why Fresh Fruit is Essential for Your Daily Nutrition",
-      description: "Discover how adding fresh fruits to your daily diet can boost immunity, improve skin...",
-      category: "Nutrition",
-      author: "Admin User",
-      status: "Published",
-      views: "1,245",
-      date: "18 May, 2025 10:30 AM",
-      image: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=100&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 2,
-      title: "How to Keep Your Fruits & Vegetables Crispy Longer",
-      description: "Learn simple and effective tips to store your produce properly and extend their shelf life...",
-      category: "Health Tips",
-      author: "Admin User",
-      status: "Published",
-      views: "842",
-      date: "16 May, 2025 09:15 AM",
-      image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 3,
-      title: "Tasty Berries & Organic Greens for Immunity",
-      description: "Boost your immune system with antioxidant-rich berries and organic leafy greens...",
-      category: "Organic Food",
-      author: "Admin User",
-      status: "Published",
-      views: "1,032",
-      date: "14 May, 2025 08:45 AM",
-      image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=100&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 4,
-      title: "Supercharge Your Morning Smoothie with Fresh Blueberries",
-      description: "Kickstart your day with this quick and healthy blueberry smoothie recipe...",
-      category: "Recipes",
-      author: "Admin User",
-      status: "Draft",
-      views: "—",
-      date: "—",
-      image: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=100&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 5,
-      title: "Benefits of Whole Grains for a Healthier You",
-      description: "Whole grains are packed with fiber, vitamins, and minerals that support overall health...",
-      category: "Nutrition",
-      author: "Admin User",
-      status: "Scheduled",
-      views: "—",
-      date: "22 May, 2025 10:00 AM",
-      image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=100&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 6,
-      title: "Avocado: The Superfood You Need Every Day",
-      description: "From heart health to glowing skin, avocado offers amazing benefits...",
-      category: "Superfoods",
-      author: "Admin User",
-      status: "Published",
-      views: "1,987",
-      date: "10 May, 2025 07:20 AM",
-      image: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=100&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 7,
-      title: "Top 10 Nuts You Should Add to Your Diet",
-      description: "Nuts are nutrient-dense and can improve heart health, brain function, and more...",
-      category: "Health Tips",
-      author: "Admin User",
-      status: "Draft",
-      views: "—",
-      date: "—",
-      image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=100&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 8,
-      title: "Healthy Soup Recipes for Every Season",
-      description: "Warm, comforting, and healthy soup recipes you can make at home...",
-      category: "Recipes",
-      author: "Admin User",
-      status: "Published",
-      views: "1,153",
-      date: "05 May, 2025 05:40 PM",
-      image: "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=100&auto=format&fit=crop&q=80"
-    }
-  ]);
+const API_BASE_URL = 'http://localhost:5000/api/blogs';
 
-  // Filtering & Pagination State
+const BlogPosting = () => {
+  const { id: urlId } = useParams();
+  const navigate = useNavigate();
+
+  const [blogs, setBlogs] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Filters & Pagination
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All Categories');
   const [appliedCategoryFilter, setAppliedCategoryFilter] = useState('All Categories');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // Main Form State (Left Column)
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
-    category: '',
+    category: 'Nutrition',
     featuredImage: null,
     imagePreview: '',
     excerpt: '',
@@ -119,64 +36,104 @@ const BlogPosting = () => {
     metaTitle: '',
     metaDescription: '',
     metaKeywords: '',
-    status: '',
+    status: 'Published',
     publishDate: ''
   });
 
-  // Modal State (Popup for Add / Edit)
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('add');
-  const [editingId, setEditingId] = useState(null);
-  const [modalData, setModalData] = useState({
-    title: '',
-    slug: '',
-    category: '',
-    featuredImage: null,
-    imagePreview: '',
-    excerpt: '',
-    content: '',
-    status: 'Draft',
-    publishDate: ''
-  });
-
-  // Fullscreen state for TinyMCE editor
   const [isEditorFullscreen, setIsEditorFullscreen] = useState(false);
-
   const fileInputRef = useRef(null);
-  const modalFileInputRef = useRef(null);
   const contentTextareaRef = useRef(null);
 
-  // Input Handlers
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleModalInputChange = (e) => {
-    const { name, value } = e.target;
-    setModalData(prev => ({ ...prev, [name]: value }));
-  };
-
-  // Image Upload Handlers
-  const handleImageChange = (e, isModal = false) => {
-    const file = e.target.files[0];
-    if (file) {
-      const previewUrl = URL.createObjectURL(file);
-      if (isModal) {
-        setModalData(prev => ({ ...prev, featuredImage: file, imagePreview: previewUrl }));
+  // Load all blogs for table
+  const loadBlogs = async () => {
+    try {
+      setIsLoading(true);
+      const url = appliedCategoryFilter && appliedCategoryFilter !== 'All Categories'
+        ? `${API_BASE_URL}?category=${encodeURIComponent(appliedCategoryFilter)}`
+        : API_BASE_URL;
+      const res = await fetch(url);
+      const json = await res.json();
+      if (json.success) {
+        setBlogs(json.data || []);
       } else {
-        setFormData(prev => ({ ...prev, featuredImage: file, imagePreview: previewUrl }));
+        setBlogs([]);
       }
+    } catch (err) {
+      console.error('Error loading blogs:', err.message);
+      setBlogs([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Rich Text Formatting Handler
+  useEffect(() => {
+    loadBlogs();
+  }, [appliedCategoryFilter]);
+
+  // Read URL id param for auto-populating edit form
+  useEffect(() => {
+    if (urlId) {
+      const fetchBlogDetails = async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/${urlId}`);
+          const json = await res.json();
+          if (json.success && json.data) {
+            const blog = json.data;
+            setEditingId(blog._id);
+            setFormData({
+              title: blog.title || '',
+              slug: blog.slug || '',
+              category: blog.category || 'Nutrition',
+              featuredImage: null,
+              imagePreview: blog.image || '',
+              excerpt: blog.excerpt || '',
+              content: blog.content || '',
+              metaTitle: blog.metaTitle || '',
+              metaDescription: blog.metaDescription || '',
+              metaKeywords: blog.metaKeywords || '',
+              status: blog.status || 'Published',
+              publishDate: blog.publishDate ? blog.publishDate.substring(0, 10) : ''
+            });
+          }
+        } catch (err) {
+          console.error('Error fetching blog details:', err.message);
+        }
+      };
+      fetchBlogDetails();
+    }
+  }, [urlId]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => {
+      const updated = { ...prev, [name]: value };
+      if (name === 'title' && !editingId) {
+        updated.slug = value
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+      }
+      return updated;
+    });
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      setFormData(prev => ({
+        ...prev,
+        featuredImage: file,
+        imagePreview: URL.createObjectURL(file)
+      }));
+    }
+  };
+
   const applyFormatting = (tagOpen, tagClose = '') => {
     const textarea = contentTextareaRef.current;
     if (!textarea) return;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const text = formData.content;
+    const text = formData.content || '';
     const selectedText = text.substring(start, end);
     const replacement = tagOpen + selectedText + tagClose;
 
@@ -189,12 +146,12 @@ const BlogPosting = () => {
     }, 0);
   };
 
-  // Reset Forms
   const handleReset = () => {
+    setEditingId(null);
     setFormData({
       title: '',
       slug: '',
-      category: '',
+      category: 'Nutrition',
       featuredImage: null,
       imagePreview: '',
       excerpt: '',
@@ -202,120 +159,83 @@ const BlogPosting = () => {
       metaTitle: '',
       metaDescription: '',
       metaKeywords: '',
-      status: '',
+      status: 'Published',
       publishDate: ''
     });
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (urlId) navigate('/blog');
   };
 
-  // Submit Main Form (Left Section)
-  const handleSubmitBlog = (e, statusType) => {
-    e.preventDefault();
-    if (!formData.title) {
-      alert("Please enter a blog title.");
+  const handleEditClick = (blog) => {
+    navigate(`/blog/edit/${blog._id}`);
+  };
+
+  // Navigates directly to /news/:id
+  const handleReadMoreNavigation = (blogId) => {
+    navigate(`/news/${blogId}`);
+  };
+
+  const handleSubmitBlog = async (e, forcedStatus) => {
+    if (e) e.preventDefault();
+    if (!formData.title.trim()) {
+      alert('Please enter a blog title.');
       return;
     }
 
-    const newBlogItem = {
-      id: Date.now(),
-      title: formData.title,
-      description: formData.excerpt || "No summary added...",
-      category: formData.category || "Nutrition",
-      author: "Admin User",
-      status: statusType || formData.status || "Published",
-      views: "0",
-      date: formData.publishDate || "Just now",
-      image: formData.imagePreview || "https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=100&auto=format&fit=crop&q=80"
-    };
-
-    setBlogs([newBlogItem, ...blogs]);
-    handleReset();
-    alert("Blog published/saved successfully!");
-  };
-
-  // Open Modal for Add New
-  const handleOpenAddModal = () => {
-    setModalMode('add');
-    setEditingId(null);
-    setModalData({
-      title: '',
-      slug: '',
-      category: '',
-      featuredImage: null,
-      imagePreview: '',
-      excerpt: '',
-      content: '',
-      status: 'Draft',
-      publishDate: ''
-    });
-    setIsModalOpen(true);
-  };
-
-  // Open Modal for Edit
-  const handleOpenEditModal = (blog) => {
-    setModalMode('edit');
-    setEditingId(blog.id);
-    setModalData({
-      title: blog.title,
-      slug: blog.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-      category: blog.category,
-      featuredImage: null,
-      imagePreview: blog.image,
-      excerpt: blog.description,
-      content: blog.description,
-      status: blog.status,
-      publishDate: ''
-    });
-    setIsModalOpen(true);
-  };
-
-  // Save Modal Form (Popup Add/Edit)
-  const handleSaveModal = (e) => {
-    e.preventDefault();
-    if (!modalData.title) {
-      alert("Title is required");
-      return;
-    }
-
-    if (modalMode === 'edit') {
-      setBlogs(blogs.map(b => {
-        if (b.id === editingId) {
-          return {
-            ...b,
-            title: modalData.title,
-            category: modalData.category,
-            description: modalData.excerpt,
-            status: modalData.status,
-            image: modalData.imagePreview || b.image
-          };
-        }
-        return b;
-      }));
-    } else {
-      const newBlog = {
-        id: Date.now(),
-        title: modalData.title,
-        description: modalData.excerpt || "No description...",
-        category: modalData.category || "Health Tips",
-        author: "Admin User",
-        status: modalData.status || "Published",
-        views: "0",
-        date: "Just now",
-        image: modalData.imagePreview || "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&auto=format&fit=crop&q=80"
+    try {
+      const payload = {
+        ...formData,
+        status: forcedStatus || formData.status || 'Published'
       };
-      setBlogs([newBlog, ...blogs]);
-    }
 
-    setIsModalOpen(false);
+      const data = new FormData();
+      Object.keys(payload).forEach((key) => {
+        if (key === 'featuredImage') {
+          if (payload[key]) data.append('featuredImage', payload[key]);
+        } else if (payload[key] !== null && payload[key] !== undefined) {
+          data.append(key, payload[key]);
+        }
+      });
+
+      if (editingId) {
+        const res = await fetch(`${API_BASE_URL}/${editingId}`, {
+          method: 'PUT',
+          body: data
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message || 'Failed to update blog');
+        alert('Blog updated successfully!');
+      } else {
+        const res = await fetch(API_BASE_URL, {
+          method: 'POST',
+          body: data
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message || 'Failed to publish blog');
+        alert('Blog published successfully!');
+      }
+
+      handleReset();
+      loadBlogs();
+    } catch (error) {
+      alert(`Error saving blog: ${error.message}`);
+    }
   };
 
-  // Delete Blog Handler
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this blog?")) {
-      setBlogs(blogs.filter(blog => blog.id !== id));
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this blog?')) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/${id}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message || 'Failed to delete blog');
+        loadBlogs();
+        if (editingId === id) handleReset();
+      } catch (error) {
+        alert(`Error deleting blog: ${error.message}`);
+      }
     }
   };
 
-  // Filter Trigger Button Actions
   const handleApplyFilter = () => {
     setAppliedCategoryFilter(selectedCategoryFilter);
     setCurrentPage(1);
@@ -327,26 +247,18 @@ const BlogPosting = () => {
     setCurrentPage(1);
   };
 
-  // Filter & Pagination Logic
-  const filteredBlogs = appliedCategoryFilter === 'All Categories'
-    ? blogs
-    : blogs.filter(blog => blog.category.toLowerCase() === appliedCategoryFilter.toLowerCase());
-
-  const totalPages = Math.ceil(filteredBlogs.length / itemsPerPage) || 1;
+  const totalPages = Math.ceil(blogs.length / itemsPerPage) || 1;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentBlogs = filteredBlogs.slice(indexOfFirstItem, indexOfLastItem);
+  const currentBlogs = blogs.slice(indexOfFirstItem, indexOfLastItem);
 
   return (
     <div className="BlogPosting">
+      {/* Top Metric Cards */}
 
       {/* Top Action Bar */}
-      <div className="BlogPosting__top-action">
-        <button className="BlogPosting__add-btn" onClick={handleOpenAddModal}>
-          <FiPlus /> Add New Blog
-        </button>
-      </div>
-
+      
+     
       {/* Top Metric Cards Row (With Hover Animations) */}
       <div className="BlogPosting__metrics-grid">
         <div className="BlogPosting__metric-card">
@@ -354,7 +266,7 @@ const BlogPosting = () => {
           <div className="BlogPosting__metric-info">
             <h3>Total Blogs</h3>
             <h2>{blogs.length}</h2>
-            <p>All time published</p>
+            <p>All database records</p>
           </div>
         </div>
         <div className="BlogPosting__metric-card">
@@ -362,7 +274,7 @@ const BlogPosting = () => {
           <div className="BlogPosting__metric-info">
             <h3>Published</h3>
             <h2>{blogs.filter(b => b.status === 'Published').length}</h2>
-            <p>Visible on website</p>
+            <p>Visible on news feed</p>
           </div>
         </div>
         <div className="BlogPosting__metric-card">
@@ -370,7 +282,7 @@ const BlogPosting = () => {
           <div className="BlogPosting__metric-info">
             <h3>Drafts</h3>
             <h2>{blogs.filter(b => b.status === 'Draft').length}</h2>
-            <p>Work in progress</p>
+            <p>Unpublished work</p>
           </div>
         </div>
         <div className="BlogPosting__metric-card">
@@ -378,27 +290,27 @@ const BlogPosting = () => {
           <div className="BlogPosting__metric-info">
             <h3>Scheduled</h3>
             <h2>{blogs.filter(b => b.status === 'Scheduled').length}</h2>
-            <p>Coming up next</p>
+            <p>Upcoming queue</p>
           </div>
         </div>
         <div className="BlogPosting__metric-card">
           <div className="BlogPosting__metric-icon BlogPosting__metric-icon--pink"><FiTrendingUp /></div>
           <div className="BlogPosting__metric-info">
             <h3>Total Views</h3>
-            <h2>12,458</h2>
-            <p>Across all blogs</p>
+            <h2>{blogs.reduce((acc, curr) => acc + (curr.views || 0), 0)}</h2>
+            <p>Across all published posts</p>
           </div>
         </div>
       </div>
 
-      {/* Main 50/50 Layout Section - Equal Heights */}
+      {/* Main 50/50 Layout Section */}
       <div className="BlogPosting__main-layout">
         
-        {/* Left Section: Scrollable Form with Invisible Scrollbar */}
+        {/* Left Section: Form */}
         <div className="BlogPosting__form-section">
           <div className="BlogPosting__section-header">
-            <h3>Add / Edit Blog</h3>
-            <p>Create a new blog or update an existing one.</p>
+            <h3>{editingId ? 'Edit Blog Post' : 'Add New Blog'}</h3>
+            <p>{editingId ? 'Updating blog record in real-time.' : 'Create and broadcast fresh recipes and tips.'}</p>
           </div>
 
           <form className="BlogPosting__form" onSubmit={(e) => handleSubmitBlog(e)}>
@@ -411,6 +323,7 @@ const BlogPosting = () => {
                 value={formData.title}
                 onChange={handleInputChange}
                 maxLength={120}
+                required
               />
               <span className="BlogPosting__char-count">{formData.title.length}/120 characters</span>
             </div>
@@ -423,42 +336,45 @@ const BlogPosting = () => {
                 placeholder="enter-blog-slug"
                 value={formData.slug}
                 onChange={handleInputChange}
+                required
               />
-              <span className="BlogPosting__hint">URL will be: yoursite.com/blog/enter-blog-slug</span>
+              <span className="BlogPosting__hint">URL endpoint: /news/{formData.slug || 'slug'}</span>
             </div>
 
             <div className="BlogPosting__input-group">
               <label>Category *</label>
               <select name="category" value={formData.category} onChange={handleInputChange}>
-                <option value="">Select category</option>
                 <option value="Nutrition">Nutrition</option>
+                <option value="news">News</option>
+                <option value="health">Health</option>
+                <option value="recipes">Recipes</option>
                 <option value="Health Tips">Health Tips</option>
                 <option value="Organic Food">Organic Food</option>
-                <option value="Recipes">Recipes</option>
                 <option value="Superfoods">Superfoods</option>
+                <option value="Organic Living">Organic Living</option>
               </select>
             </div>
 
             <div className="BlogPosting__input-group">
-              <label>Featured Image *</label>
+              <label>Featured Image</label>
               <input
                 type="file"
                 ref={fileInputRef}
                 style={{ display: 'none' }}
                 accept="image/*"
-                onChange={(e) => handleImageChange(e, false)}
+                onChange={handleImageChange}
               />
-              <div className="BlogPosting__dropzone" onClick={() => fileInputRef.current.click()}>
+              <div className="BlogPosting__dropzone" onClick={() => fileInputRef.current && fileInputRef.current.click()}>
                 {formData.imagePreview ? (
                   <div className="BlogPosting__preview-container">
                     <img src={formData.imagePreview} alt="Preview" className="BlogPosting__uploaded-preview" />
-                    <span>Click or drag to change image</span>
+                    <span>Click to change image</span>
                   </div>
                 ) : (
                   <>
                     <FiUploadCloud className="BlogPosting__upload-icon" />
                     <p>Click to upload image<br />or drag and drop</p>
-                    <span>Recommended: 1200 x 630px (Max 2MB)<br />JPG, PNG, WEBP</span>
+                    <span>Recommended: 1200 x 630px (Max 5MB)<br />JPG, PNG, WEBP</span>
                   </>
                 )}
               </div>
@@ -473,11 +389,12 @@ const BlogPosting = () => {
                 value={formData.excerpt}
                 onChange={handleInputChange}
                 maxLength={160}
+                required
               ></textarea>
               <span className="BlogPosting__char-count">{formData.excerpt.length}/160</span>
             </div>
 
-            {/* TinyMCE-style Professional Editor Box */}
+            {/* TinyMCE-Style Editor */}
             <div className={`BlogPosting__tinymce-editor ${isEditorFullscreen ? 'BlogPosting__tinymce-editor--fullscreen' : ''}`}>
               <div className="BlogPosting__tinymce-menubar">
                 <span>File</span>
@@ -486,7 +403,6 @@ const BlogPosting = () => {
                 <span>Insert</span>
                 <span>Format</span>
                 <span>Tools</span>
-                <span>Table</span>
               </div>
               
               <div className="BlogPosting__tinymce-toolbar">
@@ -494,6 +410,7 @@ const BlogPosting = () => {
                   <select 
                     className="BlogPosting__tinymce-select"
                     onChange={(e) => applyFormatting(`<${e.target.value}>`, `</${e.target.value}>`)}
+                    defaultValue="p"
                   >
                     <option value="p">Paragraph</option>
                     <option value="h1">Heading 1</option>
@@ -507,9 +424,9 @@ const BlogPosting = () => {
                 <div className="BlogPosting__tinymce-divider"></div>
 
                 <div className="BlogPosting__tinymce-group">
-                  <button type="button" onClick={() => applyFormatting('**', '**')} title="Bold (Ctrl+B)"><FiBold /></button>
-                  <button type="button" onClick={() => applyFormatting('*', '*')} title="Italic (Ctrl+I)"><FiItalic /></button>
-                  <button type="button" onClick={() => applyFormatting('<u>', '</u>')} title="Underline (Ctrl+U)"><FiUnderline /></button>
+                  <button type="button" onClick={() => applyFormatting('**', '**')} title="Bold"><FiBold /></button>
+                  <button type="button" onClick={() => applyFormatting('*', '*')} title="Italic"><FiItalic /></button>
+                  <button type="button" onClick={() => applyFormatting('<u>', '</u>')} title="Underline"><FiUnderline /></button>
                   <button type="button" onClick={() => applyFormatting('`', '`')} title="Inline Code"><FiCode /></button>
                 </div>
 
@@ -517,23 +434,8 @@ const BlogPosting = () => {
 
                 <div className="BlogPosting__tinymce-group">
                   <button type="button" onClick={() => applyFormatting('\n- ')} title="Bullet List"><FiList /></button>
-                  <button type="button" onClick={() => applyFormatting('\n1. ')} title="Numbered List"><FiList /></button>
-                </div>
-
-                <div className="BlogPosting__tinymce-divider"></div>
-
-                <div className="BlogPosting__tinymce-group">
-                  <button type="button" onClick={() => applyFormatting('<div align="left">', '</div>')} title="Align Left"><FiAlignLeft /></button>
-                  <button type="button" onClick={() => applyFormatting('<div align="center">', '</div>')} title="Align Center"><FiAlignCenter /></button>
-                  <button type="button" onClick={() => applyFormatting('<div align="right">', '</div>')} title="Align Right"><FiAlignRight /></button>
-                </div>
-
-                <div className="BlogPosting__tinymce-divider"></div>
-
-                <div className="BlogPosting__tinymce-group">
-                  <button type="button" onClick={() => applyFormatting('[Link Text](', ')')} title="Insert Link"><FiLink /></button>
-                  <button type="button" onClick={() => applyFormatting('![Alt Text](', ')')} title="Insert Image"><FiImage /></button>
-                  <button type="button" onClick={() => applyFormatting('\n---\n')} title="Horizontal Line"><FiMinus /></button>
+                  <button type="button" onClick={() => applyFormatting('<div align="center">', '</div>')} title="Center"><FiAlignCenter /></button>
+                  <button type="button" onClick={() => applyFormatting('\n---\n')} title="Line"><FiMinus /></button>
                 </div>
 
                 <div className="BlogPosting__tinymce-group BlogPosting__tinymce-group--right">
@@ -551,14 +453,13 @@ const BlogPosting = () => {
                 ref={contentTextareaRef}
                 name="content"
                 className="BlogPosting__tinymce-textarea"
-                placeholder="Write your blog content here using rich formatting..."
+                placeholder="Write full blog article details..."
                 value={formData.content}
                 onChange={handleInputChange}
-                maxLength={10000}
               ></textarea>
               <div className="BlogPosting__tinymce-statusbar">
                 <span>p</span>
-                <span>{formData.content.length}/10000 characters</span>
+                <span>{(formData.content || '').length} characters</span>
               </div>
             </div>
 
@@ -569,21 +470,14 @@ const BlogPosting = () => {
                 <label>Meta Title</label>
                 <div className="BlogPosting__dual-input">
                   <input type="text" name="metaTitle" placeholder="Enter meta title" value={formData.metaTitle} onChange={handleInputChange} />
-                  <span>0/60</span>
+                  <span>{formData.metaTitle.length}/60</span>
                 </div>
               </div>
               <div className="BlogPosting__input-group">
                 <label>Meta Description</label>
                 <div className="BlogPosting__dual-input">
                   <input type="text" name="metaDescription" placeholder="Enter meta description" value={formData.metaDescription} onChange={handleInputChange} />
-                  <span>0/150</span>
-                </div>
-              </div>
-              <div className="BlogPosting__input-group">
-                <label>Meta Keywords</label>
-                <div className="BlogPosting__dual-input">
-                  <input type="text" name="metaKeywords" placeholder="Enter keywords separated by commas" value={formData.metaKeywords} onChange={handleInputChange} />
-                  <span>0/150</span>
+                  <span>{formData.metaDescription.length}/150</span>
                 </div>
               </div>
             </div>
@@ -593,14 +487,13 @@ const BlogPosting = () => {
               <div className="BlogPosting__input-group">
                 <label>Status</label>
                 <select name="status" value={formData.status} onChange={handleInputChange}>
-                  <option value="">Select status</option>
                   <option value="Published">Published</option>
                   <option value="Draft">Draft</option>
                   <option value="Scheduled">Scheduled</option>
                 </select>
               </div>
               <div className="BlogPosting__input-group">
-                <label>Publish Date *</label>
+                <label>Publish Date</label>
                 <div className="BlogPosting__date-input-wrapper">
                   <input type="date" name="publishDate" value={formData.publishDate} onChange={handleInputChange} />
                   <FiCalendar className="BlogPosting__input-calendar-icon" />
@@ -608,11 +501,17 @@ const BlogPosting = () => {
               </div>
             </div>
 
-            {/* Form Actions */}
+            {/* Actions */}
             <div className="BlogPosting__form-actions">
-              <button type="button" className="BlogPosting__reset-btn" onClick={handleReset}>Reset</button>
-              <button type="button" className="BlogPosting__draft-btn" onClick={(e) => handleSubmitBlog(e, 'Draft')}>Save as Draft</button>
-              <button type="submit" className="BlogPosting__publish-btn"><FiCheck /> Publish Blog</button>
+              <button type="button" className="BlogPosting__reset-btn" onClick={handleReset}>
+                {editingId ? 'Cancel Edit' : 'Reset'}
+              </button>
+              <button type="button" className="BlogPosting__draft-btn" onClick={() => handleSubmitBlog(null, 'Draft')}>
+                Save as Draft
+              </button>
+              <button type="submit" className="BlogPosting__publish-btn">
+                <FiCheck /> {editingId ? 'Update Post' : 'Publish Blog'}
+              </button>
             </div>
           </form>
         </div>
@@ -622,7 +521,7 @@ const BlogPosting = () => {
           <div className="BlogPosting__table-header-row">
             <div className="BlogPosting__table-title-area">
               <h3>All Blogs</h3>
-              <p>Manage and organize all your blog posts.</p>
+              <p>Database entries synced in real-time.</p>
             </div>
             <div className="BlogPosting__table-controls">
               <select
@@ -632,10 +531,11 @@ const BlogPosting = () => {
               >
                 <option value="All Categories">All Categories</option>
                 <option value="Nutrition">Nutrition</option>
-                <option value="Health Tips">Health Tips</option>
+                <option value="news">News</option>
+                <option value="health">Health</option>
+                <option value="recipes">Recipes</option>
                 <option value="Organic Food">Organic Food</option>
-                <option value="Recipes">Recipes</option>
-                <option value="Superfoods">Superfoods</option>
+                <option value="Organic Living">Organic Living</option>
               </select>
               <button type="button" className="BlogPosting__control-btn" onClick={handleApplyFilter}><FiFilter /> Filter</button>
               <button type="button" className="BlogPosting__control-btn" onClick={handleResetFilter} title="Reset Filter"><FiRefreshCw /></button>
@@ -649,46 +549,56 @@ const BlogPosting = () => {
                   <th>#</th>
                   <th>Title</th>
                   <th>Category</th>
-                  <th>Author</th>
                   <th>Status</th>
-                  <th>Views</th>
-                  <th>Date</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {currentBlogs.length > 0 ? (
+                {isLoading ? (
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: '24px' }}>Loading blogs...</td></tr>
+                ) : currentBlogs.length > 0 ? (
                   currentBlogs.map((blog, index) => (
-                    <tr key={blog.id}>
+                    <tr key={blog._id}>
                       <td>{indexOfFirstItem + index + 1}</td>
                       <td className="BlogPosting__title-cell">
-                        <img src={blog.image} alt="" className="BlogPosting__row-thumb" />
+                        <img 
+                          src={blog.image || "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&auto=format&fit=crop&q=80"} 
+                          alt="" 
+                          className="BlogPosting__row-thumb" 
+                          onError={(e) => {
+                            e.target.src = "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&auto=format&fit=crop&q=80";
+                          }}
+                        />
                         <div>
                           <strong>{blog.title}</strong>
-                          <p>{blog.description}</p>
+                          <p>{blog.excerpt}</p>
                         </div>
                       </td>
                       <td>
-                        <span className={`BlogPosting__badge BlogPosting__badge--category-${(blog.category || 'Nutrition').toLowerCase().replace(/ /g, '-')}`}>
+                        <span className={`BlogPosting__badge BlogPosting__badge--category-${(blog.category || 'news').toLowerCase().replace(/ /g, '-')}`}>
                           {blog.category}
                         </span>
                       </td>
-                      <td className="BlogPosting__author-cell">
-                        <span className="BlogPosting__author-avatar">👤</span> {blog.author}
-                      </td>
                       <td>
-                        <span className={`BlogPosting__badge BlogPosting__badge--status-${(blog.status || 'draft').toLowerCase()}`}>
+                        <span className={`BlogPosting__badge BlogPosting__badge--status-${(blog.status || 'Draft').toLowerCase()}`}>
                           {blog.status}
                         </span>
                       </td>
-                      <td>{blog.views}</td>
-                      <td className="BlogPosting__date-cell">{blog.date}</td>
                       <td>
                         <div className="BlogPosting__action-btns">
-                          <button type="button" className="BlogPosting__action-edit" onClick={() => handleOpenEditModal(blog)} title="Edit">
+                          {/* Navigate to /news/:id for reading the blog */}
+                          <button 
+                            type="button" 
+                            className="BlogPosting__action-view" 
+                            onClick={() => handleReadMoreNavigation(blog._id)} 
+                            title="Preview Read More"
+                          >
+                            <FiExternalLink />
+                          </button>
+                          <button type="button" className="BlogPosting__action-edit" onClick={() => handleEditClick(blog)} title="Edit">
                             <FiEdit2 />
                           </button>
-                          <button type="button" className="BlogPosting__action-delete" onClick={() => handleDelete(blog.id)} title="Delete">
+                          <button type="button" className="BlogPosting__action-delete" onClick={() => handleDelete(blog._id)} title="Delete">
                             <FiTrash2 />
                           </button>
                         </div>
@@ -697,8 +607,8 @@ const BlogPosting = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="8" style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
-                      No blogs found for this category.
+                    <td colSpan="5" style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
+                      No blogs found.
                     </td>
                   </tr>
                 )}
@@ -708,7 +618,7 @@ const BlogPosting = () => {
 
           {/* Pagination Footer */}
           <div className="BlogPosting__table-footer">
-            <span>Showing {filteredBlogs.length > 0 ? indexOfFirstItem + 1 : 0} to {Math.min(indexOfLastItem, filteredBlogs.length)} of {filteredBlogs.length} entries</span>
+            <span>Showing {blogs.length > 0 ? indexOfFirstItem + 1 : 0} to {Math.min(indexOfLastItem, blogs.length)} of {blogs.length} entries</span>
             <div className="BlogPosting__pagination">
               <button
                 type="button"
@@ -741,148 +651,9 @@ const BlogPosting = () => {
             </div>
           </div>
 
-          {/* Bottom Summary Cards */}
-          <div className="BlogPosting__bottom-metrics-grid">
-            <div className="BlogPosting__bottom-card">
-              <div className="BlogPosting__bottom-card-header">
-                <span>Total Views</span>
-                <FiTrendingUp className="BlogPosting__icon--green" />
-              </div>
-              <h3>12,458</h3>
-              <p><span className="BlogPosting__trend-up">+16.4%</span> vs last month</p>
-            </div>
-            <div className="BlogPosting__bottom-card">
-              <div className="BlogPosting__bottom-card-header">
-                <span>Avg. Read Time</span>
-                <FiTrendingUp className="BlogPosting__icon--purple" />
-              </div>
-              <h3>04:32 min</h3>
-              <p><span className="BlogPosting__trend-up">+3.2%</span> vs last month</p>
-            </div>
-            <div className="BlogPosting__bottom-card">
-              <div className="BlogPosting__bottom-card-header">
-                <span>Engagement Rate</span>
-                <FiTrendingUp className="BlogPosting__icon--orange" />
-              </div>
-              <h3>62.5%</h3>
-              <p><span className="BlogPosting__trend-up">+12.7%</span> vs last month</p>
-            </div>
-            <div className="BlogPosting__bottom-card BlogPosting__bottom-card--highlight">
-              <div className="BlogPosting__bottom-card-header">
-                <span>Most Popular</span>
-                <span className="BlogPosting__trophy-icon">🏆</span>
-              </div>
-              <h3>Fresh Fruit Benefits</h3>
-              <p>1,987 views</p>
-            </div>
-          </div>
         </div>
 
       </div>
-
-      {/* Popup Modal for Add / Edit Blog */}
-      {isModalOpen && (
-        <div className="BlogPosting__modal-overlay">
-          <div className="BlogPosting__modal-content">
-            <div className="BlogPosting__modal-header">
-              <h3>{modalMode === 'edit' ? 'Edit Blog Post' : 'Add New Blog'}</h3>
-              <button type="button" className="BlogPosting__modal-close" onClick={() => setIsModalOpen(false)}>
-                <FiX />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveModal}>
-              <div className="BlogPosting__input-group">
-                <label>Blog Title *</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={modalData.title}
-                  onChange={handleModalInputChange}
-                  placeholder="Enter title..."
-                  required
-                />
-              </div>
-
-              <div className="BlogPosting__input-group">
-                <label>Slug *</label>
-                <input
-                  type="text"
-                  name="slug"
-                  value={modalData.slug}
-                  onChange={handleModalInputChange}
-                  placeholder="blog-slug-url"
-                  required
-                />
-              </div>
-
-              <div className="BlogPosting__input-group">
-                <label>Category *</label>
-                <select name="category" value={modalData.category} onChange={handleModalInputChange}>
-                  <option value="">Select category</option>
-                  <option value="Nutrition">Nutrition</option>
-                  <option value="Health Tips">Health Tips</option>
-                  <option value="Organic Food">Organic Food</option>
-                  <option value="Recipes">Recipes</option>
-                  <option value="Superfoods">Superfoods</option>
-                </select>
-              </div>
-
-              <div className="BlogPosting__input-group">
-                <label>Featured Image *</label>
-                <input
-                  type="file"
-                  ref={modalFileInputRef}
-                  style={{ display: 'none' }}
-                  accept="image/*"
-                  onChange={(e) => handleImageChange(e, true)}
-                />
-                <div className="BlogPosting__dropzone" onClick={() => modalFileInputRef.current.click()}>
-                  {modalData.imagePreview ? (
-                    <div className="BlogPosting__preview-container">
-                      <img src={modalData.imagePreview} alt="Preview" className="BlogPosting__uploaded-preview" />
-                      <span>Click to replace image</span>
-                    </div>
-                  ) : (
-                    <>
-                      <FiUploadCloud className="BlogPosting__upload-icon" />
-                      <p>Click to upload image</p>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="BlogPosting__input-group">
-                <label>Excerpt / Summary *</label>
-                <textarea
-                  name="excerpt"
-                  rows="3"
-                  value={modalData.excerpt}
-                  onChange={handleModalInputChange}
-                  placeholder="Write a short summary..."
-                ></textarea>
-              </div>
-
-              <div className="BlogPosting__input-group">
-                <label>Status *</label>
-                <select name="status" value={modalData.status} onChange={handleModalInputChange}>
-                  <option value="Published">Published</option>
-                  <option value="Draft">Draft</option>
-                  <option value="Scheduled">Scheduled</option>
-                </select>
-              </div>
-
-              <div className="BlogPosting__modal-actions">
-                <button type="button" className="BlogPosting__reset-btn" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button type="submit" className="BlogPosting__publish-btn">
-                  {modalMode === 'edit' ? 'Save Changes' : 'Create Blog'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };

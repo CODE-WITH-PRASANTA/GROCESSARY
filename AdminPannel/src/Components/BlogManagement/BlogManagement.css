@@ -1,111 +1,109 @@
-:root {
-  --blog-dark-bg: #122c2a;
-  --blog-yellow: #f8c135;
-  --blog-text-dark: #122c2a;
-  --blog-text-gray: #556061;
-  --blog-card-bg: #ffffff;
-}
-
+/* ==========================================================================
+   Base Container
+   ========================================================================== */
 .BlogManagement {
-  width: 100%;
-  background-color: #ffffff;
-  padding: 60px 0 0 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  padding: 24px;
+  background-color: #f8fafc;
+  color: #1e293b;
+  min-height: 100vh;
   box-sizing: border-box;
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  overflow: hidden;
 }
 
-/* Header */
+.BlogManagement * {
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   Header Row & View Switcher
+   ========================================================================== */
+.BlogManagement-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  max-width: 1120px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .BlogManagement-header {
-  text-align: center;
-  padding-bottom: 20px;
-  max-width: 700px;
-  margin: 0 auto;
-  padding-left: 20px;
-  padding-right: 20px;
+  max-width: 650px;
 }
 
 .BlogManagement-subtitle {
-  font-size: 14px;
+  display: inline-block;
+  font-size: 12px;
   font-weight: 700;
-  color: #e5b028;
+  color: #059669;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 8px;
-  display: inline-block;
+  margin-bottom: 50x;
 }
 
 .BlogManagement-title {
-  font-size: 38px;
-  font-weight: 900;
-  color: var(--blog-dark-bg);
-  margin: 0 0 12px 0;
-  letter-spacing: -0.5px;
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px 0;
   line-height: 1.2;
 }
 
 .BlogManagement-section-desc {
-  font-size: 15px;
-  color: var(--blog-text-gray);
+  font-size: 14px;
+  color: #64748b;
   margin: 0;
-  line-height: 1.5;
 }
 
-/* Slider Section Wrapper */
-.BlogManagement-content-wrapper {
-  position: relative;
-  width: 100%;
-  margin: 20px auto 0 auto;
-  padding: 0 50px 70px 50px;
-  box-sizing: border-box;
+/* View Switcher */
+.BlogManagement-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  background-color: #e2e8f0;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
 }
 
-/* Background Color Split Effect */
-.BlogManagement-bg-split {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 55%;
-  background-color: var(--blog-dark-bg);
-  z-index: 0;
-}
-
-/* Scroll Arrows */
-.BlogManagement-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background-color: var(--blog-yellow);
-  color: var(--blog-dark-bg);
-  border: none;
-  font-size: 1.1rem;
-  font-weight: bold;
+.BlogManagement-toggle-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.BlogManagement-arrow:hover {
-  background-color: #e5b028;
-  transform: translateY(-50%) scale(1.08);
+.BlogManagement-toggle-btn:hover {
+  color: #0f172a;
 }
 
-.BlogManagement-arrow-left {
-  left: 15px;
+.BlogManagement-toggle-btn.active {
+  background-color: #ffffff;
+  color: #059669;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.BlogManagement-arrow-right {
-  right: 15px;
+.BlogManagement-toggle-icon {
+  font-size: 14px;
 }
 
+<<<<<<< HEAD
+/* ==========================================================================
+   Content Layouts
+   ========================================================================== */
+.BlogManagement-content-wrapper {
+  max-width: 1120px;
+  margin: 0 auto;
+=======
 /* Slider Container */
 .BlogManagement-slider {
   position: relative;
@@ -115,172 +113,402 @@
   overflow-x: auto;
   scroll-behavior: smooth;
   padding: 10px 4px;
-  /* Hide scrollbar */
   scrollbar-width: none;
   -ms-overflow-style: none;
+>>>>>>> 57079aa73b68292f677927202fefd202b4ef9154
 }
 
-.BlogManagement-slider::-webkit-scrollbar {
-  display: none;
-}
-
-/* Cards */
-.BlogManagement-card {
-  flex: 0 0 calc(25% - 19px);
-  min-width: 280px;
-  background-color: var(--blog-card-bg);
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+.BlogManagement-container--list {
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s ease;
+  gap: 16px;
+}
+
+.BlogManagement-container--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+/* ==========================================================================
+   List View Card Dimensions & Appearance
+   ========================================================================== */
+.BlogManagement-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: visible;
+  transition: box-shadow 0.2s ease;
 }
 
 .BlogManagement-card:hover {
-  transform: translateY(-6px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
-/* Image & Tag Badge */
-.BlogManagement-card-image-wrapper {
-  position: relative;
+/* List Mode Setup */
+.BlogManagement-card--list {
+  display: flex;
+  flex-direction: row;
   width: 100%;
-  height: 210px;
+  height: 180px; /* Exact uniform height */
+}
+
+.BlogManagement-card--list .BlogManagement-card-image-wrapper {
+  width: 250px;
+  min-width: 250px;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
 }
 
 .BlogManagement-card-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
+/* Tag on Image */
 .BlogManagement-card-tag {
   position: absolute;
-  top: 14px;
-  left: 14px;
-  background-color: var(--blog-yellow);
-  color: var(--blog-dark-bg);
-  font-size: 12px;
+  top: 12px;
+  left: 12px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-size: 11px;
   font-weight: 700;
-  padding: 5px 14px;
+  padding: 4px 10px;
   border-radius: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  letter-spacing: 0.3px;
+}
+
+<<<<<<< HEAD
+/* List Card Body */
+.BlogManagement-card--list .BlogManagement-card-body {
+  flex: 1;
+  padding: 16px 20px 14px 20px;
+=======
+/* Three-Dot Menu Styles */
+.BlogManagement-menu-container {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+}
+
+.BlogManagement-dots-btn {
+  background: rgba(18, 44, 42, 0.75);
+  color: #ffffff;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.BlogManagement-dots-btn:hover {
+  background: var(--blog-dark-bg);
+  transform: scale(1.05);
+}
+
+.BlogManagement-dropdown {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  width: 130px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: fadeInDown 0.18s ease-out;
+  border: 1px solid #edf2f2;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.BlogManagement-dropdown-item {
+  background: none;
+  border: none;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  transition: background 0.15s ease;
+}
+
+.BlogManagement-dropdown-item.edit {
+  color: #2b6cb0;
+}
+
+.BlogManagement-dropdown-item.edit:hover {
+  background: #ebf8ff;
+}
+
+.BlogManagement-dropdown-item.delete {
+  color: #e53e3e;
+  border-top: 1px solid #f7fafc;
+}
+
+.BlogManagement-dropdown-item.delete:hover {
+  background: #fff5f5;
 }
 
 /* Card Content */
 .BlogManagement-card-body {
   padding: 24px;
+>>>>>>> 57079aa73b68292f677927202fefd202b4ef9154
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
   justify-content: space-between;
+  position: relative;
+}
+
+/* Status Badge */
+.BlogManagement-status-row {
+  display: flex;
+  align-items: center;
+}
+
+.BlogManagement-status-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 2.5px 8px;
+  border-radius: 4px;
+}
+
+.BlogManagement-status-badge--published {
+  background-color: #e6f7f0;
+  color: #059669;
+}
+
+.BlogManagement-status-badge--draft,
+.BlogManagement-status-badge--unpublished {
+  background-color: #fefce8;
+  color: #ca8a04;
+}
+
+/* Title & Description */
+.BlogManagement-card-text {
+  padding-right: 36px; /* Space for the 3-dot action button */
 }
 
 .BlogManagement-card-title {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 800;
-  color: var(--blog-text-dark);
-  margin: 0 0 10px 0;
+  color: #0f172a;
+  margin: 4px 0 6px 0;
   line-height: 1.35;
-}
-
-.BlogManagement-card-description {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--blog-text-gray);
-  margin: 0 0 24px 0;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-/* Card Footer */
+.BlogManagement-card-description {
+  font-size: 13.5px;
+  color: #64748b;
+  line-height: 1.45;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Footer Section */
 .BlogManagement-card-footer {
   display: flex;
-  align-items: flex-end;
   justify-content: space-between;
-  gap: 10px;
-  border-top: 1px solid #edf2f2;
-  padding-top: 16px;
+  align-items: center;
+  padding-top: 4px;
 }
 
 .BlogManagement-card-button {
-  background-color: var(--blog-yellow);
-  color: var(--blog-dark-bg);
+  color: #059669;
   text-decoration: none;
-  font-size: 13px;
   font-weight: 700;
-  padding: 8px 14px;
-  border-radius: 8px;
+  font-size: 13px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  transition: opacity 0.2s ease;
+  gap: 2px;
+  transition: color 0.15s ease;
 }
 
 .BlogManagement-card-button:hover {
-  opacity: 0.9;
+  color: #047857;
 }
 
 .BlogManagement-card-button-icon {
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .BlogManagement-card-meta {
-  display: flex;
-  flex-direction: column;
-  text-align: right;
-  font-size: 12px;
-  color: var(--blog-text-gray);
+  font-size: 12.5px;
+  color: #94a3b8;
+  white-space: nowrap;
 }
 
 .BlogManagement-card-author {
-  font-weight: 700;
-  color: var(--blog-text-dark);
+  color: #475569;
+  font-weight: 600;
+  margin-right: 4px;
 }
 
-.BlogManagement-card-date {
-  font-size: 11px;
-  color: #718096;
-  margin-top: 2px;
+/* ==========================================================================
+   Three Dots Circular Action Menu
+   ========================================================================== */
+.BlogManagement-actions-menu {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 10;
 }
 
-/* Responsive Adjustments */
-@media (max-width: 1024px) {
-  .BlogManagement-card {
-    flex: 0 0 calc(33.333% - 17px);
-  }
+.BlogManagement-menu-trigger {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
 }
 
+.BlogManagement-menu-trigger:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.BlogManagement-dropdown-menu {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 5px;
+  min-width: 135px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+.BlogManagement-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: #334155;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.BlogManagement-dropdown-item:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.BlogManagement-dropdown-item--delete {
+  color: #ef4444;
+}
+
+.BlogManagement-dropdown-item--delete:hover {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.BlogManagement-dropdown-icon {
+  font-size: 13px;
+}
+
+.BlogManagement-dropdown-divider {
+  height: 1px;
+  background-color: #f1f5f9;
+  margin: 4px 0;
+}
+
+/* ==========================================================================
+   Grid Mode Overrides
+   ========================================================================== */
+.BlogManagement-card--grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.BlogManagement-card--grid .BlogManagement-card-image-wrapper {
+  width: 100%;
+  height: 180px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.BlogManagement-card--grid .BlogManagement-card-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ==========================================================================
+   Responsive Adaptability
+   ========================================================================== */
 @media (max-width: 768px) {
-  .BlogManagement-title {
-    font-size: 28px;
+  .BlogManagement-card--list {
+    flex-direction: column;
+    height: auto;
   }
 
-  .BlogManagement-content-wrapper {
-    padding: 0 40px 50px 40px;
+  .BlogManagement-card--list .BlogManagement-card-image-wrapper {
+    width: 100%;
+    height: 180px;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 0;
   }
 
-  .BlogManagement-card {
-    flex: 0 0 calc(50% - 12px);
-  }
-}
-
-@media (max-width: 480px) {
-  .BlogManagement-content-wrapper {
-    padding: 0 20px 40px 20px;
-  }
-
-  .BlogManagement-card {
-    flex: 0 0 88%;
-  }
-
-  .BlogManagement-arrow-left {
-    left: 5px;
-  }
-
-  .BlogManagement-arrow-right {
-    right: 5px;
+  .BlogManagement-card-title {
+    -webkit-line-clamp: 2;
   }
 }

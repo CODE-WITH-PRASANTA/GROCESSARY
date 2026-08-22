@@ -1,172 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './BlogGrid.css';
 
-// Import local images from your project
-import blogfruit1 from '../../assets/blogfruit1.webp';
-import blogfruit2 from '../../assets/blogfruit2.webp';
-import blogfruit3 from '../../assets/blogfruit3.webp';
-import blogfruit4 from '../../assets/blogfruit4.webp';
+const API_BASE_URL = 'http://localhost:5000/api/blogs';
 
 const BlogGrid = () => {
-  // State for handling active pagination page
+  const navigate = useNavigate();
+  const [blogs, setBlogs] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-
-  // Mock Blog Data for Grocery Sathi
-  const allBlogs = [
-    {
-      id: 1,
-      image: blogfruit1,
-      tag: 'news',
-      title: 'Fruit is an Essential Part of a Healthy Diet',
-      description: 'Explore the world of culinary delights with our grocery blog, where we highlight unique ingredients, share delicious recipes, and provide expert tips for your kitchen.',
-      author: 'Grocery Sathi',
-      date: 'December 5, 2022'
-    },
-    {
-      id: 2,
-      image: blogfruit2,
-      tag: 'news',
-      title: 'Keeping Your Fresh Fruit Longer at Home',
-      description: 'Different fruits and vegetables have unique storage requirements. Some can be stored at room temperature, while others need refrigeration to stay crisp.',
-      author: 'Grocery Sathi',
-      date: 'December 5, 2022'
-    },
-    {
-      id: 3,
-      image: blogfruit3,
-      tag: 'news',
-      title: 'Tasty Berries & Their Amazing Benefits',
-      description: 'Strawberries, blueberries, raspberries, and blackberries are not only delicious but also packed with antioxidants and vitamins. Add them to your daily meals!',
-      author: 'Grocery Sathi',
-      date: 'December 5, 2022'
-    },
-    {
-      id: 4,
-      image: blogfruit4,
-      tag: 'news',
-      title: 'The Natural Goodness of Blueberries',
-      description: 'Discover how fresh blueberries add delightful and enticing flavors to your diet. Whether you are making smoothies, baking, or enjoying them raw.',
-      author: 'Grocery Sathi',
-      date: 'December 5, 2022'
-    },
-    // Page 2 Mock Data
-    {
-      id: 5,
-      image: blogfruit1,
-      tag: 'news',
-      title: 'Fresh Organic Produce from Local Farms',
-      description: 'Discover how organic farming practices bring healthier and fresher fruits and vegetables directly from farms to your kitchen table in Rajgarh.',
-      author: 'Grocery Sathi',
-      date: 'December 8, 2022'
-    },
-    {
-      id: 6,
-      image: blogfruit2,
-      tag: 'news',
-      title: 'Seasonal Fruit Guide for Smart Shoppers',
-      description: 'Learn which fruits are in season this month to get maximum flavor, nutritional value, and the best prices on your grocery run.',
-      author: 'Grocery Sathi',
-      date: 'December 10, 2022'
-    },
-    {
-      id: 7,
-      image: blogfruit3,
-      tag: 'news',
-      title: 'Healthy Green Smoothies for Energy',
-      description: 'Blend your way to health with these easy green smoothie recipes featuring fresh spinach, kale, apples, and energizing chia seeds.',
-      author: 'Grocery Sathi',
-      date: 'December 12, 2022'
-    },
-    {
-      id: 8,
-      image: blogfruit4,
-      tag: 'news',
-      title: 'Top Antioxidant Superfoods to Try',
-      description: 'Uncover the top antioxidant-rich berries and greens that boost your immune system and keep your body feeling fresh and energized every day.',
-      author: 'Grocery Sathi',
-      date: 'December 15, 2022'
-    }
-  ];
+  const [isLoading, setIsLoading] = useState(false);
 
   const itemsPerPage = 4;
-  const totalPages = Math.ceil(allBlogs.length / itemsPerPage);
 
-  // Slice items for active page
-  const currentBlogs = allBlogs.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const handleReadMore = (blogTitle) => {
-    // Navigate or trigger detail page viewing
-    alert(`Opening detailed article: "${blogTitle}"`);
-  };
-
-  // Structured Data (JSON-LD) for SEO schema
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": "https://www.grocerysathi.com/"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": "News & Blog",
-        "item": "https://www.grocerysathi.com/news"
+  const loadBlogs = async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch(`${API_BASE_URL}?status=Published`);
+      const json = await res.json();
+      if (json.success) {
+        setBlogs(json.data || []);
       }
-    ]
+    } catch (err) {
+      console.error('Error fetching blog grid:', err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const blogCollectionSchema = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": "Grocery Sathi News & Blog",
-    "url": "https://www.grocerysathi.com/news",
-    "description": "Read the latest grocery tips, healthy recipes, and farm-fresh produce guides from Grocery Sathi.",
-    "publisher": {
-      "@type": "Organization",
-      "name": "Grocery Sathi",
-      "url": "https://www.grocerysathi.com",
-      "logo": "https://www.grocerysathi.com/logo.png"
-    }
+  useEffect(() => {
+    loadBlogs();
+  }, []);
+
+  const totalPages = Math.ceil(blogs.length / itemsPerPage) || 1;
+  const currentBlogs = blogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const handleReadMore = (id) => {
+    navigate(`/news/${id}`);
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'Recently';
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   return (
     <div className="blog-grid-page">
-      {/* Inject Schema JSON-LD for Search Engines */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogCollectionSchema) }}
-      />
-
-      {/* --- BREADCRUMB / HERO BANNER --- */}
+      {/* Hero Banner */}
       <section className="blog-grid-breadcrumb" aria-label="News Breadcrumb Banner">
         <div className="blog-grid-breadcrumb-container">
-          
-          {/* Back Navigation Link */}
           <nav aria-label="Breadcrumb Navigation">
-            <a href="/" className="blog-grid-back-link" title="Return to Grocery Sathi Homepage">
+            <a href="/" className="blog-grid-back-link" title="Return to Home">
               <span className="blog-grid-arrow-circle" aria-hidden="true">
-                <svg
-                  className="blog-grid-back-arrow-icon"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="19" y1="12" x2="5" y2="12"></line>
                   <polyline points="12 19 5 12 12 5"></polyline>
                 </svg>
@@ -175,112 +64,87 @@ const BlogGrid = () => {
             </a>
           </nav>
 
-          {/* Heading Title */}
           <h1 className="blog-grid-banner-title">News &amp; Blog</h1>
-
-          {/* Subtitle Description */}
           <p className="blog-grid-banner-desc">
-            Explore expert grocery guides, nutrition tips, and farm-fresh recipes from Grocery Sathi. Stay informed on healthy eating and proper food storage to support your family&apos;s overall well-being.
+            Explore expert grocery guides, nutrition tips, and farm-fresh recipes from Grocery Sathi.
           </p>
         </div>
       </section>
 
-      {/* --- BLOG GRID CONTAINER --- */}
+      {/* Main Grid */}
       <main className="blog-grid-main">
-        <div className="blog-grid-cards-wrapper">
-          {currentBlogs.map((blog) => (
-            <article key={blog.id} className="blog-grid-card">
-              
-              {/* Card Image Wrapper */}
-              <div className="blog-grid-image-wrapper">
-                <img 
-                  src={blog.image} 
-                  alt={blog.title} 
-                  className="blog-grid-card-img" 
-                  loading="lazy"
-                />
-                <span className="blog-grid-tag">{blog.tag}</span>
-              </div>
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>Loading articles...</div>
+        ) : blogs.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>No articles published yet.</div>
+        ) : (
+          <div className="blog-grid-cards-wrapper">
+            {currentBlogs.map((blog) => (
+              <article key={blog._id} className="blog-grid-card">
+                <div className="blog-grid-image-wrapper">
+                  <img 
+                    src={blog.image} 
+                    alt={blog.title} 
+                    className="blog-grid-card-img" 
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.src = "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop";
+                    }}
+                  />
+                  <span className="blog-grid-tag">{blog.category}</span>
+                </div>
 
-              {/* Card Body */}
-              <div className="blog-grid-card-content">
-                <h2 className="blog-grid-card-title">{blog.title}</h2>
-                <p className="blog-grid-card-desc">{blog.description}</p>
+                <div className="blog-grid-card-content">
+                  <h2 className="blog-grid-card-title">{blog.title}</h2>
+                  <p className="blog-grid-card-desc">{blog.excerpt}</p>
 
-                {/* Card Footer Actions */}
-                <div className="blog-grid-card-footer">
-                  <button 
-                    className="blog-grid-read-more-btn"
-                    onClick={() => handleReadMore(blog.title)}
-                    aria-label={`Read more about ${blog.title}`}
-                  >
-                    <span>Read more</span>
-                    <svg
-                      className="blog-grid-btn-arrow"
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                  <div className="blog-grid-card-footer">
+                    <button 
+                      className="blog-grid-read-more-btn"
+                      onClick={() => handleReadMore(blog._id)}
+                      aria-label={`Read more about ${blog.title}`}
                     >
-                      <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                  </button>
+                      <span>Read more</span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </button>
 
-                  <div className="blog-grid-author-info">
-                    <span className="blog-grid-author">{blog.author}</span>
-                    <span className="blog-grid-date">{blog.date}</span>
+                    <div className="blog-grid-author-info">
+                      <span className="blog-grid-author">{blog.author || 'Grocery Sathi'}</span>
+                      <span className="blog-grid-date">{formatDate(blog.publishDate || blog.createdAt)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </article>
+            ))}
+          </div>
+        )}
 
-            </article>
-          ))}
-        </div>
+        {/* Pagination */}
+        {blogs.length > itemsPerPage && (
+          <nav className="blog-grid-pagination" aria-label="Blog Grid Pagination">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+              <button
+                key={num}
+                className={`blog-grid-page-num ${currentPage === num ? 'active' : ''}`}
+                onClick={() => setCurrentPage(num)}
+              >
+                {num}
+              </button>
+            ))}
 
-        {/* --- PAGINATION SECTION --- */}
-        <nav className="blog-grid-pagination" aria-label="Blog Grid Pagination">
-          <button
-            className={`blog-grid-page-num ${currentPage === 1 ? 'active' : ''}`}
-            onClick={() => setCurrentPage(1)}
-            aria-label="Page 1"
-            aria-current={currentPage === 1 ? 'page' : undefined}
-          >
-            1
-          </button>
-          
-          <button
-            className={`blog-grid-page-num ${currentPage === 2 ? 'active' : ''}`}
-            onClick={() => setCurrentPage(2)}
-            aria-label="Page 2"
-            aria-current={currentPage === 2 ? 'page' : undefined}
-          >
-            2
-          </button>
-
-          <button
-            className="blog-grid-page-next"
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-            aria-label="Next Page"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <button
+              className="blog-grid-page-next"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
             >
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </button>
-        </nav>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </nav>
+        )}
       </main>
     </div>
   );

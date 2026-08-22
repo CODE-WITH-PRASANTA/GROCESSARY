@@ -1,233 +1,187 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import './BlogReadmoreOne.css';
 
-// Image Imports
-import blogfruit1 from '../../assets/blogfruit1.webp';
-import blogfruit2 from '../../assets/blogfruit2.webp';
-import blogfruit3 from '../../assets/blogfruit3.webp';
-import blogfruit4 from '../../assets/blogfruit4.webp';
+const API_BASE_URL = 'http://localhost:5000/api/blogs';
 
 const BlogReadmoreOne = () => {
+  // Reads dynamic ID from URL e.g. /news/6a7edbfca9b63324310d3fba
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [blog, setBlog] = useState(null);
+  const [relatedArticles, setRelatedArticles] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [commentForm, setCommentForm] = useState({
     name: '',
     email: '',
     message: ''
   });
 
+  // Fetch active blog by ID and load related articles
+  useEffect(() => {
+    const fetchArticleData = async () => {
+      try {
+        setIsLoading(true);
+        // 1. Fetch current article details by ID
+        const res = await fetch(`${API_BASE_URL}/${id}`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          setBlog(json.data);
+        } else {
+          setBlog(null);
+        }
+
+        // 2. Fetch related published articles
+        const relRes = await fetch(`${API_BASE_URL}?status=Published`);
+        const relJson = await relRes.json();
+        if (relJson.success && relJson.data) {
+          setRelatedArticles(relJson.data.filter(item => item._id !== id).slice(0, 3));
+        }
+      } catch (err) {
+        console.error('Error fetching blog read more:', err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchArticleData();
+      window.scrollTo(0, 0);
+    }
+  }, [id]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setCommentForm((prev) => ({ ...prev, [name]: value }));
+    setCommentForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCommentSubmit = (e) => {
+  const handleCommentSubmit = async (e) => {
     e.preventDefault();
-    alert('Thank you for your comment! Your feedback is valued at Grocery Sathi.');
-    setCommentForm({ name: '', email: '', message: '' });
+    try {
+      const res = await fetch(`${API_BASE_URL}/${id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(commentForm)
+      });
+      const json = await res.json();
+      if (json.success) {
+        alert('Thank you for your comment! Your feedback has been recorded.');
+        setCommentForm({ name: '', email: '', message: '' });
+        setBlog(prev => ({
+          ...prev,
+          comments: json.data || prev.comments
+        }));
+      }
+    } catch (err) {
+      alert(`Error submitting comment: ${err.message}`);
+    }
   };
 
   const handleShare = () => {
     if (navigator.share) {
-      navigator
-        .share({
-          title: 'Fruit is an Essential Part of a Healthy Diet | Grocery Sathi',
-          url: window.location.href
-        })
-        .catch(() => {});
+      navigator.share({
+        title: blog?.title || 'Grocery Sathi Blog',
+        url: window.location.href
+      }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
       alert('Article link copied to clipboard!');
     }
   };
 
-  // Advanced Structured Data (JSON-LD) for SEO and Google Rich Results
-  const articleSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    'headline': 'Fruit is an essential food for our life',
-    'description': 'Explore why fresh fruits are essential for your daily diet, immune support, and long-term health with Grocery Sathi.',
-    'image': 'https://www.grocerysathi.com/assets/blogfruit1.webp',
-    'author': {
-      '@type': 'Organization',
-      'name': 'Grocery Sathi'
-    },
-    'publisher': {
-      '@type': 'Organization',
-      'name': 'Grocery Sathi',
-      'logo': {
-        '@type': 'ImageObject',
-        'url': 'https://www.grocerysathi.com/logo.png'
-      }
-    },
-    'datePublished': '2022-12-05',
-    'dateModified': '2026-07-29',
-    'mainEntityOfPage': {
-      '@type': 'WebPage',
-      '@id': 'https://www.grocerysathi.com/blog/fruit-essential-food'
-    },
-    'keywords': ['Grocery Sathi', 'Fresh Fruits', 'Healthy Diet', 'Nutrition', 'Organic Produce']
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'Recently';
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    'itemListElement': [
-      {
-        '@type': 'ListItem',
-        'position': 1,
-        'name': 'Home',
-        'item': 'https://www.grocerysathi.com/'
-      },
-      {
-        '@type': 'ListItem',
-        'position': 2,
-        'name': 'Blog',
-        'item': 'https://www.grocerysathi.com/blog'
-      },
-      {
-        '@type': 'ListItem',
-        'position': 3,
-        'name': 'Fruit is an essential food',
-        'item': 'https://www.grocerysathi.com/blog/fruit-essential-food'
-      }
-    ]
-  };
+  const fallbackImage = "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&auto=format&fit=crop";
 
-  // Related articles array utilizing imported images
-  const relatedArticles = [
-    {
-      id: 1,
-      image: blogfruit2,
-      tag: 'news',
-      title: 'Keeping Your Fresh Fruit Longer at Home',
-      description:
-        'Different fruits and vegetables have unique storage requirements. Some can be stored at room temperature, while others need refrigeration to stay crisp and fresh...',
-      author: 'Grocery Sathi',
-      date: 'December 5, 2022'
-    },
-    {
-      id: 2,
-      image: blogfruit3,
-      tag: 'health',
-      title: 'Tasty Berries & Their Amazing Benefits',
-      description:
-        'Strawberries, blueberries, raspberries, and blackberries are not only delicious but also packed with antioxidants and vitamins for your daily health routine...',
-      author: 'Grocery Sathi',
-      date: 'December 6, 2022'
-    },
-    {
-      id: 3,
-      image: blogfruit4,
-      tag: 'recipes',
-      title: 'Healthy Green Smoothies for Energy',
-      description:
-        'Blend your way to wellness with easy-to-make refreshing green juice recipes packed with natural vitamins and nutrients to energize your mornings...',
-      author: 'Grocery Sathi',
-      date: 'December 8, 2022'
-    }
-  ];
+  if (isLoading) {
+    return <div style={{ padding: '80px', textAlign: 'center', color: '#64748b' }}>Loading article...</div>;
+  }
+
+  if (!blog) {
+    return (
+      <div style={{ padding: '80px', textAlign: 'center', color: '#64748b' }}>
+        <h2>Article with ID: {id} not found.</h2>
+        <button 
+          onClick={() => navigate('/blog')}
+          style={{ marginTop: '16px', padding: '10px 20px', cursor: 'pointer', background: '#0f766e', color: '#fff', border: 'none', borderRadius: '6px' }}
+        >
+          Back to Blog Management
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="blog-readmore-one-page">
-      {/* SEO Schemas Injection */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-
-      {/* --- HERO / BREADCRUMB SECTION --- */}
+      {/* Hero Banner with Blog's Image */}
       <section
         className="blog-readmore-one-hero"
         style={{
-          backgroundImage: `linear-gradient(rgba(16, 42, 39, 0.75), rgba(16, 42, 39, 0.75)), url(${blogfruit1})`
+          backgroundImage: `linear-gradient(rgba(16, 42, 39, 0.8), rgba(16, 42, 39, 0.8)), url(${blog.image || fallbackImage})`
         }}
         aria-label="Article Hero Banner"
       >
         <div className="blog-readmore-one-hero-container">
-          {/* Back Navigation Button */}
           <nav aria-label="Breadcrumb Navigation">
-            <a href="/" className="blog-readmore-one-back-btn" title="Return to Grocery Sathi Homepage">
-              <span className="blog-readmore-one-arrow-circle" aria-hidden="true">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+            <button 
+              type="button" 
+              onClick={() => navigate('/blog')} 
+              className="blog-readmore-one-back-btn" 
+              title="Back to Blog Management"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+            >
+              <span className="blog-readmore-one-arrow-circle">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="19" y1="12" x2="5" y2="12"></line>
                   <polyline points="12 19 5 12 12 5"></polyline>
                 </svg>
               </span>
-              <span>Back to Home</span>
-            </a>
+              <span>Back to Blogs</span>
+            </button>
           </nav>
 
-          {/* Meta Badges / Interactive Controls */}
           <div className="blog-readmore-one-hero-meta">
-            <span className="blog-readmore-one-badge-featured">Featured Post</span>
-            <button className="blog-readmore-one-meta-pill">
-              Category: <strong>news</strong>
+            <span className="blog-readmore-one-badge-featured">{blog.status}</span>
+            <button className="blog-readmore-one-meta-pill" type="button">
+              Category: <strong>{blog.category}</strong>
             </button>
-            <button className="blog-readmore-one-meta-pill">
-              Date: <strong>December 5, 2022</strong>
+            <button className="blog-readmore-one-meta-pill" type="button">
+              Date: <strong>{formatDate(blog.publishDate || blog.createdAt)}</strong>
             </button>
           </div>
 
-          {/* Hero Main Heading */}
-          <h1 className="blog-readmore-one-hero-title">
-            Fruit is an essential food
-            <br />
-            for our daily life
-          </h1>
-
-          {/* Hero Subtitle */}
-          <p className="blog-readmore-one-hero-desc">
-            Explore the world of wholesome nutrition with Grocery Sathi. Discover unique ingredients, expert storage tips, and farm-fresh produce guides designed to enrich your well-being.
-          </p>
+          <h1 className="blog-readmore-one-hero-title">{blog.title}</h1>
+          <p className="blog-readmore-one-hero-desc">{blog.excerpt}</p>
         </div>
       </section>
 
-      {/* --- MAIN CONTENT & SIDEBAR GRID --- */}
+      {/* Main Content Body */}
       <main className="blog-readmore-one-main">
         <div className="blog-readmore-one-container">
-          
-          {/* LEFT COLUMN: MAIN ARTICLE */}
+          {/* Article Column */}
           <article className="blog-readmore-one-content">
-            
-            {/* Meta bar under hero */}
             <div className="blog-readmore-one-author-bar">
               <div className="blog-readmore-one-meta-group">
-                <span className="blog-readmore-one-author">Grocery Sathi</span>
+                <span className="blog-readmore-one-author">{blog.author || 'Grocery Sathi'}</span>
                 <span className="blog-readmore-one-meta-item">
-                  Category: <strong>news</strong>
+                  Category: <strong>{blog.category}</strong>
                 </span>
                 <span className="blog-readmore-one-meta-item">
-                  Date: <strong>December 5, 2022</strong>
+                  Date: <strong>{formatDate(blog.publishDate || blog.createdAt)}</strong>
                 </span>
               </div>
 
-              <button
-                className="blog-readmore-one-share-btn"
-                onClick={handleShare}
-                aria-label="Share this article"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+              <button className="blog-readmore-one-share-btn" onClick={handleShare}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
                   <polyline points="16 6 12 2 8 6"></polyline>
                   <line x1="12" y1="2" x2="12" y2="15"></line>
@@ -236,109 +190,83 @@ const BlogReadmoreOne = () => {
               </button>
             </div>
 
-            {/* Article Heading */}
-            <h2 className="blog-readmore-one-article-title">
-              Fruit is an essential food for our life &amp; vitality
-            </h2>
+            <h2 className="blog-readmore-one-article-title">{blog.title}</h2>
 
-            {/* Featured Image */}
             <div className="blog-readmore-one-feature-img-wrapper">
               <img
-                src={blogfruit1}
-                alt="Fresh organic fruits basket representing healthy eating by Grocery Sathi"
+                src={blog.image || fallbackImage}
+                alt={blog.title}
                 className="blog-readmore-one-feature-img"
-                loading="lazy"
+                onError={(e) => {
+                  e.target.src = fallbackImage;
+                }}
               />
             </div>
 
-            {/* Paragraph Content */}
-            <p className="blog-readmore-one-text">
-              At Grocery Sathi, we believe that bringing fresh, quality produce into your kitchen is the foundation of a healthy lifestyle. Explore the world of culinary delights with our grocery blog, where we highlight unique ingredients, share delicious recipes, and provide expert cooking hacks for all skill levels.
-            </p>
-
-            <h3 className="blog-readmore-one-bold-heading">
-              Fruits are packed with essential vitamins, minerals, and natural antioxidants that contribute directly to long-term vitality, immune strengthening, and chronic disease prevention.
-            </h3>
-
-            <p className="blog-readmore-one-text">
-              Regular consumption of fresh fruits has been scientifically associated with a reduced risk of heart disease, stroke, certain cancers, and healthy weight management. The natural antioxidants found in berries and citrus protect your cells from oxidative stress and inflammation, while high water content supports daily hydration and digestive health.
-            </p>
-
-            {/* Italic Quote Block */}
-            <blockquote className="blog-readmore-one-quote">
-              <span className="blog-readmore-one-quote-icon" aria-hidden="true">
-                “
-              </span>
-              <p>
-                Many fresh fruits are exceptional sources of vitamin C, playing a vital role in supporting a robust immune system. Regular daily intake helps strengthen your body&apos;s defenses against everyday infections and seasonal illnesses.
-              </p>
-            </blockquote>
-
-            <p className="blog-readmore-one-text">
-              Whether you are shopping for farm-fresh apples, juicy oranges, or antioxidant-rich seasonal berries, Grocery Sathi ensures top-tier quality delivered straight to your doorstep. Make smart, healthy choices every single day!
-            </p>
+            {/* Render formatted content */}
+            <div 
+              className="blog-readmore-one-text" 
+              style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8' }}
+              dangerouslySetInnerHTML={{ __html: blog.content || `<p>${blog.excerpt}</p>` }}
+            />
 
             {/* Tags */}
             <div className="blog-readmore-one-tags">
-              <strong>Tags:</strong>
-              <span className="blog-readmore-one-tag-item">Food</span>
-              <span className="blog-readmore-one-tag-comma">,</span>
-              <span className="blog-readmore-one-tag-item">Fruits</span>
-              <span className="blog-readmore-one-tag-comma">,</span>
-              <span className="blog-readmore-one-tag-item">Healthy Diet</span>
+              <strong>Category:</strong>
+              <span className="blog-readmore-one-tag-item">{blog.category}</span>
             </div>
           </article>
 
-          {/* RIGHT COLUMN: SIDEBAR */}
-          <aside className="blog-readmore-one-sidebar" aria-label="Sidebar Content">
-            
-            {/* Related Articles Section */}
+          {/* Sidebar */}
+          <aside className="blog-readmore-one-sidebar">
+            {/* Related Articles */}
             <div className="blog-readmore-one-related-block">
               <h3 className="blog-readmore-one-sidebar-title">Related articles</h3>
 
-              {relatedArticles.map((article) => (
-                <div key={article.id} className="blog-readmore-one-related-card">
-                  <div className="blog-readmore-one-card-img-wrapper">
-                    <img src={article.image} alt={article.title} loading="lazy" />
-                    <span className="blog-readmore-one-card-tag">{article.tag}</span>
-                  </div>
+              {relatedArticles.length > 0 ? (
+                relatedArticles.map((rel) => (
+                  <div key={rel._id} className="blog-readmore-one-related-card">
+                    <div className="blog-readmore-one-card-img-wrapper">
+                      <img 
+                        src={rel.image || fallbackImage} 
+                        alt={rel.title} 
+                        onError={(e) => {
+                          e.target.src = fallbackImage;
+                        }} 
+                      />
+                      <span className="blog-readmore-one-card-tag">{rel.category}</span>
+                    </div>
 
-                  <div className="blog-readmore-one-card-body">
-                    <h4 className="blog-readmore-one-card-title">{article.title}</h4>
-                    <p className="blog-readmore-one-card-desc">{article.description}</p>
+                    <div className="blog-readmore-one-card-body">
+                      <h4 className="blog-readmore-one-card-title">{rel.title}</h4>
+                      <p className="blog-readmore-one-card-desc">{rel.excerpt}</p>
 
-                    <div className="blog-readmore-one-card-footer">
-                      <button
-                        className="blog-readmore-one-read-more-btn"
-                        onClick={() => alert(`Opening article: "${article.title}"`)}
-                        aria-label={`Read more about ${article.title}`}
-                      >
-                        <span>Read more</span>
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                      <div className="blog-readmore-one-card-footer">
+                        <button
+                          type="button"
+                          className="blog-readmore-one-read-more-btn"
+                          onClick={() => navigate(`/news/${rel._id}`)}
                         >
-                          <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
-                      </button>
+                          <span>Read more</span>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                          </svg>
+                        </button>
 
-                      <div className="blog-readmore-one-card-author-info">
-                        <span className="blog-readmore-one-card-author">{article.author}</span>
-                        <span className="blog-readmore-one-card-date">{article.date}</span>
+                        <div className="blog-readmore-one-card-author-info">
+                          <span className="blog-readmore-one-card-author">{rel.author || 'Admin'}</span>
+                          <span className="blog-readmore-one-card-date">{formatDate(rel.publishDate || rel.createdAt)}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p style={{ color: '#94a3b8', fontSize: '14px' }}>No related articles yet.</p>
+              )}
             </div>
 
-            {/* Leave a Comment Form */}
+            {/* Comment Form */}
             <div className="blog-readmore-one-comment-box">
               <h3 className="blog-readmore-one-comment-title">Leave a Comment</h3>
 
@@ -385,7 +313,6 @@ const BlogReadmoreOne = () => {
               </form>
             </div>
           </aside>
-
         </div>
       </main>
     </div>
