@@ -51,18 +51,7 @@ const App = () => {
           path="/BlogReadmoreOne"
           element={<BlogReadmoreOne />}
         />
-        {/* <Route
-          path="/BlogReadmoreTwo"
-          element={<BlogReadmoreTwo />}
-        />
-        <Route
-          path="/BlogReadmoreThree"
-          element={<BlogReadmoreThree />}
-        />
-        <Route
-          path="/BlogReadmoreFour"
-          element={<BlogReadmoreFour />}
-        /> */}
+       
         <Route path="/account" element={<LoginPage />} />
         <Route path="/cart" element={<CartSection />} />
         <Route path="/deliverytime" element={<DeliveryTime />} />
