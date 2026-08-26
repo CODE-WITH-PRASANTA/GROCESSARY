@@ -27,6 +27,7 @@ import CartSection from "./Components/CartSection/CartSection";
 import DeliveryTime from "./Components/DeliveryTime/DeliveryTime";
 import MyOrders from "./Components/MyOrders/MyOrders";
 import ListUpload from "./Components/ListUpload/ListUpload";
+import ProductDetails from "./Pages/ProductDetails/ProductDetails";
 
 const App = () => {
   return (
@@ -42,6 +43,7 @@ const App = () => {
         <Route path="/terms-and-conditions" element={<TermAndCondition />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/shipping-delivery" element={<ShippingAndDelivery />} />
+        <Route path="/productdetails" element={<ProductDetails />} />
 
         {/* Blog System Routes */}
         <Route path="/blogs" element={<BlogGrid />} />
@@ -61,5 +63,5 @@ const App = () => {
     </BrowserRouter>
   );
 };
-
+ 
 export default App;
