@@ -1,7 +1,7 @@
 import React from 'react';
 import './AboutUsBreadcrumb.css';
 
-import breadcrumbBg from '../../assets/a-grocery.jpg'; 
+import breadcrumbBg from '../../assets/breadcrumb.webp'; 
 
 const AboutUsBreadcrumb = () => {
   // Structured Data (JSON-LD) for SEO schema
