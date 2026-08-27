@@ -686,10 +686,7 @@ const Import = () => {
     return;
   }
 
-  console.log(
-    "DATA BEING SENT TO BACKEND:",
-    selectedData
-  );
+ 
 
   const formData = new FormData();
 
@@ -751,20 +748,14 @@ const Import = () => {
   /*
    * DEBUG FormData
    */
-  console.log("===== FORM DATA =====");
+  
+  
 
   for (const [key, value] of formData.entries()) {
     if (value instanceof File) {
-      console.log(
-        key,
-        "FILE:",
-        value.name
-      );
+     
     } else {
-      console.log(
-        key,
-        value
-      );
+      
     }
   }
 
@@ -778,10 +769,7 @@ const Import = () => {
 
     const result = response.data;
 
-    console.log(
-      "IMPORT RESPONSE:",
-      result
-    );
+    
 
     if (result.success) {
       const importedCount =

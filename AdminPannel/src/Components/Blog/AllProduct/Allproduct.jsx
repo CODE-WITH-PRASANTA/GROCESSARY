@@ -60,9 +60,7 @@ const Allproduct = () => {
 
       const result = await response.json();
 
-      console.log("=================================");
-      console.log("PRODUCT API RESPONSE:", result);
-      console.log("=================================");
+      
 
       if (!response.ok) {
         throw new Error(result?.message || "Failed to fetch products");
@@ -82,8 +80,7 @@ const Allproduct = () => {
         productList = result.result;
       }
 
-      console.log("ALL PRODUCTS:", productList);
-      console.log("TOTAL PRODUCTS:", productList.length);
+      
 
       // =====================================================
       // SHOW BOTH IMPORT + MANUAL PRODUCTS

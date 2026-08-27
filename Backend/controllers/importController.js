@@ -263,9 +263,7 @@ const findOrCreateCategory = async (value) => {
     });
 
   if (category) {
-    console.log(
-      `Category already exists: ${category.name}`
-    );
+    
 
     return category;
   }
@@ -311,13 +309,7 @@ const findOrCreateCategory = async (value) => {
       slug: categorySlug,
     });
 
-  console.log(
-    `✅ Automatically created category: ${categoryValue}`
-  );
-
-  console.log(
-    `✅ Category slug: ${categorySlug}`
-  );
+  
 
   return category;
 };
@@ -363,9 +355,7 @@ const findOrCreateBrand = async (value) => {
     });
 
   if (brand) {
-    console.log(
-      `Brand already exists: ${brand.name}`
-    );
+    
 
     return brand;
   }
@@ -411,13 +401,7 @@ const findOrCreateBrand = async (value) => {
       slug: brandSlug,
     });
 
-  console.log(
-    `✅ Automatically created brand: ${brandValue}`
-  );
-
-  console.log(
-    `✅ Brand slug: ${brandSlug}`
-  );
+ 
 
   return brand;
 };
@@ -475,9 +459,7 @@ const findOrCreateUnit = async (value) => {
   });
 
   if (unit) {
-    console.log(
-      `✅ Unit already exists: ${unit.name} (${unit.symbol})`
-    );
+    
 
     return unit;
   }
@@ -534,13 +516,7 @@ const findOrCreateUnit = async (value) => {
     order: 0,
   });
 
-  console.log(
-    `✅ Automatically created unit: ${unitValue}`
-  );
-
-  console.log(
-    `✅ Unit type: ${unitType}`
-  );
+  
 
   return unit;
 };
@@ -625,29 +601,9 @@ const importData = async (
   res
 ) => {
   try {
-    console.log(
-      "========== IMPORT REQUEST =========="
-    );
+   
 
-    console.log(
-      "Content-Type:",
-      req.headers["content-type"]
-    );
-
-    console.log(
-      "req.body:",
-      req.body
-    );
-
-    console.log(
-      "req.body.products:",
-      req.body?.products
-    );
-
-    console.log(
-      "req.files:",
-      req.files
-    );
+    
 
     // ==================================================
     // PARSE PRODUCTS
@@ -702,15 +658,7 @@ const importData = async (
       });
     }
 
-    console.log(
-      "Products received:",
-      products.length
-    );
-
-    console.log(
-      "Products:",
-      products
-    );
+   
 
     // ==================================================
     // FILES
@@ -971,25 +919,7 @@ const importData = async (
         // CREATE PRODUCT
         // ==============================================
 
-        console.log(
-          `Creating product row ${rowNumber}`,
-          {
-            productName,
-            category:
-              categoryDoc._id,
-            brand:
-              brandDoc
-                ? brandDoc._id
-                : null,
-            unit:
-              unitDoc._id,
-            sku,
-            purchasePrice,
-            sellingPrice,
-            writtenPrice,
-            stock,
-          }
-        );
+      
 
         const product =
           await Product.create({

@@ -443,7 +443,7 @@ const Catagory = () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/products`);
 
-      console.log("ALL PRODUCTS RESPONSE:", response.data);
+      
 
       let allProducts = [];
 
@@ -465,7 +465,7 @@ const Catagory = () => {
         (product) => String(product?.source || "").toLowerCase() === "import",
       );
 
-      console.log("ONLY IMPORTED PRODUCTS:", importedProducts);
+     
 
       const normalizedProducts = importedProducts
         .map((product) => normalizeImportedProduct(product, brandList, []))
@@ -678,7 +678,7 @@ const Catagory = () => {
         },
       );
 
-      console.log("MULTIPLE IMAGE UPLOAD RESPONSE:", response.data);
+      
 
       const updatedProduct =
         response.data?.product || response.data?.data || response.data;
