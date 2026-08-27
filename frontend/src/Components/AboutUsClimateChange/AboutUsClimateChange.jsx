@@ -4,7 +4,7 @@ import './AboutUsClimateChange.css';
 // Importing your image assets
 import img1 from '../../assets/aboutusclimatechange1.webp';
 import img2 from '../../assets/aboutusclimatechange2.webp';
-
+  
 const AboutUsClimateChange = () => {
   // Structured Data for SEO optimization customized for Grocery Sathi
   const schemaData = {
