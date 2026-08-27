@@ -15,6 +15,7 @@ const coldLeadRoutes = require("./routes/coldLeadRoutes");
 const unitRoutes = require("./routes/unit.routes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const blogRoutes = require('./routes/blogRoutes');
+const importRoutes =require('./routes/importRoutes')
 
 // Load environment variables
 dotenv.config();
@@ -43,6 +44,7 @@ app.use("/api/brands", require("./routes/brandRoutes"));
 
 app.use("/api/cold-leads", coldLeadRoutes);
 app.use('/api/blogs', blogRoutes);
+app.use('/api/import', importRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

@@ -1,167 +1,321 @@
 const Product = require("../models/Product");
-const Category = require("../models/Category");
-const Brand = require("../models/Brand");
-const Unit = require("../models/unit.model");
 
-const {
-  deleteUploadedFile,
-} = require("../middleware/upload");
+// ======================================================
+// HELPERS
+// ======================================================
 
+const normalizeString = (value) => {
+  if (
+    value === undefined ||
+    value === null
+  ) {
+    return "";
+  }
+
+  return String(value).trim();
+};
+
+const normalizeArray = (value) => {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (
+    typeof value === "string" &&
+    value.trim()
+  ) {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
+const parseNumber = (
+  value,
+  defaultValue = 0
+) => {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return defaultValue;
+  }
+
+  const number = Number(value);
+
+  return Number.isFinite(number)
+    ? number
+    : defaultValue;
+};
+
+const parseBoolean = (
+  value,
+  defaultValue = false
+) => {
+  if (
+    value === undefined ||
+    value === null
+  ) {
+    return defaultValue;
+  }
+
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (
+    value === "true" ||
+    value === "1" ||
+    value === 1
+  ) {
+    return true;
+  }
+
+  if (
+    value === "false" ||
+    value === "0" ||
+    value === 0
+  ) {
+    return false;
+  }
+
+  return defaultValue;
+};
+
+const parseDate = (value) => {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  if (isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date;
+};
+
+const normalizeStatus = (
+  status
+) => {
+  if (
+    status === "published" ||
+    status === "active"
+  ) {
+    return "active";
+  }
+
+  if (
+    status === "unpublished" ||
+    status === "inactive"
+  ) {
+    return "inactive";
+  }
+
+  return "active";
+};
 
 // ======================================================
 // CREATE SLUG
 // ======================================================
 
-const createSlug = (text) => {
-  return String(text || "")
+const createSlug = (value) => {
+  return normalizeString(value)
     .toLowerCase()
-    .trim()
     .replace(
-      /[^a-z0-9]+/g,
+      /[^a-z0-9\s-]/g,
+      ""
+    )
+    .replace(
+      /\s+/g,
       "-"
     )
     .replace(
-      /^-+|-+$/g,
+      /-+/g,
+      "-"
+    )
+    .replace(
+      /^-|-$/g,
       "");
 };
 
-
 // ======================================================
-// PARSE ARRAY
+// UNIQUE SLUG
 // ======================================================
 
-const parseArray = (value) => {
-  if (!value) {
-    return [];
-  }
+const createUniqueSlug = async (
+  productName,
+  productId = null
+) => {
+  const baseSlug =
+    createSlug(productName) ||
+    `product-${Date.now()}`;
 
-  if (Array.isArray(value)) {
-    return value;
-  }
+  let slug = baseSlug;
+  let counter = 1;
 
-  try {
-    const parsed =
-      JSON.parse(value);
+  while (true) {
+    const query = {
+      slug,
+    };
 
-    if (
-      Array.isArray(parsed)
-    ) {
-      return parsed;
+    if (productId) {
+      query._id = {
+        $ne: productId,
+      };
     }
-  } catch (error) {
-    // Continue with comma-separated value
+
+    const exists =
+      await Product.exists(query);
+
+    if (!exists) {
+      break;
+    }
+
+    slug =
+      `${baseSlug}-${counter}`;
+
+    counter++;
   }
 
-  return String(value)
-    .split(",")
-    .map(
-      (item) => item.trim()
-    )
-    .filter(Boolean);
+  return slug;
 };
 
+// ======================================================
+// POPULATE PRODUCT
+// ======================================================
+
+const getPopulatedProduct = (
+  id
+) => {
+  return Product.findById(id)
+    .populate(
+      "category",
+      "name"
+    )
+    .populate(
+      "brand",
+      "name"
+    )
+    .populate(
+      "unit",
+      "name"
+    );
+};
 
 // ======================================================
 // GET ALL PRODUCTS
-// GET /api/products
 // ======================================================
 
-exports.getProducts = async (
+const getAllProducts = async (
   req,
   res
 ) => {
   try {
     const {
-      search,
+      search = "",
       category,
       brand,
       unit,
       status,
+      source,
       page = 1,
-      limit = 20,
+      limit = 100,
     } = req.query;
 
-
-    // ==================================================
-    // QUERY
-    // ==================================================
-
     const query = {};
-
 
     // ==================================================
     // SEARCH
     // ==================================================
 
-    if (
-      search &&
-      search.trim()
-    ) {
+    if (search.trim()) {
       query.$or = [
         {
           productName: {
-            $regex:
-              search.trim(),
+            $regex: search.trim(),
             $options: "i",
           },
         },
-
         {
           sku: {
-            $regex:
-              search.trim(),
-            $options: "i",
-          },
-        },
-
-        {
-          slug: {
-            $regex:
-              search.trim(),
+            $regex: search.trim(),
             $options: "i",
           },
         },
       ];
     }
 
-
     // ==================================================
     // CATEGORY
     // ==================================================
 
-    if (category) {
+    if (
+      category &&
+      category !== "all"
+    ) {
       query.category =
         category;
     }
-
 
     // ==================================================
     // BRAND
     // ==================================================
 
-    if (brand) {
-      query.brand = brand;
+    if (
+      brand &&
+      brand !== "all"
+    ) {
+      query.brand =
+        brand;
     }
-
 
     // ==================================================
     // UNIT
     // ==================================================
 
-    if (unit) {
-      query.unit = unit;
+    if (
+      unit &&
+      unit !== "all"
+    ) {
+      query.unit =
+        unit;
     }
-
 
     // ==================================================
     // STATUS
     // ==================================================
 
-    if (status) {
+    if (
+      status &&
+      status !== "all"
+    ) {
       query.status =
-        status;
+        normalizeStatus(
+          status
+        );
     }
 
+    // ==================================================
+    // SOURCE
+    // ==================================================
+
+    if (
+      source &&
+      source !== "all"
+    ) {
+      query.source =
+        source;
+    }
 
     // ==================================================
     // PAGINATION
@@ -174,18 +328,20 @@ exports.getProducts = async (
       );
 
     const limitNumber =
-      Math.max(
-        Number(limit) || 20,
-        1
+      Math.min(
+        Math.max(
+          Number(limit) || 100,
+          1
+        ),
+        500
       );
 
     const skip =
       (pageNumber - 1) *
       limitNumber;
 
-
     // ==================================================
-    // FETCH
+    // QUERY
     // ==================================================
 
     const [
@@ -193,28 +349,22 @@ exports.getProducts = async (
       total,
     ] = await Promise.all([
       Product.find(query)
-
         .populate(
           "category",
-          "name slug"
+          "name"
         )
-
         .populate(
           "brand",
-          "name slug logoUrl"
+          "name"
         )
-
         .populate(
           "unit",
-          "name shortName slug"
+          "name"
         )
-
         .sort({
           createdAt: -1,
         })
-
         .skip(skip)
-
         .limit(
           limitNumber
         ),
@@ -224,279 +374,595 @@ exports.getProducts = async (
       ),
     ]);
 
-
-    // ==================================================
-    // RESPONSE
-    // ==================================================
-
-    return res.status(
-      200
-    ).json({
+    return res.status(200).json({
       success: true,
 
-      data: products,
+      count:
+        products.length,
 
-      pagination: {
-        page: pageNumber,
+      total,
 
-        limit:
-          limitNumber,
+      page:
+        pageNumber,
 
-        total,
+      limit:
+        limitNumber,
 
-        totalPages:
-          Math.ceil(
-            total /
-              limitNumber
-          ),
-      },
+      pages:
+        Math.ceil(
+          total /
+            limitNumber
+        ),
+
+      products,
     });
-
   } catch (error) {
     console.error(
-      "Get Products Error:",
+      "GET ALL PRODUCTS ERROR:",
       error
     );
 
-    return res.status(
-      500
-    ).json({
+    return res.status(500).json({
       success: false,
+
       message:
+        "Failed to fetch products.",
+
+      error:
         error.message,
     });
   }
 };
 
-
 // ======================================================
 // GET PRODUCT BY ID
-// GET /api/products/:id
 // ======================================================
 
-exports.getProductById =
-  async (req, res) => {
-    try {
-      const product =
-        await Product.findById(
-          req.params.id
-        )
-
-          .populate(
-            "category"
-          )
-
-          .populate(
-            "brand"
-          )
-
-          .populate(
-            "unit"
-          );
-
-
-      if (!product) {
-        return res.status(
-          404
-        ).json({
-          success: false,
-          message:
-            "Product not found",
-        });
-      }
-
-
-      return res.status(
-        200
-      ).json({
-        success: true,
-        data: product,
-      });
-
-    } catch (error) {
-      console.error(
-        "Get Product Error:",
-        error
+const getProductById = async (
+  req,
+  res
+) => {
+  try {
+    const product =
+      await getPopulatedProduct(
+        req.params.id
       );
 
-      return res.status(
-        500
-      ).json({
+    if (!product) {
+      return res.status(404).json({
         success: false,
+
         message:
-          error.message,
+          "Product not found.",
       });
     }
-  };
 
+    return res.status(200).json({
+      success: true,
+
+      product,
+
+      data: product,
+    });
+  } catch (error) {
+    console.error(
+      "GET PRODUCT BY ID ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+
+      message:
+        "Failed to fetch product.",
+
+      error:
+        error.message,
+    });
+  }
+};
 
 // ======================================================
 // CREATE PRODUCT
-// POST /api/products
 // ======================================================
 
-exports.createProduct =
-  async (req, res) => {
-    try {
-      const {
+const createProduct = async (
+  req,
+  res
+) => {
+  try {
+    const body =
+      req.body || {};
+
+    // ==================================================
+    // BASIC DATA
+    // ==================================================
+
+    const productName =
+      normalizeString(
+        body.productName ||
+          body.name
+      );
+
+    if (!productName) {
+      return res.status(400).json({
+        success: false,
+
+        message:
+          "Product name is required.",
+      });
+    }
+
+    // ==================================================
+    // CATEGORY
+    // ==================================================
+
+    const category =
+      body.category;
+
+    if (!category) {
+      return res.status(400).json({
+        success: false,
+
+        message:
+          "Category is required.",
+      });
+    }
+
+    // ==================================================
+    // UNIT
+    // ==================================================
+
+    const unit =
+      body.unit;
+
+    if (!unit) {
+      return res.status(400).json({
+        success: false,
+
+        message:
+          "Unit is required.",
+      });
+    }
+
+    // ==================================================
+    // SKU
+    // ==================================================
+
+    const sku =
+      normalizeString(
+        body.sku
+      ).toUpperCase();
+
+    if (!sku) {
+      return res.status(400).json({
+        success: false,
+
+        message:
+          "SKU is required.",
+      });
+    }
+
+    // ==================================================
+    // DUPLICATE SKU
+    // ==================================================
+
+    const existingSku =
+      await Product.findOne({
+        sku,
+      });
+
+    if (existingSku) {
+      return res.status(409).json({
+        success: false,
+
+        message:
+          "SKU already exists.",
+      });
+    }
+
+    // ==================================================
+    // SLUG
+    // ==================================================
+
+    const slug =
+      await createUniqueSlug(
+        body.slug ||
+          productName
+      );
+
+    // ==================================================
+    // PRICES
+    // ==================================================
+
+    const price =
+      parseNumber(
+        body.price ??
+          body.sellingPrice,
+        0
+      );
+
+    const purchasePrice =
+      parseNumber(
+        body.purchasePrice,
+        body.costPrice !==
+        undefined
+          ? parseNumber(
+              body.costPrice
+            )
+          : 0
+      );
+
+    const writtenPrice =
+      parseNumber(
+        body.writtenPrice,
+        0
+      );
+
+    const discountPrice =
+      parseNumber(
+        body.discountPrice,
+        0
+      );
+
+    const costPrice =
+      parseNumber(
+        body.costPrice,
+        purchasePrice
+      );
+
+    // ==================================================
+    // STOCK
+    // ==================================================
+
+    const stockQuantity =
+      parseNumber(
+        body.stockQuantity ??
+          body.stock,
+        0
+      );
+
+    // ==================================================
+    // IMAGES
+    // ==================================================
+
+    let images = [];
+
+    if (
+      Array.isArray(
+        req.files
+      )
+    ) {
+      images =
+        req.files
+          .map(
+            (file) => {
+              if (
+                file.url
+              ) {
+                return file.url;
+              }
+
+              if (
+                file.path
+              ) {
+                return `/${String(
+                  file.path
+                ).replace(
+                  /^\/+/,
+                  ""
+                )}`;
+              }
+
+              return null;
+            }
+          )
+          .filter(Boolean)
+          .slice(0, 5);
+    }
+
+    // ==================================================
+    // SOURCE
+    // ==================================================
+
+    const source =
+      body.source ===
+      "import"
+        ? "import"
+        : "manual";
+
+    // ==================================================
+    // CREATE
+    // ==================================================
+
+    const product =
+      new Product({
         productName,
+
+        slug,
 
         category,
 
-        brand,
+        brand:
+          body.brand ||
+          null,
 
         sku,
 
         unit,
 
-        tags,
+        source,
 
-        shortDescription,
+        tags:
+          normalizeArray(
+            body.tags
+          ),
 
-        fullDescription,
+        shortDescription:
+          normalizeString(
+            body.shortDescription
+          ),
 
-        metaTitle,
+        fullDescription:
+          normalizeString(
+            body.fullDescription
+          ),
 
-        metaDescription,
+        metaTitle:
+          normalizeString(
+            body.metaTitle
+          ),
 
-        metaKeywords,
+        metaDescription:
+          normalizeString(
+            body.metaDescription
+          ),
+
+        metaKeywords:
+          normalizeArray(
+            body.metaKeywords
+          ),
 
         price,
+
+        purchasePrice,
+
+        writtenPrice,
 
         discountPrice,
 
         costPrice,
 
+        manufactureDate:
+          parseDate(
+            body.manufactureDate
+          ),
+
+        expiryDate:
+          parseDate(
+            body.expiryDate
+          ),
+
         stockQuantity,
 
-        lowStockAlert,
+        lowStockAlert:
+          parseNumber(
+            body.lowStockAlert,
+            0
+          ),
 
-        tax,
+        tax:
+          parseNumber(
+            body.tax,
+            0
+          ),
 
-        isOutOfStock,
+        isOutOfStock:
+          parseBoolean(
+            body.isOutOfStock,
+            stockQuantity <=
+              0
+          ),
 
-        status,
+        status:
+          normalizeStatus(
+            body.status ||
+              "active"
+          ),
 
-        slug,
-      } = req.body;
+        images,
+      });
 
+    await product.save();
 
-      // ==================================================
-      // REQUIRED FIELDS
-      // ==================================================
+    const savedProduct =
+      await getPopulatedProduct(
+        product._id
+      );
+
+    return res.status(201).json({
+      success: true,
+
+      message:
+        "Product created successfully.",
+
+      product:
+        savedProduct,
+
+      data:
+        savedProduct,
+    });
+  } catch (error) {
+    console.error(
+      "CREATE PRODUCT ERROR:",
+      error
+    );
+
+    if (
+      error.code ===
+      11000
+    ) {
+      return res.status(409).json({
+        success: false,
+
+        message:
+          "Product with the same SKU or slug already exists.",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+
+      message:
+        error.message ||
+        "Failed to create product.",
+    });
+  }
+};
+
+// ======================================================
+// UPDATE PRODUCT
+// ======================================================
+
+const updateProduct = async (
+  req,
+  res
+) => {
+  try {
+    const product =
+      await Product.findById(
+        req.params.id
+      );
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+
+        message:
+          "Product not found.",
+      });
+    }
+
+    const body =
+      req.body || {};
+
+    // ==================================================
+    // PRODUCT NAME
+    // ==================================================
+
+    if (
+      body.productName !==
+        undefined ||
+      body.name !==
+        undefined
+    ) {
+      product.productName =
+        normalizeString(
+          body.productName ||
+            body.name
+        );
+    }
+
+    // ==================================================
+    // SLUG
+    // ==================================================
+
+    if (
+      body.slug !==
+      undefined
+    ) {
+      const requestedSlug =
+        createSlug(
+          body.slug
+        );
+
+      const slugExists =
+        await Product.findOne({
+          slug:
+            requestedSlug,
+
+          _id: {
+            $ne:
+              product._id,
+          },
+        });
 
       if (
-        !productName ||
-        !category ||
-        !sku ||
-        !unit ||
-        price === undefined ||
-        price === ""
+        slugExists
       ) {
-        return res.status(
-          400
-        ).json({
+        return res.status(409).json({
           success: false,
 
           message:
-            "Product name, category, SKU, unit and price are required.",
+            "Slug already exists.",
         });
       }
 
-
-      // ==================================================
-      // CATEGORY VALIDATION
-      // ==================================================
-
-      const categoryExists =
-        await Category.findById(
-          category
+      product.slug =
+        requestedSlug;
+    } else if (
+      body.productName !==
+      undefined
+    ) {
+      product.slug =
+        await createUniqueSlug(
+          product.productName,
+          product._id
         );
+    }
 
+    // ==================================================
+    // CATEGORY
+    // ==================================================
 
-      if (!categoryExists) {
-        return res.status(
-          400
-        ).json({
-          success: false,
+    if (
+      body.category !==
+      undefined
+    ) {
+      product.category =
+        body.category;
+    }
 
-          message:
-            "Invalid category.",
-        });
-      }
+    // ==================================================
+    // BRAND
+    // ==================================================
 
+    if (
+      body.brand !==
+      undefined
+    ) {
+      product.brand =
+        body.brand ||
+        null;
+    }
 
-      // ==================================================
-      // BRAND VALIDATION
-      // ==================================================
+    // ==================================================
+    // SKU
+    // ==================================================
 
-      if (brand) {
-        const brandExists =
-          await Brand.findById(
-            brand
-          );
+    if (
+      body.sku !==
+      undefined
+    ) {
+      const sku =
+        normalizeString(
+          body.sku
+        ).toUpperCase();
 
-
-        if (!brandExists) {
-          return res.status(
-            400
-          ).json({
-            success: false,
-
-            message:
-              "Invalid brand.",
-          });
-        }
-      }
-
-
-      // ==================================================
-      // UNIT VALIDATION
-      // ==================================================
-
-      const unitExists =
-        await Unit.findById(
-          unit
-        );
-
-
-      if (!unitExists) {
-        return res.status(
-          400
-        ).json({
-          success: false,
-
-          message:
-            "Invalid unit.",
-        });
-      }
-
-
-      // ==================================================
-      // NORMALIZE SKU
-      // ==================================================
-
-      const normalizedSku =
-        String(sku)
-          .trim()
-          .toUpperCase();
-
-
-      // ==================================================
-      // SKU CHECK
-      // ==================================================
-
-      const skuExists =
+      const duplicate =
         await Product.findOne({
-          sku:
-            normalizedSku,
+          sku,
+
+          _id: {
+            $ne:
+              product._id,
+          },
         });
 
-
-      if (skuExists) {
-        return res.status(
-          400
-        ).json({
+      if (
+        duplicate
+      ) {
+        return res.status(409).json({
           success: false,
 
           message:
@@ -504,859 +970,731 @@ exports.createProduct =
         });
       }
 
-
-      // ==================================================
-      // SLUG
-      // ==================================================
-
-      let finalSlug =
-        slug
-          ? createSlug(slug)
-          : createSlug(
-              productName
-            );
-
-
-      // ==================================================
-      // SLUG CHECK
-      // ==================================================
-
-      const slugExists =
-        await Product.findOne({
-          slug: finalSlug,
-        });
-
-
-      if (slugExists) {
-        finalSlug =
-          `${finalSlug}-${Date.now()}`;
-      }
-
-
-      // ==================================================
-      // IMAGES
-      // ==================================================
-
-      const images =
-        req.files &&
-        Array.isArray(
-          req.files
-        )
-          ? req.files.map(
-              (file) =>
-                `/${file.path}`
-            )
-          : [];
-
-
-      // ==================================================
-      // CREATE PRODUCT
-      // ==================================================
-
-      const product =
-        await Product.create({
-          productName:
-            productName.trim(),
-
-          slug:
-            finalSlug,
-
-          category,
-
-          brand:
-            brand || null,
-
-          sku:
-            normalizedSku,
-
-          unit,
-
-          tags:
-            parseArray(tags),
-
-          shortDescription:
-            shortDescription ||
-            "",
-
-          fullDescription:
-            fullDescription ||
-            "",
-
-          metaTitle:
-            metaTitle || "",
-
-          metaDescription:
-            metaDescription ||
-            "",
-
-          metaKeywords:
-            parseArray(
-              metaKeywords
-            ),
-
-          price:
-            Number(price),
-
-          discountPrice:
-            Number(
-              discountPrice
-            ) || 0,
-
-          costPrice:
-            Number(
-              costPrice
-            ) || 0,
-
-          stockQuantity:
-            Number(
-              stockQuantity
-            ) || 0,
-
-          lowStockAlert:
-            Number(
-              lowStockAlert
-            ) || 0,
-
-          tax:
-            Number(tax) || 0,
-
-          isOutOfStock:
-            isOutOfStock ===
-              "true" ||
-            isOutOfStock ===
-              true,
-
-          status:
-            status ===
-            "inactive"
-              ? "inactive"
-              : "active",
-
-          images,
-        });
-
-
-      // ==================================================
-      // POPULATE RESPONSE
-      // ==================================================
-
-      const populatedProduct =
-        await Product.findById(
-          product._id
-        )
-
-          .populate(
-            "category",
-            "name slug"
-          )
-
-          .populate(
-            "brand",
-            "name slug logoUrl"
-          )
-
-          .populate(
-            "unit",
-            "name shortName slug"
-          );
-
-
-      // ==================================================
-      // RESPONSE
-      // ==================================================
-
-      return res.status(
-        201
-      ).json({
-        success: true,
-
-        message:
-          "Product created successfully",
-
-        data:
-          populatedProduct,
-      });
-
-    } catch (error) {
-      console.error(
-        "Create Product Error:",
-        error
-      );
-
-      return res.status(
-        500
-      ).json({
-        success: false,
-        message:
-          error.message,
-      });
+      product.sku =
+        sku;
     }
-  };
 
+    // ==================================================
+    // UNIT
+    // ==================================================
 
-// ======================================================
-// UPDATE PRODUCT
-// PUT /api/products/:id
-// ======================================================
+    if (
+      body.unit !==
+      undefined
+    ) {
+      product.unit =
+        body.unit;
+    }
 
-exports.updateProduct =
-  async (req, res) => {
-    try {
-      const product =
-        await Product.findById(
-          req.params.id
+    // ==================================================
+    // TAGS
+    // ==================================================
+
+    if (
+      body.tags !==
+      undefined
+    ) {
+      product.tags =
+        normalizeArray(
+          body.tags
         );
-
-
-      if (!product) {
-        return res.status(
-          404
-        ).json({
-          success: false,
-
-          message:
-            "Product not found",
-        });
-      }
-
-
-      const {
-        productName,
-
-        category,
-
-        brand,
-
-        sku,
-
-        unit,
-
-        tags,
-
-        shortDescription,
-
-        fullDescription,
-
-        metaTitle,
-
-        metaDescription,
-
-        metaKeywords,
-
-        price,
-
-        discountPrice,
-
-        costPrice,
-
-        stockQuantity,
-
-        lowStockAlert,
-
-        tax,
-
-        isOutOfStock,
-
-        status,
-
-        slug,
-      } = req.body;
-
-
-      // ==================================================
-      // CATEGORY
-      // ==================================================
-
-      if (
-        category !==
-        undefined
-      ) {
-        const exists =
-          await Category.findById(
-            category
-          );
-
-
-        if (!exists) {
-          return res.status(
-            400
-          ).json({
-            success: false,
-
-            message:
-              "Invalid category.",
-          });
-        }
-
-
-        product.category =
-          category;
-      }
-
-
-      // ==================================================
-      // BRAND
-      // ==================================================
-
-      if (
-        brand !==
-        undefined
-      ) {
-        if (brand) {
-          const exists =
-            await Brand.findById(
-              brand
-            );
-
-
-          if (!exists) {
-            return res.status(
-              400
-            ).json({
-              success: false,
-
-              message:
-                "Invalid brand.",
-            });
-          }
-        }
-
-
-        product.brand =
-          brand || null;
-      }
-
-
-      // ==================================================
-      // UNIT
-      // ==================================================
-
-      if (
-        unit !==
-        undefined
-      ) {
-        const exists =
-          await Unit.findById(
-            unit
-          );
-
-
-        if (!exists) {
-          return res.status(
-            400
-          ).json({
-            success: false,
-
-            message:
-              "Invalid unit.",
-          });
-        }
-
-
-        product.unit =
-          unit;
-      }
-
-
-      // ==================================================
-      // PRODUCT NAME
-      // ==================================================
-
-      if (
-        productName !==
-        undefined
-      ) {
-        product.productName =
-          productName.trim();
-      }
-
-
-      // ==================================================
-      // SKU
-      // ==================================================
-
-      if (
-        sku !==
-        undefined
-      ) {
-        const normalizedSku =
-          String(sku)
-            .trim()
-            .toUpperCase();
-
-
-        const skuExists =
-          await Product.findOne({
-            sku:
-              normalizedSku,
-
-            _id: {
-              $ne:
-                product._id,
-            },
-          });
-
-
-        if (skuExists) {
-          return res.status(
-            400
-          ).json({
-            success: false,
-
-            message:
-              "SKU already exists.",
-          });
-        }
-
-
-        product.sku =
-          normalizedSku;
-      }
-
-
-      // ==================================================
-      // SLUG
-      // ==================================================
-
-      if (
-        slug !==
-        undefined
-      ) {
-        const newSlug =
-          createSlug(
-            slug
-          );
-
-
-        const slugExists =
-          await Product.findOne({
-            slug:
-              newSlug,
-
-            _id: {
-              $ne:
-                product._id,
-            },
-          });
-
-
-        if (slugExists) {
-          return res.status(
-            400
-          ).json({
-            success: false,
-
-            message:
-              "Product slug already exists.",
-          });
-        }
-
-
-        product.slug =
-          newSlug;
-      }
-
-
-      // ==================================================
-      // TAGS
-      // ==================================================
-
-      if (
-        tags !==
-        undefined
-      ) {
-        product.tags =
-          parseArray(tags);
-      }
-
-
-      // ==================================================
-      // DESCRIPTIONS
-      // ==================================================
-
-      if (
-        shortDescription !==
-        undefined
-      ) {
-        product.shortDescription =
-          shortDescription;
-      }
-
-
-      if (
-        fullDescription !==
-        undefined
-      ) {
-        product.fullDescription =
-          fullDescription;
-      }
-
-
-      // ==================================================
-      // SEO
-      // ==================================================
-
-      if (
-        metaTitle !==
-        undefined
-      ) {
-        product.metaTitle =
-          metaTitle;
-      }
-
-
-      if (
-        metaDescription !==
-        undefined
-      ) {
-        product.metaDescription =
-          metaDescription;
-      }
-
-
-      if (
-        metaKeywords !==
-        undefined
-      ) {
-        product.metaKeywords =
-          parseArray(
-            metaKeywords
-          );
-      }
-
-
-      // ==================================================
-      // PRICE
-      // ==================================================
-
-      if (
-        price !==
-        undefined
-      ) {
-        product.price =
-          Number(price);
-      }
-
-
-      if (
-        discountPrice !==
-        undefined
-      ) {
-        product.discountPrice =
-          Number(
-            discountPrice
-          ) || 0;
-      }
-
-
-      if (
-        costPrice !==
-        undefined
-      ) {
-        product.costPrice =
-          Number(
-            costPrice
-          ) || 0;
-      }
-
-
-      // ==================================================
-      // STOCK
-      // ==================================================
-
-      if (
-        stockQuantity !==
-        undefined
-      ) {
-        product.stockQuantity =
-          Number(
-            stockQuantity
-          ) || 0;
-      }
-
-
-      if (
-        lowStockAlert !==
-        undefined
-      ) {
-        product.lowStockAlert =
-          Number(
-            lowStockAlert
-          ) || 0;
-      }
-
-
-      // ==================================================
-      // TAX
-      // ==================================================
-
-      if (
-        tax !==
-        undefined
-      ) {
-        product.tax =
-          Number(tax) || 0;
-      }
-
-
-      // ==================================================
-      // OUT OF STOCK
-      // ==================================================
-
-      if (
-        isOutOfStock !==
-        undefined
-      ) {
-        product.isOutOfStock =
-          isOutOfStock ===
-            "true" ||
-          isOutOfStock ===
-            true;
-      }
-
-
-      // ==================================================
-      // STATUS
-      // ==================================================
-
-      if (
-        status !==
-        undefined
-      ) {
-        product.status =
-          status;
-      }
-
-
-      // ==================================================
-      // EXISTING IMAGES
-      // ==================================================
-
-      let existingImages =
-        product.images || [];
-
-
-      if (
-        req.body
-          .existingImages
-      ) {
-        try {
-          existingImages =
-            JSON.parse(
-              req.body
-                .existingImages
-            );
-        } catch (error) {
-          return res.status(
-            400
-          ).json({
-            success: false,
-
-            message:
-              "Invalid existingImages format.",
-          });
-        }
-      }
-
-
-      // ==================================================
-      // REMOVED IMAGES
-      // ==================================================
-
-      const removedImages =
-        (
-          product.images ||
-          []
-        ).filter(
-          (image) =>
-            !existingImages.includes(
-              image
-            )
+    }
+
+    // ==================================================
+    // DESCRIPTION
+    // ==================================================
+
+    if (
+      body.shortDescription !==
+      undefined
+    ) {
+      product.shortDescription =
+        normalizeString(
+          body.shortDescription
         );
+    }
 
+    if (
+      body.fullDescription !==
+      undefined
+    ) {
+      product.fullDescription =
+        normalizeString(
+          body.fullDescription
+        );
+    }
 
-      removedImages.forEach(
-        (image) => {
-          deleteUploadedFile(
-            image
-          );
-        }
-      );
+    // ==================================================
+    // SEO
+    // ==================================================
 
+    if (
+      body.metaTitle !==
+      undefined
+    ) {
+      product.metaTitle =
+        normalizeString(
+          body.metaTitle
+        );
+    }
 
-      // ==================================================
-      // NEW IMAGES
-      // ==================================================
+    if (
+      body.metaDescription !==
+      undefined
+    ) {
+      product.metaDescription =
+        normalizeString(
+          body.metaDescription
+        );
+    }
 
+    if (
+      body.metaKeywords !==
+      undefined
+    ) {
+      product.metaKeywords =
+        normalizeArray(
+          body.metaKeywords
+        );
+    }
+
+    // ==================================================
+    // PRICE
+    // ==================================================
+
+    if (
+      body.price !==
+      undefined
+    ) {
+      product.price =
+        parseNumber(
+          body.price
+        );
+    }
+
+    if (
+      body.sellingPrice !==
+      undefined
+    ) {
+      product.price =
+        parseNumber(
+          body.sellingPrice
+        );
+    }
+
+    if (
+      body.purchasePrice !==
+      undefined
+    ) {
+      product.purchasePrice =
+        parseNumber(
+          body.purchasePrice
+        );
+    }
+
+    if (
+      body.writtenPrice !==
+      undefined
+    ) {
+      product.writtenPrice =
+        parseNumber(
+          body.writtenPrice
+        );
+    }
+
+    if (
+      body.discountPrice !==
+      undefined
+    ) {
+      product.discountPrice =
+        parseNumber(
+          body.discountPrice
+        );
+    }
+
+    if (
+      body.costPrice !==
+      undefined
+    ) {
+      product.costPrice =
+        parseNumber(
+          body.costPrice
+        );
+    }
+
+    // ==================================================
+    // DATES
+    // ==================================================
+
+    if (
+      body.manufactureDate !==
+      undefined
+    ) {
+      product.manufactureDate =
+        parseDate(
+          body.manufactureDate
+        );
+    }
+
+    if (
+      body.expiryDate !==
+      undefined
+    ) {
+      product.expiryDate =
+        parseDate(
+          body.expiryDate
+        );
+    }
+
+    // ==================================================
+    // STOCK
+    // ==================================================
+
+    if (
+      body.stockQuantity !==
+      undefined
+    ) {
+      product.stockQuantity =
+        parseNumber(
+          body.stockQuantity
+        );
+    }
+
+    if (
+      body.stock !==
+      undefined
+    ) {
+      product.stockQuantity =
+        parseNumber(
+          body.stock
+        );
+    }
+
+    if (
+      body.lowStockAlert !==
+      undefined
+    ) {
+      product.lowStockAlert =
+        parseNumber(
+          body.lowStockAlert
+        );
+    }
+
+    // ==================================================
+    // TAX
+    // ==================================================
+
+    if (
+      body.tax !==
+      undefined
+    ) {
+      product.tax =
+        parseNumber(
+          body.tax
+        );
+    }
+
+    // ==================================================
+    // OUT OF STOCK
+    // ==================================================
+
+    if (
+      body.isOutOfStock !==
+      undefined
+    ) {
+      product.isOutOfStock =
+        parseBoolean(
+          body.isOutOfStock
+        );
+    } else if (
+      body.stockQuantity !==
+        undefined ||
+      body.stock !==
+        undefined
+    ) {
+      product.isOutOfStock =
+        product.stockQuantity <=
+        0;
+    }
+
+    // ==================================================
+    // STATUS
+    // ==================================================
+
+    if (
+      body.status !==
+      undefined
+    ) {
+      product.status =
+        normalizeStatus(
+          body.status
+        );
+    }
+
+    // ==================================================
+    // SOURCE
+    // ==================================================
+
+    if (
+      body.source ===
+        "manual" ||
+      body.source ===
+        "import"
+    ) {
+      product.source =
+        body.source;
+    }
+
+    // ==================================================
+    // NEW IMAGES
+    // ==================================================
+
+    if (
+      Array.isArray(
+        req.files
+      ) &&
+      req.files.length >
+        0
+    ) {
       const newImages =
-        req.files &&
-        Array.isArray(
-          req.files
-        )
-          ? req.files.map(
-              (file) =>
-                `/${file.path}`
-            )
-          : [];
+        req.files
+          .map(
+            (file) => {
+              if (
+                file.url
+              ) {
+                return file.url;
+              }
 
+              if (
+                file.path
+              ) {
+                return `/${String(
+                  file.path
+                ).replace(
+                  /^\/+/,
+                  ""
+                )}`;
+              }
 
-      // ==================================================
-      // MAX 5 IMAGES
-      // ==================================================
-
-      product.images = [
-        ...existingImages,
-        ...newImages,
-      ].slice(0, 5);
-
-
-      // ==================================================
-      // SAVE
-      // ==================================================
-
-      await product.save();
-
-
-      // ==================================================
-      // POPULATE
-      // ==================================================
-
-      const populatedProduct =
-        await Product.findById(
-          product._id
-        )
-
-          .populate(
-            "category",
-            "name slug"
+              return null;
+            }
           )
+          .filter(Boolean);
 
-          .populate(
-            "brand",
-            "name slug logoUrl"
+      product.images =
+        [
+          ...(Array.isArray(
+            product.images
           )
+            ? product.images
+            : []),
+          ...newImages,
+        ].slice(
+          0,
+          5
+        );
+    }
 
-          .populate(
-            "unit",
-            "name shortName slug"
-          );
+    // ==================================================
+    // SAVE
+    // ==================================================
 
+    await product.save();
 
-      // ==================================================
-      // RESPONSE
-      // ==================================================
-
-      return res.status(
-        200
-      ).json({
-        success: true,
-
-        message:
-          "Product updated successfully",
-
-        data:
-          populatedProduct,
-      });
-
-    } catch (error) {
-      console.error(
-        "Update Product Error:",
-        error
+    const updatedProduct =
+      await getPopulatedProduct(
+        product._id
       );
 
-      return res.status(
-        500
-      ).json({
+    return res.status(200).json({
+      success: true,
+
+      message:
+        "Product updated successfully.",
+
+      product:
+        updatedProduct,
+
+      data:
+        updatedProduct,
+    });
+  } catch (error) {
+    console.error(
+      "UPDATE PRODUCT ERROR:",
+      error
+    );
+
+    if (
+      error.code ===
+      11000
+    ) {
+      return res.status(409).json({
         success: false,
 
         message:
-          error.message,
+          "SKU or slug already exists.",
       });
     }
-  };
 
+    return res.status(500).json({
+      success: false,
+
+      message:
+        error.message ||
+        "Failed to update product.",
+    });
+  }
+};
 
 // ======================================================
 // DELETE PRODUCT
-// DELETE /api/products/:id
 // ======================================================
 
-exports.deleteProduct =
-  async (req, res) => {
+const deleteProduct = async (
+  req,
+  res
+) => {
+  try {
+    const product =
+      await Product.findByIdAndDelete(
+        req.params.id
+      );
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+
+        message:
+          "Product not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+
+      message:
+        "Product deleted successfully.",
+
+      product,
+    });
+  } catch (error) {
+    console.error(
+      "DELETE PRODUCT ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+
+      message:
+        "Failed to delete product.",
+
+      error:
+        error.message,
+    });
+  }
+};
+
+// ======================================================
+// PUBLISH / UNPUBLISH ONE PRODUCT
+// ======================================================
+
+const updateProductStatus =
+  async (
+    req,
+    res
+  ) => {
     try {
       const product =
         await Product.findById(
           req.params.id
         );
 
-
       if (!product) {
-        return res.status(
-          404
-        ).json({
+        return res.status(404).json({
           success: false,
 
           message:
-            "Product not found",
+            "Product not found.",
         });
       }
 
+      const requestedStatus =
+        req.body?.status;
+
+      if (
+        requestedStatus ===
+          undefined
+      ) {
+        return res.status(400).json({
+          success: false,
+
+          message:
+            "Status is required.",
+        });
+      }
+
+      product.status =
+        normalizeStatus(
+          requestedStatus
+        );
+
+      await product.save();
+
+      const updatedProduct =
+        await getPopulatedProduct(
+          product._id
+        );
+
+      return res.status(200).json({
+        success: true,
+
+        message:
+          product.status ===
+          "active"
+            ? "Product published successfully."
+            : "Product unpublished successfully.",
+
+        product:
+          updatedProduct,
+
+        data:
+          updatedProduct,
+      });
+    } catch (error) {
+      console.error(
+        "UPDATE PRODUCT STATUS ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+
+        message:
+          "Failed to update product status.",
+
+        error:
+          error.message,
+      });
+    }
+  };
+
+// ======================================================
+// BULK PUBLISH / UNPUBLISH
+// ======================================================
+
+const bulkUpdateProductStatus =
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const {
+        ids,
+        status,
+      } = req.body || {};
 
       // ==================================================
-      // DELETE PRODUCT IMAGES
+      // VALIDATE IDS
       // ==================================================
 
       if (
-        Array.isArray(
-          product.images
-        )
+        !Array.isArray(ids) ||
+        ids.length === 0
       ) {
-        product.images.forEach(
-          (image) => {
-            deleteUploadedFile(
-              image
-            );
-          }
-        );
+        return res.status(400).json({
+          success: false,
+
+          message:
+            "Please provide at least one product ID.",
+        });
       }
 
+      // ==================================================
+      // VALIDATE STATUS
+      // ==================================================
+
+      if (
+        status ===
+          undefined
+      ) {
+        return res.status(400).json({
+          success: false,
+
+          message:
+            "Status is required.",
+        });
+      }
+
+      const normalizedStatus =
+        normalizeStatus(
+          status
+        );
 
       // ==================================================
-      // DELETE PRODUCT
+      // UPDATE
       // ==================================================
 
-      await product.deleteOne();
-
+      const result =
+        await Product.updateMany(
+          {
+            _id: {
+              $in: ids,
+            },
+          },
+          {
+            $set: {
+              status:
+                normalizedStatus,
+            },
+          }
+        );
 
       // ==================================================
       // RESPONSE
       // ==================================================
 
-      return res.status(
-        200
-      ).json({
+      return res.status(200).json({
         success: true,
 
         message:
-          "Product deleted successfully",
+          normalizedStatus ===
+          "active"
+            ? "Products published successfully."
+            : "Products unpublished successfully.",
 
-        id:
-          req.params.id,
+        modifiedCount:
+          result.modifiedCount ??
+          result.nModified ??
+          0,
+
+        matchedCount:
+          result.matchedCount ??
+          result.n ??
+          0,
       });
-
     } catch (error) {
       console.error(
-        "Delete Product Error:",
+        "BULK UPDATE PRODUCT STATUS ERROR:",
         error
       );
 
-      return res.status(
-        500
-      ).json({
+      return res.status(500).json({
         success: false,
 
         message:
+          "Failed to update product statuses.",
+
+        error:
           error.message,
       });
     }
   };
+
+// ======================================================
+// PUBLISH ONE PRODUCT
+// ======================================================
+
+const publishProduct = async (
+  req,
+  res
+) => {
+  req.body = {
+    ...(req.body || {}),
+    status: "active",
+  };
+
+  return updateProductStatus(
+    req,
+    res
+  );
+};
+
+// ======================================================
+// UNPUBLISH ONE PRODUCT
+// ======================================================
+
+const unpublishProduct =
+  async (
+    req,
+    res
+  ) => {
+    req.body = {
+      ...(req.body || {}),
+      status: "inactive",
+    };
+
+    return updateProductStatus(
+      req,
+      res
+    );
+  };
+
+// ======================================================
+// BULK PUBLISH
+// ======================================================
+
+const bulkPublishProducts =
+  async (
+    req,
+    res
+  ) => {
+    req.body = {
+      ...(req.body || {}),
+      status: "active",
+    };
+
+    return bulkUpdateProductStatus(
+      req,
+      res
+    );
+  };
+
+// ======================================================
+// BULK UNPUBLISH
+// ======================================================
+
+const bulkUnpublishProducts =
+  async (
+    req,
+    res
+  ) => {
+    req.body = {
+      ...(req.body || {}),
+      status: "inactive",
+    };
+
+    return bulkUpdateProductStatus(
+      req,
+      res
+    );
+  };
+
+// ======================================================
+// EXPORTS
+// ======================================================
+
+module.exports = {
+  getAllProducts,
+
+  getProductById,
+
+  createProduct,
+
+  updateProduct,
+
+  deleteProduct,
+
+  updateProductStatus,
+
+  bulkUpdateProductStatus,
+
+  publishProduct,
+
+  unpublishProduct,
+
+  bulkPublishProducts,
+
+  bulkUnpublishProducts,
+};
