@@ -48,7 +48,6 @@ const App = () => {
         {/* Protected Admin Routes Wrapper */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
-            
             {/* Dashboard (Loaded after successful login at /dashboard) */}
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="coldlead" element={<ColdLeadManagement />} />
@@ -56,11 +55,15 @@ const App = () => {
             {/* Blog & Testimonials */}
             <Route path="blog" element={<BlogPosting />} />
             <Route path="blogmanagement" element={<BlogManagement />} />
-            <Route path="testimonialmanagement" element={<TestimonialManagement />} />
+            <Route
+              path="testimonialmanagement"
+              element={<TestimonialManagement />}
+            />
 
             {/* Products */}
             <Route path="products/all-products" element={<Allproduct />} />
             <Route path="products/add-product" element={<Addnew />} />
+            <Route path="products/add-product/:id" element={<Addnew />} />
             <Route path="products/categories" element={<Categories />} />
             <Route path="products/brands" element={<Brands />} />
             <Route path="products/units" element={<EditUnit />} />
@@ -73,18 +76,30 @@ const App = () => {
             {/* Customers */}
             <Route path="customers/reviews" element={<ReviewsManagement />} />
 
-          {/* Returns */}
-          <Route path="returns/details" element={<ReturnDetails />} />
-          <Route path="returns/inspection" element={<QualityInspection />} />
-          <Route path="returns/refund" element={<RefundDetails />} />
-          <Route path="returns/product-info" element={<ProductInformation />} />
-          <Route path="returns/replacement-details" element={<ReplacementDetails />} />
-          <Route path="returns/approval" element={<ReturnApproval />} />
-          <Route path="returns/pickup-management" element={<PickupManagement />} />
-          <Route path="returns/inventory-adjustment" element={<InventoryAdjustment />} />
-          <Route path="returns/activity-log" element={<ActivityLog />} />
-          <Route path="/import" element={<Import />} />
-          <Route path="/catagory" element={<Catagory />} />
+            {/* Returns */}
+            <Route path="returns/details" element={<ReturnDetails />} />
+            <Route path="returns/inspection" element={<QualityInspection />} />
+            <Route path="returns/refund" element={<RefundDetails />} />
+            <Route
+              path="returns/product-info"
+              element={<ProductInformation />}
+            />
+            <Route
+              path="returns/replacement-details"
+              element={<ReplacementDetails />}
+            />
+            <Route path="returns/approval" element={<ReturnApproval />} />
+            <Route
+              path="returns/pickup-management"
+              element={<PickupManagement />}
+            />
+            <Route
+              path="returns/inventory-adjustment"
+              element={<InventoryAdjustment />}
+            />
+            <Route path="returns/activity-log" element={<ActivityLog />} />
+            <Route path="/import" element={<Import />} />
+            <Route path="/catagory" element={<Catagory />} />
             {/* Marketing */}
             <Route path="marketing/banners" element={<Banners />} />
             <Route path="marketing/discounts" element={<Discounts />} />
@@ -93,13 +108,24 @@ const App = () => {
             <Route path="returns/details" element={<ReturnDetails />} />
             <Route path="returns/inspection" element={<QualityInspection />} />
             <Route path="returns/refund" element={<RefundDetails />} />
-            <Route path="returns/product-info" element={<ProductInformation />} />
-            <Route path="returns/replacement-details" element={<ReplacementDetails />} />
+            <Route
+              path="returns/product-info"
+              element={<ProductInformation />}
+            />
+            <Route
+              path="returns/replacement-details"
+              element={<ReplacementDetails />}
+            />
             <Route path="returns/approval" element={<ReturnApproval />} />
-            <Route path="returns/pickup-management" element={<PickupManagement />} />
-            <Route path="returns/inventory-adjustment" element={<InventoryAdjustment />} />
+            <Route
+              path="returns/pickup-management"
+              element={<PickupManagement />}
+            />
+            <Route
+              path="returns/inventory-adjustment"
+              element={<InventoryAdjustment />}
+            />
             <Route path="returns/activity-log" element={<ActivityLog />} />
-
           </Route>
         </Route>
 
