@@ -67,6 +67,17 @@ const importSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // =====================================================
+    // UNIT NUMBER
+    // =====================================================
+
+    unitNo: {
+      type: Number,
+      required: true,
+      min: 1,
+      default: 1,
+    },
+
     quantity: {
       type: String,
       default: "",

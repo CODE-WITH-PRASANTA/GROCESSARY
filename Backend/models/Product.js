@@ -67,11 +67,22 @@ const productSchema = new mongoose.Schema(
     },
 
     // ====================================================
+    // UNIT NO
+    // ====================================================
+
+    unitNo: {
+      type: Number,
+      required: true,
+      min: 1,
+      default: 1,
+    },
+
+    // ====================================================
     // SOURCE
     // ====================================================
+
     // manual = product created manually
     // import = product created through Excel import
-    // ====================================================
 
     source: {
       type: String,
@@ -224,9 +235,9 @@ const productSchema = new mongoose.Schema(
     // ====================================================
     // PRODUCT IMAGES
     // ====================================================
+
     // Both manual and imported products use
     // the same image format.
-    // ====================================================
 
     images: {
       type: [String],
@@ -258,11 +269,17 @@ productSchema.index({
   unit: 1,
 });
 
+// Optional index for Unit No
+productSchema.index({
+  unitNo: 1,
+});
+
 productSchema.index({
   status: 1,
 });
 
 // IMPORTANT FOR IMPORTED PRODUCTS
+
 productSchema.index({
   source: 1,
 });

@@ -11,7 +11,7 @@ const ProductDetails = () => {
   return (
     <div>
       <ProductDetailsVegetables productId={id} />
-      <ProductDetailsDiscounts />
+      {/* <ProductDetailsDiscounts /> */}
       <ProductDetailsTestimonials />
     </div>
   );

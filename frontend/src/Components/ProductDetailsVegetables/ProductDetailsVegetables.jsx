@@ -142,12 +142,7 @@ const ShareIcon = () => (
 );
 
 const CheckBadge = () => (
-  <svg
-    width="17"
-    height="17"
-    viewBox="0 0 24 24"
-    fill="#2eb5a2"
-  >
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="#2eb5a2">
     <rect width="20" height="20" x="2" y="2" rx="4" />
     <polyline
       points="7 12 10 15 17 8"
@@ -182,18 +177,38 @@ const UserPlaceholder = () => (
 
 const ProductDetailsVegetables = ({ productId }) => {
   const [product, setProduct] = useState(null);
-
   const [activeImage, setActiveImage] = useState(0);
-
   const [selectedSize, setSelectedSize] = useState("1 KG");
-
   const [quantity, setQuantity] = useState(1);
-
   const [isWishlisted, setIsWishlisted] = useState(false);
-
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
+
+  const [isReviewPopupOpen, setIsReviewPopupOpen] = useState(false);
+
+  const [reviewRating, setReviewRating] = useState(5);
+
+  const [reviewTitle, setReviewTitle] = useState("");
+
+  const [reviewMessage, setReviewMessage] = useState("");
+
+  const [reviewImage, setReviewImage] = useState(null);
+
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+
+  const [reviews, setReviews] = useState([]);
+  const [reviewSummary, setReviewSummary] = useState({
+    totalReviews: 0,
+    averageRating: 0,
+    ratingBreakdown: {
+      5: 0,
+      4: 0,
+      3: 0,
+      2: 0,
+      1: 0,
+    },
+  });
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   // ====================================================
   // FETCH PRODUCT BY ID
@@ -211,53 +226,29 @@ const ProductDetailsVegetables = ({ productId }) => {
         setLoading(true);
         setError("");
 
-        console.log(
-          "FETCHING PRODUCT:",
-          `${API_BASE_URL}/api/products/${productId}`
-        );
-
         const response = await fetch(
-          `${API_BASE_URL}/api/products/${productId}`
+          `${API_BASE_URL}/api/products/${productId}`,
         );
 
         const result = await response.json();
 
-        console.log(
-          "PRODUCT DETAILS API RESPONSE:",
-          result
-        );
-
         if (!response.ok) {
-          throw new Error(
-            result?.message ||
-              "Failed to fetch product."
-          );
+          throw new Error(result?.message || "Failed to fetch product.");
         }
 
-        const productData =
-          result?.product ||
-          result?.data ||
-          result;
+        const productData = result?.product || result?.data || result;
 
         if (!productData?._id) {
-          throw new Error(
-            "Product not found."
-          );
+          throw new Error("Product not found.");
         }
 
         setProduct(productData);
 
         setActiveImage(0);
       } catch (err) {
-        console.error(
-          "Product details fetch error:",
-          err
-        );
+        console.error("Product details fetch error:", err);
 
-        setError(
-          err?.message ||
-            "Failed to load product."
-        );
+        setError(err?.message || "Failed to load product.");
       } finally {
         setLoading(false);
       }
@@ -277,11 +268,7 @@ const ProductDetailsVegetables = ({ productId }) => {
 
     // Object image support
     if (typeof image === "object") {
-      const objectImage =
-        image?.url ||
-        image?.path ||
-        image?.secure_url ||
-        "";
+      const objectImage = image?.url || image?.path || image?.secure_url || "";
 
       if (!objectImage) {
         return "";
@@ -290,16 +277,11 @@ const ProductDetailsVegetables = ({ productId }) => {
       image = objectImage;
     }
 
-    if (
-      image.startsWith("http://") ||
-      image.startsWith("https://")
-    ) {
+    if (image.startsWith("http://") || image.startsWith("https://")) {
       return image;
     }
 
-    return `${API_BASE_URL}${
-      image.startsWith("/") ? "" : "/"
-    }${image}`;
+    return `${API_BASE_URL}${image.startsWith("/") ? "" : "/"}${image}`;
   };
 
   // ====================================================
@@ -307,11 +289,8 @@ const ProductDetailsVegetables = ({ productId }) => {
   // ====================================================
 
   const productImages =
-    Array.isArray(product?.images) &&
-    product.images.length > 0
-      ? product.images
-          .map((image) => getImageUrl(image))
-          .filter(Boolean)
+    Array.isArray(product?.images) && product.images.length > 0
+      ? product.images.map((image) => getImageUrl(image)).filter(Boolean)
       : fallbackProductImages;
 
   // ====================================================
@@ -319,9 +298,7 @@ const ProductDetailsVegetables = ({ productId }) => {
   // ====================================================
 
   useEffect(() => {
-    if (
-      activeImage >= productImages.length
-    ) {
+    if (activeImage >= productImages.length) {
       setActiveImage(0);
     }
   }, [productImages.length, activeImage]);
@@ -332,17 +309,13 @@ const ProductDetailsVegetables = ({ productId }) => {
 
   const handlePrevImage = () => {
     setActiveImage((prev) =>
-      prev === 0
-        ? productImages.length - 1
-        : prev - 1
+      prev === 0 ? productImages.length - 1 : prev - 1,
     );
   };
 
   const handleNextImage = () => {
     setActiveImage((prev) =>
-      prev === productImages.length - 1
-        ? 0
-        : prev + 1
+      prev === productImages.length - 1 ? 0 : prev + 1,
     );
   };
 
@@ -370,34 +343,29 @@ const ProductDetailsVegetables = ({ productId }) => {
 
   const unitName =
     typeof product?.unit === "object"
-      ? product?.unit?.name ||
-        product?.unit?.symbol ||
-        ""
+      ? product?.unit?.name || product?.unit?.symbol || ""
       : product?.unit || "";
 
   // ====================================================
   // PRICE
   // ====================================================
 
-  const price = Number(
-    product?.price || 0
-  );
+  const price = Number(product?.price || 0);
 
-  const writtenPrice = Number(
-    product?.writtenPrice || 0
-  );
+  // ====================================================
+  // TOTAL PRICE
+  // ====================================================
 
-  const discountPrice = Number(
-    product?.discountPrice || 0
-  );
+  const writtenPrice = Number(product?.writtenPrice || 0);
+
+  const discountPrice = Number(product?.discountPrice || 0);
+  const totalPrice = price * quantity;
 
   // ====================================================
   // STOCK
   // ====================================================
 
-  const stockQuantity = Number(
-    product?.stockQuantity || 0
-  );
+  const stockQuantity = Number(product?.stockQuantity || 0);
 
   // ====================================================
   // DISCOUNT %
@@ -405,17 +373,378 @@ const ProductDetailsVegetables = ({ productId }) => {
 
   let discountPercent = 0;
 
-  if (
-    writtenPrice > price &&
-    writtenPrice > 0
-  ) {
-    discountPercent = Math.round(
-      ((writtenPrice - price) /
-        writtenPrice) *
-        100
-    );
+  if (writtenPrice > price && writtenPrice > 0) {
+    discountPercent = Math.round(((writtenPrice - price) / writtenPrice) * 100);
   }
 
+  const handleAddToCart = async () => {
+    try {
+      // ==========================================
+      // CHECK LOGIN
+      // ==========================================
+
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("Please login first to add products to cart.");
+        return;
+      }
+
+      // ==========================================
+      // CHECK PRODUCT
+      // ==========================================
+
+      if (!product?._id) {
+        alert("Product information is missing.");
+        return;
+      }
+
+      // ==========================================
+      // CHECK QUANTITY
+      // ==========================================
+
+      if (quantity < 1) {
+        alert("Please select a valid quantity.");
+        return;
+      }
+
+      // ==========================================
+      // CHECK STOCK
+      // ==========================================
+
+      if (stockQuantity <= 0) {
+        alert("Product is out of stock.");
+        return;
+      }
+
+      if (quantity > stockQuantity) {
+        alert(`Only ${stockQuantity} item(s) available in stock.`);
+        return;
+      }
+
+      // ==========================================
+      // API REQUEST
+      // ==========================================
+
+      const response = await fetch(`${API_BASE_URL}/api/cart/add`, {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+
+        body: JSON.stringify({
+          productId: product._id,
+          quantity: quantity,
+        }),
+      });
+
+      const result = await response.json();
+
+      console.log("ADD TO CART RESPONSE:", result);
+
+      // ==========================================
+      // API ERROR
+      // ==========================================
+
+      if (!response.ok) {
+        throw new Error(result?.message || "Failed to add product to cart.");
+      }
+
+      // ==========================================
+      // SUCCESS
+      // ==========================================
+
+      alert(result?.message || "Product added to cart successfully.");
+    } catch (error) {
+      console.error("Add to cart error:", error);
+
+      alert(error?.message || "Unable to add product to cart.");
+    }
+  };
+
+  // ====================================================
+  // OPEN REVIEW POPUP
+  // ====================================================
+
+  const handleOpenReviewPopup = () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Please login first to write a review.");
+      return;
+    }
+
+    setReviewRating(5);
+    setReviewTitle("");
+    setReviewMessage("");
+    setReviewImage(null);
+    setIsReviewPopupOpen(true);
+  };
+
+  // ====================================================
+  // CLOSE REVIEW POPUP
+  // ====================================================
+
+  const handleCloseReviewPopup = () => {
+    if (reviewSubmitting) {
+      return;
+    }
+
+    setIsReviewPopupOpen(false);
+  };
+
+  // ====================================================
+  // SELECT REVIEW IMAGE
+  // ====================================================
+
+  const handleReviewImageChange = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size must be less than 5MB.");
+      return;
+    }
+
+    setReviewImage(file);
+  };
+
+  // ====================================================
+  // SUBMIT REVIEW
+  // ====================================================
+
+  // ======================================================
+  // FETCH PRODUCT REVIEWS
+  // ======================================================
+
+  const fetchReviews = async () => {
+    try {
+      if (!product?._id) return;
+
+      setReviewsLoading(true);
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/reviews/product/${product._id}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result?.message || "Failed to fetch reviews.");
+      }
+
+      setReviews(Array.isArray(result?.reviews) ? result.reviews : []);
+
+      setReviewSummary({
+        totalReviews: Number(result?.summary?.totalReviews || 0),
+
+        averageRating: Number(result?.summary?.averageRating || 0),
+
+        ratingBreakdown: result?.summary?.ratingBreakdown || {
+          5: 0,
+          4: 0,
+          3: 0,
+          2: 0,
+          1: 0,
+        },
+      });
+    } catch (error) {
+      console.error("Fetch reviews error:", error);
+
+      setReviews([]);
+      setReviewSummary({
+        totalReviews: 0,
+        averageRating: 0,
+        ratingBreakdown: {
+          5: 0,
+          4: 0,
+          3: 0,
+          2: 0,
+          1: 0,
+        },
+      });
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (product?._id) {
+      fetchReviews();
+    }
+  }, [product?._id]);
+
+  const handleSubmitReview = async (event) => {
+    event.preventDefault();
+
+    try {
+      const token = localStorage.getItem("token");
+
+      // ======================================================
+      // LOGIN CHECK
+      // ======================================================
+
+      if (!token) {
+        alert("Please login first to submit a review.");
+        return;
+      }
+
+      // ======================================================
+      // PRODUCT CHECK
+      // ======================================================
+
+      if (!product?._id) {
+        alert("Product information is missing.");
+        return;
+      }
+
+      // ======================================================
+      // RATING
+      // ======================================================
+
+      const rating = Number(reviewRating);
+
+      if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+        alert("Please select a rating between 1 and 5.");
+        return;
+      }
+
+      // ======================================================
+      // TITLE
+      // ======================================================
+
+      const title = reviewTitle.trim();
+
+      if (!title) {
+        alert("Please enter a review title.");
+        return;
+      }
+
+      // ======================================================
+      // COMMENT
+      // ======================================================
+
+      const comment = reviewMessage.trim();
+
+      if (!comment) {
+        alert("Please write your review.");
+        return;
+      }
+
+      // ======================================================
+      // START LOADING
+      // ======================================================
+
+      setReviewSubmitting(true);
+
+      // ======================================================
+      // JSON BODY
+      // ======================================================
+
+      const requestBody = {
+        productId: product._id,
+        rating,
+        title,
+        comment,
+      };
+
+      console.log("REVIEW REQUEST:", requestBody);
+
+      // ======================================================
+      // API
+      // ======================================================
+
+      const response = await fetch(`${API_BASE_URL}/api/reviews`, {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+
+          Accept: "application/json",
+
+          Authorization: `Bearer ${token}`,
+        },
+
+        body: JSON.stringify(requestBody),
+      });
+
+      // ======================================================
+      // RESPONSE
+      // ======================================================
+
+      const contentType = response.headers.get("content-type");
+
+      let result = {};
+
+      if (contentType && contentType.includes("application/json")) {
+        result = await response.json();
+      } else {
+        const text = await response.text();
+
+        console.error("Review API non-JSON response:", text);
+
+        throw new Error("Invalid response from review API.");
+      }
+
+      // ======================================================
+      // ERROR
+      // ======================================================
+
+      if (!response.ok) {
+        throw new Error(result?.message || "Failed to submit review.");
+      }
+
+      // ======================================================
+      // SUCCESS
+      // ======================================================
+
+      alert(result?.message || "Review submitted successfully.");
+
+      // ======================================================
+      // CLOSE POPUP
+      // ======================================================
+
+      setIsReviewPopupOpen(false);
+
+      // ======================================================
+      // RESET FORM
+      // ======================================================
+
+      setReviewRating(5);
+
+      setReviewTitle("");
+
+      setReviewMessage("");
+
+      // ======================================================
+      // REFRESH REVIEWS
+      // ======================================================
+
+      await fetchReviews();
+    } catch (error) {
+      console.error("Submit review error:", error);
+
+      alert(error?.message || "Unable to submit review.");
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
   // ====================================================
   // LOADING
   // ====================================================
@@ -438,9 +767,7 @@ const ProductDetailsVegetables = ({ productId }) => {
     return (
       <div className="pdv">
         <div className="pdv__container">
-          <p>
-            {error || "Product not found."}
-          </p>
+          <p>{error || "Product not found."}</p>
         </div>
       </div>
     );
@@ -453,49 +780,34 @@ const ProductDetailsVegetables = ({ productId }) => {
   return (
     <div className="pdv">
       <div className="pdv__container">
-
         {/* ==================================================
             TOP HEADER NAVIGATION
         ================================================== */}
 
         <header className="pdv__top-bar">
-
           <button
             className="pdv__back-link"
             type="button"
-            onClick={() =>
-              window.history.back()
-            }
+            onClick={() => window.history.back()}
           >
             <span className="pdv__back-circle">
               <ArrowLeft />
             </span>
 
-            <span>
-              Back to category
-            </span>
+            <span>Back to category</span>
           </button>
 
           <button
             className={`pdv__wishlist-btn ${
-              isWishlisted
-                ? "pdv__wishlist-btn--active"
-                : ""
+              isWishlisted ? "pdv__wishlist-btn--active" : ""
             }`}
-            onClick={() =>
-              setIsWishlisted(
-                !isWishlisted
-              )
-            }
+            onClick={() => setIsWishlisted(!isWishlisted)}
             type="button"
           >
-            <span>
-              Add to wishlist
-            </span>
+            <span>Add to wishlist</span>
 
             <HeartIcon />
           </button>
-
         </header>
 
         {/* ==================================================
@@ -503,104 +815,47 @@ const ProductDetailsVegetables = ({ productId }) => {
         ================================================== */}
 
         <div className="pdv__product-grid">
-
           {/* ==================================================
               COLUMN 1: INFO & CONTROLS
           ================================================== */}
 
           <section className="pdv__col pdv__col--info">
-
-            <span className="pdv__badge">
-              {categoryName}
-            </span>
+            <span className="pdv__badge">{categoryName}</span>
 
             <h1 className="pdv__title">
-              {product?.productName ||
-                product?.name ||
-                "Product"}
+              {product?.productName || product?.name || "Product"}
             </h1>
 
-            <span className="pdv__category-sub">
-              {categoryName}
-            </span>
+            <span className="pdv__category-sub">{categoryName}</span>
 
             {/* ==================================================
                 SIZE
             ================================================== */}
-
-            <div className="pdv__option-group">
-
-              <div className="pdv__option-label">
-                Size: {selectedSize}
-              </div>
-
-              <div className="pdv__size-buttons">
-
-                {["1 KG", "2 KG"].map(
-                  (size) => (
-                    <button
-                      key={size}
-                      type="button"
-                      className={`pdv__size-btn ${
-                        selectedSize === size
-                          ? "pdv__size-btn--active"
-                          : ""
-                      }`}
-                      onClick={() =>
-                        setSelectedSize(size)
-                      }
-                    >
-                      {size}
-                    </button>
-                  )
-                )}
-
-              </div>
-
-            </div>
 
             {/* ==================================================
                 QUANTITY
             ================================================== */}
 
             <div className="pdv__option-group">
-
-              <div className="pdv__option-label">
-                Quantity :
-              </div>
+              <div className="pdv__option-label">Quantity :</div>
 
               <div className="pdv__qty-control">
-
                 <button
                   type="button"
-                  onClick={() =>
-                    setQuantity((q) =>
-                      Math.max(
-                        1,
-                        q - 1
-                      )
-                    )
-                  }
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   aria-label="Decrease quantity"
                 >
                   −
                 </button>
 
-                <span className="pdv__qty-value">
-                  {quantity}
-                </span>
+                <span className="pdv__qty-value">{quantity}</span>
 
                 <button
                   type="button"
                   onClick={() =>
                     setQuantity((q) => {
-                      if (
-                        stockQuantity > 0
-                      ) {
-                        return Math.min(
-                          q + 1,
-                          stockQuantity
-                        );
+                      if (stockQuantity > 0) {
+                        return Math.min(q + 1, stockQuantity);
                       }
 
                       return q + 1;
@@ -610,9 +865,7 @@ const ProductDetailsVegetables = ({ productId }) => {
                 >
                   +
                 </button>
-
               </div>
-
             </div>
 
             {/* ==================================================
@@ -620,23 +873,16 @@ const ProductDetailsVegetables = ({ productId }) => {
             ================================================== */}
 
             <div className="pdv__price-tag">
-
-              ₹{price.toFixed(2)}
-
-              {writtenPrice >
-                price &&
-                writtenPrice > 0 && (
-                  <>
-                    {" "}
-                    <del>
-                      ₹
-                      {writtenPrice.toFixed(
-                        2
-                      )}
-                    </del>
-                  </>
-                )}
-
+              ₹{totalPrice.toFixed(2)}
+              {quantity > 1 && (
+                <span> {/* ({quantity} × ₹{price.toFixed(2)}) */}</span>
+              )}
+              {writtenPrice > price && writtenPrice > 0 && (
+                <>
+                  {" "}
+                  <del>₹{(writtenPrice * quantity).toFixed(2)}</del>
+                </>
+              )}
             </div>
 
             {/* ==================================================
@@ -644,29 +890,19 @@ const ProductDetailsVegetables = ({ productId }) => {
             ================================================== */}
 
             <div className="pdv__actions-stack">
-
               <button
                 className="pdv__btn-add-cart"
                 type="button"
+                onClick={handleAddToCart}
               >
-                <span>
-                  Add to Cart
-                </span>
-
-                <span className="pdv__btn-chevron">
-                  ›
-                </span>
+                <span>Add to Cart</span>
+                <span className="pdv__btn-chevron">›</span>
               </button>
 
-              <button
-                className="pdv__btn-buy-now"
-                type="button"
-              >
+              <button className="pdv__btn-buy-now" type="button">
                 Buy it now
               </button>
-
             </div>
-
           </section>
 
           {/* ==================================================
@@ -674,76 +910,49 @@ const ProductDetailsVegetables = ({ productId }) => {
           ================================================== */}
 
           <section className="pdv__col pdv__col--gallery">
-
             <div className="pdv__main-image-wrap">
-
               <img
-                src={
-                  productImages[
-                    activeImage
-                  ]
-                }
-                alt={
-                  product?.productName ||
-                  "Product"
-                }
+                src={productImages[activeImage]}
+                alt={product?.productName || "Product"}
                 className="pdv__main-image"
                 onError={(e) => {
-                  e.currentTarget.src =
-                    fallbackProductImages[0];
+                  e.currentTarget.src = fallbackProductImages[0];
                 }}
               />
-
             </div>
 
             <div className="pdv__gallery-footer">
-
               <div className="pdv__thumbnails">
-
-                {productImages.map(
-                  (img, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      className={`pdv__thumb-btn ${
-                        activeImage === idx
-                          ? "pdv__thumb-btn--active"
-                          : ""
+                {productImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className={`pdv__thumb-btn ${
+                      activeImage === idx ? "pdv__thumb-btn--active" : ""
+                    }`}
+                    onClick={() => setActiveImage(idx)}
+                  >
+                    <img
+                      src={img}
+                      alt={`${product?.productName || "Product"} thumbnail ${
+                        idx + 1
                       }`}
-                      onClick={() =>
-                        setActiveImage(idx)
-                      }
-                    >
-                      <img
-                        src={img}
-                        alt={`${
-                          product?.productName ||
-                          "Product"
-                        } thumbnail ${
-                          idx + 1
-                        }`}
-                        onError={(e) => {
-                          e.currentTarget.src =
-                            fallbackProductImages[
-                              idx %
-                                fallbackProductImages.length
-                            ];
-                        }}
-                      />
-                    </button>
-                  )
-                )}
-
+                      onError={(e) => {
+                        e.currentTarget.src =
+                          fallbackProductImages[
+                            idx % fallbackProductImages.length
+                          ];
+                      }}
+                    />
+                  </button>
+                ))}
               </div>
 
               <div className="pdv__carousel-controls">
-
                 <button
                   type="button"
                   className="pdv__nav-btn"
-                  onClick={
-                    handlePrevImage
-                  }
+                  onClick={handlePrevImage}
                   aria-label="Previous image"
                 >
                   ‹
@@ -752,22 +961,15 @@ const ProductDetailsVegetables = ({ productId }) => {
                 <button
                   type="button"
                   className="pdv__nav-btn pdv__nav-btn--muted"
-                  onClick={
-                    handleNextImage
-                  }
+                  onClick={handleNextImage}
                   aria-label="Next image"
                 >
                   ›
                 </button>
 
-                <span className="pdv__slider-text">
-                  Slide slider
-                </span>
-
+                <span className="pdv__slider-text">Slide slider</span>
               </div>
-
             </div>
-
           </section>
 
           {/* ==================================================
@@ -775,100 +977,66 @@ const ProductDetailsVegetables = ({ productId }) => {
           ================================================== */}
 
           <section className="pdv__col pdv__col--meta">
-
             <div className="pdv__rating-header">
-
               <div className="pdv__star-rating">
-                <StarFilled />
-                <StarFilled />
-                <StarFilled />
-                <StarFilled />
-                <StarOutline />
+                {[1, 2, 3, 4, 5].map((star) =>
+                  star <= Math.round(reviewSummary.averageRating) ? (
+                    <StarFilled key={star} />
+                  ) : (
+                    <StarOutline key={star} />
+                  ),
+                )}
               </div>
 
-              <button
-                className="pdv__link-action"
-                type="button"
-              >
-                <PencilIcon />
-
-                <span>
-                  Write a Review
-                </span>
-              </button>
-
+              <span className="pdv__score-val">
+                {Number(reviewSummary.averageRating || 0).toFixed(1)} out of 5
+              </span>
             </div>
 
             {/* ==================================================
-                DESCRIPTION
-            ================================================== */}
+      DESCRIPTION
+  ================================================== */}
 
             <div className="pdv__meta-section">
-
-              <h2 className="pdv__section-heading">
-                Description:
-              </h2>
+              <h2 className="pdv__section-heading">Description:</h2>
 
               <p className="pdv__desc-text">
                 {product?.fullDescription ||
                   product?.shortDescription ||
                   "No description available."}
               </p>
-
             </div>
 
             {/* ==================================================
-                ABOUT PRODUCT
-            ================================================== */}
+      ABOUT PRODUCT
+  ================================================== */}
 
             <div className="pdv__meta-section">
-
-              <h2 className="pdv__section-heading">
-                About Product:
-              </h2>
+              <h2 className="pdv__section-heading">About Product:</h2>
 
               {/* SKU */}
 
               <div className="pdv__spec-item">
+                <span className="pdv__spec-label">SKU:</span>
 
-                <span className="pdv__spec-label">
-                  SKU:
-                </span>
-
-                <span className="pdv__spec-val">
-                  {product?.sku ||
-                    "N/A"}
-                </span>
-
+                <span className="pdv__spec-val">{product?.sku || "N/A"}</span>
               </div>
 
               {/* CATEGORY */}
 
               <div className="pdv__spec-item">
+                <span className="pdv__spec-label">Category:</span>
 
-                <span className="pdv__spec-label">
-                  Category:
-                </span>
-
-                <span className="pdv__spec-val">
-                  {categoryName}
-                </span>
-
+                <span className="pdv__spec-val">{categoryName}</span>
               </div>
 
               {/* BRAND */}
 
               {brandName && (
                 <div className="pdv__spec-item">
+                  <span className="pdv__spec-label">Brand:</span>
 
-                  <span className="pdv__spec-label">
-                    Brand:
-                  </span>
-
-                  <span className="pdv__spec-val">
-                    {brandName}
-                  </span>
-
+                  <span className="pdv__spec-val">{brandName}</span>
                 </div>
               )}
 
@@ -876,48 +1044,29 @@ const ProductDetailsVegetables = ({ productId }) => {
 
               {unitName && (
                 <div className="pdv__spec-item">
+                  <span className="pdv__spec-label">Unit:</span>
 
-                  <span className="pdv__spec-label">
-                    Unit:
-                  </span>
-
-                  <span className="pdv__spec-val">
-                    {unitName}
-                  </span>
-
+                  <span className="pdv__spec-val">{unitName}</span>
                 </div>
               )}
 
               {/* STOCK */}
 
               <div className="pdv__spec-item">
+                <span className="pdv__spec-label">Stock:</span>
 
-                <span className="pdv__spec-label">
-                  Stock:
-                </span>
-
-                <span className="pdv__spec-val">
-                  {stockQuantity}
-                </span>
-
+                <span className="pdv__spec-val">{stockQuantity}</span>
               </div>
 
               {/* MRP */}
 
               {writtenPrice > 0 && (
                 <div className="pdv__spec-item">
-
-                  <span className="pdv__spec-label">
-                    MRP:
-                  </span>
+                  <span className="pdv__spec-label">MRP:</span>
 
                   <span className="pdv__spec-val">
-                    ₹
-                    {writtenPrice.toFixed(
-                      2
-                    )}
+                    ₹{writtenPrice.toFixed(2)}
                   </span>
-
                 </div>
               )}
 
@@ -925,35 +1074,21 @@ const ProductDetailsVegetables = ({ productId }) => {
 
               {discountPercent > 0 && (
                 <div className="pdv__spec-item">
+                  <span className="pdv__spec-label">Discount:</span>
 
-                  <span className="pdv__spec-label">
-                    Discount:
-                  </span>
-
-                  <span className="pdv__spec-val">
-                    {discountPercent}%
-                  </span>
-
+                  <span className="pdv__spec-val">{discountPercent}%</span>
                 </div>
               )}
-
             </div>
 
             {/* ==================================================
-                FOOTER ACTIONS
-            ================================================== */}
+      FOOTER ACTIONS
+  ================================================== */}
 
             <div className="pdv__footer-actions">
-
-              <button
-                className="pdv__link-action"
-                type="button"
-              >
+              <button className="pdv__link-action" type="button">
                 <ScissorsIcon />
-
-                <span>
-                  See Sizing Guide
-                </span>
+                <span>See Sizing Guide</span>
               </button>
 
               <button
@@ -961,227 +1096,379 @@ const ProductDetailsVegetables = ({ productId }) => {
                 type="button"
                 onClick={async () => {
                   try {
-                    await navigator.clipboard.writeText(
-                      window.location.href
-                    );
+                    await navigator.clipboard.writeText(window.location.href);
                   } catch (error) {
-                    console.error(
-                      "Share failed:",
-                      error
-                    );
+                    console.error("Share failed:", error);
                   }
                 }}
               >
                 <ShareIcon />
-
-                <span>
-                  Share
-                </span>
+                <span>Share</span>
               </button>
-
             </div>
-
           </section>
-
         </div>
 
         {/* ==================================================
             CUSTOMER REVIEWS
         ================================================== */}
 
-        <section className="pdv__reviews-wrapper">
+        {/* ======================================================
+    CUSTOMER REVIEWS
+====================================================== */}
 
-          <h2 className="pdv__reviews-title">
-            Customer Reviews
-          </h2>
+        <section className="pdv__reviews-wrapper">
+          <h2 className="pdv__reviews-title">Customer Reviews</h2>
 
           <div className="pdv__reviews-summary-card">
-
             {/* ==================================================
-                LEFT SCORE BLOCK
-            ================================================== */}
+        LEFT SCORE BLOCK
+    ================================================== */}
 
             <div className="pdv__score-summary">
-
               <div className="pdv__score-stars-row">
-
                 <div className="pdv__star-rating">
-                  <StarFilled />
-                  <StarFilled />
-                  <StarFilled />
-                  <StarFilled />
-                  <StarOutline />
+                  {[1, 2, 3, 4, 5].map((star) =>
+                    star <= Math.round(reviewSummary.averageRating) ? (
+                      <StarFilled key={star} />
+                    ) : (
+                      <StarOutline key={star} />
+                    ),
+                  )}
                 </div>
 
                 <span className="pdv__score-val">
-                  4.00 out of 5
+                  {reviewSummary.averageRating.toFixed(2)} out of 5
                 </span>
-
               </div>
 
               <div className="pdv__verified-row">
-
                 <span>
-                  Based on 1 review
+                  Based on {reviewSummary.totalReviews}{" "}
+                  {reviewSummary.totalReviews === 1 ? "review" : "reviews"}
                 </span>
 
                 <CheckBadge />
-
               </div>
-
             </div>
 
             {/* ==================================================
-                MIDDLE RATING DISTRIBUTION
-            ================================================== */}
+        MIDDLE RATING DISTRIBUTION
+    ================================================== */}
 
             <div className="pdv__rating-breakdown">
+              {[5, 4, 3, 2, 1].map((stars) => {
+                const count = Number(
+                  reviewSummary.ratingBreakdown?.[stars] || 0,
+                );
 
-              {[
-                {
-                  stars: 5,
-                  filled: 5,
-                  count: 0,
-                  percent: 0,
-                },
-                {
-                  stars: 4,
-                  filled: 4,
-                  count: 1,
-                  percent: 100,
-                },
-                {
-                  stars: 3,
-                  filled: 3,
-                  count: 0,
-                  percent: 0,
-                },
-                {
-                  stars: 2,
-                  filled: 2,
-                  count: 0,
-                  percent: 0,
-                },
-                {
-                  stars: 1,
-                  filled: 1,
-                  count: 0,
-                  percent: 0,
-                },
-              ].map((row) => (
+                const total = reviewSummary.totalReviews;
 
-                <div
-                  className="pdv__bar-row"
-                  key={row.stars}
-                >
+                const percent = total > 0 ? (count / total) * 100 : 0;
 
-                  <div className="pdv__bar-stars">
-
-                    {[...Array(5)].map(
-                      (_, i) =>
-                        i < row.filled ? (
-                          <StarFilled
-                            key={i}
-                          />
+                return (
+                  <div className="pdv__bar-row" key={stars}>
+                    <div className="pdv__bar-stars">
+                      {[...Array(5)].map((_, i) =>
+                        i < stars ? (
+                          <StarFilled key={i} />
                         ) : (
-                          <StarOutline
-                            key={i}
-                          />
-                        )
-                    )}
+                          <StarOutline key={i} />
+                        ),
+                      )}
+                    </div>
 
+                    <div className="pdv__progress-track">
+                      <div
+                        className="pdv__progress-fill"
+                        style={{
+                          width: `${percent}%`,
+                        }}
+                      />
+                    </div>
+
+                    <span className="pdv__bar-count">{count}</span>
                   </div>
-
-                  <div className="pdv__progress-track">
-
-                    <div
-                      className="pdv__progress-fill"
-                      style={{
-                        width: `${row.percent}%`,
-                      }}
-                    />
-
-                  </div>
-
-                  <span className="pdv__bar-count">
-                    {row.count}
-                  </span>
-
-                </div>
-
-              ))}
-
+                );
+              })}
             </div>
 
             {/* ==================================================
-                RIGHT REVIEW CTA
-            ================================================== */}
+        RIGHT REVIEW CTA
+    ================================================== */}
 
             <div className="pdv__review-cta-wrap">
-
               <button
                 className="pdv__btn-review"
                 type="button"
+                onClick={handleOpenReviewPopup}
               >
                 Write a review
               </button>
-
             </div>
-
           </div>
 
           {/* ==================================================
-              REVIEW LIST CARD
-          ================================================== */}
+      REVIEW LIST
+  ================================================== */}
 
           <div className="pdv__review-card-wrap">
+            {reviewsLoading ? (
+              <article className="pdv__review-card">
+                <p className="pdv__review-body">Loading reviews...</p>
+              </article>
+            ) : reviews.length === 0 ? (
+              <article className="pdv__review-card">
+                <div className="pdv__reviewer-profile">
+                  <div className="pdv__reviewer-avatar">
+                    <UserPlaceholder />
+                  </div>
 
-            <article className="pdv__review-card">
-
-              <div className="pdv__review-card-head">
-
-                <div className="pdv__star-rating">
-                  <StarFilled />
-                  <StarFilled />
-                  <StarFilled />
-                  <StarFilled />
-                  <StarOutline />
+                  <span className="pdv__reviewer-name">No reviews yet</span>
                 </div>
 
-                <time className="pdv__review-date">
-                  04/25/2024
-                </time>
+                <h3 className="pdv__review-headline">
+                  Be the first to review this product
+                </h3>
 
-              </div>
+                <p className="pdv__review-body">
+                  Share your experience and help other customers make a better
+                  choice.
+                </p>
+              </article>
+            ) : (
+              reviews.map((review) => {
+                const reviewerName =
+                  review?.user?.name ||
+                  review?.user?.fullName ||
+                  review?.user?.username ||
+                  review?.user?.email?.split("@")[0] ||
+                  "Customer";
 
-              <div className="pdv__reviewer-profile">
+                const reviewDate = review?.createdAt
+                  ? new Date(review.createdAt).toLocaleDateString("en-IN", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })
+                  : "";
 
-                <div className="pdv__reviewer-avatar">
-                  <UserPlaceholder />
-                </div>
+                const rating = Number(review?.rating || 0);
 
-                <span className="pdv__reviewer-name">
-                  K.M.
+                return (
+                  <article className="pdv__review-card" key={review._id}>
+                    {/* REVIEW HEADER */}
+
+                    <div className="pdv__review-card-head">
+                      <div className="pdv__star-rating">
+                        {[1, 2, 3, 4, 5].map((star) =>
+                          star <= rating ? (
+                            <StarFilled key={star} />
+                          ) : (
+                            <StarOutline key={star} />
+                          ),
+                        )}
+                      </div>
+
+                      <time
+                        className="pdv__review-date"
+                        dateTime={review?.createdAt}
+                      >
+                        {reviewDate}
+                      </time>
+                    </div>
+
+                    {/* REVIEWER */}
+
+                    <div className="pdv__reviewer-profile">
+                      <div className="pdv__reviewer-avatar">
+                        <UserPlaceholder />
+                      </div>
+
+                      <span className="pdv__reviewer-name">{reviewerName}</span>
+
+                      {review?.verifiedPurchase && (
+                        <span className="pdv__verified-review">
+                          Verified Purchase
+                        </span>
+                      )}
+                    </div>
+
+                    {/* REVIEW TITLE */}
+
+                    <h3 className="pdv__review-headline">
+                      {review?.title || "Customer Review"}
+                    </h3>
+
+                    {/* REVIEW COMMENT */}
+
+                    <p className="pdv__review-body">{review?.comment || ""}</p>
+                  </article>
+                );
+              })
+            )}
+          </div>
+        </section>
+      </div>
+
+      {/* ======================================================
+    WRITE REVIEW POPUP
+====================================================== */}
+
+      {isReviewPopupOpen && (
+        <div
+          className="pdv__review-modal-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              handleCloseReviewPopup();
+            }
+          }}
+        >
+          <div
+            className="pdv__review-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="review-modal-title"
+          >
+            {/* HEADER */}
+
+            <div className="pdv__review-modal-header">
+              <div>
+                <span className="pdv__review-modal-eyebrow">
+                  CUSTOMER FEEDBACK
                 </span>
 
+                <h2 id="review-modal-title" className="pdv__review-modal-title">
+                  Write a review
+                </h2>
+
+                <p className="pdv__review-modal-product">
+                  {product?.productName || product?.name}
+                </p>
               </div>
 
-              <h3 className="pdv__review-headline">
-                Nice
-              </h3>
+              <button
+                type="button"
+                className="pdv__review-modal-close"
+                onClick={handleCloseReviewPopup}
+                disabled={reviewSubmitting}
+                aria-label="Close review popup"
+              >
+                ×
+              </button>
+            </div>
 
-              <p className="pdv__review-body">
-                fwqfqfwqfqqqfwqfqwqwqwfc
-                qwfeqsdwqd qwd
-              </p>
+            {/* FORM */}
 
-            </article>
+            <form className="pdv__review-form" onSubmit={handleSubmitReview}>
+              {/* RATING */}
 
+              <div className="pdv__review-field">
+                <label className="pdv__review-label">Your Rating</label>
+
+                <div className="pdv__review-star-selector">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      className={`pdv__review-star-button ${
+                        star <= reviewRating
+                          ? "pdv__review-star-button--active"
+                          : ""
+                      }`}
+                      onClick={() => setReviewRating(star)}
+                      aria-label={`${star} star`}
+                    >
+                      ★
+                    </button>
+                  ))}
+
+                  <span className="pdv__review-rating-text">
+                    {reviewRating}/5
+                  </span>
+                </div>
+              </div>
+
+              {/* TITLE */}
+
+              <div className="pdv__review-field">
+                <label htmlFor="review-title" className="pdv__review-label">
+                  Review Title
+                </label>
+
+                <input
+                  id="review-title"
+                  type="text"
+                  className="pdv__review-input"
+                  placeholder="Example: Fresh and good quality"
+                  value={reviewTitle}
+                  onChange={(event) => setReviewTitle(event.target.value)}
+                  maxLength={100}
+                  disabled={reviewSubmitting}
+                />
+
+                <span className="pdv__review-character-count">
+                  {reviewTitle.length}/100
+                </span>
+              </div>
+
+              {/* MESSAGE */}
+
+              <div className="pdv__review-field">
+                <label htmlFor="review-message" className="pdv__review-label">
+                  Your Review
+                </label>
+
+                <textarea
+                  id="review-message"
+                  className="pdv__review-textarea"
+                  placeholder="Tell other customers about your experience..."
+                  value={reviewMessage}
+                  onChange={(event) => setReviewMessage(event.target.value)}
+                  maxLength={1000}
+                  rows={5}
+                  disabled={reviewSubmitting}
+                />
+
+                <span className="pdv__review-character-count">
+                  {reviewMessage.length}/1000
+                </span>
+              </div>
+
+              {/* ACTIONS */}
+
+              <div className="pdv__review-modal-actions">
+                <button
+                  type="button"
+                  className="pdv__review-cancel"
+                  onClick={handleCloseReviewPopup}
+                  disabled={reviewSubmitting}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="pdv__review-submit"
+                  disabled={reviewSubmitting}
+                >
+                  {reviewSubmitting ? (
+                    <>
+                      <span className="pdv__review-spinner" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      Submit Review
+                      <span>→</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
-
-        </section>
-
-      </div>
+        </div>
+      )}
     </div>
   );
 };
