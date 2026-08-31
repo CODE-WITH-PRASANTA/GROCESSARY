@@ -1,24 +1,55 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
+
 import "./CartSection.css";
 
-// --- IMPORT YOUR LOCAL IMAGES HERE ---
 import avocadoImg from "../../assets/avocadoCart.webp";
 import orangeImg from "../../assets/lemoncart.avif";
 import grapeImg from "../../assets/garpecart.avif";
 import mangoImg from "../../assets/mangocart.avif";
 
-const API_BASE_URL = "http://localhost:5000";
 import { useNavigate } from "react-router-dom";
 
-const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
+import API from "../../api/axios";
+
+// ======================================================
+// CONSTANTS
+// ======================================================
+
+const SERVER_BASE_URL = "http://localhost:5000";
+
+const GUEST_CART_KEY = "guestCart";
+
+// ======================================================
+// COMPONENT
+// ======================================================
+
+const CartSection = ({
+  isOpen: externalIsOpen,
+  onClose,
+}) => {
+  const navigate = useNavigate();
+
   // ======================================================
   // DRAWER STATE
   // ======================================================
-  const navigate = useNavigate();
-  const [internalIsOpen, setInternalIsOpen] = useState(true);
+
+  const [
+    internalIsOpen,
+    setInternalIsOpen,
+  ] = useState(true);
 
   const isCartOpen =
-    externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+    externalIsOpen !== undefined
+      ? externalIsOpen
+      : internalIsOpen;
+
+  // ======================================================
+  // CLOSE CART
+  // ======================================================
 
   const handleCloseCart = () => {
     setInternalIsOpen(false);
@@ -32,14 +63,17 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
   // CART STATE
   // ======================================================
 
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] =
+    useState([]);
 
-  const [cartLoading, setCartLoading] = useState(false);
+  const [cartLoading, setCartLoading] =
+    useState(false);
 
-  const [cartError, setCartError] = useState("");
+  const [cartError, setCartError] =
+    useState("");
 
   // ======================================================
-  // RECOMMENDATION ITEMS
+  // RECOMMENDATIONS
   // ======================================================
 
   const recommendations = [
@@ -49,12 +83,14 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
       price: 400,
       image: orangeImg,
     },
+
     {
       id: 102,
       name: "Garden Grape Fruit",
       price: 500,
       image: grapeImg,
     },
+
     {
       id: 103,
       name: "Fresh Organic Mango",
@@ -63,609 +99,1784 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
     },
   ];
 
-  const [activeRecIndex, setActiveRecIndex] = useState(0);
+  const [
+    activeRecIndex,
+    setActiveRecIndex,
+  ] = useState(0);
 
   // ======================================================
-  // IMAGE URL HELPER
+  // SAFE TEXT
+  //
+  // VERY IMPORTANT
+  //
+  // Prevent:
+  //
+  // Objects are not valid as a React child
+  //
+  // Example:
+  //
+  // { _id: "...", name: "Kg" }
+  //
+  // becomes:
+  //
+  // "Kg"
   // ======================================================
-  useEffect(() => {
-    if (isCartOpen) {
-      document.body.classList.add("cart-is-open");
-    } else {
-      document.body.classList.remove("cart-is-open");
+
+  const getSafeText = (
+    value,
+    fallback = ""
+  ) => {
+    if (
+      value === null ||
+      value === undefined
+    ) {
+      return fallback;
     }
 
-    return () => {
-      document.body.classList.remove("cart-is-open");
-    };
-  }, [isCartOpen]);
-  const getImageUrl = (image) => {
-    if (!image) {
-      return avocadoImg;
+    if (
+      typeof value === "string"
+    ) {
+      const text = value.trim();
+
+      return text || fallback;
     }
 
-    // Backend image object
-    if (typeof image === "object") {
-      image = image?.url || image?.path || image?.secure_url || "";
+    if (
+      typeof value === "number" ||
+      typeof value === "boolean"
+    ) {
+      return String(value);
     }
 
-    if (!image) {
-      return avocadoImg;
+    if (
+      typeof value === "object"
+    ) {
+      const possibleValues = [
+        value?.name,
+        value?.label,
+        value?.title,
+        value?.unitName,
+        value?.brandName,
+        value?.categoryName,
+        value?.value,
+        value?.symbol,
+      ];
+
+      for (
+        const possibleValue of possibleValues
+      ) {
+        if (
+          possibleValue !==
+            null &&
+          possibleValue !==
+            undefined &&
+          typeof possibleValue !==
+            "object"
+        ) {
+          const text =
+            String(
+              possibleValue
+            ).trim();
+
+          if (text) {
+            return text;
+          }
+        }
+      }
+
+      return fallback;
     }
 
-    // Full URL
-    if (image.startsWith("http://") || image.startsWith("https://")) {
-      return image;
-    }
-
-    // Relative backend path
-    return `${API_BASE_URL}${image.startsWith("/") ? "" : "/"}${image}`;
+    return fallback;
   };
+
+  // ======================================================
+  // SAFE NUMBER
+  // ======================================================
+
+  const getSafeNumber = (
+    value,
+    fallback = 0
+  ) => {
+    const number = Number(value);
+
+    return Number.isFinite(number)
+      ? number
+      : fallback;
+  };
+
+  // ======================================================
+  // TOKEN
+  // ======================================================
+
+  const getToken = () => {
+    try {
+      return localStorage.getItem(
+        "token"
+      );
+    } catch {
+      return null;
+    }
+  };
+
+  // ======================================================
+  // OBJECT ID
+  // ======================================================
+
+  const getObjectId = (
+    value
+  ) => {
+    if (!value) {
+      return "";
+    }
+
+    if (
+      typeof value === "string"
+    ) {
+      return value;
+    }
+
+    if (
+      typeof value === "object"
+    ) {
+      return (
+        value?._id ||
+        value?.id ||
+        value?.productId ||
+        ""
+      );
+    }
+
+    return "";
+  };
+
+  // ======================================================
+  // PRODUCT ID
+  // ======================================================
+
+  const getProductId = (
+    item
+  ) => {
+    if (!item) {
+      return null;
+    }
+
+    if (
+      item?.productId
+    ) {
+      return String(
+        getObjectId(
+          item.productId
+        )
+      );
+    }
+
+    if (
+      item?.product?._id
+    ) {
+      return String(
+        item.product._id
+      );
+    }
+
+    if (
+      item?._id
+    ) {
+      return String(
+        item._id
+      );
+    }
+
+    if (
+      item?.id
+    ) {
+      return String(
+        item.id
+      );
+    }
+
+    return null;
+  };
+
+  // ======================================================
+  // PRODUCT NAME
+  // ======================================================
+
+  const getProductName = (
+    product = {}
+  ) => {
+    const nestedProduct =
+      product?.product &&
+      typeof product.product ===
+        "object"
+        ? product.product
+        : {};
+
+    return getSafeText(
+      product?.productName ||
+        product?.name ||
+        product?.title ||
+        product?.productTitle ||
+        product?.product_name ||
+        product?.itemName ||
+        product?.displayName ||
+        nestedProduct?.productName ||
+        nestedProduct?.name ||
+        nestedProduct?.title ||
+        nestedProduct?.productTitle ||
+        nestedProduct?.product_name,
+      "Product"
+    );
+  };
+
+  // ======================================================
+  // PRODUCT UNIT
+  // ======================================================
+
+  const getUnitName = (
+    unit
+  ) => {
+    if (!unit) {
+      return "";
+    }
+
+    return getSafeText(
+      unit,
+      ""
+    );
+  };
+
+  // ======================================================
+  // PRODUCT PRICE
+  // ======================================================
+
+  const getProductPrice = (
+    product = {}
+  ) => {
+    const discountPrice =
+      getSafeNumber(
+        product?.discountPrice,
+        0
+      );
+
+    if (
+      discountPrice > 0
+    ) {
+      return discountPrice;
+    }
+
+    return getSafeNumber(
+      product?.price ??
+        product?.sellingPrice ??
+        0,
+      0
+    );
+  };
+
+  // ======================================================
+  // IMAGE URL
+  // ======================================================
+
+  const getImageUrl = (
+    image
+  ) => {
+    if (!image) {
+      return avocadoImg;
+    }
+
+    if (
+      typeof image ===
+      "object"
+    ) {
+      image =
+        image?.url ||
+        image?.path ||
+        image?.secure_url ||
+        image?.filename ||
+        image?.src ||
+        "";
+    }
+
+    if (!image) {
+      return avocadoImg;
+    }
+
+    const imageString =
+      String(image).trim();
+
+    if (
+      imageString.startsWith(
+        "http://"
+      ) ||
+      imageString.startsWith(
+        "https://"
+      )
+    ) {
+      return imageString;
+    }
+
+    return `${SERVER_BASE_URL}${
+      imageString.startsWith("/")
+        ? ""
+        : "/"
+    }${imageString}`;
+  };
+
+  // ======================================================
+  // GUEST CART
+  // ======================================================
+
+  const getGuestCart = () => {
+    try {
+      const storedCart =
+        localStorage.getItem(
+          GUEST_CART_KEY
+        );
+
+      if (!storedCart) {
+        return [];
+      }
+
+      const parsedCart =
+        JSON.parse(
+          storedCart
+        );
+
+      if (
+        !Array.isArray(
+          parsedCart
+        )
+      ) {
+        return [];
+      }
+
+      return parsedCart;
+    } catch (error) {
+      console.error(
+        "Guest cart parse error:",
+        error
+      );
+
+      localStorage.removeItem(
+        GUEST_CART_KEY
+      );
+
+      return [];
+    }
+  };
+
+  // ======================================================
+  // SAVE GUEST CART
+  // ======================================================
+
+  const saveGuestCart = (
+    items
+  ) => {
+    try {
+      const safeItems =
+        Array.isArray(items)
+          ? items
+          : [];
+
+      localStorage.setItem(
+        GUEST_CART_KEY,
+        JSON.stringify(
+          safeItems
+        )
+      );
+
+      window.dispatchEvent(
+        new Event(
+          "cartUpdated"
+        )
+      );
+    } catch (error) {
+      console.error(
+        "Save guest cart error:",
+        error
+      );
+    }
+  };
+
+  // ======================================================
+  // FORMAT GUEST ITEMS
+  // ======================================================
+
+  const formatGuestItems = (
+    items
+  ) => {
+    if (
+      !Array.isArray(items)
+    ) {
+      return [];
+    }
+
+    return items
+      .filter((item) => {
+        return Boolean(
+          getProductId(item)
+        );
+      })
+      .map((item) => {
+        const productId =
+          getProductId(item);
+
+        const productName =
+          getProductName(item);
+
+        const rawUnit =
+          item?.size ??
+          item?.unitName ??
+          item?.unit ??
+          "";
+
+        const unitName =
+          getUnitName(
+            rawUnit
+          );
+
+        return {
+          id: String(
+            item?.id ||
+              item?._id ||
+              productId
+          ),
+
+          productId:
+            String(
+              productId
+            ),
+
+          name:
+            getSafeText(
+              productName,
+              "Product"
+            ),
+
+          price:
+            getSafeNumber(
+              item?.price,
+              0
+            ),
+
+          originalPrice:
+            getSafeNumber(
+              item?.originalPrice ||
+                item?.price,
+              0
+            ),
+
+          writtenPrice:
+            getSafeNumber(
+              item?.writtenPrice,
+              0
+            ),
+
+          discountPrice:
+            getSafeNumber(
+              item?.discountPrice,
+              0
+            ),
+
+          size:
+            getSafeText(
+              unitName,
+              "Standard Pack"
+            ),
+
+          quantity:
+            Math.max(
+              1,
+              getSafeNumber(
+                item?.quantity,
+                1
+              )
+            ),
+
+          stockQuantity:
+            getSafeNumber(
+              item?.stockQuantity,
+              0
+            ),
+
+          image:
+            getImageUrl(
+              item?.image
+            ),
+        };
+      });
+  };
+
+  // ======================================================
+  // FORMAT BACKEND ITEMS
+  // ======================================================
+
+  const formatBackendItems = (
+    items
+  ) => {
+    if (
+      !Array.isArray(items)
+    ) {
+      return [];
+    }
+
+    return items
+      .filter(
+        (item) =>
+          item?.product
+      )
+      .map((item) => {
+        const product =
+          item.product;
+
+        const productId =
+          product?._id ||
+          product?.id ||
+          item?.productId ||
+          item?._id;
+
+        const productImage =
+          Array.isArray(
+            product?.images
+          ) &&
+          product.images.length >
+            0
+            ? product.images[0]
+            : product?.image ||
+              product?.thumbnail ||
+              product?.imageUrl ||
+              null;
+
+        const productName =
+          getProductName(
+            product
+          );
+
+        const unitName =
+          getUnitName(
+            product?.unit
+          );
+
+        const price =
+          getProductPrice(
+            product
+          );
+
+        return {
+          id: String(
+            item?._id ||
+              productId
+          ),
+
+          productId:
+            String(
+              productId || ""
+            ),
+
+          name:
+            getSafeText(
+              productName,
+              "Product"
+            ),
+
+          price:
+            getSafeNumber(
+              price,
+              0
+            ),
+
+          originalPrice:
+            getSafeNumber(
+              product?.price,
+              0
+            ),
+
+          writtenPrice:
+            getSafeNumber(
+              product?.writtenPrice,
+              0
+            ),
+
+          discountPrice:
+            getSafeNumber(
+              product?.discountPrice,
+              0
+            ),
+
+          size:
+            getSafeText(
+              unitName,
+              "Standard Pack"
+            ),
+
+          quantity:
+            Math.max(
+              1,
+              getSafeNumber(
+                item?.quantity,
+                1
+              )
+            ),
+
+          stockQuantity:
+            getSafeNumber(
+              product?.stockQuantity,
+              0
+            ),
+
+          image:
+            getImageUrl(
+              productImage
+            ),
+        };
+      });
+  };
+
+  // ======================================================
+  // GET CART ITEMS FROM RESPONSE
+  // ======================================================
+
+  const getCartItemsFromResponse =
+    (data) => {
+      if (!data) {
+        return [];
+      }
+
+      const items =
+        data?.cart?.items ||
+        data?.data?.cart?.items ||
+        data?.data?.items ||
+        data?.items ||
+        [];
+
+      return formatBackendItems(
+        items
+      );
+    };
+
+  // ======================================================
+  // MERGE GUEST CART
+  // ======================================================
+
+  const mergeGuestCartToBackend =
+    async (token) => {
+      try {
+        const guestCart =
+          getGuestCart();
+
+        if (
+          !token ||
+          guestCart.length ===
+            0
+        ) {
+          return true;
+        }
+
+        let success = true;
+
+        for (
+          const item of guestCart
+        ) {
+          const productId =
+            getProductId(item);
+
+          if (!productId) {
+            continue;
+          }
+
+          const quantity =
+            Math.max(
+              1,
+              getSafeNumber(
+                item?.quantity,
+                1
+              )
+            );
+
+          try {
+            await API.post(
+              "/cart/add",
+              {
+                productId,
+                quantity,
+              }
+            );
+          } catch (error) {
+            console.error(
+              "Guest cart merge item error:",
+              error
+            );
+
+            success = false;
+          }
+        }
+
+        if (success) {
+          localStorage.removeItem(
+            GUEST_CART_KEY
+          );
+
+          window.dispatchEvent(
+            new Event(
+              "cartUpdated"
+            )
+          );
+        }
+
+        return success;
+      } catch (error) {
+        console.error(
+          "Merge guest cart error:",
+          error
+        );
+
+        return false;
+      }
+    };
 
   // ======================================================
   // FETCH CART
   // ======================================================
 
-  const fetchCart = async () => {
-    try {
-      const token = localStorage.getItem("token");
+  const fetchCart =
+    useCallback(
+      async () => {
+        try {
+          setCartLoading(
+            true
+          );
 
-      // ==========================================
-      // NOT LOGGED IN
-      // ==========================================
+          setCartError("");
 
-      if (!token) {
-        setCartItems([]);
-        setCartError("");
-        return;
-      }
+          const token =
+            getToken();
 
-      setCartLoading(true);
-      setCartError("");
+          // ==================================================
+          // GUEST CART
+          // ==================================================
 
-      const response = await fetch(`${API_BASE_URL}/api/cart`, {
-        method: "GET",
+          if (!token) {
+            const guestCart =
+              getGuestCart();
 
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+            const formattedItems =
+              formatGuestItems(
+                guestCart
+              );
 
-      // ==========================================
-      // CHECK RESPONSE TYPE
-      // ==========================================
+            setCartItems(
+              formattedItems
+            );
 
-      const contentType = response.headers.get("content-type");
+            return;
+          }
 
-      let result;
+          // ==================================================
+          // MERGE GUEST CART
+          // ==================================================
 
-      if (contentType && contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        const text = await response.text();
+          await mergeGuestCartToBackend(
+            token
+          );
 
-        console.error("Cart API returned non-JSON:", text);
+          // ==================================================
+          // BACKEND CART
+          // ==================================================
 
-        throw new Error("Cart API returned an invalid response.");
-      }
+          const response =
+            await API.get(
+              "/cart"
+            );
 
-      console.log("GET CART RESPONSE:", result);
+          const formattedItems =
+            getCartItemsFromResponse(
+              response?.data
+            );
 
-      if (!response.ok) {
-        throw new Error(result?.message || "Failed to fetch cart.");
-      }
+          setCartItems(
+            formattedItems
+          );
+        } catch (error) {
+          console.error(
+            "Fetch cart error:",
+            error
+          );
 
-      // ==========================================
-      // GET ITEMS
-      // ==========================================
+          setCartError(
+            error?.apiMessage ||
+              error?.response
+                ?.data
+                ?.message ||
+              error?.message ||
+              "Unable to load cart."
+          );
 
-      const items = result?.cart?.items || result?.items || [];
-
-      // ==========================================
-      // FORMAT BACKEND ITEMS FOR EXISTING UI
-      // ==========================================
-
-      const formattedItems = items
-        .filter((item) => item?.product)
-        .map((item) => {
-          const product = item.product;
-
-          const productImage =
-            Array.isArray(product?.images) && product.images.length > 0
-              ? product.images[0]
-              : null;
-
-          const unitName =
-            typeof product?.unit === "object"
-              ? product?.unit?.name || product?.unit?.symbol || ""
-              : product?.unit || "";
-
-          return {
-            // Keep original cart item ID
-            id: item._id,
-
-            // Product ID is useful for API updates later
-            productId: product._id,
-
-            name: product?.productName || product?.name || "Product",
-
-            price: Number(product?.price || 0),
-
-            writtenPrice: Number(product?.writtenPrice || 0),
-
-            size: unitName || "Standard Pack",
-
-            quantity: Number(item?.quantity || 1),
-
-            stockQuantity: Number(product?.stockQuantity || 0),
-
-            image: getImageUrl(productImage),
-          };
-        });
-
-      setCartItems(formattedItems);
-    } catch (error) {
-      console.error("Fetch cart error:", error);
-
-      setCartError(error?.message || "Unable to load cart.");
-
-      setCartItems([]);
-    } finally {
-      setCartLoading(false);
-    }
-  };
+          setCartItems([]);
+        } finally {
+          setCartLoading(
+            false
+          );
+        }
+      },
+      []
+    );
 
   // ======================================================
-  // LOAD CART
+  // INITIAL LOAD
   // ======================================================
 
   useEffect(() => {
     fetchCart();
-  }, []);
+  }, [fetchCart]);
 
   // ======================================================
-  // REFRESH CART WHEN DRAWER OPENS
+  // REFRESH WHEN CART OPENS
   // ======================================================
 
   useEffect(() => {
     if (isCartOpen) {
       fetchCart();
     }
+  }, [
+    isCartOpen,
+    fetchCart,
+  ]);
+
+  // ======================================================
+  // CART UPDATED EVENT
+  // ======================================================
+
+  useEffect(() => {
+    const handleCartUpdated =
+      () => {
+        fetchCart();
+      };
+
+    window.addEventListener(
+      "cartUpdated",
+      handleCartUpdated
+    );
+
+    return () => {
+      window.removeEventListener(
+        "cartUpdated",
+        handleCartUpdated
+      );
+    };
+  }, [fetchCart]);
+
+  // ======================================================
+  // BODY LOCK
+  // ======================================================
+
+  useEffect(() => {
+    if (isCartOpen) {
+      document.body.classList.add(
+        "cart-is-open"
+      );
+    } else {
+      document.body.classList.remove(
+        "cart-is-open"
+      );
+    }
+
+    return () => {
+      document.body.classList.remove(
+        "cart-is-open"
+      );
+    };
   }, [isCartOpen]);
 
   // ======================================================
   // UPDATE CART QUANTITY
   // ======================================================
 
-  const updateCartQuantity = async (item, newQuantity) => {
-    try {
-      const token = localStorage.getItem("token");
+  const updateCartQuantity =
+    async (
+      item,
+      quantity
+    ) => {
+      try {
+        const safeQuantity =
+          getSafeNumber(
+            quantity,
+            0
+          );
 
-      if (!token) {
-        alert("Please login first.");
-        return;
+        const productId =
+          getProductId(item);
+
+        if (!productId) {
+          throw new Error(
+            "Product ID is missing."
+          );
+        }
+
+        // ==================================================
+        // REMOVE IF ZERO
+        // ==================================================
+
+        if (
+          safeQuantity <= 0
+        ) {
+          await handleRemove(
+            item.id
+          );
+
+          return;
+        }
+
+        // ==================================================
+        // STOCK
+        // ==================================================
+
+        if (
+          item.stockQuantity >
+            0 &&
+          safeQuantity >
+            item.stockQuantity
+        ) {
+          alert(
+            `Only ${item.stockQuantity} item(s) available in stock.`
+          );
+
+          return;
+        }
+
+        const token =
+          getToken();
+
+        // ==================================================
+        // GUEST
+        // ==================================================
+
+        if (!token) {
+          const guestCart =
+            getGuestCart();
+
+          const updatedCart =
+            guestCart.map(
+              (cartItem) => {
+                const cartProductId =
+                  getProductId(
+                    cartItem
+                  );
+
+                if (
+                  String(
+                    cartProductId
+                  ) ===
+                  String(
+                    productId
+                  )
+                ) {
+                  return {
+                    ...cartItem,
+
+                    quantity:
+                      safeQuantity,
+                  };
+                }
+
+                return cartItem;
+              }
+            );
+
+          saveGuestCart(
+            updatedCart
+          );
+
+          setCartItems(
+            formatGuestItems(
+              updatedCart
+            )
+          );
+
+          return;
+        }
+
+        // ==================================================
+        // LOGGED-IN
+        // ==================================================
+
+        const response =
+          await API.put(
+            `/cart/update/${productId}`,
+            {
+              quantity:
+                safeQuantity,
+            }
+          );
+
+        const returnedItems =
+          getCartItemsFromResponse(
+            response?.data
+          );
+
+        if (
+          returnedItems.length >
+            0 ||
+          response?.data
+            ?.cart?.items
+        ) {
+          setCartItems(
+            returnedItems
+          );
+        } else {
+          await fetchCart();
+        }
+
+        window.dispatchEvent(
+          new Event(
+            "cartUpdated"
+          )
+        );
+      } catch (error) {
+        console.error(
+          "Update cart error:",
+          error
+        );
+
+        alert(
+          error?.apiMessage ||
+            error?.response
+              ?.data
+              ?.message ||
+            error?.message ||
+            "Unable to update cart."
+        );
       }
-
-      if (newQuantity < 1) {
-        await handleRemove(item.id);
-        return;
-      }
-
-      if (item.stockQuantity > 0 && newQuantity > item.stockQuantity) {
-        alert(`Only ${item.stockQuantity} item(s) available in stock.`);
-        return;
-      }
-
-      console.log("UPDATING CART:", {
-        productId: item.productId,
-        quantity: newQuantity,
-      });
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/cart/update/${item.productId}`,
-        {
-          method: "PUT",
-
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-
-          body: JSON.stringify({
-            quantity: newQuantity,
-          }),
-        },
-      );
-
-      const contentType = response.headers.get("content-type");
-
-      let result;
-
-      if (contentType && contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        const text = await response.text();
-
-        console.error("Update cart non-JSON:", text);
-
-        throw new Error("Invalid response from cart API.");
-      }
-
-      console.log("UPDATE CART RESPONSE:", result);
-
-      if (!response.ok) {
-        throw new Error(result?.message || "Unable to update cart.");
-      }
-
-      // Update immediately from server response
-      if (result?.cart?.items) {
-        const formattedItems = result.cart.items
-          .filter((cartItem) => cartItem?.product)
-          .map((cartItem) => {
-            const product = cartItem.product;
-
-            const productImage =
-              Array.isArray(product?.images) && product.images.length > 0
-                ? product.images[0]
-                : null;
-
-            const unitName =
-              typeof product?.unit === "object"
-                ? product?.unit?.name || product?.unit?.symbol || ""
-                : product?.unit || "";
-
-            return {
-              id: cartItem._id,
-
-              productId: product._id,
-
-              name: product?.productName || product?.name || "Product",
-
-              price: Number(product?.price || 0),
-
-              writtenPrice: Number(product?.writtenPrice || 0),
-
-              size: unitName || "Standard Pack",
-
-              quantity: Number(cartItem?.quantity || 1),
-
-              stockQuantity: Number(product?.stockQuantity || 0),
-
-              image: getImageUrl(productImage),
-            };
-          });
-
-        setCartItems(formattedItems);
-      } else {
-        await fetchCart();
-      }
-    } catch (error) {
-      console.error("Update cart error:", error);
-
-      alert(error?.message || "Unable to update cart.");
-    }
-  };
+    };
 
   // ======================================================
   // INCREASE
   // ======================================================
 
-  const handleIncrease = (id) => {
-    const item = cartItems.find((cartItem) => cartItem.id === id);
+  const handleIncrease = (
+    id
+  ) => {
+    const item =
+      cartItems.find(
+        (cartItem) =>
+          String(
+            cartItem.id
+          ) ===
+          String(id)
+      );
 
     if (!item) {
       return;
     }
 
-    updateCartQuantity(item, item.quantity + 1);
+    const nextQuantity =
+      getSafeNumber(
+        item.quantity,
+        0
+      ) + 1;
+
+    if (
+      item.stockQuantity >
+        0 &&
+      nextQuantity >
+        item.stockQuantity
+    ) {
+      alert(
+        `Only ${item.stockQuantity} item(s) available in stock.`
+      );
+
+      return;
+    }
+
+    updateCartQuantity(
+      item,
+      nextQuantity
+    );
   };
 
   // ======================================================
   // DECREASE
   // ======================================================
 
-  const handleDecrease = (id) => {
-    const item = cartItems.find((cartItem) => cartItem.id === id);
+  const handleDecrease = (
+    id
+  ) => {
+    const item =
+      cartItems.find(
+        (cartItem) =>
+          String(
+            cartItem.id
+          ) ===
+          String(id)
+      );
 
     if (!item) {
       return;
     }
 
-    updateCartQuantity(item, item.quantity - 1);
+    const nextQuantity =
+      getSafeNumber(
+        item.quantity,
+        0
+      ) - 1;
+
+    updateCartQuantity(
+      item,
+      nextQuantity
+    );
   };
 
   // ======================================================
   // REMOVE
   // ======================================================
 
-  const handleRemove = async (id) => {
-    try {
-      const token = localStorage.getItem("token");
+  const handleRemove =
+    async (id) => {
+      try {
+        const item =
+          cartItems.find(
+            (cartItem) =>
+              String(
+                cartItem.id
+              ) ===
+              String(id)
+          );
 
-      if (!token) {
-        alert("Please login first.");
-        return;
+        if (!item) {
+          return;
+        }
+
+        const token =
+          getToken();
+
+        // ==================================================
+        // GUEST
+        // ==================================================
+
+        if (!token) {
+          const guestCart =
+            getGuestCart();
+
+          const productId =
+            getProductId(
+              item
+            );
+
+          const updatedGuestCart =
+            guestCart.filter(
+              (cartItem) => {
+                const cartProductId =
+                  getProductId(
+                    cartItem
+                  );
+
+                return (
+                  String(
+                    cartProductId
+                  ) !==
+                  String(
+                    productId
+                  )
+                );
+              }
+            );
+
+          saveGuestCart(
+            updatedGuestCart
+          );
+
+          setCartItems(
+            formatGuestItems(
+              updatedGuestCart
+            )
+          );
+
+          return;
+        }
+
+        // ==================================================
+        // LOGGED-IN
+        // ==================================================
+
+        const productId =
+          getProductId(item);
+
+        if (!productId) {
+          throw new Error(
+            "Product ID is missing."
+          );
+        }
+
+        const response =
+          await API.delete(
+            `/cart/remove/${productId}`
+          );
+
+        const returnedItems =
+          getCartItemsFromResponse(
+            response?.data
+          );
+
+        if (
+          returnedItems.length >
+            0 ||
+          response?.data
+            ?.cart?.items
+        ) {
+          setCartItems(
+            returnedItems
+          );
+        } else {
+          await fetchCart();
+        }
+
+        window.dispatchEvent(
+          new Event(
+            "cartUpdated"
+          )
+        );
+      } catch (error) {
+        console.error(
+          "Remove cart error:",
+          error
+        );
+
+        alert(
+          error?.apiMessage ||
+            error?.response
+              ?.data
+              ?.message ||
+            error?.message ||
+            "Unable to remove product."
+        );
       }
-
-      const item = cartItems.find((cartItem) => cartItem.id === id);
-
-      if (!item) {
-        return;
-      }
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/cart/remove/${item.productId}`,
-        {
-          method: "DELETE",
-
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      const contentType = response.headers.get("content-type");
-
-      let result;
-
-      if (contentType && contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        const text = await response.text();
-
-        console.error("Remove cart non-JSON:", text);
-
-        throw new Error("Invalid response from cart API.");
-      }
-
-      if (!response.ok) {
-        throw new Error(result?.message || "Unable to remove product.");
-      }
-
-      console.log("REMOVE CART RESPONSE:", result);
-
-      // Refresh cart from backend
-      await fetchCart();
-    } catch (error) {
-      console.error("Remove cart error:", error);
-
-      alert(error?.message || "Unable to remove product.");
-    }
-  };
+    };
 
   // ======================================================
-  // RECOMMENDATION ADD
+  // ADD RECOMMENDATION
   // ======================================================
 
-  const handleAddToCart = async (recItem) => {
-    try {
-      const token = localStorage.getItem("token");
+  const handleAddToCart =
+    async (
+      recItem
+    ) => {
+      try {
+        if (!recItem) {
+          return;
+        }
 
-      if (!token) {
-        alert("Please login first to add products to cart.");
-        return;
+        const productId =
+          recItem?.productId ||
+          recItem?._id;
+
+        // ==================================================
+        // DEMO RECOMMENDATION
+        // ==================================================
+
+        if (!productId) {
+          alert(
+            "This recommendation is currently a demo product."
+          );
+
+          return;
+        }
+
+        const token =
+          getToken();
+
+        // ==================================================
+        // GUEST
+        // ==================================================
+
+        if (!token) {
+          const guestCart =
+            getGuestCart();
+
+          const existingIndex =
+            guestCart.findIndex(
+              (item) =>
+                String(
+                  getProductId(
+                    item
+                  )
+                ) ===
+                String(
+                  productId
+                )
+            );
+
+          if (
+            existingIndex !==
+            -1
+          ) {
+            const currentQuantity =
+              getSafeNumber(
+                guestCart[
+                  existingIndex
+                ]
+                  ?.quantity,
+                1
+              );
+
+            guestCart[
+              existingIndex
+            ] = {
+              ...guestCart[
+                existingIndex
+              ],
+
+              quantity:
+                currentQuantity +
+                1,
+            };
+          } else {
+            guestCart.push({
+              id: String(
+                productId
+              ),
+
+              productId:
+                String(
+                  productId
+                ),
+
+              name:
+                getSafeText(
+                  recItem?.name,
+                  "Product"
+                ),
+
+              price:
+                getSafeNumber(
+                  recItem?.price,
+                  0
+                ),
+
+              writtenPrice:
+                getSafeNumber(
+                  recItem?.writtenPrice,
+                  0
+                ),
+
+              quantity: 1,
+
+              stockQuantity:
+                getSafeNumber(
+                  recItem?.stockQuantity,
+                  0
+                ),
+
+              image:
+                getImageUrl(
+                  recItem?.image
+                ),
+            });
+          }
+
+          saveGuestCart(
+            guestCart
+          );
+
+          setCartItems(
+            formatGuestItems(
+              guestCart
+            )
+          );
+
+          alert(
+            "Product added to cart successfully."
+          );
+
+          return;
+        }
+
+        // ==================================================
+        // LOGGED-IN
+        // ==================================================
+
+        const response =
+          await API.post(
+            "/cart/add",
+            {
+              productId,
+              quantity: 1,
+            }
+          );
+
+        const returnedItems =
+          getCartItemsFromResponse(
+            response?.data
+          );
+
+        if (
+          returnedItems.length >
+            0 ||
+          response?.data
+            ?.cart?.items
+        ) {
+          setCartItems(
+            returnedItems
+          );
+        } else {
+          await fetchCart();
+        }
+
+        window.dispatchEvent(
+          new Event(
+            "cartUpdated"
+          )
+        );
+
+        alert(
+          response?.data
+            ?.message ||
+            "Product added to cart successfully."
+        );
+      } catch (error) {
+        console.error(
+          "Recommendation cart error:",
+          error
+        );
+
+        alert(
+          error?.apiMessage ||
+            error?.response
+              ?.data
+              ?.message ||
+            error?.message ||
+            "Unable to add product to cart."
+        );
       }
-
-      alert("This recommendation is currently a demo product.");
-    } catch (error) {
-      console.error("Recommendation cart error:", error);
-    }
-  };
+    };
 
   // ======================================================
   // CALCULATIONS
   // ======================================================
 
-  const totalItemsCount = cartItems.reduce(
-    (acc, item) => acc + item.quantity,
-    0,
-  );
+  const totalItemsCount =
+    cartItems.reduce(
+      (
+        total,
+        item
+      ) =>
+        total +
+        getSafeNumber(
+          item?.quantity,
+          0
+        ),
+      0
+    );
 
-  const subtotalAmount = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0,
-  );
+  const subtotalAmount =
+    cartItems.reduce(
+      (
+        total,
+        item
+      ) => {
+        const price =
+          getSafeNumber(
+            item?.price,
+            0
+          );
+
+        const quantity =
+          getSafeNumber(
+            item?.quantity,
+            0
+          );
+
+        return (
+          total +
+          price *
+            quantity
+        );
+      },
+      0
+    );
 
   // ======================================================
   // FREE SHIPPING
   // ======================================================
 
-  const freeShippingThreshold = 1000;
+  const freeShippingThreshold =
+    1000;
 
-  const progressPercent = Math.min(
-    (subtotalAmount / freeShippingThreshold) * 100,
-    100,
-  );
+  const progressPercent =
+    Math.min(
+      (subtotalAmount /
+        freeShippingThreshold) *
+        100,
+      100
+    );
 
   // ======================================================
-  // RETURN
+  // ACTIVE RECOMMENDATION
+  // ======================================================
+
+  const activeRecommendation =
+    recommendations[
+      activeRecIndex
+    ] ||
+    recommendations[0];
+
+  // ======================================================
+  // RENDER
   // ======================================================
 
   return (
     <>
-      {/* ================================================== */}
-      {/* SEO STRUCTURED DATA */}
-      {/* ================================================== */}
+      {/* ==================================================
+          SEO
+      ================================================== */}
 
       <script type="application/ld+json">
         {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "WebPage",
-          name: "Grocery Sathi Shopping Cart",
+          "@context":
+            "https://schema.org",
+
+          "@type":
+            "WebPage",
+
+          name:
+            "Grocery Sathi Shopping Cart",
+
           description:
             "Review your selected fresh organic grocery items, check shipping progress, and proceed to secure checkout on Grocery Sathi.",
+
           publisher: {
-            "@type": "Organization",
-            name: "Grocery Sathi",
+            "@type":
+              "Organization",
+
+            name:
+              "Grocery Sathi",
           },
         })}
       </script>
 
-      {/* ================================================== */}
-      {/* REOPEN BUTTON */}
-      {/* ================================================== */}
+      {/* ==================================================
+          REOPEN CART
+      ================================================== */}
 
       {!isCartOpen && (
         <button
           type="button"
           className="reopen-cart-btn"
-          onClick={() => setInternalIsOpen(true)}
+          onClick={() =>
+            setInternalIsOpen(
+              true
+            )
+          }
           aria-label="Open Grocery Sathi Shopping Cart"
         >
           🛒 Open Cart
         </button>
       )}
 
-      {/* ================================================== */}
-      {/* CART DRAWER OVERLAY */}
-      {/* ================================================== */}
+      {/* ==================================================
+          CART OVERLAY
+      ================================================== */}
 
       <div
-        className={`cart-drawer-overlay ${isCartOpen ? "open" : ""}`}
-        onClick={handleCloseCart}
+        className={`cart-drawer-overlay ${
+          isCartOpen
+            ? "open"
+            : ""
+        }`}
+        onClick={
+          handleCloseCart
+        }
         role="presentation"
       >
         <div
-          className={`cart-drawer-container ${isCartOpen ? "slide-in" : ""}`}
-          onClick={(e) => e.stopPropagation()}
+          className={`cart-drawer-container ${
+            isCartOpen
+              ? "slide-in"
+              : ""
+          }`}
+          onClick={(e) =>
+            e.stopPropagation()
+          }
           role="dialog"
           aria-modal="true"
           aria-label="Shopping Cart Drawer"
         >
-          {/* ================================================== */}
-          {/* HEADER */}
-          {/* ================================================== */}
+          {/* ==================================================
+              HEADER
+          ================================================== */}
 
           <header className="cart-header">
+            <div className="cart-header-title-wrap">
+              <h2 className="cart-header-title">
+                Shopping Cart
+              </h2>
+
+              <span className="cart-total-item-count">
+                {totalItemsCount}{" "}
+                item
+                {totalItemsCount !==
+                1
+                  ? "s"
+                  : ""}
+              </span>
+            </div>
+
             <button
               type="button"
               className="cart-close-btn"
-              onClick={() => {
-                handleCloseCart();
-                navigate("/");
-              }}
-              aria-label="Close Shopping Cart"
+              onClick={
+                handleCloseCart
+              }
+              aria-label="Close shopping cart"
             >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+              ×
             </button>
-
-            <div className="cart-header-title-wrap">
-              <h2 className="cart-header-title">Your Cart</h2>
-
-              <span className="cart-total-item-count">
-                {totalItemsCount} {totalItemsCount === 1 ? "Item" : "Items"}
-              </span>
-            </div>
           </header>
 
-          {/* ================================================== */}
-          {/* LOADING */}
-          {/* ================================================== */}
+          {/* ==================================================
+              LOADING
+          ================================================== */}
 
           {cartLoading ? (
             <div className="empty-cart-container">
-              <h3 className="empty-cart-title">Loading cart...</h3>
+              <div className="empty-cart-icon-wrap">
+                🛒
+              </div>
+
+              <h3 className="empty-cart-title">
+                Loading cart...
+              </h3>
             </div>
           ) : cartError ? (
             <div className="empty-cart-container">
-              <h3 className="empty-cart-title">{cartError}</h3>
+              <div className="empty-cart-icon-wrap">
+                ⚠️
+              </div>
+
+              <h3 className="empty-cart-title">
+                {getSafeText(
+                  cartError,
+                  "Unable to load cart."
+                )}
+              </h3>
 
               <button
                 type="button"
                 className="btn-continue-shopping"
-                onClick={fetchCart}
+                onClick={
+                  fetchCart
+                }
               >
                 Try Again
               </button>
             </div>
-          ) : cartItems.length === 0 ? (
-            /* ================================================== */
-            /* EMPTY CART */
-            /* ================================================== */
+          ) : cartItems.length ===
+            0 ? (
+            <>
+              {/* ==================================================
+                  EMPTY CART
+              ================================================== */}
 
-            <div className="empty-cart-container">
-              <div className="empty-cart-icon-wrap" aria-hidden="true">
-                <svg
-                  width="64"
-                  height="64"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
+              <div className="empty-cart-container">
+                <div className="empty-cart-icon-wrap">
+                  <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M6 8h12l1 13H5L6 8Z" />
+
+                    <path d="M9 8a3 3 0 0 1 6 0" />
+                  </svg>
+                </div>
+
+                <h3 className="empty-cart-title">
+                  Your cart is
+                  empty
+                </h3>
+
+                <button
+                  type="button"
+                  className="btn-continue-shopping"
+                  onClick={() => {
+                    handleCloseCart();
+                    navigate("/");
+                  }}
                 >
-                  <path d="M19 18c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm0-3h11.23c.77 0 1.45-.44 1.77-1.12l3.58-6.49A1.003 1.003 0 0 0 22.7 6c-.33-.51-.92-.81-1.53-.81H5.21l-.94-2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2z" />
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <line
+                      x1="19"
+                      y1="12"
+                      x2="5"
+                      y2="12"
+                    />
 
-                  <path d="M11 9.5c0-.28.22-.5.5-.5s.5.22.5.5v1c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-1zm5 0c0-.28.22-.5.5-.5s.5.22.5.5v1c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-1zm-6 4c0 1.1 1.34 2 3 2s3-.9 3-2h-6z" />
-                </svg>
+                    <polyline points="12 19 5 12 12 5" />
+                  </svg>
+
+                  Continue
+                  shopping
+                </button>
               </div>
-
-              <h3 className="empty-cart-title">Your cart is empty</h3>
-
-              <button
-                type="button"
-                className="btn-continue-shopping"
-                onClick={() => {
-                  handleCloseCart();
-                  navigate("/");
-                }}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <line x1="19" y1="12" x2="5" y2="12" />
-
-                  <polyline points="12 19 5 12 12 5" />
-                </svg>
-                Continue shopping
-              </button>
-            </div>
+            </>
           ) : (
             <>
-              {/* ================================================== */}
-              {/* CART BODY */}
-              {/* ================================================== */}
+              {/* ==================================================
+                  CART BODY
+              ================================================== */}
 
               <div className="cart-body">
-                {/* ================================================== */}
-                {/* SHIPPING BAR */}
-                {/* ================================================== */}
+                {/* ==================================================
+                    SHIPPING
+                ================================================== */}
 
                 <div className="shipping-bar-container">
                   <p className="shipping-msg">
-                    {subtotalAmount >= freeShippingThreshold ? (
+                    {subtotalAmount >=
+                    freeShippingThreshold ? (
                       <>
-                        🎉 <strong>Yay!</strong> You've unlocked{" "}
-                        <strong>FREE Shipping</strong>
+                        🎉{" "}
+                        <strong>
+                          Yay!
+                        </strong>{" "}
+                        You've
+                        unlocked{" "}
+                        <strong>
+                          FREE
+                          Shipping
+                        </strong>
                       </>
                     ) : (
                       <>
                         Add{" "}
                         <strong>
-                          ₹{(freeShippingThreshold - subtotalAmount).toFixed(2)}
+                          ₹
+                          {(
+                            freeShippingThreshold -
+                            subtotalAmount
+                          ).toFixed(
+                            2
+                          )}
                         </strong>{" "}
-                        more for <strong>FREE Shipping</strong>
+                        more for{" "}
+                        <strong>
+                          FREE
+                          Shipping
+                        </strong>
                       </>
                     )}
                   </p>
@@ -698,136 +1909,249 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                       >
-                        <rect x="1" y="3" width="15" height="13" rx="2" />
+                        <rect
+                          x="1"
+                          y="3"
+                          width="15"
+                          height="13"
+                          rx="2"
+                        />
 
                         <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
 
-                        <circle cx="5.5" cy="18.5" r="2.5" />
+                        <circle
+                          cx="5.5"
+                          cy="18.5"
+                          r="2.5"
+                        />
 
-                        <circle cx="18.5" cy="18.5" r="2.5" />
+                        <circle
+                          cx="18.5"
+                          cy="18.5"
+                          r="2.5"
+                        />
                       </svg>
                     </div>
                   </div>
                 </div>
 
-                {/* ================================================== */}
-                {/* CART ITEMS */}
-                {/* ================================================== */}
+                {/* ==================================================
+                    CART ITEMS
+                ================================================== */}
 
-                <section className="cart-items-list" aria-label="Cart Items">
-                  {cartItems.map((item) => (
-                    <article key={item.id} className="cart-item-card">
-                      <div className="cart-item-img-wrap">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          loading="lazy"
-                          onError={(e) => {
-                            e.currentTarget.src = avocadoImg;
-                          }}
-                        />
-                      </div>
+                <section
+                  className="cart-items-list"
+                  aria-label="Cart Items"
+                >
+                  {cartItems.map(
+                    (item) => {
+                      const itemName =
+                        getSafeText(
+                          item?.name,
+                          "Product"
+                        );
 
-                      <div className="cart-item-details">
-                        <div className="cart-item-header-row">
-                          <h4 className="cart-item-title">{item.name}</h4>
+                      const itemSize =
+                        getSafeText(
+                          item?.size,
+                          "Standard Pack"
+                        );
 
-                          <button
-                            type="button"
-                            className="cart-item-delete-btn"
-                            onClick={() => handleRemove(item.id)}
-                            aria-label={`Remove ${item.name} from cart`}
-                          >
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="#f43f5e"
-                              strokeWidth="2.2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              aria-hidden="true"
-                            >
-                              <polyline points="3 6 5 6 21 6" />
+                      const itemPrice =
+                        getSafeNumber(
+                          item?.price,
+                          0
+                        );
 
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
-                          </button>
-                        </div>
+                      const itemQuantity =
+                        getSafeNumber(
+                          item?.quantity,
+                          1
+                        );
 
-                        <p className="cart-item-price">
-                          ₹{item.price.toFixed(2)}
-                        </p>
+                      return (
+                        <article
+                          key={
+                            item.id ||
+                            item.productId
+                          }
+                          className="cart-item-card"
+                        >
+                          {/* IMAGE */}
 
-                        <p className="cart-item-size">Size: {item.size}</p>
+                          <div className="cart-item-img-wrap">
+                            <img
+                              src={
+                                item.image ||
+                                avocadoImg
+                              }
+                              alt={
+                                itemName
+                              }
+                              loading="lazy"
+                              onError={(
+                                e
+                              ) => {
+                                e.currentTarget.src =
+                                  avocadoImg;
+                              }}
+                            />
+                          </div>
 
-                        {/* ================================================== */}
-                        {/* QUANTITY */}
-                        {/* ================================================== */}
+                          {/* DETAILS */}
 
-                        <div className="cart-item-qty-control">
-                          <button
-                            type="button"
-                            onClick={() => handleDecrease(item.id)}
-                            aria-label="Decrease quantity"
-                          >
-                            -
-                          </button>
+                          <div className="cart-item-details">
+                            <div className="cart-item-header-row">
+                              <h4 className="cart-item-title">
+                                {
+                                  itemName
+                                }
+                              </h4>
 
-                          <span aria-label={`Quantity: ${item.quantity}`}>
-                            {item.quantity}
-                          </span>
+                              <button
+                                type="button"
+                                className="cart-item-delete-btn"
+                                onClick={() =>
+                                  handleRemove(
+                                    item.id
+                                  )
+                                }
+                                aria-label={`Remove ${itemName} from cart`}
+                              >
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="#f43f5e"
+                                  strokeWidth="2.2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  aria-hidden="true"
+                                >
+                                  <polyline points="3 6 5 6 21 6" />
 
-                          <button
-                            type="button"
-                            onClick={() => handleIncrease(item.id)}
-                            aria-label="Increase quantity"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                              </button>
+                            </div>
+
+                            {/* PRICE */}
+
+                            <p className="cart-item-price">
+                              ₹
+                              {itemPrice.toFixed(
+                                2
+                              )}
+                            </p>
+
+                            {/* SIZE */}
+
+                            <p className="cart-item-size">
+                              Size:{" "}
+                              {
+                                itemSize
+                              }
+                            </p>
+
+                            {/* QUANTITY */}
+
+                            <div className="cart-item-qty-control">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleDecrease(
+                                    item.id
+                                  )
+                                }
+                                aria-label="Decrease quantity"
+                              >
+                                -
+                              </button>
+
+                              <span
+                                aria-label={`Quantity: ${itemQuantity}`}
+                              >
+                                {
+                                  itemQuantity
+                                }
+                              </span>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleIncrease(
+                                    item.id
+                                  )
+                                }
+                                aria-label="Increase quantity"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    }
+                  )}
                 </section>
 
-                {/* ================================================== */}
-                {/* RECOMMENDATIONS */}
-                {/* ================================================== */}
+                {/* ==================================================
+                    RECOMMENDATIONS
+                ================================================== */}
 
                 <section
                   className="cart-recommendations-section"
                   aria-label="Recommended Products"
                 >
-                  <h3 className="recommendations-title">You may also like</h3>
+                  <h3 className="recommendations-title">
+                    You may also
+                    like
+                  </h3>
 
                   <div className="recommendation-card">
                     <div className="rec-img-wrap">
                       <img
-                        src={recommendations[activeRecIndex].image}
-                        alt={recommendations[activeRecIndex].name}
+                        src={
+                          activeRecommendation?.image
+                        }
+                        alt={getSafeText(
+                          activeRecommendation?.name,
+                          "Recommended Product"
+                        )}
                         loading="lazy"
                       />
                     </div>
 
                     <div className="rec-details">
                       <h4 className="rec-title">
-                        {recommendations[activeRecIndex].name}
+                        {getSafeText(
+                          activeRecommendation?.name,
+                          "Product"
+                        )}
                       </h4>
 
                       <p className="rec-price">
-                        ₹{recommendations[activeRecIndex].price.toFixed(2)}
+                        ₹
+                        {getSafeNumber(
+                          activeRecommendation?.price,
+                          0
+                        ).toFixed(
+                          2
+                        )}
                       </p>
 
                       <button
                         type="button"
                         className="rec-add-btn"
                         onClick={() =>
-                          handleAddToCart(recommendations[activeRecIndex])
+                          handleAddToCart(
+                            activeRecommendation
+                          )
                         }
                       >
-                        + Add to Cart
+                        + Add to
+                        Cart
                       </button>
                     </div>
                   </div>
@@ -837,28 +2161,50 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
                     role="tablist"
                     aria-label="Recommendation carousel controls"
                   >
-                    {recommendations.map((_, idx) => (
-                      <button
-                        type="button"
-                        key={idx}
-                        role="tab"
-                        aria-selected={activeRecIndex === idx}
-                        aria-label={`Slide recommendation ${idx + 1}`}
-                        className={`dot ${
-                          activeRecIndex === idx ? "active" : ""
-                        }`}
-                        onClick={() => setActiveRecIndex(idx)}
-                      />
-                    ))}
+                    {recommendations.map(
+                      (
+                        recommendation,
+                        idx
+                      ) => (
+                        <button
+                          type="button"
+                          key={
+                            recommendation.id
+                          }
+                          role="tab"
+                          aria-selected={
+                            activeRecIndex ===
+                            idx
+                          }
+                          aria-label={`Slide recommendation ${
+                            idx +
+                            1
+                          }`}
+                          className={`dot ${
+                            activeRecIndex ===
+                            idx
+                              ? "active"
+                              : ""
+                          }`}
+                          onClick={() =>
+                            setActiveRecIndex(
+                              idx
+                            )
+                          }
+                        />
+                      )
+                    )}
                   </div>
                 </section>
               </div>
 
-              {/* ================================================== */}
-              {/* FOOTER */}
-              {/* ================================================== */}
+              {/* ==================================================
+                  FOOTER
+              ================================================== */}
 
               <footer className="cart-footer">
+                {/* BADGES */}
+
                 <div className="cart-badges-row">
                   <div
                     className="cart-badge-card"
@@ -877,14 +2223,31 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
                     >
                       <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z" />
 
-                      <line x1="9" y1="9" x2="9.01" y2="9" />
+                      <line
+                        x1="9"
+                        y1="9"
+                        x2="9.01"
+                        y2="9"
+                      />
 
-                      <line x1="15" y1="15" x2="15.01" y2="15" />
+                      <line
+                        x1="15"
+                        y1="15"
+                        x2="15.01"
+                        y2="15"
+                      />
 
-                      <line x1="15" y1="9" x2="9" y2="15" />
+                      <line
+                        x1="15"
+                        y1="9"
+                        x2="9"
+                        y2="15"
+                      />
                     </svg>
 
-                    <span>Save More</span>
+                    <span>
+                      Save More
+                    </span>
                   </div>
 
                   <div
@@ -904,76 +2267,137 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
                     >
                       <polyline points="20 12 20 22 4 22 4 12" />
 
-                      <rect x="2" y="7" width="20" height="5" />
+                      <rect
+                        x="2"
+                        y="7"
+                        width="20"
+                        height="5"
+                      />
 
-                      <line x1="12" y1="22" x2="12" y2="7" />
+                      <line
+                        x1="12"
+                        y1="22"
+                        x2="12"
+                        y2="7"
+                      />
                     </svg>
 
-                    <span>Express Delivery</span>
-                  </div>
-                </div>
-
-                {/* ================================================== */}
-                {/* TOTALS */}
-                {/* ================================================== */}
-
-                <div className="cart-totals-row">
-                  <div className="total-col">
-                    <span className="total-label">Total Items</span>
-
-                    <span className="total-value">{totalItemsCount}</span>
-                  </div>
-
-                  <div className="total-col right">
-                    <span className="total-label">Subtotal</span>
-
-                    <span className="total-value">
-                      ₹{subtotalAmount.toFixed(2)}
+                    <span>
+                      Express
+                      Delivery
                     </span>
                   </div>
                 </div>
 
-                {/* ================================================== */}
-                {/* EACH ITEM PRICE DETAILS */}
-                {/* ================================================== */}
+                {/* TOTALS */}
 
-                <div className="cart-item-price-details">
-                  <h4 className="price-details-title">Price Details</h4>
+                <div className="cart-totals-row">
+                  <div className="total-col">
+                    <span className="total-label">
+                      Total Items
+                    </span>
 
-                  {cartItems.map((item) => {
-                    const itemTotal =
-                      Number(item.price || 0) * Number(item.quantity || 0);
+                    <span className="total-value">
+                      {
+                        totalItemsCount
+                      }
+                    </span>
+                  </div>
 
-                    return (
-                      <div className="cart-price-detail-item" key={item.id}>
-                        <div className="cart-price-detail-info">
-                          <span className="cart-price-detail-name">
-                            {item.name}
-                          </span>
+                  <div className="total-col right">
+                    <span className="total-label">
+                      Subtotal
+                    </span>
 
-                          <span className="cart-price-detail-quantity">
-                            {item.quantity} × ₹
-                            {Number(item.price || 0).toFixed(2)}
-                          </span>
-                        </div>
-
-                        <span className="cart-price-detail-total">
-                          ₹{itemTotal.toFixed(2)}
-                        </span>
-                      </div>
-                    );
-                  })}
+                    <span className="total-value">
+                      ₹
+                      {subtotalAmount.toFixed(
+                        2
+                      )}
+                    </span>
+                  </div>
                 </div>
 
-                {/* ================================================== */}
+                {/* PRICE DETAILS */}
+
+                <div className="cart-item-price-details">
+                  <h4 className="price-details-title">
+                    Price Details
+                  </h4>
+
+                  {cartItems.map(
+                    (item) => {
+                      const itemTotal =
+                        getSafeNumber(
+                          item?.price,
+                          0
+                        ) *
+                        getSafeNumber(
+                          item?.quantity,
+                          0
+                        );
+
+                      const itemName =
+                        getSafeText(
+                          item?.name,
+                          "Product"
+                        );
+
+                      return (
+                        <div
+                          className="cart-price-detail-item"
+                          key={
+                            item.id ||
+                            item.productId
+                          }
+                        >
+                          <div className="cart-price-detail-info">
+                            <span className="cart-price-detail-name">
+                              {
+                                itemName
+                              }
+                            </span>
+
+                            <span className="cart-price-detail-quantity">
+                              {
+                                getSafeNumber(
+                                  item?.quantity,
+                                  0
+                                )
+                              }{" "}
+                              × ₹
+                              {getSafeNumber(
+                                item?.price,
+                                0
+                              ).toFixed(
+                                2
+                              )}
+                            </span>
+                          </div>
+
+                          <span className="cart-price-detail-total">
+                            ₹
+                            {itemTotal.toFixed(
+                              2
+                            )}
+                          </span>
+                        </div>
+                      );
+                    }
+                  )}
+                </div>
+
                 {/* ACTION BUTTONS */}
-                {/* ================================================== */}
 
                 <div className="cart-action-buttons">
                   <button
                     type="button"
                     className="btn-view-cart"
-                    onClick={() => alert("Redirecting to full cart page...")}
+                    onClick={() =>
+                      navigate(
+                        "/cart"
+                      )
+                    }
                   >
                     View Cart
                   </button>
@@ -981,7 +2405,11 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
                   <button
                     type="button"
                     className="btn-checkout"
-                    onClick={() => alert("Proceeding to secure checkout...")}
+                    onClick={() =>
+                      navigate(
+                        "/checkout"
+                      )
+                    }
                   >
                     Checkout
                   </button>

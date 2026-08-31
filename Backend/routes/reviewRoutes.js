@@ -3,19 +3,24 @@ const express = require("express");
 const {
   createReview,
   getProductReviews,
+  getAllReviews,
+  publishReview,
+  rejectReview,
+  unpublishReview,
   deleteReview,
 } = require("../controllers/reviewController");
 
 const {
   protect,
+  optionalAuth,
 } = require("../middleware/authMiddleware");
 
-const router =
-  express.Router();
+const router = express.Router();
+
 
 // ======================================================
-// GET PRODUCT REVIEWS
 // PUBLIC
+// GET PUBLISHED REVIEWS
 // ======================================================
 
 router.get(
@@ -23,20 +28,74 @@ router.get(
   getProductReviews
 );
 
+
 // ======================================================
+// PUBLIC
 // CREATE REVIEW
-// LOGIN REQUIRED
+//
+// Login is NOT required
 // ======================================================
 
 router.post(
   "/",
-  protect,
+  optionalAuth,
   createReview
 );
 
+
 // ======================================================
-// DELETE REVIEW
-// LOGIN REQUIRED
+// ADMIN
+// GET ALL REVIEWS
+// ======================================================
+
+router.get(
+  "/admin/all",
+  protect,
+  getAllReviews
+);
+
+
+// ======================================================
+// ADMIN
+// PUBLISH
+// ======================================================
+
+router.put(
+  "/admin/:reviewId/publish",
+  protect,
+  publishReview
+);
+
+
+// ======================================================
+// ADMIN
+// REJECT
+// ======================================================
+
+
+router.put(
+  "/admin/:reviewId/reject",
+  protect,
+  rejectReview
+);
+
+
+
+
+// ======================================================
+// ADMIN
+// UNPUBLISH
+// ======================================================
+
+router.put(
+  "/admin/:reviewId/unpublish",
+  protect,
+  unpublishReview
+);
+
+
+// ======================================================
+// DELETE
 // ======================================================
 
 router.delete(
@@ -44,5 +103,6 @@ router.delete(
   protect,
   deleteReview
 );
+
 
 module.exports = router;

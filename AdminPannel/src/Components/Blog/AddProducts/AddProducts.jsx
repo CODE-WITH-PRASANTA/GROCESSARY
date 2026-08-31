@@ -59,7 +59,7 @@ const AddProducts = () => {
     fullDescription: "",
     metaTitle: "",
     metaDescription: "",
-    metaKeywords: "",
+    metaKeywords: [],
     price: "",
     writtenPrice: "",
     discountPrice: "",
@@ -247,8 +247,13 @@ const AddProducts = () => {
         metaDescription: product.metaDescription || "",
 
         metaKeywords: Array.isArray(product.metaKeywords)
-          ? product.metaKeywords.join(", ")
-          : product.metaKeywords || "",
+          ? product.metaKeywords
+          : product.metaKeywords
+            ? product.metaKeywords
+                .split(",")
+                .map((keyword) => keyword.trim())
+                .filter(Boolean)
+            : [],
 
         // ==========================================
         // PRICE
@@ -516,8 +521,13 @@ const AddProducts = () => {
         metaDescription: editingProduct.metaDescription || "",
 
         metaKeywords: Array.isArray(editingProduct.metaKeywords)
-          ? editingProduct.metaKeywords.join(", ")
-          : editingProduct.metaKeywords || "",
+          ? editingProduct.metaKeywords
+          : editingProduct.metaKeywords
+            ? editingProduct.metaKeywords
+                .split(",")
+                .map((keyword) => keyword.trim())
+                .filter(Boolean)
+            : [],
 
         // ==========================================
         // PRICING
@@ -671,9 +681,12 @@ const AddProducts = () => {
       // ===============================================
       // NORMAL FORM FIELDS
       // ===============================================
-
       Object.keys(formData).forEach((key) => {
-        data.append(key, formData[key] ?? "");
+        if (key === "metaKeywords") {
+          data.append(key, JSON.stringify(formData.metaKeywords || []));
+        } else {
+          data.append(key, formData[key] ?? "");
+        }
       });
 
       // ===============================================
@@ -795,6 +808,46 @@ const AddProducts = () => {
     }
 
     return `${API_BASE_URL}${img.startsWith("/") ? "" : "/"}${img}`;
+  };
+
+  const handleMetaKeywordKeyDown = (e) => {
+    if (e.key !== "Enter") return;
+
+    e.preventDefault();
+
+    const keyword = e.target.value.trim();
+
+    if (!keyword) return;
+
+    // Prevent duplicate keywords
+    const exists = formData.metaKeywords.some(
+      (item) => item.toLowerCase() === keyword.toLowerCase(),
+    );
+
+    if (exists) {
+      e.target.value = "";
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      metaKeywords: [
+        ...(Array.isArray(prev.metaKeywords) ? prev.metaKeywords : []),
+        keyword,
+      ],
+    }));
+
+    e.target.value = "";
+  };
+
+  const removeMetaKeyword = (keywordToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      metaKeywords: (Array.isArray(prev.metaKeywords)
+        ? prev.metaKeywords
+        : []
+      ).filter((keyword) => keyword !== keywordToRemove),
+    }));
   };
 
   // =====================================================
@@ -1148,13 +1201,42 @@ const AddProducts = () => {
             <div className="gs-form-group">
               <label>Meta Keywords</label>
 
-              <input
-                type="text"
-                name="metaKeywords"
-                placeholder="organic, fresh, vegetables"
-                value={formData.metaKeywords}
-                onChange={handleChange}
-              />
+              <div className="gs-keyword-input-wrapper">
+                {/* KEYWORD TAGS */}
+
+                {Array.isArray(formData.metaKeywords) &&
+                  formData.metaKeywords.map((keyword) => (
+                    <span key={keyword} className="gs-keyword-tag">
+                      {keyword}
+
+                      <button
+                        type="button"
+                        className="gs-keyword-remove"
+                        onClick={() => removeMetaKeyword(keyword)}
+                        aria-label={`Remove ${keyword}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+
+                {/* INPUT */}
+
+                <input
+                  type="text"
+                  placeholder={
+                    formData.metaKeywords?.length
+                      ? "Add another keyword..."
+                      : "Type keyword and press Enter"
+                  }
+                  onKeyDown={handleMetaKeywordKeyDown}
+                  autoComplete="off"
+                />
+              </div>
+
+              <small className="gs-field-help">
+                Type a keyword and press Enter to add it.
+              </small>
             </div>
           </div>
         </div>

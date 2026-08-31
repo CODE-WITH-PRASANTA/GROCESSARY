@@ -1,5 +1,15 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
+
+import {
+  Link,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 
 import {
   Search,
@@ -13,7 +23,14 @@ import {
 } from "lucide-react";
 
 import logo from "../../assets/Grocessary Sathi Png.png";
+
 import "./Navbar.css";
+
+import CartSection from "../CartSection/CartSection";
+
+// ======================================================
+// NAVIGATION PATHS
+// ======================================================
 
 const NAV_PATHS = {
   HOME: "/",
@@ -28,13 +45,25 @@ const NAV_PATHS = {
 };
 
 const API_BASE_URL = "http://localhost:5000/api";
+const SERVER_BASE_URL = "http://localhost:5000";
+
+// ======================================================
+// COMPONENT
+// ======================================================
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   // ======================================================
-  // CATEGORY STATES
+  // CART POPUP
+  // ======================================================
+
+  const [isCartOpen, setIsCartOpen] =
+    useState(false);
+
+  // ======================================================
+  // CATEGORY
   // ======================================================
 
   const [isCategoryOpen, setIsCategoryOpen] =
@@ -59,7 +88,7 @@ const Navbar = () => {
     useState(false);
 
   // ======================================================
-  // USER STATES
+  // USER
   // ======================================================
 
   const [currentUser, setCurrentUser] =
@@ -69,7 +98,7 @@ const Navbar = () => {
     useState(true);
 
   // ======================================================
-  // CART STATES
+  // CART
   // ======================================================
 
   const [cartItemCount, setCartItemCount] =
@@ -83,11 +112,88 @@ const Navbar = () => {
   // ======================================================
 
   const getToken = () => {
-    return localStorage.getItem("token");
+    try {
+      return localStorage.getItem("token");
+    } catch {
+      return null;
+    }
   };
 
   // ======================================================
-  // GET USER NAME
+  // SAFE STRING
+  // IMPORTANT FIX
+  // Prevent {_id, name} object rendering
+  // ======================================================
+
+  const getSafeString = (
+    value,
+    fallback = ""
+  ) => {
+    if (
+      value === null ||
+      value === undefined
+    ) {
+      return fallback;
+    }
+
+    if (typeof value === "string") {
+      return value.trim();
+    }
+
+    if (
+      typeof value === "number" ||
+      typeof value === "boolean"
+    ) {
+      return String(value);
+    }
+
+    if (
+      typeof value === "object"
+    ) {
+      return (
+        String(
+          value?.name ||
+            value?.title ||
+            value?.label ||
+            value?.value ||
+            value?.categoryName ||
+            value?.brandName ||
+            value?.unitName ||
+            ""
+        ).trim() || fallback
+      );
+    }
+
+    return fallback;
+  };
+
+  // ======================================================
+  // GET OBJECT ID
+  // ======================================================
+
+  const getObjectId = (value) => {
+    if (!value) {
+      return "";
+    }
+
+    if (typeof value === "string") {
+      return value;
+    }
+
+    if (typeof value === "object") {
+      return (
+        value?._id ||
+        value?.id ||
+        value?.value ||
+        ""
+      );
+    }
+
+    return "";
+  };
+
+  // ======================================================
+  // USER NAME
   // ======================================================
 
   const getUserName = (user) => {
@@ -95,25 +201,355 @@ const Navbar = () => {
       return "";
     }
 
-    return (
-      user.name ||
-      user.fullName ||
-      user.username ||
-      user.userName ||
-      user.firstName ||
-      user.email?.split("@")[0] ||
+    return getSafeString(
+      user?.name ||
+        user?.fullName ||
+        user?.username ||
+        user?.userName ||
+        user?.firstName ||
+        user?.email?.split("@")[0],
       "User"
     );
+  };
+
+  // ======================================================
+  // CATEGORY NAME
+  // ======================================================
+
+  const getCategoryName = (category) => {
+    if (!category) {
+      return "";
+    }
+
+    return getSafeString(
+      category,
+      ""
+    );
+  };
+
+  // ======================================================
+  // CATEGORY ID
+  // ======================================================
+
+  const getCategoryId = (category) => {
+    return getObjectId(category);
+  };
+
+  // ======================================================
+  // CATEGORY SLUG
+  // ======================================================
+
+  const getCategorySlug = (category) => {
+    if (!category) {
+      return "";
+    }
+
+    if (
+      typeof category === "string"
+    ) {
+      return category.trim();
+    }
+
+    return getSafeString(
+      category?.slug ||
+        category?._id ||
+        category?.id ||
+        "",
+      ""
+    );
+  };
+
+  // ======================================================
+  // CATEGORY KEY
+  // ======================================================
+
+  const getCategoryKey = (category) => {
+    if (!category) {
+      return "";
+    }
+
+    return (
+      category?._id ||
+      category?.id ||
+      category?.slug ||
+      category?.name ||
+      ""
+    );
+  };
+
+  // ======================================================
+  // SUBCATEGORY NAME
+  // ======================================================
+
+  const getSubCategoryName = (
+    subCategory
+  ) => {
+    if (!subCategory) {
+      return "";
+    }
+
+    return getSafeString(
+      subCategory?.name ||
+        subCategory?.title ||
+        subCategory?.categoryName ||
+        subCategory,
+      ""
+    );
+  };
+
+  // ======================================================
+  // SUBCATEGORY ID
+  // ======================================================
+
+  const getSubCategoryId = (
+    subCategory
+  ) => {
+    return getObjectId(
+      subCategory
+    );
+  };
+
+  // ======================================================
+  // SUBCATEGORY SLUG
+  // ======================================================
+
+  const getSubCategorySlug = (
+    subCategory
+  ) => {
+    if (!subCategory) {
+      return "";
+    }
+
+    if (
+      typeof subCategory ===
+      "string"
+    ) {
+      return subCategory.trim();
+    }
+
+    return getSafeString(
+      subCategory?.slug ||
+        subCategory?._id ||
+        subCategory?.id ||
+        "",
+      ""
+    );
+  };
+
+  // ======================================================
+  // GET SUBCATEGORIES
+  // ======================================================
+
+  const getSubCategories = (
+    category
+  ) => {
+    if (!category) {
+      return [];
+    }
+
+    const list =
+      category?.subCategories ||
+      category?.subcategories ||
+      category?.children ||
+      [];
+
+    if (!Array.isArray(list)) {
+      return [];
+    }
+
+    return list.filter(Boolean);
+  };
+
+  // ======================================================
+  // GET PRODUCT ID
+  // ======================================================
+
+  const getProductId = (
+    product
+  ) => {
+    if (!product) {
+      return "";
+    }
+
+    return getObjectId(product);
+  };
+
+  // ======================================================
+  // PRODUCT NAME
+  // ======================================================
+
+  const getProductName = (
+    product
+  ) => {
+    if (!product) {
+      return "Unnamed Product";
+    }
+
+    return getSafeString(
+      product?.productName ||
+        product?.name ||
+        product?.title,
+      "Unnamed Product"
+    );
+  };
+
+  // ======================================================
+  // PRODUCT CATEGORY
+  // ======================================================
+
+  const getProductCategory = (
+    product
+  ) => {
+    if (!product) {
+      return null;
+    }
+
+    return (
+      product?.category ||
+      product?.categoryId ||
+      product?.category_id ||
+      null
+    );
+  };
+
+  // ======================================================
+  // PRODUCT CATEGORY ID
+  // ======================================================
+
+  const getProductCategoryId = (
+    product
+  ) => {
+    return getObjectId(
+      getProductCategory(product)
+    );
+  };
+
+  // ======================================================
+  // PRODUCT CATEGORY NAME
+  // ======================================================
+
+  const getProductCategoryName = (
+    product
+  ) => {
+    return getCategoryName(
+      getProductCategory(product)
+    );
+  };
+
+  // ======================================================
+  // PRODUCT IMAGE
+  // Supports:
+  // images[]
+  // image
+  // thumbnail
+  // imageUrl
+  // ======================================================
+
+  const getProductImage = (
+    product
+  ) => {
+    if (!product) {
+      return "";
+    }
+
+    let image =
+      Array.isArray(
+        product?.images
+      ) &&
+      product.images.length > 0
+        ? product.images[0]
+        : product?.image ||
+          product?.thumbnail ||
+          product?.imageUrl ||
+          "";
+
+    if (!image) {
+      return "";
+    }
+
+    if (
+      typeof image === "object"
+    ) {
+      image =
+        image?.url ||
+        image?.path ||
+        image?.secure_url ||
+        image?.src ||
+        "";
+    }
+
+    if (!image) {
+      return "";
+    }
+
+    const imageString =
+      String(image).trim();
+
+    if (
+      imageString.startsWith(
+        "http://"
+      ) ||
+      imageString.startsWith(
+        "https://"
+      )
+    ) {
+      return imageString;
+    }
+
+    return `${SERVER_BASE_URL}${
+      imageString.startsWith("/")
+        ? imageString
+        : `/${imageString}`
+    }`;
+  };
+
+  // ======================================================
+  // PRODUCT PRICE
+  // ======================================================
+
+  const getProductPrice = (
+    product
+  ) => {
+    if (!product) {
+      return 0;
+    }
+
+    const discountPrice =
+      Number(
+        product?.discountPrice ||
+          0
+      );
+
+    if (
+      Number.isFinite(
+        discountPrice
+      ) &&
+      discountPrice > 0
+    ) {
+      return discountPrice;
+    }
+
+    const price =
+      Number(
+        product?.price ??
+          product?.sellingPrice ??
+          0
+      );
+
+    return Number.isFinite(price)
+      ? price
+      : 0;
   };
 
   // ======================================================
   // FETCH CURRENT USER
   // ======================================================
 
-  const fetchCurrentUser = useCallback(
-    async () => {
+  const fetchCurrentUser =
+    useCallback(async () => {
       try {
-        const token = getToken();
+        const token =
+          getToken();
 
         if (!token) {
           setCurrentUser(null);
@@ -121,23 +557,31 @@ const Navbar = () => {
           return;
         }
 
-        const response = await fetch(
-          `${API_BASE_URL}/auth/me`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response =
+          await fetch(
+            `${API_BASE_URL}/auth/me`,
+            {
+              method: "GET",
+              headers: {
+                Accept:
+                  "application/json",
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          );
 
         if (!response.ok) {
           if (
-            response.status === 401 ||
-            response.status === 403
+            response.status ===
+              401 ||
+            response.status ===
+              403
           ) {
-            localStorage.removeItem("token");
+            localStorage.removeItem(
+              "token"
+            );
+
             setCurrentUser(null);
             setCartItemCount(0);
             setCartTotal(0);
@@ -150,7 +594,6 @@ const Navbar = () => {
         const result =
           await response.json();
 
-        // Supports different backend response structures
         const user =
           result?.user ||
           result?.data?.user ||
@@ -168,41 +611,162 @@ const Navbar = () => {
       } finally {
         setUserLoading(false);
       }
-    },
-    []
-  );
+    }, []);
 
   // ======================================================
   // FETCH CART
   // ======================================================
 
-  const fetchCart = useCallback(
-    async () => {
+  const fetchCart =
+    useCallback(async () => {
       try {
-        const token = getToken();
+        const token =
+          getToken();
 
-        // User is not logged in
+        // ==================================================
+        // GUEST CART
+        // ==================================================
+
         if (!token) {
-          setCartItemCount(0);
-          setCartTotal(0);
+          const storedCart =
+            localStorage.getItem(
+              "guestCart"
+            );
+
+          if (!storedCart) {
+            setCartItemCount(0);
+            setCartTotal(0);
+            return;
+          }
+
+          let guestCart;
+
+          try {
+            guestCart =
+              JSON.parse(
+                storedCart
+              );
+          } catch {
+            guestCart = [];
+          }
+
+          if (
+            !Array.isArray(
+              guestCart
+            )
+          ) {
+            localStorage.removeItem(
+              "guestCart"
+            );
+
+            setCartItemCount(0);
+            setCartTotal(0);
+            return;
+          }
+
+          const validCart =
+            guestCart.filter(
+              (item) =>
+                item &&
+                Number(
+                  item?.quantity
+                ) > 0
+            );
+
+          if (
+            validCart.length !==
+            guestCart.length
+          ) {
+            localStorage.setItem(
+              "guestCart",
+              JSON.stringify(
+                validCart
+              )
+            );
+          }
+
+          const totalQuantity =
+            validCart.reduce(
+              (
+                total,
+                item
+              ) =>
+                total +
+                Number(
+                  item?.quantity ||
+                    0
+                ),
+              0
+            );
+
+          const totalPrice =
+            validCart.reduce(
+              (
+                total,
+                item
+              ) => {
+                const price =
+                  Number(
+                    item?.price ??
+                      item?.sellingPrice ??
+                      item?.discountPrice ??
+                      0
+                  );
+
+                const quantity =
+                  Number(
+                    item?.quantity ||
+                      0
+                  );
+
+                return (
+                  total +
+                  price *
+                    quantity
+                );
+              },
+              0
+            );
+
+          setCartItemCount(
+            totalQuantity
+          );
+
+          setCartTotal(
+            Number.isFinite(
+              totalPrice
+            )
+              ? totalPrice
+              : 0
+          );
+
           return;
         }
 
-        const response = await fetch(
-          `${API_BASE_URL}/cart`,
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        // ==================================================
+        // LOGGED-IN CART
+        // ==================================================
+
+        const response =
+          await fetch(
+            `${API_BASE_URL}/cart`,
+            {
+              method: "GET",
+              headers: {
+                Accept:
+                  "application/json",
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          );
 
         if (!response.ok) {
           if (
-            response.status === 401 ||
-            response.status === 403
+            response.status ===
+              401 ||
+            response.status ===
+              403
           ) {
             setCartItemCount(0);
             setCartTotal(0);
@@ -220,55 +784,53 @@ const Navbar = () => {
           result?.data?.items ||
           [];
 
-        if (!Array.isArray(items)) {
+        if (
+          !Array.isArray(items)
+        ) {
           setCartItemCount(0);
           setCartTotal(0);
           return;
         }
 
-        // ==================================================
-        // TOTAL ITEM QUANTITY
-        // ==================================================
-
         const totalQuantity =
           items.reduce(
-            (total, item) => {
-              return (
-                total +
-                Number(
-                  item?.quantity || 0
-                )
-              );
-            },
+            (
+              total,
+              item
+            ) =>
+              total +
+              Number(
+                item?.quantity ||
+                  0
+              ),
             0
           );
 
-        // ==================================================
-        // TOTAL CART PRICE
-        // ==================================================
-
         const totalPrice =
           items.reduce(
-            (total, item) => {
+            (
+              total,
+              item
+            ) => {
               const product =
-                item?.product || {};
+                item?.product ||
+                {};
 
               const price =
-                Number(
-                  product?.price ??
-                    product?.sellingPrice ??
-                    product?.discountPrice ??
-                    0
+                getProductPrice(
+                  product
                 );
 
               const quantity =
                 Number(
-                  item?.quantity || 0
+                  item?.quantity ||
+                    0
                 );
 
               return (
                 total +
-                price * quantity
+                price *
+                  quantity
               );
             },
             0
@@ -279,7 +841,11 @@ const Navbar = () => {
         );
 
         setCartTotal(
-          totalPrice
+          Number.isFinite(
+            totalPrice
+          )
+            ? totalPrice
+            : 0
         );
       } catch (error) {
         console.error(
@@ -290,147 +856,234 @@ const Navbar = () => {
         setCartItemCount(0);
         setCartTotal(0);
       }
-    },
-    []
-  );
+    }, []);
 
   // ======================================================
   // FETCH CATEGORIES
   // ======================================================
 
-  const fetchCategories = async () => {
-    try {
-      setLoadingCategories(true);
-
-      const response = await fetch(
-        `${API_BASE_URL}/categories`
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `Category API failed: ${response.status}`
-        );
-      }
-
-      const result =
-        await response.json();
-
-      let categoryList = [];
-
-      if (Array.isArray(result)) {
-        categoryList = result;
-      } else if (
-        Array.isArray(result.categories)
-      ) {
-        categoryList = result.categories;
-      } else if (
-        Array.isArray(result.data)
-      ) {
-        categoryList = result.data;
-      } else if (
-        result.data &&
-        Array.isArray(
-          result.data.categories
-        )
-      ) {
-        categoryList =
-          result.data.categories;
-      }
-
-      const activeCategories =
-        categoryList.filter(
-          (category) =>
-            category.status ===
-              undefined ||
-            category.status ===
-              "Active" ||
-            category.status ===
-              "active" ||
-            category.status === true
+  const fetchCategories =
+    useCallback(async () => {
+      try {
+        setLoadingCategories(
+          true
         );
 
-      setCategories(
-        activeCategories
-      );
-    } catch (error) {
-      console.error(
-        "Navbar category fetch error:",
-        error
-      );
+        const response =
+          await fetch(
+            `${API_BASE_URL}/categories`,
+            {
+              method: "GET",
+              headers: {
+                Accept:
+                  "application/json",
+              },
+            }
+          );
 
-      setCategories([]);
-    } finally {
-      setLoadingCategories(false);
-    }
-  };
+        if (!response.ok) {
+          throw new Error(
+            `Category API failed: ${response.status}`
+          );
+        }
+
+        const result =
+          await response.json();
+
+       
+
+        let categoryList = [];
+
+        if (
+          Array.isArray(result)
+        ) {
+          categoryList =
+            result;
+        } else if (
+          Array.isArray(
+            result?.categories
+          )
+        ) {
+          categoryList =
+            result.categories;
+        } else if (
+          Array.isArray(
+            result?.data
+          )
+        ) {
+          categoryList =
+            result.data;
+        } else if (
+          Array.isArray(
+            result?.data?.categories
+          )
+        ) {
+          categoryList =
+            result.data
+              .categories;
+        }
+
+        // ==================================================
+        // ONLY VALID CATEGORIES
+        // ==================================================
+
+        const activeCategories =
+          categoryList.filter(
+            (category) => {
+              if (!category) {
+                return false;
+              }
+
+              const status =
+                String(
+                  category?.status ??
+                    "active"
+                )
+                  .trim()
+                  .toLowerCase();
+
+              return (
+                status ===
+                  "active" ||
+                status ===
+                  "true" ||
+                status ===
+                  "1" ||
+                category?.status ===
+                  undefined
+              );
+            }
+          );
+
+        setCategories(
+          activeCategories
+        );
+      } catch (error) {
+        console.error(
+          "Navbar category fetch error:",
+          error
+        );
+
+        setCategories([]);
+      } finally {
+        setLoadingCategories(
+          false
+        );
+      }
+    }, []);
 
   // ======================================================
   // FETCH ALL PRODUCTS
   // ======================================================
 
-  const fetchProducts = async () => {
-    try {
-      setLoadingProducts(true);
-
-      const response = await fetch(
-        `${API_BASE_URL}/products`
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `Products API failed: ${response.status}`
-        );
-      }
-
-      const result =
-        await response.json();
-
-      let productList = [];
-
-      if (Array.isArray(result)) {
-        productList = result;
-      } else if (
-        Array.isArray(result.products)
-      ) {
-        productList = result.products;
-      } else if (
-        Array.isArray(result.data)
-      ) {
-        productList = result.data;
-      } else if (
-        result.data &&
-        Array.isArray(
-          result.data.products
-        )
-      ) {
-        productList =
-          result.data.products;
-      }
-
-      const activeProducts =
-        productList.filter(
-          (product) =>
-            product.status ===
-              undefined ||
-            product.status ===
-              "active" ||
-            product.status ===
-              "Active" ||
-            product.status === true
+  const fetchProducts =
+    useCallback(async () => {
+      try {
+        setLoadingProducts(
+          true
         );
 
-      setProducts(activeProducts);
-    } catch (error) {
-      console.error(
-        "Navbar product fetch error:",
-        error
-      );
+        const response =
+          await fetch(
+            `${API_BASE_URL}/products`,
+            {
+              method: "GET",
+              headers: {
+                Accept:
+                  "application/json",
+              },
+            }
+          );
 
-      setProducts([]);
-    } finally {
-      setLoadingProducts(false);
-    }
-  };
+        if (!response.ok) {
+          throw new Error(
+            `Products API failed: ${response.status}`
+          );
+        }
+
+        const result =
+          await response.json();
+
+       
+
+        let productList = [];
+
+        if (
+          Array.isArray(result)
+        ) {
+          productList =
+            result;
+        } else if (
+          Array.isArray(
+            result?.products
+          )
+        ) {
+          productList =
+            result.products;
+        } else if (
+          Array.isArray(
+            result?.data
+          )
+        ) {
+          productList =
+            result.data;
+        } else if (
+          Array.isArray(
+            result?.data?.products
+          )
+        ) {
+          productList =
+            result.data.products;
+        }
+
+        // ==================================================
+        // ACTIVE PRODUCTS ONLY
+        // ==================================================
+
+        const activeProducts =
+          productList.filter(
+            (product) => {
+              if (!product) {
+                return false;
+              }
+
+              const status =
+                String(
+                  product?.status ??
+                    "active"
+                )
+                  .trim()
+                  .toLowerCase();
+
+              return (
+                status ===
+                  "active" ||
+                status ===
+                  "true" ||
+                status ===
+                  "1" ||
+                product?.status ===
+                  undefined
+              );
+            }
+          );
+
+        setProducts(
+          activeProducts
+        );
+      } catch (error) {
+        console.error(
+          "Navbar product fetch error:",
+          error
+        );
+
+        setProducts([]);
+      } finally {
+        setLoadingProducts(
+          false
+        );
+      }
+    }, []);
 
   // ======================================================
   // INITIAL LOAD
@@ -442,6 +1095,8 @@ const Navbar = () => {
     fetchCurrentUser();
     fetchCart();
   }, [
+    fetchCategories,
+    fetchProducts,
     fetchCurrentUser,
     fetchCart,
   ]);
@@ -459,19 +1114,13 @@ const Navbar = () => {
 
   // ======================================================
   // CART UPDATED EVENT
-  //
-  // Your ProductDetails / Cart component can use:
-  //
-  // window.dispatchEvent(
-  //   new Event("cartUpdated")
-  // );
-  //
   // ======================================================
 
   useEffect(() => {
-    const handleCartUpdated = () => {
-      fetchCart();
-    };
+    const handleCartUpdated =
+      () => {
+        fetchCart();
+      };
 
     window.addEventListener(
       "cartUpdated",
@@ -487,14 +1136,15 @@ const Navbar = () => {
   }, [fetchCart]);
 
   // ======================================================
-  // LOGIN UPDATED EVENT
+  // AUTH UPDATED EVENT
   // ======================================================
 
   useEffect(() => {
-    const handleAuthChanged = () => {
-      fetchCurrentUser();
-      fetchCart();
-    };
+    const handleAuthChanged =
+      () => {
+        fetchCurrentUser();
+        fetchCart();
+      };
 
     window.addEventListener(
       "authChanged",
@@ -517,9 +1167,14 @@ const Navbar = () => {
   // ======================================================
 
   useEffect(() => {
-    const handleStorage = (event) => {
+    const handleStorage = (
+      event
+    ) => {
       if (
-        event.key === "token"
+        event.key ===
+          "token" ||
+        event.key ===
+          "guestCart"
       ) {
         fetchCurrentUser();
         fetchCart();
@@ -543,347 +1198,173 @@ const Navbar = () => {
   ]);
 
   // ======================================================
-  // GET CATEGORY NAME
+  // GET PRODUCTS BY CATEGORY
   // ======================================================
 
-  const getCategoryName = (
-    product
-  ) => {
-    if (!product) {
-      return "";
-    }
-
-    if (
-      product.category &&
-      typeof product.category ===
-        "object"
-    ) {
-      return (
-        product.category.name ||
-        product.category.categoryName ||
-        product.category.title ||
-        ""
-      );
-    }
-
-    if (
-      typeof product.category ===
-      "string"
-    ) {
-      return product.category;
-    }
-
-    return "";
-  };
-
-  // ======================================================
-  // GET CATEGORY ID
-  // ======================================================
-
-  const getCategoryId = (
-    category
-  ) => {
-    if (!category) {
-      return "";
-    }
-
-    if (
-      typeof category ===
-      "object"
-    ) {
-      return (
-        category._id ||
-        category.id ||
-        ""
-      );
-    }
-
-    return category;
-  };
-
-  // ======================================================
-  // GET CATEGORY SLUG
-  // ======================================================
-
-  const getCategorySlug = (
-    category
-  ) => {
-    if (!category) {
-      return "";
-    }
-
-    return (
-      category.slug ||
-      category._id ||
-      category.id ||
-      ""
-    );
-  };
-
-  // ======================================================
-  // GET CATEGORY KEY
-  // ======================================================
-
-  const getCategoryKey = (
-    category
-  ) => {
-    return (
-      category?._id ||
-      category?.id ||
-      category?.slug ||
-      category?.name
-    );
-  };
-
-  // ======================================================
-  // GET SUB CATEGORIES
-  // ======================================================
-
-  const getSubCategories = (
-    category
-  ) => {
-    if (!category) {
-      return [];
-    }
-
-    if (
-      Array.isArray(
-        category.subCategories
-      )
-    ) {
-      return category.subCategories;
-    }
-
-    if (
-      Array.isArray(
-        category.subcategories
-      )
-    ) {
-      return category.subcategories;
-    }
-
-    if (
-      Array.isArray(
-        category.children
-      )
-    ) {
-      return category.children;
-    }
-
-    return [];
-  };
-
-  // ======================================================
-  // GET PRODUCTS FOR CATEGORY
-  // ======================================================
-
-  const getProductsByCategory = (
-    category
-  ) => {
-    if (!category) {
-      return [];
-    }
-
-    const categoryId =
-      getCategoryId(category);
-
-    const categoryName =
-      String(
-        category.name || ""
-      )
-        .trim()
-        .toLowerCase();
-
-    return products.filter(
-      (product) => {
-        if (!product) {
-          return false;
+  const getProductsByCategory =
+    useCallback(
+      (category) => {
+        if (
+          !category ||
+          !Array.isArray(products)
+        ) {
+          return [];
         }
 
-        const productCategory =
-          product.category;
+        const categoryId =
+          String(
+            getCategoryId(
+              category
+            ) || ""
+          )
+            .trim()
+            .toLowerCase();
 
-        // PRODUCT CATEGORY OBJECT
+        const categoryName =
+          getCategoryName(
+            category
+          )
+            .trim()
+            .toLowerCase();
 
-        if (
-          productCategory &&
-          typeof productCategory ===
-            "object"
-        ) {
-          const productCategoryId =
-            productCategory._id ||
-            productCategory.id ||
-            "";
+        return products.filter(
+          (product) => {
+            if (!product) {
+              return false;
+            }
 
-          const productCategoryName =
-            String(
-              productCategory.name ||
-                productCategory.categoryName ||
-                productCategory.title ||
-                ""
-            )
-              .trim()
-              .toLowerCase();
-
-          if (
-            categoryId &&
-            productCategoryId &&
-            String(
-              productCategoryId
-            ) ===
-              String(categoryId)
-          ) {
-            return true;
-          }
-
-          if (
-            categoryName &&
-            productCategoryName ===
-              categoryName
-          ) {
-            return true;
-          }
-        }
-
-        // PRODUCT CATEGORY STRING
-
-        if (
-          typeof productCategory ===
-          "string"
-        ) {
-          const value =
-            productCategory
-              .trim()
-              .toLowerCase();
-
-          if (
-            categoryId &&
-            value ===
+            const productStatus =
               String(
-                categoryId
-              ).toLowerCase()
-          ) {
-            return true;
+                product?.status ??
+                  "active"
+              )
+                .trim()
+                .toLowerCase();
+
+            if (
+              productStatus !==
+                "active" &&
+              productStatus !==
+                "true" &&
+              productStatus !==
+                "1"
+            ) {
+              return false;
+            }
+
+            const productCategory =
+              getProductCategory(
+                product
+              );
+
+            if (
+              !productCategory
+            ) {
+              return false;
+            }
+
+            const productCategoryId =
+              String(
+                getObjectId(
+                  productCategory
+                ) || ""
+              )
+                .trim()
+                .toLowerCase();
+
+            const productCategoryName =
+              getCategoryName(
+                productCategory
+              )
+                .trim()
+                .toLowerCase();
+
+            // ID MATCH
+            if (
+              categoryId &&
+              productCategoryId &&
+              categoryId ===
+                productCategoryId
+            ) {
+              return true;
+            }
+
+            // NAME MATCH
+            if (
+              categoryName &&
+              productCategoryName &&
+              categoryName ===
+                productCategoryName
+            ) {
+              return true;
+            }
+
+            // STRING CATEGORY
+            if (
+              typeof productCategory ===
+              "string"
+            ) {
+              const value =
+                productCategory
+                  .trim()
+                  .toLowerCase();
+
+              if (
+                value ===
+                  categoryId ||
+                value ===
+                  categoryName
+              ) {
+                return true;
+              }
+            }
+
+            return false;
+          }
+        );
+      },
+      [products]
+    );
+
+  // ======================================================
+  // ONLY SHOW CATEGORY IF PRODUCT COUNT > 0
+  // ======================================================
+
+  const visibleCategories =
+    useMemo(() => {
+      if (
+        loadingProducts
+      ) {
+        return [];
+      }
+
+      return categories.filter(
+        (category) => {
+          const name =
+            getCategoryName(
+              category
+            );
+
+          if (!name) {
+            return false;
           }
 
-          if (
-            categoryName &&
-            value ===
-              categoryName
-          ) {
-            return true;
-          }
+          const categoryProducts =
+            getProductsByCategory(
+              category
+            );
+
+          return (
+            categoryProducts.length >
+            0
+          );
         }
-
-        return false;
-      }
-    );
-  };
-
-  // ======================================================
-  // PRODUCT IMAGE
-  // ======================================================
-
-  const getProductImage = (
-    product
-  ) => {
-    if (
-      !product ||
-      !Array.isArray(
-        product.images
-      ) ||
-      product.images.length === 0
-    ) {
-      return "";
-    }
-
-    const firstImage =
-      product.images[0];
-
-    if (
-      typeof firstImage ===
-      "string"
-    ) {
-      if (
-        firstImage.startsWith(
-          "http://"
-        ) ||
-        firstImage.startsWith(
-          "https://"
-        )
-      ) {
-        return firstImage;
-      }
-
-      return `http://localhost:5000${
-        firstImage.startsWith("/")
-          ? firstImage
-          : `/${firstImage}`
-      }`;
-    }
-
-    if (
-      typeof firstImage ===
-      "object"
-    ) {
-      const imageUrl =
-        firstImage.url ||
-        firstImage.path ||
-        firstImage.secure_url ||
-        "";
-
-      if (!imageUrl) {
-        return "";
-      }
-
-      if (
-        imageUrl.startsWith(
-          "http://"
-        ) ||
-        imageUrl.startsWith(
-          "https://"
-        )
-      ) {
-        return imageUrl;
-      }
-
-      return `http://localhost:5000${
-        imageUrl.startsWith("/")
-          ? imageUrl
-          : `/${imageUrl}`
-      }`;
-    }
-
-    return "";
-  };
-
-  // ======================================================
-  // PRODUCT NAME
-  // ======================================================
-
-  const getProductName = (
-    product
-  ) => {
-    return (
-      product?.productName ||
-      product?.name ||
-      "Unnamed Product"
-    );
-  };
-
-  // ======================================================
-  // PRODUCT PRICE
-  // ======================================================
-
-  const getProductPrice = (
-    product
-  ) => {
-    return Number(
-      product?.price ??
-        product?.sellingPrice ??
-        0
-    );
-  };
+      );
+    }, [
+      categories,
+      loadingProducts,
+      getProductsByCategory,
+    ]);
 
   // ======================================================
   // OPEN PRODUCT DETAILS
@@ -892,9 +1373,12 @@ const Navbar = () => {
   const handleProductClick = (
     product
   ) => {
+    if (!product) {
+      return;
+    }
+
     const productId =
-      product?._id ||
-      product?.id;
+      getProductId(product);
 
     if (!productId) {
       console.error(
@@ -935,7 +1419,8 @@ const Navbar = () => {
 
     setActiveCategory(
       (previous) =>
-        previous === categoryKey
+        previous ===
+        categoryKey
           ? null
           : categoryKey
     );
@@ -945,71 +1430,76 @@ const Navbar = () => {
   // CATEGORY PAGE
   // ======================================================
 
-  const handleCategoryPageClick = (
-    category,
-    event
-  ) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+  const handleCategoryPageClick =
+    (
+      category,
+      event
+    ) => {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
 
-    const slug =
-      getCategorySlug(category);
+      const slug =
+        getCategorySlug(
+          category
+        );
 
-    closeCategoryMenu();
-    closeMobileMenu();
+      closeCategoryMenu();
+      closeMobileMenu();
 
-    if (slug) {
-      navigate(
-        `${NAV_PATHS.CATEGORIES}/${slug}`
-      );
-    }
-  };
+      if (slug) {
+        navigate(
+          `${NAV_PATHS.CATEGORIES}/${slug}`
+        );
+      }
+    };
 
   // ======================================================
-  // SUB CATEGORY CLICK
+  // SUBCATEGORY CLICK
   // ======================================================
 
-  const handleSubCategoryClick = (
-    category,
-    subCategory,
-    event
-  ) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+  const handleSubCategoryClick =
+    (
+      category,
+      subCategory,
+      event
+    ) => {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
 
-    const categorySlug =
-      getCategorySlug(category);
+      const categorySlug =
+        getCategorySlug(
+          category
+        );
 
-    const subCategorySlug =
-      subCategory?.slug ||
-      subCategory?._id ||
-      subCategory?.id ||
-      "";
+      const subCategorySlug =
+        getSubCategorySlug(
+          subCategory
+        );
 
-    closeCategoryMenu();
-    closeMobileMenu();
+      closeCategoryMenu();
+      closeMobileMenu();
 
-    if (
-      categorySlug &&
-      subCategorySlug
-    ) {
-      navigate(
-        `${NAV_PATHS.CATEGORIES}/${categorySlug}/${subCategorySlug}`
-      );
+      if (
+        categorySlug &&
+        subCategorySlug
+      ) {
+        navigate(
+          `${NAV_PATHS.CATEGORIES}/${categorySlug}/${subCategorySlug}`
+        );
 
-      return;
-    }
+        return;
+      }
 
-    if (subCategorySlug) {
-      navigate(
-        `${NAV_PATHS.CATEGORIES}/${subCategorySlug}`
-      );
-    }
-  };
+      if (subCategorySlug) {
+        navigate(
+          `${NAV_PATHS.CATEGORIES}/${subCategorySlug}`
+        );
+      }
+    };
 
   // ======================================================
   // TOGGLE CATEGORY DROPDOWN
@@ -1034,7 +1524,7 @@ const Navbar = () => {
     };
 
   // ======================================================
-  // SUB CATEGORY TOGGLE
+  // CATEGORY TOGGLE
   // ======================================================
 
   const handleCategoryToggle = (
@@ -1049,34 +1539,44 @@ const Navbar = () => {
   };
 
   // ======================================================
-  // CLOSE MOBILE MENU
+  // CLOSE MOBILE
   // ======================================================
 
   const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
+    setIsMobileMenuOpen(
+      false
+    );
   };
 
   // ======================================================
-  // CLOSE CATEGORY MENU
+  // CLOSE CATEGORY
   // ======================================================
 
   const closeCategoryMenu = () => {
-    setIsCategoryOpen(false);
-    setActiveCategory(null);
+    setIsCategoryOpen(
+      false
+    );
+
+    setActiveCategory(
+      null
+    );
   };
 
   // ======================================================
-  // ACCOUNT CLICK
+  // ACCOUNT
   // ======================================================
 
   const handleAccountClick = (
     event
   ) => {
-    const token = getToken();
+    const token =
+      getToken();
 
     if (!token) {
       event.preventDefault();
-      navigate("/login");
+
+      navigate("/account");
+
       return;
     }
   };
@@ -1086,7 +1586,9 @@ const Navbar = () => {
   // ======================================================
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem(
+      "token"
+    );
 
     setCurrentUser(null);
     setCartItemCount(0);
@@ -1099,25 +1601,45 @@ const Navbar = () => {
     navigate("/");
   };
 
+  // ======================================================
+  // CLOSE CART
+  // ======================================================
+
+  const handleCloseCart = () => {
+    setIsCartOpen(false);
+  };
+
+  // ======================================================
+  // RENDER
+  // ======================================================
+
   return (
     <>
       {/* ==================================================
-          SEO SCHEMA
+          SEO
       ================================================== */}
 
       <script type="application/ld+json">
         {JSON.stringify({
           "@context":
             "https://schema.org",
-          "@type": "WebSite",
-          name: "Grocery Sathi",
+
+          "@type":
+            "WebSite",
+
+          name:
+            "Grocery Sathi",
+
           url:
             "https://www.grocerysathi.com",
+
           potentialAction: {
             "@type":
               "SearchAction",
+
             target:
               "https://www.grocerysathi.com/search?q={search_term_string}",
+
             "query-input":
               "required name=search_term_string",
           },
@@ -1125,7 +1647,7 @@ const Navbar = () => {
       </script>
 
       {/* ==================================================
-          NAVBAR HEADER
+          HEADER
       ================================================== */}
 
       <header
@@ -1211,9 +1733,7 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* ==================================================
-                USER ACTIONS
-            ================================================== */}
+            {/* USER ACTIONS */}
 
             <div className="navbar-user-actions">
 
@@ -1223,7 +1743,7 @@ const Navbar = () => {
                 to={
                   currentUser
                     ? NAV_PATHS.ACCOUNT
-                    : "/login"
+                    : "/account"
                 }
                 className={`navbar-icon-btn ${
                   currentUser
@@ -1259,10 +1779,15 @@ const Navbar = () => {
 
               {/* CART */}
 
-              <Link
-                to={NAV_PATHS.CART}
+              <button
+                type="button"
                 className="navbar-cart-container"
-                aria-label={`View Shopping Cart. ${cartItemCount} items. Total ₹${cartTotal.toFixed(
+                onClick={() =>
+                  setIsCartOpen(
+                    true
+                  )
+                }
+                aria-label={`Open Shopping Cart. ${cartItemCount} items. Total ₹${cartTotal.toFixed(
                   2
                 )}`}
               >
@@ -1293,9 +1818,9 @@ const Navbar = () => {
                     {cartItemCount}
                   </span>
                 </div>
-              </Link>
+              </button>
 
-              {/* MOBILE MENU */}
+              {/* MOBILE */}
 
               <button
                 type="button"
@@ -1392,6 +1917,7 @@ const Navbar = () => {
                 }`}
               >
                 <ul className="navbar-dropdown-list">
+
                   {loadingCategories ? (
                     <li className="navbar-dropdown-item">
                       <div className="navbar-dropdown-item-header">
@@ -1400,22 +1926,29 @@ const Navbar = () => {
                         </span>
                       </div>
                     </li>
-                  ) : categories.length ===
+                  ) : visibleCategories.length ===
                     0 ? (
                     <li className="navbar-dropdown-item">
                       <div className="navbar-dropdown-item-header">
                         <span className="navbar-category-title-text">
-                          No categories found
+                          {loadingProducts
+                            ? "Loading products..."
+                            : "No categories found"}
                         </span>
                       </div>
                     </li>
                   ) : (
-                    categories.map(
+                    visibleCategories.map(
                       (
                         category
                       ) => {
                         const categoryKey =
                           getCategoryKey(
+                            category
+                          );
+
+                        const categoryName =
+                          getCategoryName(
                             category
                           );
 
@@ -1440,9 +1973,11 @@ const Navbar = () => {
                             }
                             className="navbar-dropdown-item"
                           >
+
                             {/* CATEGORY HEADER */}
 
                             <div className="navbar-dropdown-item-header">
+
                               <button
                                 type="button"
                                 className="navbar-dropdown-title-link"
@@ -1456,17 +1991,13 @@ const Navbar = () => {
                                 }
                               >
                                 <Grid
-                                  size={
-                                    18
-                                  }
+                                  size={18}
                                   className="navbar-dropdown-icon"
                                   aria-hidden="true"
                                 />
 
                                 <span className="navbar-category-title-text">
-                                  {
-                                    category.name
-                                  }
+                                  {categoryName}
                                 </span>
                               </button>
 
@@ -1488,27 +2019,23 @@ const Navbar = () => {
                                 aria-expanded={
                                   isSubOpen
                                 }
-                                aria-label={`Show ${category.name} products`}
+                                aria-label={`Show ${categoryName} products`}
                               >
                                 {isSubOpen ? (
                                   <ChevronDown
-                                    size={
-                                      16
-                                    }
+                                    size={16}
                                     aria-hidden="true"
                                   />
                                 ) : (
                                   <ChevronRight
-                                    size={
-                                      16
-                                    }
+                                    size={16}
                                     aria-hidden="true"
                                   />
                                 )}
                               </button>
                             </div>
 
-                            {/* CATEGORY PRODUCTS */}
+                            {/* SUB DROPDOWN */}
 
                             <div
                               className={`navbar-sub-dropdown ${
@@ -1519,17 +2046,40 @@ const Navbar = () => {
                             >
                               <ul className="navbar-sub-list">
 
-                                {/* SUB CATEGORIES */}
+                                {/* ==================================================
+                                    SUBCATEGORIES
+                                ================================================== */}
 
                                 {subCategories.map(
                                   (
                                     subCategory
                                   ) => {
                                     const subKey =
-                                      subCategory?._id ||
-                                      subCategory?.id ||
-                                      subCategory?.slug ||
-                                      subCategory?.name;
+                                      getSubCategoryId(
+                                        subCategory
+                                      ) ||
+                                      getSubCategorySlug(
+                                        subCategory
+                                      ) ||
+                                      getSubCategoryName(
+                                        subCategory
+                                      );
+
+                                    const subName =
+                                      getSubCategoryName(
+                                        subCategory
+                                      );
+
+                                    const subSlug =
+                                      getSubCategorySlug(
+                                        subCategory
+                                      );
+
+                                    if (
+                                      !subName
+                                    ) {
+                                      return null;
+                                    }
 
                                     return (
                                       <li
@@ -1541,12 +2091,7 @@ const Navbar = () => {
                                         <Link
                                           to={`${NAV_PATHS.CATEGORIES}/${getCategorySlug(
                                             category
-                                          )}/${
-                                            subCategory.slug ||
-                                            subCategory._id ||
-                                            subCategory.id ||
-                                            ""
-                                          }`}
+                                          )}/${subSlug}`}
                                           onClick={(
                                             event
                                           ) =>
@@ -1557,24 +2102,22 @@ const Navbar = () => {
                                             )
                                           }
                                         >
-                                          {subCategory.name ||
-                                            subCategory.title}
+                                          {
+                                            subName
+                                          }
                                         </Link>
                                       </li>
                                     );
                                   }
                                 )}
 
-                                {/* PRODUCTS */}
+                                {/* ==================================================
+                                    PRODUCTS
+                                ================================================== */}
 
                                 {loadingProducts ? (
                                   <li className="navbar-sub-item">
                                     Loading products...
-                                  </li>
-                                ) : categoryProducts.length ===
-                                  0 ? (
-                                  <li className="navbar-sub-item">
-                                    No products found
                                   </li>
                                 ) : (
                                   categoryProducts.map(
@@ -1582,13 +2125,25 @@ const Navbar = () => {
                                       product
                                     ) => {
                                       const productId =
-                                        product?._id ||
-                                        product?.id;
+                                        getProductId(
+                                          product
+                                        );
+
+                                      const productName =
+                                        getProductName(
+                                          product
+                                        );
 
                                       const image =
                                         getProductImage(
                                           product
                                         );
+
+                                      if (
+                                        !productId
+                                      ) {
+                                        return null;
+                                      }
 
                                       return (
                                         <li
@@ -1610,9 +2165,9 @@ const Navbar = () => {
                                                 src={
                                                   image
                                                 }
-                                                alt={getProductName(
-                                                  product
-                                                )}
+                                                alt={
+                                                  productName
+                                                }
                                                 style={{
                                                   width:
                                                     "35px",
@@ -1627,13 +2182,19 @@ const Navbar = () => {
                                                   verticalAlign:
                                                     "middle",
                                                 }}
+                                                onError={(
+                                                  event
+                                                ) => {
+                                                  event.currentTarget.style.display =
+                                                    "none";
+                                                }}
                                               />
                                             )}
 
                                             <span>
-                                              {getProductName(
-                                                product
-                                              )}
+                                              {
+                                                productName
+                                              }
                                             </span>
                                           </button>
                                         </li>
@@ -1658,8 +2219,7 @@ const Navbar = () => {
               <strong>
                 -30% off
               </strong>{" "}
-              on your first order over
-              ₹200.{" "}
+              on your first order over ₹200.{" "}
               <Link
                 to="/promotions/first-order-discount"
                 onClick={
@@ -1673,6 +2233,7 @@ const Navbar = () => {
             {/* QUICK NAVIGATION */}
 
             <div className="navbar-nav-links">
+
               <Link
                 to={NAV_PATHS.HOME}
                 onClick={
@@ -1717,10 +2278,22 @@ const Navbar = () => {
               >
                 About Us
               </Link>
+
             </div>
           </div>
         </nav>
       </header>
+
+      {/* ==================================================
+          CART POPUP
+      ================================================== */}
+
+      <CartSection
+        isOpen={isCartOpen}
+        onClose={
+          handleCloseCart
+        }
+      />
     </>
   );
 };
