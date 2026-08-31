@@ -67,6 +67,31 @@ const productSchema = new mongoose.Schema(
     },
 
     // ====================================================
+    // UNIT NO
+    // ====================================================
+
+    unitNo: {
+      type: Number,
+      required: true,
+      min: 1,
+      default: 1,
+    },
+
+    // ====================================================
+    // SOURCE
+    // ====================================================
+
+    // manual = product created manually
+    // import = product created through Excel import
+
+    source: {
+      type: String,
+      enum: ["manual", "import"],
+      default: "manual",
+      index: true,
+    },
+
+    // ====================================================
     // TAGS
     // ====================================================
 
@@ -122,6 +147,20 @@ const productSchema = new mongoose.Schema(
       min: 0,
     },
 
+    // Purchase price from Excel
+    purchasePrice: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    // Written / MRP price
+    writtenPrice: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     discountPrice: {
       type: Number,
       default: 0,
@@ -132,6 +171,20 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: 0,
+    },
+
+    // ====================================================
+    // PRODUCT DATES
+    // ====================================================
+
+    manufactureDate: {
+      type: Date,
+      default: null,
+    },
+
+    expiryDate: {
+      type: Date,
+      default: null,
     },
 
     // ====================================================
@@ -175,10 +228,7 @@ const productSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: [
-        "active",
-        "inactive",
-      ],
+      enum: ["active", "inactive"],
       default: "active",
     },
 
@@ -186,17 +236,18 @@ const productSchema = new mongoose.Schema(
     // PRODUCT IMAGES
     // ====================================================
 
+    // Both manual and imported products use
+    // the same image format.
+
     images: {
       type: [String],
       default: [],
     },
   },
-
   {
     timestamps: true,
   }
 );
-
 
 // ======================================================
 // INDEXES
@@ -218,10 +269,28 @@ productSchema.index({
   unit: 1,
 });
 
+// Optional index for Unit No
+productSchema.index({
+  unitNo: 1,
+});
+
 productSchema.index({
   status: 1,
 });
 
+// IMPORTANT FOR IMPORTED PRODUCTS
+
+productSchema.index({
+  source: 1,
+});
+
+productSchema.index({
+  manufactureDate: 1,
+});
+
+productSchema.index({
+  expiryDate: 1,
+});
 
 // ======================================================
 // EXPORT

@@ -1,12 +1,11 @@
 import React from 'react';
 import './AboutUsClimateChange.css';
 
-// Importing your image assets
+// Importing image assets
 import img1 from '../../assets/aboutusclimatechange1.webp';
 import img2 from '../../assets/aboutusclimatechange2.webp';
-  
+
 const AboutUsClimateChange = () => {
-  // Structured Data for SEO optimization customized for Grocery Sathi
   const schemaData = {
     "@context": "https://schema.org",
     "@type": "AboutPage",
@@ -21,6 +20,16 @@ const AboutUsClimateChange = () => {
 
   return (
     <article className="climate-change-container" itemScope itemType="https://schema.org/AboutPage">
+      {/* Ambient Floating SVGs */}
+      <div className="ambient-leaf-bg" aria-hidden="true">
+        <span className="floating-leaf leaf-1">🍃</span>
+        <span className="floating-leaf leaf-2">🌿</span>
+        <span className="floating-leaf leaf-3">🥬</span>
+        <span className="floating-leaf leaf-4">🌱</span>
+        <span className="floating-leaf leaf-5">🍃</span>
+        <span className="floating-leaf leaf-6">🌿</span>
+      </div>
+
       {/* SEO JSON-LD Injection */}
       <script
         type="application/ld+json"
@@ -31,6 +40,7 @@ const AboutUsClimateChange = () => {
         
         {/* Section 1: Quality & Transparency */}
         <section className="section-clear-concise">
+          <span className="eco-badge">Pure &amp; Sustainable</span>
           <h2 className="section-title">Freshness and Quality You Can Trust</h2>
           <div className="two-column-text">
             <p>
@@ -47,6 +57,7 @@ const AboutUsClimateChange = () => {
 
         {/* Section 2: Banner Callout */}
         <section className="section-banner-heading" aria-label="Climate action declaration">
+          <div className="banner-glow-effect"></div>
           <h2 className="banner-heading">
             The world needs to move fast to make a meaningful impact against climate change.
           </h2>
@@ -56,7 +67,8 @@ const AboutUsClimateChange = () => {
         <section className="section-inviting-engaging">
           <div className="grid-layout">
             <div className="content-col">
-              <h2 className="section-title">Convenient & Eco-Friendly Shopping</h2>
+              <span className="eco-badge">Zero Waste Mission</span>
+              <h2 className="section-title">Convenient &amp; Eco-Friendly Shopping</h2>
               <p className="text-paragraph">
                 At Grocery Sathi, customer satisfaction and environmental responsibility go hand in hand. Our dedicated team is always ready to assist you with personalized recommendations, fresh recipe inspirations, or tailored dietary needs.
               </p>
@@ -91,6 +103,7 @@ const AboutUsClimateChange = () => {
               </div>
             </div>
             <div className="content-col">
+              <span className="eco-badge">Community First</span>
               <h2 className="section-title">Building a Sustainable Community</h2>
               <p className="text-paragraph">
                 We believe that good food brings people together. Beyond daily essentials, Grocery Sathi strives to foster a strong local community by supporting green initiatives, reducing single-use plastics, and encouraging sustainable consumption.

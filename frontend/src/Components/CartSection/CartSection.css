@@ -562,3 +562,66 @@
     padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px)) 16px;
   }
 }
+
+
+
+.cart-header-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cart-total-item-count {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+
+.cart-item-price-details {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.price-details-title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.cart-price-detail-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.cart-price-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cart-price-detail-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cart-price-detail-quantity {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.cart-price-detail-total {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+body.cart-is-open .floating-call-btn,
+body.cart-is-open .floating-whatsapp-btn {
+  display: none !important;
+}

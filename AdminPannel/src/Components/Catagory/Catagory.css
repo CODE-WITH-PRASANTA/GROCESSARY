@@ -720,3 +720,965 @@
     flex-direction: column;
   }
 }
+
+
+
+
+
+
+/* =====================================================
+   NEW UPDATES - CATEGORY PAGE
+   ===================================================== */
+
+
+/* =====================================================
+   TOOLBAR RIGHT
+   ===================================================== */
+
+.catagory-toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+
+/* =====================================================
+   SELECT ALL
+   ===================================================== */
+
+.catagory-toolbarRight label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.catagory-toolbarRight input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #2563eb;
+}
+
+
+/* =====================================================
+   PUBLISH / UNPUBLISH / EXCEL BUTTONS
+   ===================================================== */
+
+.catagory-toolbarRight > button {
+  min-height: 38px;
+  padding: 8px 13px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+
+  background: #ffffff;
+  color: #374151;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+.catagory-toolbarRight > button svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+
+/* =====================================================
+   HOVER
+   ===================================================== */
+
+.catagory-toolbarRight > button:not(:disabled):hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  box-shadow:
+    0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+
+/* =====================================================
+   DISABLED
+   ===================================================== */
+
+.catagory-toolbarRight > button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+
+/* =====================================================
+   PUBLISH BUTTON
+   ===================================================== */
+
+.catagory-toolbarRight > button:nth-of-type(1) {
+  border-color: #bbf7d0;
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.catagory-toolbarRight > button:nth-of-type(1):not(:disabled):hover {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+
+/* =====================================================
+   UNPUBLISH BUTTON
+   ===================================================== */
+
+.catagory-toolbarRight > button:nth-of-type(2) {
+  border-color: #fecaca;
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.catagory-toolbarRight > button:nth-of-type(2):not(:disabled):hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+
+/* =====================================================
+   EXCEL REPORT BUTTON
+   ===================================================== */
+
+.catagory-toolbarRight > button:nth-of-type(3) {
+  border-color: #bfdbfe;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.catagory-toolbarRight > button:nth-of-type(3):not(:disabled):hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+
+/* =====================================================
+   ADD PRODUCT
+   ===================================================== */
+
+.catagory-btnAddProduct {
+  min-height: 38px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  padding: 8px 15px;
+
+  border: 1px solid transparent;
+  border-radius: 7px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.catagory-btnAddProduct:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.catagory-btnAddProduct svg {
+  width: 15px;
+  height: 15px;
+}
+
+
+/* =====================================================
+   SELECTED PRODUCTS BAR
+   ===================================================== */
+
+.catagory-selectedProductsBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+
+  padding: 10px 14px;
+  margin-bottom: 12px;
+
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+
+  background: #eff6ff;
+
+  color: #1e3a8a;
+
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.catagory-selectedProductsBar button {
+  border: none;
+  background: transparent;
+
+  color: #2563eb;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  padding: 4px 6px;
+}
+
+.catagory-selectedProductsBar button:hover {
+  text-decoration: underline;
+}
+
+
+/* =====================================================
+   PRODUCT CARD SELECT CHECKBOX
+   ===================================================== */
+
+.catagory-card {
+  position: relative;
+}
+
+.catagory-card input[type="checkbox"] {
+  accent-color: #2563eb;
+}
+
+.catagory-card
+  input[type="checkbox"]:hover {
+  transform: scale(1.04);
+}
+
+
+/* =====================================================
+   PRODUCT STATUS
+   ===================================================== */
+
+.catagory-productStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  margin-bottom: 8px;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.catagory-productStatus.published {
+  color: #15803d;
+}
+
+.catagory-productStatus.unpublished {
+  color: #6b7280;
+}
+
+.catagory-productStatus svg {
+  width: 14px;
+  height: 14px;
+}
+
+
+/* =====================================================
+   IMAGE UPLOAD BOX
+   ===================================================== */
+
+.catagory-cardImageBox {
+  position: relative;
+
+  cursor: pointer;
+
+  overflow: hidden;
+
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.catagory-cardImageBox:hover {
+  border-color: #93c5fd;
+  background: #f8fafc;
+}
+
+
+/* =====================================================
+   EMPTY IMAGE
+   ===================================================== */
+
+.catagory-emptyImage {
+  width: 100%;
+  height: 100%;
+
+  min-height: 170px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  color: #94a3b8;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  text-align: center;
+}
+
+.catagory-uploadIcon {
+  width: 28px;
+  height: 28px;
+  opacity: 0.7;
+}
+
+
+/* =====================================================
+   PRODUCT IMAGE
+   ===================================================== */
+
+.catagory-cardImg {
+  width: 100%;
+  height: 100%;
+
+  min-height: 170px;
+
+  display: block;
+
+  object-fit: contain;
+
+  transition:
+    transform 0.25s ease;
+}
+
+.catagory-cardImageBox:hover
+  .catagory-cardImg {
+  transform: scale(1.03);
+}
+
+
+/* =====================================================
+   IMAGE COUNT
+   ===================================================== */
+
+.catagory-imageCount {
+  margin-top: 5px;
+
+  text-align: center;
+
+  font-size: 12px;
+
+  color: #64748b;
+
+  font-weight: 500;
+}
+
+
+/* =====================================================
+   CARD ACTIONS
+   ===================================================== */
+
+.catagory-cardActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.catagory-actionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.catagory-actionBtn:hover {
+  transform: translateY(-1px);
+}
+
+.catagory-actionBtn svg {
+  width: 14px;
+  height: 14px;
+}
+
+
+/* =====================================================
+   EDIT
+   ===================================================== */
+
+.catagory-actionBtn.edit:hover {
+  color: #2563eb;
+}
+
+
+/* =====================================================
+   DELETE
+   ===================================================== */
+
+.catagory-actionBtn.delete:hover {
+  color: #dc2626;
+}
+
+
+/* =====================================================
+   EMPTY STATE
+   ===================================================== */
+
+.catagory-emptyState {
+  width: 100%;
+
+  min-height: 220px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 30px;
+
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+
+  background: #f8fafc;
+
+  color: #64748b;
+
+  text-align: center;
+}
+
+.catagory-emptyState p {
+  margin: 0;
+
+  font-size: 14px;
+}
+
+
+/* =====================================================
+   PAGINATION
+   ===================================================== */
+
+.catagory-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  margin-top: 22px;
+}
+
+.catagory-paginationInfo {
+  color: #64748b;
+
+  font-size: 13px;
+}
+
+.catagory-pageControls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.catagory-pageNav,
+.catagory-pageNumber {
+  min-width: 34px;
+  height: 34px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+
+  background: #ffffff;
+
+  color: #475569;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.catagory-pageNav svg {
+  width: 15px;
+  height: 15px;
+}
+
+.catagory-pageNav:hover:not(:disabled),
+.catagory-pageNumber:hover {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.catagory-pageNav:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.catagory-pageNumber.active {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+
+/* =====================================================
+   MODAL
+   ===================================================== */
+
+.catagory-modalOverlay {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 9999;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background:
+    rgba(15, 23, 42, 0.55);
+
+  backdrop-filter:
+    blur(3px);
+}
+
+.catagory-modal {
+  width: 100%;
+  max-width: 650px;
+
+  max-height: 90vh;
+
+  overflow-y: auto;
+
+  background: #ffffff;
+
+  border-radius: 12px;
+
+  box-shadow:
+    0 20px 50px
+      rgba(15, 23, 42, 0.2);
+
+  animation:
+    catagoryModalIn
+    0.2s
+    ease-out;
+}
+
+.catagory-smallModal {
+  max-width: 450px;
+}
+
+@keyframes catagoryModalIn {
+  from {
+    opacity: 0;
+    transform:
+      translateY(10px)
+      scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+/* =====================================================
+   MODAL HEADER
+   ===================================================== */
+
+.catagory-modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 18px 20px;
+
+  border-bottom:
+    1px solid #e5e7eb;
+}
+
+.catagory-modalHeader h3 {
+  margin: 0;
+
+  color: #111827;
+
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.catagory-modalClose {
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+
+  border-radius: 6px;
+
+  background: #f3f4f6;
+
+  color: #64748b;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.catagory-modalClose:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+
+/* =====================================================
+   MODAL FORM
+   ===================================================== */
+
+.catagory-modalForm {
+  padding: 20px;
+}
+
+.catagory-formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+  margin-bottom: 16px;
+}
+
+.catagory-formGroup label {
+  color: #374151;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.catagory-formGroup input,
+.catagory-formGroup select {
+  width: 100%;
+
+  min-height: 40px;
+
+  padding: 9px 11px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+
+  outline: none;
+
+  background: #ffffff;
+
+  color: #111827;
+
+  font-size: 14px;
+
+  box-sizing: border-box;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.catagory-formGroup input:focus,
+.catagory-formGroup select:focus {
+  border-color: #2563eb;
+
+  box-shadow:
+    0 0 0 3px
+      rgba(37, 99, 235, 0.1);
+}
+
+
+/* =====================================================
+   FORM ROW
+   ===================================================== */
+
+.catagory-formRow {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(150px, 1fr)
+    );
+
+  gap: 14px;
+}
+
+
+/* =====================================================
+   MODAL ACTIONS
+   ===================================================== */
+
+.catagory-modalActions {
+  display: flex;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  padding-top: 8px;
+}
+
+.catagory-btnCancel,
+.catagory-btnSubmit {
+  min-height: 38px;
+
+  padding: 8px 15px;
+
+  border-radius: 7px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.catagory-btnCancel {
+  border: 1px solid #d1d5db;
+
+  background: #ffffff;
+
+  color: #4b5563;
+}
+
+.catagory-btnCancel:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.catagory-btnSubmit {
+  border: 1px solid #2563eb;
+
+  background: #2563eb;
+
+  color: #ffffff;
+}
+
+.catagory-btnSubmit:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+
+/* =====================================================
+   RESPONSIVE - LARGE TABLET
+   ===================================================== */
+
+@media (max-width: 1200px) {
+
+  .catagory-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .catagory-toolbarLeft,
+  .catagory-toolbarRight {
+    width: 100%;
+  }
+
+  .catagory-toolbarRight {
+    justify-content: flex-start;
+  }
+
+}
+
+
+/* =====================================================
+   RESPONSIVE - TABLET
+   ===================================================== */
+
+@media (max-width: 900px) {
+
+  .catagory-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .catagory-sidebar {
+    width: 100%;
+  }
+
+  .catagory-list {
+    display: grid;
+
+    grid-template-columns:
+      repeat(
+        auto-fit,
+        minmax(180px, 1fr)
+      );
+
+    gap: 6px;
+  }
+
+  .catagory-totalBox {
+    display: none;
+  }
+
+  .catagory-productsGrid {
+    grid-template-columns:
+      repeat(
+        3,
+        minmax(0, 1fr)
+      );
+  }
+
+}
+
+
+/* =====================================================
+   RESPONSIVE - MOBILE
+   ===================================================== */
+
+@media (max-width: 650px) {
+
+  .catagory-toolbarRight {
+    display: grid;
+
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+
+    gap: 8px;
+  }
+
+  .catagory-searchWrapper {
+    width: 100%;
+  }
+
+  .catagory-selectWrapper {
+    width: 100%;
+  }
+
+  .catagory-toolbarRight > button,
+  .catagory-btnAddProduct {
+    width: 100%;
+  }
+
+  .catagory-toolbarRight label {
+    grid-column:
+      1 / -1;
+
+    justify-content: flex-start;
+  }
+
+  .catagory-productsGrid {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+
+  .catagory-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .catagory-pageControls {
+    justify-content: center;
+  }
+
+  .catagory-paginationInfo {
+    text-align: center;
+  }
+
+}
+
+
+/* =====================================================
+   RESPONSIVE - SMALL MOBILE
+   ===================================================== */
+
+@media (max-width: 450px) {
+
+  .catagory-productsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .catagory-toolbarRight {
+    grid-template-columns: 1fr;
+  }
+
+  .catagory-toolbarRight label {
+    grid-column: auto;
+  }
+
+  .catagory-cardActions {
+    flex-direction: row;
+  }
+
+  .catagory-modalOverlay {
+    padding: 10px;
+  }
+
+  .catagory-modalForm {
+    padding: 15px;
+  }
+
+  .catagory-formRow {
+    grid-template-columns: 1fr;
+  }
+
+}

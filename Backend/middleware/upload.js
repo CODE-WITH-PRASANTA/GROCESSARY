@@ -8,10 +8,8 @@ const sharp = require("sharp");
 // CONFIG
 // ======================================================
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const MAX_PRODUCT_IMAGES = 5;
-
 
 // ======================================================
 // ALLOWED MIME TYPES
@@ -25,7 +23,6 @@ const allowedMimeTypes = {
   "image/avif": ".avif",
   "application/pdf": ".pdf",
 };
-
 
 // ======================================================
 // GET FILE CATEGORY
@@ -47,19 +44,12 @@ const getFileType = (file) => {
   return "others";
 };
 
-
 // ======================================================
 // CREATE UPLOAD DIRECTORY
-//
-// backend/
-//    uploads/
-//       images/
-//       pdfs/
 // ======================================================
 
 const createUploadDirectory = (file) => {
-  const fileCategory =
-    getFileType(file);
+  const fileCategory = getFileType(file);
 
   const uploadDirectory = path.join(
     __dirname,
@@ -69,12 +59,9 @@ const createUploadDirectory = (file) => {
   );
 
   if (!fs.existsSync(uploadDirectory)) {
-    fs.mkdirSync(
-      uploadDirectory,
-      {
-        recursive: true,
-      }
-    );
+    fs.mkdirSync(uploadDirectory, {
+      recursive: true,
+    });
   }
 
   return {
@@ -83,29 +70,25 @@ const createUploadDirectory = (file) => {
   };
 };
 
-
 // ======================================================
 // MULTER MEMORY STORAGE
 // ======================================================
 
-const storage =
-  multer.memoryStorage();
-
+const storage = multer.memoryStorage();
 
 // ======================================================
 // FILE FILTER
 // ======================================================
 
-const fileFilter = (
-  req,
-  file,
-  cb
-) => {
-  if (
-    !allowedMimeTypes[
-      file.mimetype
-    ]
-  ) {
+const fileFilter = (req, file, cb) => {
+  if (!file || !file.mimetype) {
+    return cb(
+      new Error("Invalid uploaded file."),
+      false
+    );
+  }
+
+  if (!allowedMimeTypes[file.mimetype]) {
     return cb(
       new Error(
         "Invalid file type. Only JPG, JPEG, PNG, WEBP, AVIF, and PDF are allowed."
@@ -117,68 +100,46 @@ const fileFilter = (
   cb(null, true);
 };
 
-
 // ======================================================
 // MULTER CONFIGURATION
-//
-// Supports:
-// - Single file
-// - Multiple product images
 // ======================================================
 
 const upload = multer({
   storage,
-
   fileFilter,
 
   limits: {
-    fileSize:
-      MAX_FILE_SIZE,
-
-    files:
-      MAX_PRODUCT_IMAGES,
+    fileSize: MAX_FILE_SIZE,
+    files: MAX_PRODUCT_IMAGES,
   },
 });
-
 
 // ======================================================
 // SANITIZE FILE NAME
 // ======================================================
 
-const sanitizeFileName = (
-  originalName
-) => {
-  const originalBaseName =
-    path
-      .basename(
-        originalName,
-        path.extname(
-          originalName
-        )
-      )
-      .replace(
-        /[^a-zA-Z0-9-_]/g,
-        "-"
-      )
-      .replace(
-        /-+/g,
-        "-"
-      )
-      .replace(
-        /^-|-$/g,
-        ""
-      )
-      .substring(
-        0,
-        50
-      );
+const sanitizeFileName = (originalName) => {
+  const originalBaseName = path
+    .basename(
+      originalName,
+      path.extname(originalName)
+    )
+    .replace(
+      /[^a-zA-Z0-9-_]/g,
+      "-"
+    )
+    .replace(
+      /-+/g,
+      "-"
+    )
+    .replace(
+      /^-|-$/g,
+      ""
+    )
+    .substring(0, 50);
 
-  return (
-    originalBaseName ||
-    "file"
-  );
+  return originalBaseName || "file";
 };
-
 
 // ======================================================
 // GENERATE UNIQUE FILE NAME
@@ -189,223 +150,80 @@ const generateFileName = (
   extension
 ) => {
   const safeBaseName =
-    sanitizeFileName(
-      originalName
-    );
+    sanitizeFileName(originalName);
 
-  const timestamp =
-    Date.now();
+  const timestamp = Date.now();
 
-  const randomId =
-    crypto
-      .randomBytes(8)
-      .toString("hex");
+  const randomId = crypto
+    .randomBytes(8)
+    .toString("hex");
 
   return `${safeBaseName}-${timestamp}-${randomId}${extension}`;
 };
-
 
 // ======================================================
 // PROCESS SINGLE FILE
 // ======================================================
 
-const processSingleFile =
-  async (file) => {
-    if (!file) {
-      return null;
-    }
+const processSingleFile = async (file) => {
+  if (!file) {
+    return null;
+  }
 
-    // ==================================================
-    // CREATE DIRECTORY
-    // ==================================================
+  // ====================================================
+  // CREATE DIRECTORY
+  // ====================================================
 
-    const {
-      uploadDirectory,
-      fileCategory,
-    } =
-      createUploadDirectory(
-        file
-      );
+  const {
+    uploadDirectory,
+    fileCategory,
+  } = createUploadDirectory(file);
 
+  // ====================================================
+  // IMAGE
+  // ====================================================
 
-    // ==================================================
-    // IMAGE
-    // ==================================================
-
-    if (
-      fileCategory ===
-      "images"
-    ) {
-      const fileName =
-        generateFileName(
-          file.originalname,
-          ".webp"
-        );
-
-      const absolutePath =
-        path.join(
-          uploadDirectory,
-          fileName
-        );
-
-
-      // ================================================
-      // CONVERT IMAGE TO WEBP
-      // ================================================
-
-      await sharp(
-        file.buffer
-      )
-        .resize(
-          1920,
-          1080,
-          {
-            fit: "inside",
-
-            withoutEnlargement:
-              true,
-          }
-        )
-        .webp({
-          quality: 80,
-        })
-        .toFile(
-          absolutePath
-        );
-
-
-      // ================================================
-      // RELATIVE PATH
-      // ================================================
-
-      const relativePath =
-        `uploads/images/${fileName}`;
-
-
-      // ================================================
-      // UPDATE FILE OBJECT
-      // ================================================
-
-      file.filename =
-        fileName;
-
-      file.path =
-        relativePath;
-
-      file.absolutePath =
-        absolutePath;
-
-      file.mimetype =
-        "image/webp";
-
-      file.size =
-        fs.statSync(
-          absolutePath
-        ).size;
-
-
-      return file;
-    }
-
-
-    // ==================================================
-    // PDF
-    // ==================================================
-
-    if (
-      fileCategory ===
-      "pdfs"
-    ) {
-      const extension =
-        allowedMimeTypes[
-          file.mimetype
-        ] || ".pdf";
-
-
-      const fileName =
-        generateFileName(
-          file.originalname,
-          extension
-        );
-
-
-      const absolutePath =
-        path.join(
-          uploadDirectory,
-          fileName
-        );
-
-
-      // ================================================
-      // SAVE PDF
-      // ================================================
-
-      fs.writeFileSync(
-        absolutePath,
-        file.buffer
-      );
-
-
-      // ================================================
-      // RELATIVE PATH
-      // ================================================
-
-      const relativePath =
-        `uploads/pdfs/${fileName}`;
-
-
-      file.filename =
-        fileName;
-
-      file.path =
-        relativePath;
-
-      file.absolutePath =
-        absolutePath;
-
-      file.size =
-        fs.statSync(
-          absolutePath
-        ).size;
-
-
-      return file;
-    }
-
-
-    // ==================================================
-    // OTHER FILES
-    // ==================================================
-
-    const extension =
-      allowedMimeTypes[
-        file.mimetype
-      ] || "";
-
-
-    const fileName =
-      generateFileName(
-        file.originalname,
-        extension
-      );
-
-
-    const absolutePath =
-      path.join(
-        uploadDirectory,
-        fileName
-      );
-
-
-    fs.writeFileSync(
-      absolutePath,
-      file.buffer
+  if (fileCategory === "images") {
+    const fileName = generateFileName(
+      file.originalname,
+      ".webp"
     );
 
+    const absolutePath = path.join(
+      uploadDirectory,
+      fileName
+    );
+
+    // ================================================
+    // CONVERT IMAGE TO WEBP
+    // ================================================
+
+    await sharp(file.buffer)
+      .resize(
+        1920,
+        1080,
+        {
+          fit: "inside",
+          withoutEnlargement: true,
+        }
+      )
+      .webp({
+        quality: 80,
+      })
+      .toFile(
+        absolutePath
+      );
+
+    // ================================================
+    // RELATIVE PATH
+    // ================================================
 
     const relativePath =
-      `uploads/others/${fileName}`;
+      `uploads/images/${fileName}`;
 
+    // ================================================
+    // UPDATE FILE OBJECT
+    // ================================================
 
     file.filename =
       fileName;
@@ -416,157 +234,230 @@ const processSingleFile =
     file.absolutePath =
       absolutePath;
 
+    file.mimetype =
+      "image/webp";
 
     file.size =
       fs.statSync(
         absolutePath
       ).size;
 
+    return file;
+  }
+
+  // ====================================================
+  // PDF
+  // ====================================================
+
+  if (fileCategory === "pdfs") {
+    const extension =
+      allowedMimeTypes[
+        file.mimetype
+      ] || ".pdf";
+
+    const fileName =
+      generateFileName(
+        file.originalname,
+        extension
+      );
+
+    const absolutePath =
+      path.join(
+        uploadDirectory,
+        fileName
+      );
+
+    // ================================================
+    // SAVE PDF
+    // ================================================
+
+    fs.writeFileSync(
+      absolutePath,
+      file.buffer
+    );
+
+    // ================================================
+    // RELATIVE PATH
+    // ================================================
+
+    const relativePath =
+      `uploads/pdfs/${fileName}`;
+
+    file.filename =
+      fileName;
+
+    file.path =
+      relativePath;
+
+    file.absolutePath =
+      absolutePath;
+
+    file.size =
+      fs.statSync(
+        absolutePath
+      ).size;
 
     return file;
-  };
+  }
 
+  // ====================================================
+  // OTHER FILES
+  // ====================================================
+
+  const extension =
+    allowedMimeTypes[
+      file.mimetype
+    ] || "";
+
+  const fileName =
+    generateFileName(
+      file.originalname,
+      extension
+    );
+
+  const absolutePath =
+    path.join(
+      uploadDirectory,
+      fileName
+    );
+
+  fs.writeFileSync(
+    absolutePath,
+    file.buffer
+  );
+
+  const relativePath =
+    `uploads/others/${fileName}`;
+
+  file.filename =
+    fileName;
+
+  file.path =
+    relativePath;
+
+  file.absolutePath =
+    absolutePath;
+
+  file.size =
+    fs.statSync(
+      absolutePath
+    ).size;
+
+  return file;
+};
 
 // ======================================================
 // MIDDLEWARE
+// ======================================================
 //
-// IMPORTANT:
-//
-// Supports both:
+// Supports:
 //
 // upload.single("logo")
 // upload.array("images", 5)
 //
 // ======================================================
 
-const convertToWebp =
-  async (
-    req,
-    res,
-    next
-  ) => {
-    try {
+const convertToWebp = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    // ==================================================
+    // MULTIPLE FILES
+    // ==================================================
 
-      // ==================================================
-      // MULTIPLE FILES
-      // ==================================================
+    if (
+      req.files &&
+      Array.isArray(req.files)
+    ) {
+      // ================================================
+      // MAX FILE CHECK
+      // ================================================
 
       if (
-        req.files &&
-        Array.isArray(
-          req.files
-        )
+        req.files.length >
+        MAX_PRODUCT_IMAGES
       ) {
+        return res.status(400).json({
+          success: false,
 
-        // ================================================
-        // MAX FILE CHECK
-        // ================================================
-
-        if (
-          req.files.length >
-          MAX_PRODUCT_IMAGES
-        ) {
-          return res.status(
-            400
-          ).json({
-            success: false,
-
-            message:
-              `Maximum ${MAX_PRODUCT_IMAGES} files are allowed.`,
-          });
-        }
-
-
-        // ================================================
-        // PROCESS ALL FILES
-        // ================================================
-
-        const processedFiles =
-          [];
-
-
-        for (
-          const file of req.files
-        ) {
-          const processedFile =
-            await processSingleFile(
-              file
-            );
-
-          if (
-            processedFile
-          ) {
-            processedFiles.push(
-              processedFile
-            );
-          }
-        }
-
-
-        // ================================================
-        // REPLACE req.files
-        // ================================================
-
-        req.files =
-          processedFiles;
-
-
-        return next();
+          message:
+            `Maximum ${MAX_PRODUCT_IMAGES} files are allowed.`,
+        });
       }
 
+      // ================================================
+      // PROCESS ALL FILES
+      // ================================================
 
-      // ==================================================
-      // SINGLE FILE
-      //
-      // Used by:
-      //
-      // upload.single("logo")
-      // ==================================================
+      const processedFiles = [];
 
-      if (req.file) {
-
+      for (
+        const file of req.files
+      ) {
         const processedFile =
           await processSingleFile(
-            req.file
+            file
           );
 
-
-        req.file =
-          processedFile;
-
-
-        return next();
+        if (
+          processedFile
+        ) {
+          processedFiles.push(
+            processedFile
+          );
+        }
       }
 
+      // ================================================
+      // REPLACE req.files
+      // ================================================
 
-      // ==================================================
-      // NO FILE
-      // ==================================================
+      req.files =
+        processedFiles;
 
       return next();
-
-    } catch (error) {
-
-      console.error(
-        "File Processing Error:",
-        error
-      );
-
-
-      return res.status(
-        500
-      ).json({
-        success: false,
-
-        message:
-          "Failed to process and save uploaded file",
-
-        error:
-          error.message,
-      });
     }
-  };
 
+    // ==================================================
+    // SINGLE FILE
+    // ==================================================
+
+    if (req.file) {
+      const processedFile =
+        await processSingleFile(
+          req.file
+        );
+
+      req.file =
+        processedFile;
+
+      return next();
+    }
+
+    // ==================================================
+    // NO FILE
+    // ==================================================
+
+    return next();
+  } catch (error) {
+    console.error(
+      "File Processing Error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+
+      message:
+        "Failed to process and save uploaded file",
+
+      error:
+        error.message,
+    });
+  }
+};
 
 // ======================================================
 // MAP SINGLE UPLOADED FILE
@@ -576,11 +467,9 @@ const mapUploadedFile = (
   file,
   req = null
 ) => {
-
   if (!file) {
     return null;
   }
-
 
   if (!file.path) {
     throw new Error(
@@ -588,14 +477,12 @@ const mapUploadedFile = (
     );
   }
 
-
   // ====================================================
   // URL
   // ====================================================
 
   let fullUrl =
     file.path;
-
 
   if (req) {
     const protocol =
@@ -610,7 +497,6 @@ const mapUploadedFile = (
     fullUrl =
       `/${file.path}`;
   }
-
 
   // ====================================================
   // RETURN
@@ -651,7 +537,6 @@ const mapUploadedFile = (
   };
 };
 
-
 // ======================================================
 // MAP MULTIPLE FILES
 // ======================================================
@@ -660,14 +545,12 @@ const mapUploadedFiles = (
   files,
   req = null
 ) => {
-
   if (
     !files ||
     !Array.isArray(files)
   ) {
     return [];
   }
-
 
   return files
     .map((file) =>
@@ -679,20 +562,16 @@ const mapUploadedFiles = (
     .filter(Boolean);
 };
 
-
 // ======================================================
 // DELETE UPLOADED FILE
 // ======================================================
 
 const deleteUploadedFile =
   (fileData) => {
-
     try {
-
       if (!fileData) {
         return false;
       }
-
 
       // ==================================================
       // GET TARGET PATH
@@ -705,11 +584,9 @@ const deleteUploadedFile =
           : fileData.path ||
             fileData.absolutePath;
 
-
       if (!targetPath) {
         return false;
       }
-
 
       // ==================================================
       // ROOT DIRECTORY
@@ -721,20 +598,17 @@ const deleteUploadedFile =
           ".."
         );
 
-
       const uploadRoot =
         path.join(
           rootDir,
           "uploads"
         );
 
-
       // ==================================================
       // ABSOLUTE PATH
       // ==================================================
 
       let absolutePath;
-
 
       if (
         path.isAbsolute(
@@ -746,8 +620,6 @@ const deleteUploadedFile =
             targetPath
           );
       } else {
-
-        // Remove leading slash
         const cleanPath =
           String(
             targetPath
@@ -756,7 +628,6 @@ const deleteUploadedFile =
             ""
           );
 
-
         absolutePath =
           path.resolve(
             rootDir,
@@ -764,11 +635,8 @@ const deleteUploadedFile =
           );
       }
 
-
       // ==================================================
       // SECURITY
-      //
-      // File must remain inside uploads
       // ==================================================
 
       const normalizedUploadRoot =
@@ -776,12 +644,10 @@ const deleteUploadedFile =
           uploadRoot
         );
 
-
       const normalizedFilePath =
         path.resolve(
           absolutePath
         );
-
 
       if (
         normalizedFilePath !==
@@ -798,7 +664,6 @@ const deleteUploadedFile =
         return false;
       }
 
-
       // ==================================================
       // FILE DOES NOT EXIST
       // ==================================================
@@ -811,7 +676,6 @@ const deleteUploadedFile =
         return false;
       }
 
-
       // ==================================================
       // DELETE
       // ==================================================
@@ -820,11 +684,8 @@ const deleteUploadedFile =
         normalizedFilePath
       );
 
-
       return true;
-
     } catch (error) {
-
       console.error(
         "File Deletion Error:",
         error.message
@@ -834,31 +695,24 @@ const deleteUploadedFile =
     }
   };
 
-
 // ======================================================
 // DELETE MULTIPLE FILES
 // ======================================================
 
 const deleteUploadedFiles =
   (files) => {
-
     if (
       !files ||
-      !Array.isArray(
-        files
-      )
+      !Array.isArray(files)
     ) {
       return 0;
     }
 
-
     let deletedCount =
       0;
 
-
     files.forEach(
       (file) => {
-
         if (
           deleteUploadedFile(
             file
@@ -866,27 +720,27 @@ const deleteUploadedFiles =
         ) {
           deletedCount++;
         }
-
       }
     );
 
-
     return deletedCount;
   };
-
 
 // ======================================================
 // ERROR HANDLER FOR MULTER
 // ======================================================
 
 const handleUploadError =
-  (error, req, res, next) => {
-
+  (
+    error,
+    req,
+    res,
+    next
+  ) => {
     if (
       error instanceof
       multer.MulterError
     ) {
-
       if (
         error.code ===
         "LIMIT_FILE_SIZE"
@@ -897,10 +751,9 @@ const handleUploadError =
           success: false,
 
           message:
-            "File size cannot exceed 10 MB.",
+            "File size cannot exceed 5 MB.",
         });
       }
-
 
       if (
         error.code ===
@@ -916,7 +769,6 @@ const handleUploadError =
         });
       }
 
-
       if (
         error.code ===
         "LIMIT_UNEXPECTED_FILE"
@@ -931,7 +783,6 @@ const handleUploadError =
         });
       }
 
-
       return res.status(
         400
       ).json({
@@ -941,7 +792,6 @@ const handleUploadError =
           error.message,
       });
     }
-
 
     if (error) {
       return res.status(
@@ -955,17 +805,14 @@ const handleUploadError =
       });
     }
 
-
     next();
   };
-
 
 // ======================================================
 // EXPORTS
 // ======================================================
 
 module.exports = {
-
   // Multer instance
   upload,
 
