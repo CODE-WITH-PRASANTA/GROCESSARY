@@ -6,6 +6,9 @@ import Orders from "./Components/Orders/Orders";
 import OrderHistory from "./Components/OrderHistory/OrderHistory";
 import TrasactionHistory from "./Components/TransactionHistory/TransactionHistory";
 import ReferEarn from "./Components/ReferEarn/ReferEarn";
+import WalletPoints from "./Pages/WalletPoints/WalletPoints";
+import DeliveryAddresses from "./Pages/DeliveryAddresses/DeliveryAddresses";
+import MyWishlist from "./Pages/MyWishlist/MyWishlist";
 
 const App = () => {
   return (
@@ -26,7 +29,9 @@ const App = () => {
             <Route path="/order-history" element={<OrderHistory />} />
             <Route path="/trasanction-history" element={<TrasactionHistory/>} />
             <Route path="/rafer-earn" element={<ReferEarn/>} />
-
+            <Route path="/wallet" element={<WalletPoints/>}/>
+            <Route path="/addresses" element={<DeliveryAddresses/>}/>
+            <Route path="/wishlist" element={<MyWishlist/>}/>
         </Route>
 
         {/* 404 Fallback - Redirects unknown URLs back to Dashboard */}
