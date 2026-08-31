@@ -53,6 +53,7 @@ const AddProducts = () => {
     brand: "",
     sku: "",
     unit: "",
+    unitNo: 1,
     tags: "",
     shortDescription: "",
     fullDescription: "",
@@ -231,6 +232,7 @@ const AddProducts = () => {
         sku: product.sku || "",
 
         unit: getId(product.unit),
+        unitNo: product.unitNo ?? 1,
 
         tags: Array.isArray(product.tags)
           ? product.tags.join(", ")
@@ -499,6 +501,7 @@ const AddProducts = () => {
         sku: editingProduct.sku || "",
 
         unit: getId(editingProduct.unit),
+        unitNo: editingProduct.unitNo ?? 1,
 
         tags: Array.isArray(editingProduct.tags)
           ? editingProduct.tags.join(", ")
@@ -586,6 +589,18 @@ const AddProducts = () => {
 
     if (!formData.unit) {
       return "Please select a unit.";
+    }
+
+    if (
+      formData.unitNo === "" ||
+      formData.unitNo === null ||
+      formData.unitNo === undefined
+    ) {
+      return "Unit No is required.";
+    }
+
+    if (Number(formData.unitNo) < 1) {
+      return "Unit No must be greater than 0.";
     }
 
     if (
@@ -682,9 +697,8 @@ const AddProducts = () => {
       const isEditMode = Boolean(editingProduct?._id);
 
       const url = isEditMode
-        ? `${API_BASE_URL}/api/import/${editingProduct._id}`
-        : `${API_BASE_URL}/api/import`;
-
+        ? `${API_BASE_URL}/api/products/${editingProduct._id}`
+        : `${API_BASE_URL}/api/products`;
       // ===============================================
       // REQUEST
       // ===============================================
@@ -966,10 +980,9 @@ const AddProducts = () => {
                 required
               />
             </div>
-
             {/* ===========================================
-                UNIT / TAGS
-            =========================================== */}
+    UNIT / UNIT NO / TAGS
+=========================================== */}
 
             <div className="gs-form-row col-2">
               <div className="gs-form-group">
@@ -990,7 +1003,6 @@ const AddProducts = () => {
                   {units.map((unit) => (
                     <option key={unit._id} value={unit._id}>
                       {unit.name}
-
                       {unit.shortName ? ` (${unit.shortName})` : ""}
                     </option>
                   ))}
@@ -998,16 +1010,33 @@ const AddProducts = () => {
               </div>
 
               <div className="gs-form-group">
-                <label>Tags</label>
+                <label>
+                  Unit No <span className="gs-required">*</span>
+                </label>
 
                 <input
-                  type="text"
-                  name="tags"
-                  placeholder="Enter tags (e.g. organic, fresh)"
-                  value={formData.tags}
+                  type="number"
+                  name="unitNo"
+                  min="1"
+                  step="1"
+                  placeholder="Enter unit number"
+                  value={formData.unitNo}
                   onChange={handleChange}
+                  required
                 />
               </div>
+            </div>
+
+            <div className="gs-form-group">
+              <label>Tags</label>
+
+              <input
+                type="text"
+                name="tags"
+                placeholder="Enter tags (e.g. organic, fresh)"
+                value={formData.tags}
+                onChange={handleChange}
+              />
             </div>
 
             {/* ===========================================
@@ -1250,7 +1279,6 @@ const AddProducts = () => {
                 />
               </div>
             </div>
-
 
             {/* ===========================================
                 LOW STOCK / TAX

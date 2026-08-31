@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useCallback } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 import {
   Search,
@@ -30,26 +30,269 @@ const NAV_PATHS = {
 const API_BASE_URL = "http://localhost:5000/api";
 
 const Navbar = () => {
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const [categories, setCategories] = useState([]);
-  const [products, setProducts] = useState([]);
-
-  const [loadingCategories, setLoadingCategories] = useState(false);
-  const [loadingProducts, setLoadingProducts] = useState(false);
-
   const navigate = useNavigate();
+  const location = useLocation();
 
   // ======================================================
-  // FETCH CATEGORIES
+  // CATEGORY STATES
   // ======================================================
 
-  useEffect(() => {
-    fetchCategories();
-    fetchProducts();
-  }, []);
+  const [isCategoryOpen, setIsCategoryOpen] =
+    useState(false);
+
+  const [activeCategory, setActiveCategory] =
+    useState(null);
+
+  const [isMobileMenuOpen, setIsMobileMenuOpen] =
+    useState(false);
+
+  const [categories, setCategories] =
+    useState([]);
+
+  const [products, setProducts] =
+    useState([]);
+
+  const [loadingCategories, setLoadingCategories] =
+    useState(false);
+
+  const [loadingProducts, setLoadingProducts] =
+    useState(false);
+
+  // ======================================================
+  // USER STATES
+  // ======================================================
+
+  const [currentUser, setCurrentUser] =
+    useState(null);
+
+  const [userLoading, setUserLoading] =
+    useState(true);
+
+  // ======================================================
+  // CART STATES
+  // ======================================================
+
+  const [cartItemCount, setCartItemCount] =
+    useState(0);
+
+  const [cartTotal, setCartTotal] =
+    useState(0);
+
+  // ======================================================
+  // GET TOKEN
+  // ======================================================
+
+  const getToken = () => {
+    return localStorage.getItem("token");
+  };
+
+  // ======================================================
+  // GET USER NAME
+  // ======================================================
+
+  const getUserName = (user) => {
+    if (!user) {
+      return "";
+    }
+
+    return (
+      user.name ||
+      user.fullName ||
+      user.username ||
+      user.userName ||
+      user.firstName ||
+      user.email?.split("@")[0] ||
+      "User"
+    );
+  };
+
+  // ======================================================
+  // FETCH CURRENT USER
+  // ======================================================
+
+  const fetchCurrentUser = useCallback(
+    async () => {
+      try {
+        const token = getToken();
+
+        if (!token) {
+          setCurrentUser(null);
+          setUserLoading(false);
+          return;
+        }
+
+        const response = await fetch(
+          `${API_BASE_URL}/auth/me`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          if (
+            response.status === 401 ||
+            response.status === 403
+          ) {
+            localStorage.removeItem("token");
+            setCurrentUser(null);
+            setCartItemCount(0);
+            setCartTotal(0);
+          }
+
+          setUserLoading(false);
+          return;
+        }
+
+        const result =
+          await response.json();
+
+        // Supports different backend response structures
+        const user =
+          result?.user ||
+          result?.data?.user ||
+          result?.data ||
+          null;
+
+        setCurrentUser(user);
+      } catch (error) {
+        console.error(
+          "Fetch current user error:",
+          error
+        );
+
+        setCurrentUser(null);
+      } finally {
+        setUserLoading(false);
+      }
+    },
+    []
+  );
+
+  // ======================================================
+  // FETCH CART
+  // ======================================================
+
+  const fetchCart = useCallback(
+    async () => {
+      try {
+        const token = getToken();
+
+        // User is not logged in
+        if (!token) {
+          setCartItemCount(0);
+          setCartTotal(0);
+          return;
+        }
+
+        const response = await fetch(
+          `${API_BASE_URL}/cart`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          if (
+            response.status === 401 ||
+            response.status === 403
+          ) {
+            setCartItemCount(0);
+            setCartTotal(0);
+          }
+
+          return;
+        }
+
+        const result =
+          await response.json();
+
+        const items =
+          result?.cart?.items ||
+          result?.data?.cart?.items ||
+          result?.data?.items ||
+          [];
+
+        if (!Array.isArray(items)) {
+          setCartItemCount(0);
+          setCartTotal(0);
+          return;
+        }
+
+        // ==================================================
+        // TOTAL ITEM QUANTITY
+        // ==================================================
+
+        const totalQuantity =
+          items.reduce(
+            (total, item) => {
+              return (
+                total +
+                Number(
+                  item?.quantity || 0
+                )
+              );
+            },
+            0
+          );
+
+        // ==================================================
+        // TOTAL CART PRICE
+        // ==================================================
+
+        const totalPrice =
+          items.reduce(
+            (total, item) => {
+              const product =
+                item?.product || {};
+
+              const price =
+                Number(
+                  product?.price ??
+                    product?.sellingPrice ??
+                    product?.discountPrice ??
+                    0
+                );
+
+              const quantity =
+                Number(
+                  item?.quantity || 0
+                );
+
+              return (
+                total +
+                price * quantity
+              );
+            },
+            0
+          );
+
+        setCartItemCount(
+          totalQuantity
+        );
+
+        setCartTotal(
+          totalPrice
+        );
+      } catch (error) {
+        console.error(
+          "Navbar cart fetch error:",
+          error
+        );
+
+        setCartItemCount(0);
+        setCartTotal(0);
+      }
+    },
+    []
+  );
 
   // ======================================================
   // FETCH CATEGORIES
@@ -59,37 +302,61 @@ const Navbar = () => {
     try {
       setLoadingCategories(true);
 
-      const response = await fetch(`${API_BASE_URL}/categories`);
+      const response = await fetch(
+        `${API_BASE_URL}/categories`
+      );
 
       if (!response.ok) {
-        throw new Error(`Category API failed: ${response.status}`);
+        throw new Error(
+          `Category API failed: ${response.status}`
+        );
       }
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
       let categoryList = [];
 
       if (Array.isArray(result)) {
         categoryList = result;
-      } else if (Array.isArray(result.categories)) {
+      } else if (
+        Array.isArray(result.categories)
+      ) {
         categoryList = result.categories;
-      } else if (Array.isArray(result.data)) {
+      } else if (
+        Array.isArray(result.data)
+      ) {
         categoryList = result.data;
-      } else if (result.data && Array.isArray(result.data.categories)) {
-        categoryList = result.data.categories;
+      } else if (
+        result.data &&
+        Array.isArray(
+          result.data.categories
+        )
+      ) {
+        categoryList =
+          result.data.categories;
       }
 
-      const activeCategories = categoryList.filter(
-        (category) =>
-          category.status === undefined ||
-          category.status === "Active" ||
-          category.status === "active" ||
-          category.status === true,
-      );
+      const activeCategories =
+        categoryList.filter(
+          (category) =>
+            category.status ===
+              undefined ||
+            category.status ===
+              "Active" ||
+            category.status ===
+              "active" ||
+            category.status === true
+        );
 
-      setCategories(activeCategories);
+      setCategories(
+        activeCategories
+      );
     } catch (error) {
-      console.error("Navbar category fetch error:", error);
+      console.error(
+        "Navbar category fetch error:",
+        error
+      );
 
       setCategories([]);
     } finally {
@@ -105,44 +372,59 @@ const Navbar = () => {
     try {
       setLoadingProducts(true);
 
-      const response = await fetch(`${API_BASE_URL}/products`);
+      const response = await fetch(
+        `${API_BASE_URL}/products`
+      );
 
       if (!response.ok) {
-        throw new Error(`Products API failed: ${response.status}`);
+        throw new Error(
+          `Products API failed: ${response.status}`
+        );
       }
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
-     
       let productList = [];
 
       if (Array.isArray(result)) {
         productList = result;
-      } else if (Array.isArray(result.products)) {
+      } else if (
+        Array.isArray(result.products)
+      ) {
         productList = result.products;
-      } else if (Array.isArray(result.data)) {
+      } else if (
+        Array.isArray(result.data)
+      ) {
         productList = result.data;
-      } else if (result.data && Array.isArray(result.data.products)) {
-        productList = result.data.products;
+      } else if (
+        result.data &&
+        Array.isArray(
+          result.data.products
+        )
+      ) {
+        productList =
+          result.data.products;
       }
 
-      // ======================================================
-      // SHOW ONLY ACTIVE PRODUCTS
-      // ======================================================
-
-      const activeProducts = productList.filter(
-        (product) =>
-          product.status === undefined ||
-          product.status === "active" ||
-          product.status === "Active" ||
-          product.status === true,
-      );
-
-     
+      const activeProducts =
+        productList.filter(
+          (product) =>
+            product.status ===
+              undefined ||
+            product.status ===
+              "active" ||
+            product.status ===
+              "Active" ||
+            product.status === true
+        );
 
       setProducts(activeProducts);
     } catch (error) {
-      console.error("Navbar product fetch error:", error);
+      console.error(
+        "Navbar product fetch error:",
+        error
+      );
 
       setProducts([]);
     } finally {
@@ -151,15 +433,131 @@ const Navbar = () => {
   };
 
   // ======================================================
+  // INITIAL LOAD
+  // ======================================================
+
+  useEffect(() => {
+    fetchCategories();
+    fetchProducts();
+    fetchCurrentUser();
+    fetchCart();
+  }, [
+    fetchCurrentUser,
+    fetchCart,
+  ]);
+
+  // ======================================================
+  // REFRESH CART WHEN ROUTE CHANGES
+  // ======================================================
+
+  useEffect(() => {
+    fetchCart();
+  }, [
+    location.pathname,
+    fetchCart,
+  ]);
+
+  // ======================================================
+  // CART UPDATED EVENT
+  //
+  // Your ProductDetails / Cart component can use:
+  //
+  // window.dispatchEvent(
+  //   new Event("cartUpdated")
+  // );
+  //
+  // ======================================================
+
+  useEffect(() => {
+    const handleCartUpdated = () => {
+      fetchCart();
+    };
+
+    window.addEventListener(
+      "cartUpdated",
+      handleCartUpdated
+    );
+
+    return () => {
+      window.removeEventListener(
+        "cartUpdated",
+        handleCartUpdated
+      );
+    };
+  }, [fetchCart]);
+
+  // ======================================================
+  // LOGIN UPDATED EVENT
+  // ======================================================
+
+  useEffect(() => {
+    const handleAuthChanged = () => {
+      fetchCurrentUser();
+      fetchCart();
+    };
+
+    window.addEventListener(
+      "authChanged",
+      handleAuthChanged
+    );
+
+    return () => {
+      window.removeEventListener(
+        "authChanged",
+        handleAuthChanged
+      );
+    };
+  }, [
+    fetchCurrentUser,
+    fetchCart,
+  ]);
+
+  // ======================================================
+  // STORAGE EVENT
+  // ======================================================
+
+  useEffect(() => {
+    const handleStorage = (event) => {
+      if (
+        event.key === "token"
+      ) {
+        fetchCurrentUser();
+        fetchCart();
+      }
+    };
+
+    window.addEventListener(
+      "storage",
+      handleStorage
+    );
+
+    return () => {
+      window.removeEventListener(
+        "storage",
+        handleStorage
+      );
+    };
+  }, [
+    fetchCurrentUser,
+    fetchCart,
+  ]);
+
+  // ======================================================
   // GET CATEGORY NAME
   // ======================================================
 
-  const getCategoryName = (product) => {
+  const getCategoryName = (
+    product
+  ) => {
     if (!product) {
       return "";
     }
 
-    if (product.category && typeof product.category === "object") {
+    if (
+      product.category &&
+      typeof product.category ===
+        "object"
+    ) {
       return (
         product.category.name ||
         product.category.categoryName ||
@@ -168,7 +566,10 @@ const Navbar = () => {
       );
     }
 
-    if (typeof product.category === "string") {
+    if (
+      typeof product.category ===
+      "string"
+    ) {
       return product.category;
     }
 
@@ -179,13 +580,22 @@ const Navbar = () => {
   // GET CATEGORY ID
   // ======================================================
 
-  const getCategoryId = (category) => {
+  const getCategoryId = (
+    category
+  ) => {
     if (!category) {
       return "";
     }
 
-    if (typeof category === "object") {
-      return category._id || category.id || "";
+    if (
+      typeof category ===
+      "object"
+    ) {
+      return (
+        category._id ||
+        category.id ||
+        ""
+      );
     }
 
     return category;
@@ -195,40 +605,68 @@ const Navbar = () => {
   // GET CATEGORY SLUG
   // ======================================================
 
-  const getCategorySlug = (category) => {
+  const getCategorySlug = (
+    category
+  ) => {
     if (!category) {
       return "";
     }
 
-    return category.slug || category._id || category.id || "";
+    return (
+      category.slug ||
+      category._id ||
+      category.id ||
+      ""
+    );
   };
 
   // ======================================================
   // GET CATEGORY KEY
   // ======================================================
 
-  const getCategoryKey = (category) => {
-    return category?._id || category?.id || category?.slug || category?.name;
+  const getCategoryKey = (
+    category
+  ) => {
+    return (
+      category?._id ||
+      category?.id ||
+      category?.slug ||
+      category?.name
+    );
   };
 
   // ======================================================
   // GET SUB CATEGORIES
   // ======================================================
 
-  const getSubCategories = (category) => {
+  const getSubCategories = (
+    category
+  ) => {
     if (!category) {
       return [];
     }
 
-    if (Array.isArray(category.subCategories)) {
+    if (
+      Array.isArray(
+        category.subCategories
+      )
+    ) {
       return category.subCategories;
     }
 
-    if (Array.isArray(category.subcategories)) {
+    if (
+      Array.isArray(
+        category.subcategories
+      )
+    ) {
       return category.subcategories;
     }
 
-    if (Array.isArray(category.children)) {
+    if (
+      Array.isArray(
+        category.children
+      )
+    ) {
       return category.children;
     }
 
@@ -239,116 +677,180 @@ const Navbar = () => {
   // GET PRODUCTS FOR CATEGORY
   // ======================================================
 
-  const getProductsByCategory = (category) => {
+  const getProductsByCategory = (
+    category
+  ) => {
     if (!category) {
       return [];
     }
 
-    const categoryId = getCategoryId(category);
+    const categoryId =
+      getCategoryId(category);
 
-    const categoryName = String(category.name || "")
-      .trim()
-      .toLowerCase();
+    const categoryName =
+      String(
+        category.name || ""
+      )
+        .trim()
+        .toLowerCase();
 
-    return products.filter((product) => {
-      if (!product) {
-        return false;
-      }
+    return products.filter(
+      (product) => {
+        if (!product) {
+          return false;
+        }
 
-      const productCategory = product.category;
+        const productCategory =
+          product.category;
 
-      // --------------------------------------------
-      // PRODUCT CATEGORY IS OBJECT
-      // --------------------------------------------
-
-      if (productCategory && typeof productCategory === "object") {
-        const productCategoryId =
-          productCategory._id || productCategory.id || "";
-
-        const productCategoryName = String(
-          productCategory.name ||
-            productCategory.categoryName ||
-            productCategory.title ||
-            "",
-        )
-          .trim()
-          .toLowerCase();
+        // PRODUCT CATEGORY OBJECT
 
         if (
-          categoryId &&
-          productCategoryId &&
-          String(productCategoryId) === String(categoryId)
+          productCategory &&
+          typeof productCategory ===
+            "object"
         ) {
-          return true;
+          const productCategoryId =
+            productCategory._id ||
+            productCategory.id ||
+            "";
+
+          const productCategoryName =
+            String(
+              productCategory.name ||
+                productCategory.categoryName ||
+                productCategory.title ||
+                ""
+            )
+              .trim()
+              .toLowerCase();
+
+          if (
+            categoryId &&
+            productCategoryId &&
+            String(
+              productCategoryId
+            ) ===
+              String(categoryId)
+          ) {
+            return true;
+          }
+
+          if (
+            categoryName &&
+            productCategoryName ===
+              categoryName
+          ) {
+            return true;
+          }
         }
 
-        if (categoryName && productCategoryName === categoryName) {
-          return true;
+        // PRODUCT CATEGORY STRING
+
+        if (
+          typeof productCategory ===
+          "string"
+        ) {
+          const value =
+            productCategory
+              .trim()
+              .toLowerCase();
+
+          if (
+            categoryId &&
+            value ===
+              String(
+                categoryId
+              ).toLowerCase()
+          ) {
+            return true;
+          }
+
+          if (
+            categoryName &&
+            value ===
+              categoryName
+          ) {
+            return true;
+          }
         }
+
+        return false;
       }
-
-      // --------------------------------------------
-      // PRODUCT CATEGORY IS STRING
-      // --------------------------------------------
-
-      if (typeof productCategory === "string") {
-        const value = productCategory.trim().toLowerCase();
-
-        if (categoryId && value === String(categoryId).toLowerCase()) {
-          return true;
-        }
-
-        if (categoryName && value === categoryName) {
-          return true;
-        }
-      }
-
-      return false;
-    });
+    );
   };
 
   // ======================================================
   // PRODUCT IMAGE
   // ======================================================
 
-  const getProductImage = (product) => {
+  const getProductImage = (
+    product
+  ) => {
     if (
       !product ||
-      !Array.isArray(product.images) ||
+      !Array.isArray(
+        product.images
+      ) ||
       product.images.length === 0
     ) {
       return "";
     }
 
-    const firstImage = product.images[0];
+    const firstImage =
+      product.images[0];
 
-    if (typeof firstImage === "string") {
+    if (
+      typeof firstImage ===
+      "string"
+    ) {
       if (
-        firstImage.startsWith("http://") ||
-        firstImage.startsWith("https://")
+        firstImage.startsWith(
+          "http://"
+        ) ||
+        firstImage.startsWith(
+          "https://"
+        )
       ) {
         return firstImage;
       }
 
       return `http://localhost:5000${
-        firstImage.startsWith("/") ? firstImage : `/${firstImage}`
+        firstImage.startsWith("/")
+          ? firstImage
+          : `/${firstImage}`
       }`;
     }
 
-    if (typeof firstImage === "object") {
+    if (
+      typeof firstImage ===
+      "object"
+    ) {
       const imageUrl =
-        firstImage.url || firstImage.path || firstImage.secure_url || "";
+        firstImage.url ||
+        firstImage.path ||
+        firstImage.secure_url ||
+        "";
 
       if (!imageUrl) {
         return "";
       }
 
-      if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+      if (
+        imageUrl.startsWith(
+          "http://"
+        ) ||
+        imageUrl.startsWith(
+          "https://"
+        )
+      ) {
         return imageUrl;
       }
 
       return `http://localhost:5000${
-        imageUrl.startsWith("/") ? imageUrl : `/${imageUrl}`
+        imageUrl.startsWith("/")
+          ? imageUrl
+          : `/${imageUrl}`
       }`;
     }
 
@@ -359,27 +861,46 @@ const Navbar = () => {
   // PRODUCT NAME
   // ======================================================
 
-  const getProductName = (product) => {
-    return product?.productName || product?.name || "Unnamed Product";
+  const getProductName = (
+    product
+  ) => {
+    return (
+      product?.productName ||
+      product?.name ||
+      "Unnamed Product"
+    );
   };
 
   // ======================================================
   // PRODUCT PRICE
   // ======================================================
 
-  const getProductPrice = (product) => {
-    return Number(product?.price ?? product?.sellingPrice ?? 0);
+  const getProductPrice = (
+    product
+  ) => {
+    return Number(
+      product?.price ??
+        product?.sellingPrice ??
+        0
+    );
   };
 
   // ======================================================
   // OPEN PRODUCT DETAILS
   // ======================================================
 
-  const handleProductClick = (product) => {
-    const productId = product?._id || product?.id;
+  const handleProductClick = (
+    product
+  ) => {
+    const productId =
+      product?._id ||
+      product?.id;
 
     if (!productId) {
-      console.error("Product ID not found:", product);
+      console.error(
+        "Product ID not found:",
+        product
+      );
 
       return;
     }
@@ -387,14 +908,19 @@ const Navbar = () => {
     closeCategoryMenu();
     closeMobileMenu();
 
-    navigate(`/productdetails/${productId}`);
+    navigate(
+      `/productdetails/${productId}`
+    );
   };
 
   // ======================================================
   // CATEGORY CLICK
   // ======================================================
 
-  const handleCategoryClick = (category, event) => {
+  const handleCategoryClick = (
+    category,
+    event
+  ) => {
     if (event) {
       event.preventDefault();
       event.stopPropagation();
@@ -404,10 +930,14 @@ const Navbar = () => {
       return;
     }
 
-    const categoryKey = getCategoryKey(category);
+    const categoryKey =
+      getCategoryKey(category);
 
-    setActiveCategory((previous) =>
-      previous === categoryKey ? null : categoryKey,
+    setActiveCategory(
+      (previous) =>
+        previous === categoryKey
+          ? null
+          : categoryKey
     );
   };
 
@@ -415,19 +945,25 @@ const Navbar = () => {
   // CATEGORY PAGE
   // ======================================================
 
-  const handleCategoryPageClick = (category, event) => {
+  const handleCategoryPageClick = (
+    category,
+    event
+  ) => {
     if (event) {
       event.preventDefault();
       event.stopPropagation();
     }
 
-    const slug = getCategorySlug(category);
+    const slug =
+      getCategorySlug(category);
 
     closeCategoryMenu();
     closeMobileMenu();
 
     if (slug) {
-      navigate(`${NAV_PATHS.CATEGORIES}/${slug}`);
+      navigate(
+        `${NAV_PATHS.CATEGORIES}/${slug}`
+      );
     }
   };
 
@@ -435,28 +971,43 @@ const Navbar = () => {
   // SUB CATEGORY CLICK
   // ======================================================
 
-  const handleSubCategoryClick = (category, subCategory, event) => {
+  const handleSubCategoryClick = (
+    category,
+    subCategory,
+    event
+  ) => {
     if (event) {
       event.preventDefault();
       event.stopPropagation();
     }
 
-    const categorySlug = getCategorySlug(category);
+    const categorySlug =
+      getCategorySlug(category);
 
     const subCategorySlug =
-      subCategory?.slug || subCategory?._id || subCategory?.id || "";
+      subCategory?.slug ||
+      subCategory?._id ||
+      subCategory?.id ||
+      "";
 
     closeCategoryMenu();
     closeMobileMenu();
 
-    if (categorySlug && subCategorySlug) {
-      navigate(`${NAV_PATHS.CATEGORIES}/${categorySlug}/${subCategorySlug}`);
+    if (
+      categorySlug &&
+      subCategorySlug
+    ) {
+      navigate(
+        `${NAV_PATHS.CATEGORIES}/${categorySlug}/${subCategorySlug}`
+      );
 
       return;
     }
 
     if (subCategorySlug) {
-      navigate(`${NAV_PATHS.CATEGORIES}/${subCategorySlug}`);
+      navigate(
+        `${NAV_PATHS.CATEGORIES}/${subCategorySlug}`
+      );
     }
   };
 
@@ -464,24 +1015,37 @@ const Navbar = () => {
   // TOGGLE CATEGORY DROPDOWN
   // ======================================================
 
-  const toggleCategoryDropdown = () => {
-    setIsCategoryOpen((previous) => {
-      const next = !previous;
+  const toggleCategoryDropdown =
+    () => {
+      setIsCategoryOpen(
+        (previous) => {
+          const next =
+            !previous;
 
-      if (!next) {
-        setActiveCategory(null);
-      }
+          if (!next) {
+            setActiveCategory(
+              null
+            );
+          }
 
-      return next;
-    });
-  };
+          return next;
+        }
+      );
+    };
 
   // ======================================================
   // SUB CATEGORY TOGGLE
   // ======================================================
 
-  const handleCategoryToggle = (id) => {
-    setActiveCategory((previous) => (previous === id ? null : id));
+  const handleCategoryToggle = (
+    id
+  ) => {
+    setActiveCategory(
+      (previous) =>
+        previous === id
+          ? null
+          : id
+    );
   };
 
   // ======================================================
@@ -501,6 +1065,40 @@ const Navbar = () => {
     setActiveCategory(null);
   };
 
+  // ======================================================
+  // ACCOUNT CLICK
+  // ======================================================
+
+  const handleAccountClick = (
+    event
+  ) => {
+    const token = getToken();
+
+    if (!token) {
+      event.preventDefault();
+      navigate("/login");
+      return;
+    }
+  };
+
+  // ======================================================
+  // LOGOUT
+  // ======================================================
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+
+    setCurrentUser(null);
+    setCartItemCount(0);
+    setCartTotal(0);
+
+    window.dispatchEvent(
+      new Event("authChanged")
+    );
+
+    navigate("/");
+  };
+
   return (
     <>
       {/* ==================================================
@@ -509,21 +1107,19 @@ const Navbar = () => {
 
       <script type="application/ld+json">
         {JSON.stringify({
-          "@context": "https://schema.org",
-
+          "@context":
+            "https://schema.org",
           "@type": "WebSite",
-
           name: "Grocery Sathi",
-
-          url: "https://www.grocerysathi.com",
-
+          url:
+            "https://www.grocerysathi.com",
           potentialAction: {
-            "@type": "SearchAction",
-
+            "@type":
+              "SearchAction",
             target:
               "https://www.grocerysathi.com/search?q={search_term_string}",
-
-            "query-input": "required name=search_term_string",
+            "query-input":
+              "required name=search_term_string",
           },
         })}
       </script>
@@ -532,20 +1128,26 @@ const Navbar = () => {
           NAVBAR HEADER
       ================================================== */}
 
-      <header className="navbar-header" role="banner">
+      <header
+        className="navbar-header"
+        role="banner"
+      >
         {/* ==================================================
             TOP BAR
         ================================================== */}
 
         <div className="navbar-top-bar">
           <div className="navbar-container navbar-top-container">
+
             {/* LOGO */}
 
             <div className="navbar-logo-container">
               <Link
                 to={NAV_PATHS.HOME}
                 aria-label="Grocery Sathi Homepage"
-                onClick={closeMobileMenu}
+                onClick={
+                  closeMobileMenu
+                }
               >
                 <img
                   src={logo}
@@ -559,7 +1161,9 @@ const Navbar = () => {
 
             <form
               className="navbar-search-box"
-              action={NAV_PATHS.SEARCH}
+              action={
+                NAV_PATHS.SEARCH
+              }
               method="GET"
               role="search"
             >
@@ -583,13 +1187,19 @@ const Navbar = () => {
 
             <div className="navbar-info-wrapper">
               <div className="navbar-info-item">
-                <span className="navbar-info-title">Monday - Friday:</span>
+                <span className="navbar-info-title">
+                  Monday - Friday:
+                </span>
 
-                <span className="navbar-info-sub">8:00 AM - 9:00 PM</span>
+                <span className="navbar-info-sub">
+                  8:00 AM - 9:00 PM
+                </span>
               </div>
 
               <div className="navbar-info-item">
-                <span className="navbar-info-title">Support 24/7:</span>
+                <span className="navbar-info-title">
+                  Support 24/7:
+                </span>
 
                 <a
                   href="tel:+919887868746"
@@ -601,26 +1211,72 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* USER ACTIONS */}
+            {/* ==================================================
+                USER ACTIONS
+            ================================================== */}
 
             <div className="navbar-user-actions">
+
+              {/* USER */}
+
               <Link
-                to={NAV_PATHS.ACCOUNT}
-                className="navbar-icon-btn"
-                aria-label="User Account Dashboard"
+                to={
+                  currentUser
+                    ? NAV_PATHS.ACCOUNT
+                    : "/login"
+                }
+                className={`navbar-icon-btn ${
+                  currentUser
+                    ? "navbar-user-logged-in"
+                    : ""
+                }`}
+                aria-label={
+                  currentUser
+                    ? `Account of ${getUserName(
+                        currentUser
+                      )}`
+                    : "Login"
+                }
+                onClick={
+                  handleAccountClick
+                }
               >
-                <User size={22} aria-hidden="true" />
+                <User
+                  size={22}
+                  aria-hidden="true"
+                />
+
+                {!userLoading && (
+                  <span className="navbar-user-name">
+                    {currentUser
+                      ? getUserName(
+                          currentUser
+                        )
+                      : "Login"}
+                  </span>
+                )}
               </Link>
+
+              {/* CART */}
 
               <Link
                 to={NAV_PATHS.CART}
                 className="navbar-cart-container"
-                aria-label="View Shopping Cart"
+                aria-label={`View Shopping Cart. ${cartItemCount} items. Total ₹${cartTotal.toFixed(
+                  2
+                )}`}
               >
                 <div className="navbar-cart-text">
-                  <span className="navbar-cart-label">My Cart:</span>
+                  <span className="navbar-cart-label">
+                    My Cart:
+                  </span>
 
-                  <span className="navbar-cart-price">$0.00</span>
+                  <span className="navbar-cart-price">
+                    ₹
+                    {cartTotal.toFixed(
+                      2
+                    )}
+                  </span>
                 </div>
 
                 <div className="navbar-cart-icon-wrapper">
@@ -632,9 +1288,9 @@ const Navbar = () => {
 
                   <span
                     className="navbar-cart-badge"
-                    aria-label="0 items in cart"
+                    aria-label={`${cartItemCount} items in cart`}
                   >
-                    0
+                    {cartItemCount}
                   </span>
                 </div>
               </Link>
@@ -644,14 +1300,27 @@ const Navbar = () => {
               <button
                 type="button"
                 className="navbar-mobile-toggle"
-                onClick={() => setIsMobileMenuOpen((previous) => !previous)}
-                aria-expanded={isMobileMenuOpen}
+                onClick={() =>
+                  setIsMobileMenuOpen(
+                    (previous) =>
+                      !previous
+                  )
+                }
+                aria-expanded={
+                  isMobileMenuOpen
+                }
                 aria-label="Toggle navigation menu"
               >
                 {isMobileMenuOpen ? (
-                  <X size={24} aria-hidden="true" />
+                  <X
+                    size={24}
+                    aria-hidden="true"
+                  />
                 ) : (
-                  <Menu size={24} aria-hidden="true" />
+                  <Menu
+                    size={24}
+                    aria-hidden="true"
+                  />
                 )}
               </button>
             </div>
@@ -664,48 +1333,62 @@ const Navbar = () => {
 
         <nav
           className={`navbar-bottom-bar ${
-            isMobileMenuOpen ? "navbar-mobile-active" : ""
+            isMobileMenuOpen
+              ? "navbar-mobile-active"
+              : ""
           }`}
           aria-label="Main Navigation"
         >
           <div className="navbar-container navbar-bottom-container">
-            {/* ==================================================
-                ALL CATEGORIES
-            ================================================== */}
+
+            {/* ALL CATEGORIES */}
 
             <div className="navbar-category-wrapper">
               <button
                 type="button"
                 className={`navbar-category-btn ${
-                  isCategoryOpen ? "navbar-category-btn-active" : ""
+                  isCategoryOpen
+                    ? "navbar-category-btn-active"
+                    : ""
                 }`}
-                onClick={toggleCategoryDropdown}
-                aria-expanded={isCategoryOpen}
+                onClick={
+                  toggleCategoryDropdown
+                }
+                aria-expanded={
+                  isCategoryOpen
+                }
                 aria-controls="category-dropdown-menu"
               >
                 <div className="navbar-category-btn-left">
-                  <Grid size={18} aria-hidden="true" />
+                  <Grid
+                    size={18}
+                    aria-hidden="true"
+                  />
 
-                  <span>All Categories</span>
+                  <span>
+                    All Categories
+                  </span>
                 </div>
 
                 <ChevronRight
                   size={18}
                   className={`navbar-category-arrow ${
-                    isCategoryOpen ? "rotate-90" : ""
+                    isCategoryOpen
+                      ? "rotate-90"
+                      : ""
                   }`}
                   aria-hidden="true"
                 />
               </button>
 
-              {/* ==================================================
-                  CATEGORY DROPDOWN
-              ================================================== */}
+              {/* CATEGORY DROPDOWN */}
 
               <div
                 id="category-dropdown-menu"
                 className={`navbar-dropdown-menu ${
-                  isCategoryOpen ? "navbar-dropdown-show" : ""
+                  isCategoryOpen
+                    ? "navbar-dropdown-show"
+                    : ""
                 }`}
               >
                 <ul className="navbar-dropdown-list">
@@ -717,7 +1400,8 @@ const Navbar = () => {
                         </span>
                       </div>
                     </li>
-                  ) : categories.length === 0 ? (
+                  ) : categories.length ===
+                    0 ? (
                     <li className="navbar-dropdown-item">
                       <div className="navbar-dropdown-item-header">
                         <span className="navbar-category-title-text">
@@ -726,200 +1410,311 @@ const Navbar = () => {
                       </div>
                     </li>
                   ) : (
-                    categories.map((category) => {
-                      const categoryKey = getCategoryKey(category);
+                    categories.map(
+                      (
+                        category
+                      ) => {
+                        const categoryKey =
+                          getCategoryKey(
+                            category
+                          );
 
-                      const subCategories = getSubCategories(category);
+                        const subCategories =
+                          getSubCategories(
+                            category
+                          );
 
-                      const categoryProducts = getProductsByCategory(category);
+                        const categoryProducts =
+                          getProductsByCategory(
+                            category
+                          );
 
-                      const isSubOpen = activeCategory === categoryKey;
+                        const isSubOpen =
+                          activeCategory ===
+                          categoryKey;
 
-                      return (
-                        <li key={categoryKey} className="navbar-dropdown-item">
-                          {/* ==================================================
-                                CATEGORY HEADER
-                            ================================================== */}
-
-                          <div className="navbar-dropdown-item-header">
-                            <button
-                              type="button"
-                              className="navbar-dropdown-title-link"
-                              onClick={(event) =>
-                                handleCategoryClick(category, event)
-                              }
-                            >
-                              <Grid
-                                size={18}
-                                className="navbar-dropdown-icon"
-                                aria-hidden="true"
-                              />
-
-                              <span className="navbar-category-title-text">
-                                {category.name}
-                              </span>
-                            </button>
-
-                            {/* CATEGORY ARROW */}
-
-                            <button
-                              type="button"
-                              className="navbar-sub-toggle-btn"
-                              onClick={(event) => {
-                                event.preventDefault();
-                                event.stopPropagation();
-
-                                handleCategoryToggle(categoryKey);
-                              }}
-                              aria-expanded={isSubOpen}
-                              aria-label={`Show ${category.name} products`}
-                            >
-                              {isSubOpen ? (
-                                <ChevronDown size={16} aria-hidden="true" />
-                              ) : (
-                                <ChevronRight size={16} aria-hidden="true" />
-                              )}
-                            </button>
-                          </div>
-
-                          {/* ==================================================
-                                CATEGORY PRODUCTS
-                            ================================================== */}
-
-                          <div
-                            className={`navbar-sub-dropdown ${
-                              isSubOpen ? "navbar-sub-dropdown-show" : ""
-                            }`}
+                        return (
+                          <li
+                            key={
+                              categoryKey
+                            }
+                            className="navbar-dropdown-item"
                           >
-                            <ul className="navbar-sub-list">
-                              {/* SUB CATEGORIES */}
+                            {/* CATEGORY HEADER */}
 
-                              {subCategories.map((subCategory) => {
-                                const subKey =
-                                  subCategory?._id ||
-                                  subCategory?.id ||
-                                  subCategory?.slug ||
-                                  subCategory?.name;
+                            <div className="navbar-dropdown-item-header">
+                              <button
+                                type="button"
+                                className="navbar-dropdown-title-link"
+                                onClick={(
+                                  event
+                                ) =>
+                                  handleCategoryClick(
+                                    category,
+                                    event
+                                  )
+                                }
+                              >
+                                <Grid
+                                  size={
+                                    18
+                                  }
+                                  className="navbar-dropdown-icon"
+                                  aria-hidden="true"
+                                />
 
-                                return (
-                                  <li key={subKey} className="navbar-sub-item">
-                                    <Link
-                                      to={`${NAV_PATHS.CATEGORIES}/${getCategorySlug(
-                                        category,
-                                      )}/${
-                                        subCategory.slug ||
-                                        subCategory._id ||
-                                        subCategory.id ||
-                                        ""
-                                      }`}
-                                      onClick={(event) =>
-                                        handleSubCategoryClick(
-                                          category,
-                                          subCategory,
-                                          event,
-                                        )
-                                      }
-                                    >
-                                      {subCategory.name || subCategory.title}
-                                    </Link>
-                                  </li>
-                                );
-                              })}
+                                <span className="navbar-category-title-text">
+                                  {
+                                    category.name
+                                  }
+                                </span>
+                              </button>
 
-                              {/* PRODUCTS */}
+                              {/* CATEGORY ARROW */}
 
-                              {loadingProducts ? (
-                                <li className="navbar-sub-item">
-                                  Loading products...
-                                </li>
-                              ) : categoryProducts.length === 0 ? (
-                                <li className="navbar-sub-item">
-                                  No products found
-                                </li>
-                              ) : (
-                                categoryProducts.map((product) => {
-                                  const productId = product?._id || product?.id;
+                              <button
+                                type="button"
+                                className="navbar-sub-toggle-btn"
+                                onClick={(
+                                  event
+                                ) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
 
-                                  const image = getProductImage(product);
-
-                                  return (
-                                    <li
-                                      key={productId}
-                                      className="navbar-sub-item"
-                                    >
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleProductClick(product)
-                                        }
-                                      >
-                                        {image && (
-                                          <img
-                                            src={image}
-                                            alt={getProductName(product)}
-                                            style={{
-                                              width: "35px",
-                                              height: "35px",
-                                              objectFit: "cover",
-                                              borderRadius: "5px",
-                                              marginRight: "8px",
-                                              verticalAlign: "middle",
-                                            }}
-                                          />
-                                        )}
-
-                                        <span>{getProductName(product)}</span>
-                                      </button>
-                                    </li>
+                                  handleCategoryToggle(
+                                    categoryKey
                                   );
-                                })
-                              )}
-                            </ul>
-                          </div>
-                        </li>
-                      );
-                    })
+                                }}
+                                aria-expanded={
+                                  isSubOpen
+                                }
+                                aria-label={`Show ${category.name} products`}
+                              >
+                                {isSubOpen ? (
+                                  <ChevronDown
+                                    size={
+                                      16
+                                    }
+                                    aria-hidden="true"
+                                  />
+                                ) : (
+                                  <ChevronRight
+                                    size={
+                                      16
+                                    }
+                                    aria-hidden="true"
+                                  />
+                                )}
+                              </button>
+                            </div>
+
+                            {/* CATEGORY PRODUCTS */}
+
+                            <div
+                              className={`navbar-sub-dropdown ${
+                                isSubOpen
+                                  ? "navbar-sub-dropdown-show"
+                                  : ""
+                              }`}
+                            >
+                              <ul className="navbar-sub-list">
+
+                                {/* SUB CATEGORIES */}
+
+                                {subCategories.map(
+                                  (
+                                    subCategory
+                                  ) => {
+                                    const subKey =
+                                      subCategory?._id ||
+                                      subCategory?.id ||
+                                      subCategory?.slug ||
+                                      subCategory?.name;
+
+                                    return (
+                                      <li
+                                        key={
+                                          subKey
+                                        }
+                                        className="navbar-sub-item"
+                                      >
+                                        <Link
+                                          to={`${NAV_PATHS.CATEGORIES}/${getCategorySlug(
+                                            category
+                                          )}/${
+                                            subCategory.slug ||
+                                            subCategory._id ||
+                                            subCategory.id ||
+                                            ""
+                                          }`}
+                                          onClick={(
+                                            event
+                                          ) =>
+                                            handleSubCategoryClick(
+                                              category,
+                                              subCategory,
+                                              event
+                                            )
+                                          }
+                                        >
+                                          {subCategory.name ||
+                                            subCategory.title}
+                                        </Link>
+                                      </li>
+                                    );
+                                  }
+                                )}
+
+                                {/* PRODUCTS */}
+
+                                {loadingProducts ? (
+                                  <li className="navbar-sub-item">
+                                    Loading products...
+                                  </li>
+                                ) : categoryProducts.length ===
+                                  0 ? (
+                                  <li className="navbar-sub-item">
+                                    No products found
+                                  </li>
+                                ) : (
+                                  categoryProducts.map(
+                                    (
+                                      product
+                                    ) => {
+                                      const productId =
+                                        product?._id ||
+                                        product?.id;
+
+                                      const image =
+                                        getProductImage(
+                                          product
+                                        );
+
+                                      return (
+                                        <li
+                                          key={
+                                            productId
+                                          }
+                                          className="navbar-sub-item"
+                                        >
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleProductClick(
+                                                product
+                                              )
+                                            }
+                                          >
+                                            {image && (
+                                              <img
+                                                src={
+                                                  image
+                                                }
+                                                alt={getProductName(
+                                                  product
+                                                )}
+                                                style={{
+                                                  width:
+                                                    "35px",
+                                                  height:
+                                                    "35px",
+                                                  objectFit:
+                                                    "cover",
+                                                  borderRadius:
+                                                    "5px",
+                                                  marginRight:
+                                                    "8px",
+                                                  verticalAlign:
+                                                    "middle",
+                                                }}
+                                              />
+                                            )}
+
+                                            <span>
+                                              {getProductName(
+                                                product
+                                              )}
+                                            </span>
+                                          </button>
+                                        </li>
+                                      );
+                                    }
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                          </li>
+                        );
+                      }
+                    )
                   )}
                 </ul>
               </div>
             </div>
 
-            {/* ==================================================
-                SPECIAL OFFER
-            ================================================== */}
+            {/* SPECIAL OFFER */}
 
             <div className="navbar-offer-text">
-              <strong>-30% off</strong> on your first order over $200.{" "}
+              <strong>
+                -30% off
+              </strong>{" "}
+              on your first order over
+              ₹200.{" "}
               <Link
                 to="/promotions/first-order-discount"
-                onClick={closeMobileMenu}
+                onClick={
+                  closeMobileMenu
+                }
               >
                 Show More
               </Link>
             </div>
 
-            {/* ==================================================
-                QUICK NAVIGATION
-            ================================================== */}
+            {/* QUICK NAVIGATION */}
 
             <div className="navbar-nav-links">
-              <Link to={NAV_PATHS.HOME} onClick={closeMobileMenu}>
+              <Link
+                to={NAV_PATHS.HOME}
+                onClick={
+                  closeMobileMenu
+                }
+              >
                 Home
               </Link>
 
-              <Link to={NAV_PATHS.FAQ} onClick={closeMobileMenu}>
+              <Link
+                to={NAV_PATHS.FAQ}
+                onClick={
+                  closeMobileMenu
+                }
+              >
                 Faq
               </Link>
 
-              <Link to={NAV_PATHS.BLOG} onClick={closeMobileMenu}>
+              <Link
+                to={NAV_PATHS.BLOG}
+                onClick={
+                  closeMobileMenu
+                }
+              >
                 Blog
               </Link>
 
-              <Link to={NAV_PATHS.CONTACT} onClick={closeMobileMenu}>
+              <Link
+                to={NAV_PATHS.CONTACT}
+                onClick={
+                  closeMobileMenu
+                }
+              >
                 Contact
               </Link>
 
-              <Link to={NAV_PATHS.ABOUT} onClick={closeMobileMenu}>
+              <Link
+                to={NAV_PATHS.ABOUT}
+                onClick={
+                  closeMobileMenu
+                }
+              >
                 About Us
               </Link>
             </div>

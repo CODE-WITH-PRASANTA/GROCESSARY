@@ -695,3 +695,625 @@
     margin-bottom: 24px;
   }
 }
+
+
+
+
+/* ======================================================
+   REVIEW MODAL OVERLAY
+====================================================== */
+
+.pdv__review-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(12, 31, 29, 0.62);
+
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+
+  animation: pdvReviewOverlayIn 0.22s ease;
+}
+
+
+/* ======================================================
+   REVIEW MODAL
+====================================================== */
+
+.pdv__review-modal {
+  width: min(100%, 590px);
+  max-height: calc(100vh - 40px);
+
+  overflow-y: auto;
+
+  background: #ffffff;
+
+  border-radius: 20px;
+
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.22),
+    0 8px 30px rgba(27, 57, 53, 0.12);
+
+  animation: pdvReviewModalIn 0.25s ease;
+}
+
+
+/* ======================================================
+   MODAL HEADER
+====================================================== */
+
+.pdv__review-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding: 27px 30px 20px;
+
+  border-bottom: 1px solid #e8eeee;
+}
+
+
+.pdv__review-modal-eyebrow {
+  display: block;
+
+  margin-bottom: 7px;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 1.5px;
+
+  color: #2eb5a2;
+}
+
+
+.pdv__review-modal-title {
+  margin: 0;
+
+  color: #1b3935;
+
+  font-size: 25px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+
+.pdv__review-modal-product {
+  margin: 7px 0 0;
+
+  color: #687e7c;
+
+  font-size: 13px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  max-width: 400px;
+}
+
+
+.pdv__review-modal-close {
+  width: 38px;
+  height: 38px;
+
+  flex: 0 0 38px;
+
+  border: 1px solid #e2e9e8;
+
+  border-radius: 50%;
+
+  background: #f7faf9;
+
+  color: #526765;
+
+  font-size: 25px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+
+.pdv__review-modal-close:hover {
+  background: #1b3935;
+  color: #ffffff;
+
+  transform: rotate(90deg);
+}
+
+
+/* ======================================================
+   REVIEW FORM
+====================================================== */
+
+.pdv__review-form {
+  padding: 25px 30px 30px;
+}
+
+
+.pdv__review-field {
+  position: relative;
+
+  margin-bottom: 21px;
+}
+
+
+.pdv__review-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-bottom: 9px;
+
+  color: #1b3935;
+
+  font-size: 13px;
+  font-weight: 750;
+}
+
+
+.pdv__review-optional {
+  font-size: 11px;
+  font-weight: 500;
+
+  color: #8b9b99;
+}
+
+
+/* ======================================================
+   STAR SELECTOR
+====================================================== */
+
+.pdv__review-star-selector {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+
+.pdv__review-star-button {
+  width: 36px;
+  height: 36px;
+
+  padding: 0;
+
+  border: 1px solid #dce6e4;
+
+  border-radius: 9px;
+
+  background: #f8faf9;
+
+  color: #c6d0ce;
+
+  font-size: 22px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+
+.pdv__review-star-button:hover {
+  transform: translateY(-2px);
+
+  border-color: #f2bf3d;
+
+  color: #f2bf3d;
+
+  background: #fffaf0;
+}
+
+
+.pdv__review-star-button--active {
+  border-color: #f2bf3d;
+
+  background: #fff8e5;
+
+  color: #f2bf3d;
+}
+
+
+.pdv__review-rating-text {
+  margin-left: 8px;
+
+  color: #526765;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+/* ======================================================
+   INPUTS
+====================================================== */
+
+.pdv__review-input,
+.pdv__review-textarea {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  border: 1px solid #dce6e4;
+
+  border-radius: 11px;
+
+  background: #fbfcfc;
+
+  color: #1b3935;
+
+  font-family: inherit;
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.pdv__review-input {
+  height: 47px;
+
+  padding: 0 14px;
+}
+
+
+.pdv__review-textarea {
+  min-height: 120px;
+
+  padding: 13px 14px;
+
+  resize: vertical;
+}
+
+
+.pdv__review-input::placeholder,
+.pdv__review-textarea::placeholder {
+  color: #a2afad;
+}
+
+
+.pdv__review-input:focus,
+.pdv__review-textarea:focus {
+  border-color: #2eb5a2;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 0 0 3px rgba(46, 181, 162, 0.1);
+}
+
+
+.pdv__review-character-count {
+  position: absolute;
+
+  right: 11px;
+  bottom: 10px;
+
+  color: #9aa8a6;
+
+  font-size: 10px;
+}
+
+
+/* ======================================================
+   IMAGE UPLOAD
+====================================================== */
+
+.pdv__review-upload {
+  min-height: 52px;
+
+  padding: 10px 13px;
+
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  border: 1px dashed #b9cbc8;
+
+  border-radius: 11px;
+
+  background: #f9fbfa;
+
+  color: #526765;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+
+.pdv__review-upload:hover {
+  border-color: #2eb5a2;
+
+  background: #f2fbf9;
+}
+
+
+.pdv__review-upload-icon {
+  width: 30px;
+  height: 30px;
+
+  flex: 0 0 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+
+  background: #e3f5f1;
+
+  color: #239987;
+
+  font-size: 21px;
+  font-weight: 400;
+}
+
+
+.pdv__review-file-input {
+  display: none;
+}
+
+
+.pdv__review-upload-hint {
+  display: block;
+
+  margin-top: 6px;
+
+  color: #94a29f;
+
+  font-size: 10px;
+}
+
+
+/* ======================================================
+   MODAL ACTIONS
+====================================================== */
+
+.pdv__review-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 8px;
+}
+
+
+.pdv__review-cancel,
+.pdv__review-submit {
+  min-height: 45px;
+
+  padding: 0 20px;
+
+  border-radius: 10px;
+
+  font-family: inherit;
+
+  font-size: 13px;
+  font-weight: 750;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+
+.pdv__review-cancel {
+  border: 1px solid #dce6e4;
+
+  background: #ffffff;
+
+  color: #526765;
+}
+
+
+.pdv__review-cancel:hover {
+  background: #f5f8f7;
+}
+
+
+.pdv__review-submit {
+  border: 0;
+
+  background: #1b3935;
+
+  color: #ffffff;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 12px;
+}
+
+
+.pdv__review-submit:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 20px rgba(27, 57, 53, 0.2);
+
+  background: #244c46;
+}
+
+
+.pdv__review-submit:disabled,
+.pdv__review-cancel:disabled,
+.pdv__review-modal-close:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+
+/* ======================================================
+   SPINNER
+====================================================== */
+
+.pdv__review-spinner {
+  width: 15px;
+  height: 15px;
+
+  border: 2px solid rgba(255, 255, 255, 0.35);
+
+  border-top-color: #ffffff;
+
+  border-radius: 50%;
+
+  animation: pdvReviewSpin 0.7s linear infinite;
+}
+
+
+/* ======================================================
+   ANIMATIONS
+====================================================== */
+
+@keyframes pdvReviewOverlayIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+
+@keyframes pdvReviewModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+@keyframes pdvReviewSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* ======================================================
+   MOBILE
+====================================================== */
+
+@media (max-width: 600px) {
+  .pdv__review-modal-overlay {
+    padding: 10px;
+    align-items: flex-end;
+  }
+
+  .pdv__review-modal {
+    max-height: calc(100vh - 20px);
+
+    border-radius: 18px 18px 12px 12px;
+  }
+
+  .pdv__review-modal-header {
+    padding: 22px 20px 17px;
+  }
+
+  .pdv__review-modal-title {
+    font-size: 21px;
+  }
+
+  .pdv__review-modal-product {
+    max-width: 250px;
+  }
+
+  .pdv__review-form {
+    padding: 20px;
+  }
+
+  .pdv__review-star-button {
+    width: 34px;
+    height: 34px;
+
+    font-size: 20px;
+  }
+
+  .pdv__review-modal-actions {
+    flex-direction: column-reverse;
+
+    width: 100%;
+  }
+
+  .pdv__review-cancel,
+  .pdv__review-submit {
+    width: 100%;
+  }
+}
+
+
+/* ======================================================
+   VERY SMALL MOBILE
+====================================================== */
+
+@media (max-width: 380px) {
+  .pdv__review-modal-header {
+    padding: 18px 15px;
+  }
+
+  .pdv__review-form {
+    padding: 17px 15px 20px;
+  }
+
+  .pdv__review-star-button {
+    width: 31px;
+    height: 31px;
+
+    font-size: 18px;
+  }
+
+  .pdv__review-rating-text {
+    margin-left: 4px;
+  }
+}

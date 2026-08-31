@@ -1,24 +1,69 @@
 import React, { useState, useEffect } from "react";
+
 import "./FloatingButton.css";
-import { FaWhatsapp, FaPhoneAlt, FaArrowUp } from "react-icons/fa";
+
+import {
+  FaWhatsapp,
+  FaPhoneAlt,
+  FaArrowUp,
+} from "react-icons/fa";
 
 const FloatingButton = () => {
   const [showTop, setShowTop] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
 
-  // Clean formatted phone number configuration
   const rawNumber = "919887868746";
   const displayPhone = "+91 98878 68746";
+
+  // ======================================================
+  // SCROLL + CART STATE
+  // ======================================================
 
   useEffect(() => {
     const handleScroll = () => {
       setShowTop(window.scrollY > 300);
     };
 
-    window.addEventListener("scroll", handleScroll);
+    const checkCartState = () => {
+      setCartOpen(
+        document.body.classList.contains(
+          "cart-is-open"
+        )
+      );
+    };
+
+    window.addEventListener(
+      "scroll",
+      handleScroll
+    );
+
+    // Check immediately
+    checkCartState();
+
+    // Watch body class changes
+    const observer =
+      new MutationObserver(
+        checkCartState
+      );
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener(
+        "scroll",
+        handleScroll
+      );
+
+      observer.disconnect();
     };
   }, []);
+
+  // ======================================================
+  // SCROLL TO TOP
+  // ======================================================
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -29,45 +74,64 @@ const FloatingButton = () => {
 
   return (
     <>
-      {/* SEO Structured Data for Quick Customer Service Access */}
       <script type="application/ld+json">
         {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          "name": "Grocery Sathi",
-          "telephone": displayPhone,
-          "contactPoint": {
-            "@type": "ContactPoint",
-            "telephone": displayPhone,
-            "contactType": "customer service",
-            "areaServed": "IN",
-            "availableLanguage": ["English", "Hindi"]
-          }
+          "@context":
+            "https://schema.org",
+          "@type":
+            "Organization",
+          name: "Grocery Sathi",
+          telephone: displayPhone,
+          contactPoint: {
+            "@type":
+              "ContactPoint",
+            telephone:
+              displayPhone,
+            contactType:
+              "customer service",
+            areaServed: "IN",
+            availableLanguage: [
+              "English",
+              "Hindi",
+            ],
+          },
         })}
       </script>
 
-      <nav className="FloatingButton" aria-label="Quick Contact & Page Navigation">
+      <nav
+        className="FloatingButton"
+        aria-label="Quick Contact & Page Navigation"
+      >
         {/* CALL BUTTON */}
-        <a
-          href={`tel:+${rawNumber}`}
-          className="FloatingButton-call"
-          aria-label={`Call Grocery Sathi customer support at ${displayPhone}`}
-        >
-          <FaPhoneAlt aria-hidden="true" />
-        </a>
+
+        {!cartOpen && (
+          <a
+            href={`tel:+${rawNumber}`}
+            className="FloatingButton-call"
+            aria-label={`Call Grocery Sathi customer support at ${displayPhone}`}
+          >
+            <FaPhoneAlt aria-hidden="true" />
+          </a>
+        )}
 
         {/* WHATSAPP BUTTON */}
-        <a
-          href={`https://wa.me/${rawNumber}?text=${encodeURIComponent('Hi Grocery Sathi, I want to place an order or inquire about fresh groceries.')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="FloatingButton-whatsapp"
-          aria-label="Chat with Grocery Sathi on WhatsApp"
-        >
-          <FaWhatsapp aria-hidden="true" />
-        </a>
 
-        {/* SCROLL TO TOP BUTTON */}
+        {!cartOpen && (
+          <a
+            href={`https://wa.me/${rawNumber}?text=${encodeURIComponent(
+              "Hi Grocery Sathi, I want to place an order or inquire about fresh groceries."
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="FloatingButton-whatsapp"
+            aria-label="Chat with Grocery Sathi on WhatsApp"
+          >
+            <FaWhatsapp aria-hidden="true" />
+          </a>
+        )}
+
+        {/* SCROLL TO TOP */}
+
         {showTop && (
           <button
             type="button"
