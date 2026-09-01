@@ -19,6 +19,8 @@ const importRoutes = require("./routes/importRoutes");
 const authRoutes = require("./routes/authRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const todayDiscountRoutes =
+  require("./routes/todayDiscountRoutes");
 
 // Load environment variables
 dotenv.config();
@@ -52,6 +54,10 @@ app.use("/api/auth", authRoutes);
 
 app.use("/api/cart", cartRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use(
+  "/api/today-discounts",
+  todayDiscountRoutes
+);
 
 // Test Route
 app.get("/", (req, res) => {

@@ -1,24 +1,42 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+
 import "./CartSection.css";
 
-// --- IMPORT YOUR LOCAL IMAGES HERE ---
 import avocadoImg from "../../assets/avocadoCart.webp";
 import orangeImg from "../../assets/lemoncart.avif";
 import grapeImg from "../../assets/garpecart.avif";
 import mangoImg from "../../assets/mangocart.avif";
 
-const API_BASE_URL = "http://localhost:5000";
 import { useNavigate } from "react-router-dom";
+import API from "../../api/axios";
 
-const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
+// ======================================================
+// CONSTANTS
+// ======================================================
+
+const SERVER_BASE_URL = "http://localhost:5000";
+
+const GUEST_CART_KEY = "guestCart";
+
+// ======================================================
+// COMPONENT
+// ======================================================
+
+const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
+  const navigate = useNavigate();
+
   // ======================================================
   // DRAWER STATE
   // ======================================================
-  const navigate = useNavigate();
+
   const [internalIsOpen, setInternalIsOpen] = useState(true);
 
   const isCartOpen =
     externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+
+  // ======================================================
+  // CLOSE CART
+  // ======================================================
 
   const handleCloseCart = () => {
     setInternalIsOpen(false);
@@ -26,6 +44,17 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
     if (onClose) {
       onClose();
     }
+  };
+
+  const handleOpenCart = () => {
+    // If parent controls the cart, tell parent to open it
+    if (onOpen) {
+      onOpen();
+      return;
+    }
+
+    // Otherwise use internal state
+    setInternalIsOpen(true);
   };
 
   // ======================================================
@@ -39,7 +68,13 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
   const [cartError, setCartError] = useState("");
 
   // ======================================================
-  // RECOMMENDATION ITEMS
+  // TODAY DISCOUNTS
+  // ======================================================
+
+  const [todayDiscounts, setTodayDiscounts] = useState([]);
+
+  // ======================================================
+  // RECOMMENDATIONS
   // ======================================================
 
   const recommendations = [
@@ -66,8 +101,787 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
   const [activeRecIndex, setActiveRecIndex] = useState(0);
 
   // ======================================================
-  // IMAGE URL HELPER
+  // SAFE TEXT
   // ======================================================
+
+  const getSafeText = (value, fallback = "") => {
+    if (value === null || value === undefined) {
+      return fallback;
+    }
+
+    if (typeof value === "string") {
+      const text = value.trim();
+
+      return text || fallback;
+    }
+
+    if (typeof value === "number" || typeof value === "boolean") {
+      return String(value);
+    }
+
+    if (typeof value === "object") {
+      const possibleValues = [
+        value?.name,
+        value?.label,
+        value?.title,
+        value?.unitName,
+        value?.brandName,
+        value?.categoryName,
+        value?.value,
+        value?.symbol,
+      ];
+
+      for (const possibleValue of possibleValues) {
+        if (
+          possibleValue !== null &&
+          possibleValue !== undefined &&
+          typeof possibleValue !== "object"
+        ) {
+          const text = String(possibleValue).trim();
+
+          if (text) {
+            return text;
+          }
+        }
+      }
+
+      return fallback;
+    }
+
+    return fallback;
+  };
+
+  // ======================================================
+  // SAFE NUMBER
+  // ======================================================
+
+  const getSafeNumber = (value, fallback = 0) => {
+    const number = Number(value);
+
+    return Number.isFinite(number) ? number : fallback;
+  };
+
+  // ======================================================
+  // TOKEN
+  // ======================================================
+
+  const getToken = () => {
+    try {
+      return localStorage.getItem("token");
+    } catch {
+      return null;
+    }
+  };
+
+  // ======================================================
+  // OBJECT ID
+  // ======================================================
+
+  const getObjectId = (value) => {
+    if (!value) {
+      return "";
+    }
+
+    if (typeof value === "string") {
+      return value;
+    }
+
+    if (typeof value === "object") {
+      return value?._id || value?.id || value?.productId || "";
+    }
+
+    return "";
+  };
+
+  // ======================================================
+  // PRODUCT ID
+  // ======================================================
+
+  const getProductId = (item) => {
+    if (!item) {
+      return null;
+    }
+
+    if (item?.productId) {
+      return String(getObjectId(item.productId));
+    }
+
+    if (item?.product?._id) {
+      return String(item.product._id);
+    }
+
+    if (item?._id) {
+      return String(item._id);
+    }
+
+    if (item?.id) {
+      return String(item.id);
+    }
+
+    return null;
+  };
+
+  // ======================================================
+  // PRODUCT NAME
+  // ======================================================
+
+  const getProductName = (product = {}) => {
+    const nestedProduct =
+      product?.product && typeof product.product === "object"
+        ? product.product
+        : {};
+
+    return getSafeText(
+      product?.productName ||
+        product?.name ||
+        product?.title ||
+        product?.productTitle ||
+        product?.product_name ||
+        product?.itemName ||
+        product?.displayName ||
+        nestedProduct?.productName ||
+        nestedProduct?.name ||
+        nestedProduct?.title ||
+        nestedProduct?.productTitle ||
+        nestedProduct?.product_name,
+      "Product",
+    );
+  };
+
+  // ======================================================
+  // PRODUCT UNIT
+  // ======================================================
+
+  const getUnitName = (unit) => {
+    if (!unit) {
+      return "";
+    }
+
+    return getSafeText(unit, "");
+  };
+
+  // ======================================================
+  // PRODUCT PRICE
+  // ======================================================
+
+  const getProductPrice = (product = {}) => {
+    const productDiscountPrice = getSafeNumber(product?.discountPrice, 0);
+
+    if (productDiscountPrice > 0) {
+      return productDiscountPrice;
+    }
+
+    return getSafeNumber(product?.price ?? product?.sellingPrice ?? 0, 0);
+  };
+
+  // ======================================================
+  // IMAGE URL
+  // ======================================================
+
+  const getImageUrl = (image) => {
+    if (!image) {
+      return avocadoImg;
+    }
+
+    if (typeof image === "object") {
+      image =
+        image?.url ||
+        image?.path ||
+        image?.secure_url ||
+        image?.filename ||
+        image?.src ||
+        "";
+    }
+
+    if (!image) {
+      return avocadoImg;
+    }
+
+    const imageString = String(image).trim();
+
+    if (
+      imageString.startsWith("http://") ||
+      imageString.startsWith("https://")
+    ) {
+      return imageString;
+    }
+
+    return `${SERVER_BASE_URL}${
+      imageString.startsWith("/") ? "" : "/"
+    }${imageString}`;
+  };
+
+  // ======================================================
+  // GUEST CART
+  // ======================================================
+
+  const getGuestCart = () => {
+    try {
+      const storedCart = localStorage.getItem(GUEST_CART_KEY);
+
+      if (!storedCart) {
+        return [];
+      }
+
+      const parsedCart = JSON.parse(storedCart);
+
+      if (!Array.isArray(parsedCart)) {
+        return [];
+      }
+
+      return parsedCart;
+    } catch (error) {
+      console.error("Guest cart parse error:", error);
+
+      localStorage.removeItem(GUEST_CART_KEY);
+
+      return [];
+    }
+  };
+
+  // ======================================================
+  // SAVE GUEST CART
+  // ======================================================
+
+  const saveGuestCart = (items) => {
+    try {
+      const safeItems = Array.isArray(items) ? items : [];
+
+      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(safeItems));
+
+      window.dispatchEvent(new Event("cartUpdated"));
+    } catch (error) {
+      console.error("Save guest cart error:", error);
+    }
+  };
+
+  // ======================================================
+  // GET TODAY DISCOUNT FOR PRODUCT
+  // ======================================================
+
+  const getTodayDiscountForProduct = (productId) => {
+    if (!productId) {
+      return null;
+    }
+
+    const targetId = String(productId);
+
+    const discount = todayDiscounts.find((item) => {
+      const discountProductId = getObjectId(item?.product);
+
+      return String(discountProductId) === targetId;
+    });
+
+    return discount || null;
+  };
+
+  // ======================================================
+  // APPLY TODAY DISCOUNT
+  // ======================================================
+
+  const applyTodayDiscountToItem = (item) => {
+    if (!item) {
+      return item;
+    }
+
+    const productId = getProductId(item);
+
+    if (!productId) {
+      return item;
+    }
+
+    const discount = getTodayDiscountForProduct(productId);
+
+    // --------------------------------------------------
+    // NO ACTIVE TODAY DISCOUNT
+    // --------------------------------------------------
+
+    if (!discount) {
+      const fallbackOriginalPrice = getSafeNumber(item?.originalPrice, 0);
+
+      const currentPrice = getSafeNumber(item?.price, 0);
+
+      return {
+        ...item,
+
+        price: fallbackOriginalPrice > 0 ? fallbackOriginalPrice : currentPrice,
+
+        discountPrice: 0,
+
+        todayDiscountPrice: 0,
+
+        originalPrice:
+          fallbackOriginalPrice > 0 ? fallbackOriginalPrice : currentPrice,
+
+        isTodayDiscount: false,
+      };
+    }
+
+    // --------------------------------------------------
+    // ACTIVE TODAY DISCOUNT
+    // --------------------------------------------------
+
+    const originalPrice = getSafeNumber(
+      item?.originalPrice,
+      getSafeNumber(item?.product?.price, getSafeNumber(item?.price, 0)),
+    );
+
+    const discountPrice = getSafeNumber(discount?.discountPrice, 0);
+
+    // Safety check
+    if (
+      discountPrice <= 0 ||
+      (originalPrice > 0 && discountPrice >= originalPrice)
+    ) {
+      return {
+        ...item,
+
+        price: originalPrice > 0 ? originalPrice : item?.price,
+
+        originalPrice,
+
+        discountPrice: 0,
+
+        todayDiscountPrice: 0,
+
+        isTodayDiscount: false,
+      };
+    }
+
+    return {
+      ...item,
+
+      price: discountPrice,
+
+      originalPrice,
+
+      discountPrice,
+
+      todayDiscountPrice: discountPrice,
+
+      todayDiscountId: discount?._id,
+
+      isTodayDiscount: true,
+    };
+  };
+
+  // ======================================================
+  // APPLY TODAY DISCOUNTS TO CART
+  // ======================================================
+
+  const applyTodayDiscountsToCart = (items) => {
+    if (!Array.isArray(items)) {
+      return [];
+    }
+
+    return items.map(applyTodayDiscountToItem);
+  };
+
+  // ======================================================
+  // FORMAT GUEST ITEMS
+  // ======================================================
+
+  const formatGuestItems = (items) => {
+    if (!Array.isArray(items)) {
+      return [];
+    }
+
+    const formatted = items
+      .filter((item) => {
+        return Boolean(getProductId(item));
+      })
+      .map((item) => {
+        const productId = getProductId(item);
+
+        const productName = getProductName(item);
+
+        const rawUnit = item?.size ?? item?.unitName ?? item?.unit ?? "";
+
+        const unitName = getUnitName(rawUnit);
+
+        const originalPrice = getSafeNumber(
+          item?.originalPrice,
+          getSafeNumber(item?.price, 0),
+        );
+
+        return {
+          ...item,
+
+          id: String(item?.id || item?._id || productId),
+
+          productId: String(productId),
+
+          name: getSafeText(productName, "Product"),
+
+          price: getSafeNumber(item?.price, originalPrice),
+
+          originalPrice,
+
+          writtenPrice: getSafeNumber(item?.writtenPrice, 0),
+
+          discountPrice: getSafeNumber(item?.discountPrice, 0),
+
+          todayDiscountPrice: getSafeNumber(item?.todayDiscountPrice, 0),
+
+          size: getSafeText(unitName, "Standard Pack"),
+
+          quantity: Math.max(1, getSafeNumber(item?.quantity, 1)),
+
+          stockQuantity: getSafeNumber(item?.stockQuantity, 0),
+
+          image: getImageUrl(item?.image),
+        };
+      });
+
+    return applyTodayDiscountsToCart(formatted);
+  };
+
+  // ======================================================
+  // FORMAT BACKEND ITEMS
+  // ======================================================
+
+  const formatBackendItems = (items) => {
+    if (!Array.isArray(items)) {
+      return [];
+    }
+
+    const formatted = items
+      .filter((item) => item?.product)
+      .map((item) => {
+        const product = item.product;
+
+        const productId =
+          product?._id || product?.id || item?.productId || item?._id;
+
+        const productImage =
+          Array.isArray(product?.images) && product.images.length > 0
+            ? product.images[0]
+            : product?.image || product?.thumbnail || product?.imageUrl || null;
+
+        const productName = getProductName(product);
+
+        const unitName = getUnitName(product?.unit);
+
+        const price = getProductPrice(product);
+
+        const originalPrice = getSafeNumber(product?.price, price);
+
+        return {
+          id: String(item?._id || productId),
+
+          productId: String(productId || ""),
+
+          name: getSafeText(productName, "Product"),
+
+          price: getSafeNumber(price, 0),
+
+          originalPrice,
+
+          writtenPrice: getSafeNumber(product?.writtenPrice, 0),
+
+          discountPrice: getSafeNumber(product?.discountPrice, 0),
+
+          todayDiscountPrice: 0,
+
+          size: getSafeText(unitName, "Standard Pack"),
+
+          quantity: Math.max(1, getSafeNumber(item?.quantity, 1)),
+
+          stockQuantity: getSafeNumber(product?.stockQuantity, 0),
+
+          image: getImageUrl(productImage),
+        };
+      });
+
+    return applyTodayDiscountsToCart(formatted);
+  };
+
+  // ======================================================
+  // GET CART ITEMS FROM RESPONSE
+  // ======================================================
+
+  const getCartItemsFromResponse = (data) => {
+    if (!data) {
+      return [];
+    }
+
+    const items =
+      data?.cart?.items ||
+      data?.data?.cart?.items ||
+      data?.data?.items ||
+      data?.items ||
+      [];
+
+    return formatBackendItems(items);
+  };
+
+  // ======================================================
+  // FETCH ACTIVE TODAY DISCOUNTS
+  // ======================================================
+
+  const fetchTodayDiscounts = useCallback(async () => {
+    try {
+      const response = await API.get("/today-discounts/active");
+
+      const data = response?.data;
+
+      const discounts = Array.isArray(data?.data)
+        ? data.data
+        : Array.isArray(data)
+          ? data
+          : [];
+
+      setTodayDiscounts(discounts);
+
+      return discounts;
+    } catch (error) {
+      console.error("Fetch Today Discounts error:", error);
+
+      setTodayDiscounts([]);
+
+      return [];
+    }
+  }, []);
+
+  // ======================================================
+  // MERGE GUEST CART
+  // ======================================================
+
+  const mergeGuestCartToBackend = async (token) => {
+    try {
+      const guestCart = getGuestCart();
+
+      if (!token || guestCart.length === 0) {
+        return true;
+      }
+
+      let success = true;
+
+      for (const item of guestCart) {
+        const productId = getProductId(item);
+
+        if (!productId) {
+          continue;
+        }
+
+        const quantity = Math.max(1, getSafeNumber(item?.quantity, 1));
+
+        try {
+          await API.post("/cart/add", {
+            productId,
+            quantity,
+          });
+        } catch (error) {
+          console.error("Guest cart merge item error:", error);
+
+          success = false;
+        }
+      }
+
+      if (success) {
+        localStorage.removeItem(GUEST_CART_KEY);
+
+        window.dispatchEvent(new Event("cartUpdated"));
+      }
+
+      return success;
+    } catch (error) {
+      console.error("Merge guest cart error:", error);
+
+      return false;
+    }
+  };
+
+  // ======================================================
+  // FETCH CART
+  // ======================================================
+
+  const fetchCart = useCallback(async () => {
+    try {
+      setCartLoading(true);
+
+      setCartError("");
+
+      // ------------------------------------------------
+      // IMPORTANT:
+      // Fetch active Today Discounts first.
+      // ------------------------------------------------
+
+      const activeDiscounts = await fetchTodayDiscounts();
+
+      // Keep local copy so this fetch immediately
+      // applies discounts without waiting for state update.
+      const discountList = Array.isArray(activeDiscounts)
+        ? activeDiscounts
+        : [];
+
+      const applyCurrentDiscounts = (items) => {
+        if (!Array.isArray(items)) {
+          return [];
+        }
+
+        return items.map((item) => {
+          const productId = getProductId(item);
+
+          const discount = discountList.find(
+            (discountItem) =>
+              String(getObjectId(discountItem?.product)) === String(productId),
+          );
+
+          if (!discount) {
+            const originalPrice = getSafeNumber(
+              item?.originalPrice,
+              getSafeNumber(item?.price, 0),
+            );
+
+            return {
+              ...item,
+
+              price: originalPrice,
+
+              originalPrice,
+
+              discountPrice: 0,
+
+              todayDiscountPrice: 0,
+
+              isTodayDiscount: false,
+            };
+          }
+
+          const originalPrice = getSafeNumber(
+            item?.originalPrice,
+            getSafeNumber(item?.price, 0),
+          );
+
+          const discountPrice = getSafeNumber(discount?.discountPrice, 0);
+
+          if (
+            discountPrice <= 0 ||
+            (originalPrice > 0 && discountPrice >= originalPrice)
+          ) {
+            return {
+              ...item,
+
+              price: originalPrice,
+
+              originalPrice,
+
+              discountPrice: 0,
+
+              todayDiscountPrice: 0,
+
+              isTodayDiscount: false,
+            };
+          }
+
+          return {
+            ...item,
+
+            price: discountPrice,
+
+            originalPrice,
+
+            discountPrice,
+
+            todayDiscountPrice: discountPrice,
+
+            todayDiscountId: discount?._id,
+
+            isTodayDiscount: true,
+          };
+        });
+      };
+
+      const token = getToken();
+
+      // ==================================================
+      // GUEST CART
+      // ==================================================
+
+      if (!token) {
+        const guestCart = getGuestCart();
+
+        const formattedItems = formatGuestItems(guestCart);
+
+        const discountedItems = applyCurrentDiscounts(formattedItems);
+
+        setCartItems(discountedItems);
+
+        return;
+      }
+
+      // ==================================================
+      // MERGE GUEST CART
+      // ==================================================
+
+      await mergeGuestCartToBackend(token);
+
+      // ==================================================
+      // BACKEND CART
+      // ==================================================
+
+      const response = await API.get("/cart");
+
+      const formattedItems = getCartItemsFromResponse(response?.data);
+
+      const discountedItems = applyCurrentDiscounts(formattedItems);
+
+      setCartItems(discountedItems);
+    } catch (error) {
+      console.error("Fetch cart error:", error);
+
+      setCartError(
+        error?.apiMessage ||
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to load cart.",
+      );
+
+      setCartItems([]);
+    } finally {
+      setCartLoading(false);
+    }
+  }, [fetchTodayDiscounts]);
+
+  // ======================================================
+  // INITIAL LOAD
+  // ======================================================
+
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
+
+  // ======================================================
+  // REFRESH WHEN CART OPENS
+  // ======================================================
+
+  useEffect(() => {
+    if (isCartOpen) {
+      fetchCart();
+    }
+  }, [isCartOpen, fetchCart]);
+
+  // ======================================================
+  // CART UPDATED EVENT
+  // ======================================================
+
+  useEffect(() => {
+    const handleCartUpdated = () => {
+      fetchCart();
+    };
+
+    window.addEventListener("cartUpdated", handleCartUpdated);
+
+    return () => {
+      window.removeEventListener("cartUpdated", handleCartUpdated);
+    };
+  }, [fetchCart]);
+
+  // ======================================================
+  // BODY LOCK
+  // ======================================================
+
   useEffect(() => {
     if (isCartOpen) {
       document.body.classList.add("cart-is-open");
@@ -79,272 +893,100 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
       document.body.classList.remove("cart-is-open");
     };
   }, [isCartOpen]);
-  const getImageUrl = (image) => {
-    if (!image) {
-      return avocadoImg;
-    }
-
-    // Backend image object
-    if (typeof image === "object") {
-      image = image?.url || image?.path || image?.secure_url || "";
-    }
-
-    if (!image) {
-      return avocadoImg;
-    }
-
-    // Full URL
-    if (image.startsWith("http://") || image.startsWith("https://")) {
-      return image;
-    }
-
-    // Relative backend path
-    return `${API_BASE_URL}${image.startsWith("/") ? "" : "/"}${image}`;
-  };
-
-  // ======================================================
-  // FETCH CART
-  // ======================================================
-
-  const fetchCart = async () => {
-    try {
-      const token = localStorage.getItem("token");
-
-      // ==========================================
-      // NOT LOGGED IN
-      // ==========================================
-
-      if (!token) {
-        setCartItems([]);
-        setCartError("");
-        return;
-      }
-
-      setCartLoading(true);
-      setCartError("");
-
-      const response = await fetch(`${API_BASE_URL}/api/cart`, {
-        method: "GET",
-
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      // ==========================================
-      // CHECK RESPONSE TYPE
-      // ==========================================
-
-      const contentType = response.headers.get("content-type");
-
-      let result;
-
-      if (contentType && contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        const text = await response.text();
-
-        console.error("Cart API returned non-JSON:", text);
-
-        throw new Error("Cart API returned an invalid response.");
-      }
-
-      console.log("GET CART RESPONSE:", result);
-
-      if (!response.ok) {
-        throw new Error(result?.message || "Failed to fetch cart.");
-      }
-
-      // ==========================================
-      // GET ITEMS
-      // ==========================================
-
-      const items = result?.cart?.items || result?.items || [];
-
-      // ==========================================
-      // FORMAT BACKEND ITEMS FOR EXISTING UI
-      // ==========================================
-
-      const formattedItems = items
-        .filter((item) => item?.product)
-        .map((item) => {
-          const product = item.product;
-
-          const productImage =
-            Array.isArray(product?.images) && product.images.length > 0
-              ? product.images[0]
-              : null;
-
-          const unitName =
-            typeof product?.unit === "object"
-              ? product?.unit?.name || product?.unit?.symbol || ""
-              : product?.unit || "";
-
-          return {
-            // Keep original cart item ID
-            id: item._id,
-
-            // Product ID is useful for API updates later
-            productId: product._id,
-
-            name: product?.productName || product?.name || "Product",
-
-            price: Number(product?.price || 0),
-
-            writtenPrice: Number(product?.writtenPrice || 0),
-
-            size: unitName || "Standard Pack",
-
-            quantity: Number(item?.quantity || 1),
-
-            stockQuantity: Number(product?.stockQuantity || 0),
-
-            image: getImageUrl(productImage),
-          };
-        });
-
-      setCartItems(formattedItems);
-    } catch (error) {
-      console.error("Fetch cart error:", error);
-
-      setCartError(error?.message || "Unable to load cart.");
-
-      setCartItems([]);
-    } finally {
-      setCartLoading(false);
-    }
-  };
-
-  // ======================================================
-  // LOAD CART
-  // ======================================================
-
-  useEffect(() => {
-    fetchCart();
-  }, []);
-
-  // ======================================================
-  // REFRESH CART WHEN DRAWER OPENS
-  // ======================================================
-
-  useEffect(() => {
-    if (isCartOpen) {
-      fetchCart();
-    }
-  }, [isCartOpen]);
 
   // ======================================================
   // UPDATE CART QUANTITY
   // ======================================================
 
-  const updateCartQuantity = async (item, newQuantity) => {
+  const updateCartQuantity = async (item, quantity) => {
     try {
-      const token = localStorage.getItem("token");
+      const safeQuantity = getSafeNumber(quantity, 0);
+
+      const productId = getProductId(item);
+
+      if (!productId) {
+        throw new Error("Product ID is missing.");
+      }
+
+      // ==================================================
+      // REMOVE IF ZERO
+      // ==================================================
+
+      if (safeQuantity <= 0) {
+        await handleRemove(item.id);
+
+        return;
+      }
+
+      // ==================================================
+      // STOCK
+      // ==================================================
+
+      if (item.stockQuantity > 0 && safeQuantity > item.stockQuantity) {
+        alert(`Only ${item.stockQuantity} item(s) available in stock.`);
+
+        return;
+      }
+
+      const token = getToken();
+
+      // ==================================================
+      // GUEST
+      // ==================================================
 
       if (!token) {
-        alert("Please login first.");
+        const guestCart = getGuestCart();
+
+        const updatedCart = guestCart.map((cartItem) => {
+          const cartProductId = getProductId(cartItem);
+
+          if (String(cartProductId) === String(productId)) {
+            return {
+              ...cartItem,
+
+              quantity: safeQuantity,
+            };
+          }
+
+          return cartItem;
+        });
+
+        saveGuestCart(updatedCart);
+
+        setCartItems(formatGuestItems(updatedCart));
+
         return;
       }
 
-      if (newQuantity < 1) {
-        await handleRemove(item.id);
-        return;
-      }
+      // ==================================================
+      // LOGGED-IN
+      // ==================================================
 
-      if (item.stockQuantity > 0 && newQuantity > item.stockQuantity) {
-        alert(`Only ${item.stockQuantity} item(s) available in stock.`);
-        return;
-      }
-
-      console.log("UPDATING CART:", {
-        productId: item.productId,
-        quantity: newQuantity,
+      const response = await API.put(`/cart/update/${productId}`, {
+        quantity: safeQuantity,
       });
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/cart/update/${item.productId}`,
-        {
-          method: "PUT",
+      const returnedItems = getCartItemsFromResponse(response?.data);
 
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+      if (returnedItems.length > 0 || response?.data?.cart?.items) {
+        setCartItems(returnedItems);
 
-          body: JSON.stringify({
-            quantity: newQuantity,
-          }),
-        },
-      );
-
-      const contentType = response.headers.get("content-type");
-
-      let result;
-
-      if (contentType && contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        const text = await response.text();
-
-        console.error("Update cart non-JSON:", text);
-
-        throw new Error("Invalid response from cart API.");
-      }
-
-      console.log("UPDATE CART RESPONSE:", result);
-
-      if (!response.ok) {
-        throw new Error(result?.message || "Unable to update cart.");
-      }
-
-      // Update immediately from server response
-      if (result?.cart?.items) {
-        const formattedItems = result.cart.items
-          .filter((cartItem) => cartItem?.product)
-          .map((cartItem) => {
-            const product = cartItem.product;
-
-            const productImage =
-              Array.isArray(product?.images) && product.images.length > 0
-                ? product.images[0]
-                : null;
-
-            const unitName =
-              typeof product?.unit === "object"
-                ? product?.unit?.name || product?.unit?.symbol || ""
-                : product?.unit || "";
-
-            return {
-              id: cartItem._id,
-
-              productId: product._id,
-
-              name: product?.productName || product?.name || "Product",
-
-              price: Number(product?.price || 0),
-
-              writtenPrice: Number(product?.writtenPrice || 0),
-
-              size: unitName || "Standard Pack",
-
-              quantity: Number(cartItem?.quantity || 1),
-
-              stockQuantity: Number(product?.stockQuantity || 0),
-
-              image: getImageUrl(productImage),
-            };
-          });
-
-        setCartItems(formattedItems);
+        // Re-apply current Today Discount
+        setCartItems(applyTodayDiscountsToCart(returnedItems));
       } else {
         await fetchCart();
       }
+
+      window.dispatchEvent(new Event("cartUpdated"));
     } catch (error) {
       console.error("Update cart error:", error);
 
-      alert(error?.message || "Unable to update cart.");
+      alert(
+        error?.apiMessage ||
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to update cart.",
+      );
     }
   };
 
@@ -353,13 +995,23 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
   // ======================================================
 
   const handleIncrease = (id) => {
-    const item = cartItems.find((cartItem) => cartItem.id === id);
+    const item = cartItems.find(
+      (cartItem) => String(cartItem.id) === String(id),
+    );
 
     if (!item) {
       return;
     }
 
-    updateCartQuantity(item, item.quantity + 1);
+    const nextQuantity = getSafeNumber(item.quantity, 0) + 1;
+
+    if (item.stockQuantity > 0 && nextQuantity > item.stockQuantity) {
+      alert(`Only ${item.stockQuantity} item(s) available in stock.`);
+
+      return;
+    }
+
+    updateCartQuantity(item, nextQuantity);
   };
 
   // ======================================================
@@ -367,13 +1019,17 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
   // ======================================================
 
   const handleDecrease = (id) => {
-    const item = cartItems.find((cartItem) => cartItem.id === id);
+    const item = cartItems.find(
+      (cartItem) => String(cartItem.id) === String(id),
+    );
 
     if (!item) {
       return;
     }
 
-    updateCartQuantity(item, item.quantity - 1);
+    const nextQuantity = getSafeNumber(item.quantity, 0) - 1;
+
+    updateCartQuantity(item, nextQuantity);
   };
 
   // ======================================================
@@ -382,76 +1038,177 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
 
   const handleRemove = async (id) => {
     try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        alert("Please login first.");
-        return;
-      }
-
-      const item = cartItems.find((cartItem) => cartItem.id === id);
+      const item = cartItems.find(
+        (cartItem) => String(cartItem.id) === String(id),
+      );
 
       if (!item) {
         return;
       }
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/cart/remove/${item.productId}`,
-        {
-          method: "DELETE",
+      const token = getToken();
 
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      // ==================================================
+      // GUEST
+      // ==================================================
 
-      const contentType = response.headers.get("content-type");
+      if (!token) {
+        const guestCart = getGuestCart();
 
-      let result;
+        const productId = getProductId(item);
 
-      if (contentType && contentType.includes("application/json")) {
-        result = await response.json();
+        const updatedGuestCart = guestCart.filter((cartItem) => {
+          const cartProductId = getProductId(cartItem);
+
+          return String(cartProductId) !== String(productId);
+        });
+
+        saveGuestCart(updatedGuestCart);
+
+        setCartItems(formatGuestItems(updatedGuestCart));
+
+        return;
+      }
+
+      // ==================================================
+      // LOGGED-IN
+      // ==================================================
+
+      const productId = getProductId(item);
+
+      if (!productId) {
+        throw new Error("Product ID is missing.");
+      }
+
+      const response = await API.delete(`/cart/remove/${productId}`);
+
+      const returnedItems = getCartItemsFromResponse(response?.data);
+
+      if (returnedItems.length > 0 || response?.data?.cart?.items) {
+        setCartItems(applyTodayDiscountsToCart(returnedItems));
       } else {
-        const text = await response.text();
-
-        console.error("Remove cart non-JSON:", text);
-
-        throw new Error("Invalid response from cart API.");
+        await fetchCart();
       }
 
-      if (!response.ok) {
-        throw new Error(result?.message || "Unable to remove product.");
-      }
-
-      console.log("REMOVE CART RESPONSE:", result);
-
-      // Refresh cart from backend
-      await fetchCart();
+      window.dispatchEvent(new Event("cartUpdated"));
     } catch (error) {
       console.error("Remove cart error:", error);
 
-      alert(error?.message || "Unable to remove product.");
+      alert(
+        error?.apiMessage ||
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to remove product.",
+      );
     }
   };
 
   // ======================================================
-  // RECOMMENDATION ADD
+  // ADD RECOMMENDATION
   // ======================================================
 
   const handleAddToCart = async (recItem) => {
     try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        alert("Please login first to add products to cart.");
+      if (!recItem) {
         return;
       }
 
-      alert("This recommendation is currently a demo product.");
+      const productId = recItem?.productId || recItem?._id;
+
+      // ==================================================
+      // DEMO RECOMMENDATION
+      // ==================================================
+
+      if (!productId) {
+        alert("This recommendation is currently a demo product.");
+
+        return;
+      }
+
+      const token = getToken();
+
+      // ==================================================
+      // GUEST
+      // ==================================================
+
+      if (!token) {
+        const guestCart = getGuestCart();
+
+        const existingIndex = guestCart.findIndex(
+          (item) => String(getProductId(item)) === String(productId),
+        );
+
+        if (existingIndex !== -1) {
+          const currentQuantity = getSafeNumber(
+            guestCart[existingIndex]?.quantity,
+            1,
+          );
+
+          guestCart[existingIndex] = {
+            ...guestCart[existingIndex],
+
+            quantity: currentQuantity + 1,
+          };
+        } else {
+          guestCart.push({
+            id: String(productId),
+
+            productId: String(productId),
+
+            name: getSafeText(recItem?.name, "Product"),
+
+            price: getSafeNumber(recItem?.price, 0),
+
+            originalPrice: getSafeNumber(recItem?.price, 0),
+
+            writtenPrice: getSafeNumber(recItem?.writtenPrice, 0),
+
+            quantity: 1,
+
+            stockQuantity: getSafeNumber(recItem?.stockQuantity, 0),
+
+            image: getImageUrl(recItem?.image),
+          });
+        }
+
+        saveGuestCart(guestCart);
+
+        setCartItems(formatGuestItems(guestCart));
+
+        alert("Product added to cart successfully.");
+
+        return;
+      }
+
+      // ==================================================
+      // LOGGED-IN
+      // ==================================================
+
+      const response = await API.post("/cart/add", {
+        productId,
+        quantity: 1,
+      });
+
+      const returnedItems = getCartItemsFromResponse(response?.data);
+
+      if (returnedItems.length > 0 || response?.data?.cart?.items) {
+        setCartItems(applyTodayDiscountsToCart(returnedItems));
+      } else {
+        await fetchCart();
+      }
+
+      window.dispatchEvent(new Event("cartUpdated"));
+
+      alert(response?.data?.message || "Product added to cart successfully.");
     } catch (error) {
       console.error("Recommendation cart error:", error);
+
+      alert(
+        error?.apiMessage ||
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to add product to cart.",
+      );
     }
   };
 
@@ -460,14 +1217,37 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
   // ======================================================
 
   const totalItemsCount = cartItems.reduce(
-    (acc, item) => acc + item.quantity,
+    (total, item) => total + getSafeNumber(item?.quantity, 0),
     0,
   );
 
-  const subtotalAmount = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0,
-  );
+  const subtotalAmount = cartItems.reduce((total, item) => {
+    const price = getSafeNumber(item?.price, 0);
+
+    const quantity = getSafeNumber(item?.quantity, 0);
+
+    return total + price * quantity;
+  }, 0);
+
+  // ======================================================
+  // TOTAL SAVINGS
+  // ======================================================
+
+  const totalDiscountAmount = cartItems.reduce((total, item) => {
+    if (!item?.isTodayDiscount) {
+      return total;
+    }
+
+    const originalPrice = getSafeNumber(item?.originalPrice, 0);
+
+    const discountPrice = getSafeNumber(item?.price, 0);
+
+    const quantity = getSafeNumber(item?.quantity, 0);
+
+    const saving = Math.max(0, originalPrice - discountPrice);
+
+    return total + saving * quantity;
+  }, 0);
 
   // ======================================================
   // FREE SHIPPING
@@ -481,47 +1261,59 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
   );
 
   // ======================================================
-  // RETURN
+  // ACTIVE RECOMMENDATION
+  // ======================================================
+
+  const activeRecommendation =
+    recommendations[activeRecIndex] || recommendations[0];
+
+  // ======================================================
+  // RENDER
   // ======================================================
 
   return (
     <>
-      {/* ================================================== */}
-      {/* SEO STRUCTURED DATA */}
-      {/* ================================================== */}
+      {/* ==================================================
+          SEO
+      ================================================== */}
 
       <script type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
+
           "@type": "WebPage",
+
           name: "Grocery Sathi Shopping Cart",
+
           description:
             "Review your selected fresh organic grocery items, check shipping progress, and proceed to secure checkout on Grocery Sathi.",
+
           publisher: {
             "@type": "Organization",
+
             name: "Grocery Sathi",
           },
         })}
       </script>
 
-      {/* ================================================== */}
-      {/* REOPEN BUTTON */}
-      {/* ================================================== */}
+      {/* ==================================================
+          REOPEN CART
+      ================================================== */}
 
       {!isCartOpen && (
         <button
           type="button"
           className="reopen-cart-btn"
-          onClick={() => setInternalIsOpen(true)}
+          onClick={handleOpenCart}
           aria-label="Open Grocery Sathi Shopping Cart"
         >
           🛒 Open Cart
         </button>
       )}
 
-      {/* ================================================== */}
-      {/* CART DRAWER OVERLAY */}
-      {/* ================================================== */}
+      {/* ==================================================
+          CART OVERLAY
+      ================================================== */}
 
       <div
         className={`cart-drawer-overlay ${isCartOpen ? "open" : ""}`}
@@ -535,56 +1327,47 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
           aria-modal="true"
           aria-label="Shopping Cart Drawer"
         >
-          {/* ================================================== */}
-          {/* HEADER */}
-          {/* ================================================== */}
+          {/* ==================================================
+              HEADER
+          ================================================== */}
 
           <header className="cart-header">
+            <div className="cart-header-title-wrap">
+              <h2 className="cart-header-title">Shopping Cart</h2>
+
+              <span className="cart-total-item-count">
+                {totalItemsCount} item
+                {totalItemsCount !== 1 ? "s" : ""}
+              </span>
+            </div>
+
             <button
               type="button"
               className="cart-close-btn"
-              onClick={() => {
-                handleCloseCart();
-                navigate("/");
-              }}
-              aria-label="Close Shopping Cart"
+              onClick={handleCloseCart}
+              aria-label="Close shopping cart"
             >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+              ×
             </button>
-
-            <div className="cart-header-title-wrap">
-              <h2 className="cart-header-title">Your Cart</h2>
-
-              <span className="cart-total-item-count">
-                {totalItemsCount} {totalItemsCount === 1 ? "Item" : "Items"}
-              </span>
-            </div>
           </header>
 
-          {/* ================================================== */}
-          {/* LOADING */}
-          {/* ================================================== */}
+          {/* ==================================================
+              LOADING
+          ================================================== */}
 
           {cartLoading ? (
             <div className="empty-cart-container">
+              <div className="empty-cart-icon-wrap">🛒</div>
+
               <h3 className="empty-cart-title">Loading cart...</h3>
             </div>
           ) : cartError ? (
             <div className="empty-cart-container">
-              <h3 className="empty-cart-title">{cartError}</h3>
+              <div className="empty-cart-icon-wrap">⚠️</div>
+
+              <h3 className="empty-cart-title">
+                {getSafeText(cartError, "Unable to load cart.")}
+              </h3>
 
               <button
                 type="button"
@@ -595,62 +1378,69 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
               </button>
             </div>
           ) : cartItems.length === 0 ? (
-            /* ================================================== */
-            /* EMPTY CART */
-            /* ================================================== */
+            <>
+              {/* ==================================================
+                  EMPTY CART
+              ================================================== */}
 
-            <div className="empty-cart-container">
-              <div className="empty-cart-icon-wrap" aria-hidden="true">
-                <svg
-                  width="64"
-                  height="64"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
+              <div className="empty-cart-container">
+                <div className="empty-cart-icon-wrap">
+                  <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M6 8h12l1 13H5L6 8Z" />
+                    <path d="M9 8a3 3 0 0 1 6 0" />
+                  </svg>
+                </div>
+
+                <h3 className="empty-cart-title">Your cart is empty</h3>
+
+                <button
+                  type="button"
+                  className="btn-continue-shopping"
+                  onClick={() => {
+                    handleCloseCart();
+
+                    navigate("/");
+                  }}
                 >
-                  <path d="M19 18c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm0-3h11.23c.77 0 1.45-.44 1.77-1.12l3.58-6.49A1.003 1.003 0 0 0 22.7 6c-.33-.51-.92-.81-1.53-.81H5.21l-.94-2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2z" />
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <line x1="19" y1="12" x2="5" y2="12" />
 
-                  <path d="M11 9.5c0-.28.22-.5.5-.5s.5.22.5.5v1c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-1zm5 0c0-.28.22-.5.5-.5s.5.22.5.5v1c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-1zm-6 4c0 1.1 1.34 2 3 2s3-.9 3-2h-6z" />
-                </svg>
+                    <polyline points="12 19 5 12 12 5" />
+                  </svg>
+                  Continue shopping
+                </button>
               </div>
-
-              <h3 className="empty-cart-title">Your cart is empty</h3>
-
-              <button
-                type="button"
-                className="btn-continue-shopping"
-                onClick={() => {
-                  handleCloseCart();
-                  navigate("/");
-                }}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <line x1="19" y1="12" x2="5" y2="12" />
-
-                  <polyline points="12 19 5 12 12 5" />
-                </svg>
-                Continue shopping
-              </button>
-            </div>
+            </>
           ) : (
             <>
-              {/* ================================================== */}
-              {/* CART BODY */}
-              {/* ================================================== */}
+              {/* ==================================================
+                  CART BODY
+              ================================================== */}
 
               <div className="cart-body">
-                {/* ================================================== */}
-                {/* SHIPPING BAR */}
-                {/* ================================================== */}
+                {/* ==================================================
+                    SHIPPING
+                ================================================== */}
 
                 <div className="shipping-bar-container">
                   <p className="shipping-msg">
@@ -710,91 +1500,199 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
                   </div>
                 </div>
 
-                {/* ================================================== */}
-                {/* CART ITEMS */}
-                {/* ================================================== */}
+                {/* ==================================================
+                    SAVINGS MESSAGE
+                ================================================== */}
+
+                {totalDiscountAmount > 0 && (
+                  <div
+                    style={{
+                      margin: "10px 0",
+                      padding: "10px 12px",
+                      borderRadius: "10px",
+                      background: "#ecfdf5",
+                      color: "#047857",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    🎉 You are saving ₹{totalDiscountAmount.toFixed(2)} with
+                    Today Discounts
+                  </div>
+                )}
+
+                {/* ==================================================
+                    CART ITEMS
+                ================================================== */}
 
                 <section className="cart-items-list" aria-label="Cart Items">
-                  {cartItems.map((item) => (
-                    <article key={item.id} className="cart-item-card">
-                      <div className="cart-item-img-wrap">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          loading="lazy"
-                          onError={(e) => {
-                            e.currentTarget.src = avocadoImg;
-                          }}
-                        />
-                      </div>
+                  {cartItems.map((item) => {
+                    const itemName = getSafeText(item?.name, "Product");
 
-                      <div className="cart-item-details">
-                        <div className="cart-item-header-row">
-                          <h4 className="cart-item-title">{item.name}</h4>
+                    const itemSize = getSafeText(item?.size, "Standard Pack");
 
-                          <button
-                            type="button"
-                            className="cart-item-delete-btn"
-                            onClick={() => handleRemove(item.id)}
-                            aria-label={`Remove ${item.name} from cart`}
-                          >
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="#f43f5e"
-                              strokeWidth="2.2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              aria-hidden="true"
+                    const itemPrice = getSafeNumber(item?.price, 0);
+
+                    const originalPrice = getSafeNumber(item?.originalPrice, 0);
+
+                    const itemQuantity = getSafeNumber(item?.quantity, 1);
+
+                    const isTodayDiscount = Boolean(item?.isTodayDiscount);
+
+                    return (
+                      <article
+                        key={item.id || item.productId}
+                        className="cart-item-card"
+                      >
+                        {/* IMAGE */}
+
+                        <div className="cart-item-img-wrap">
+                          <img
+                            src={item.image || avocadoImg}
+                            alt={itemName}
+                            loading="lazy"
+                            onError={(e) => {
+                              e.currentTarget.src = avocadoImg;
+                            }}
+                          />
+                        </div>
+
+                        {/* DETAILS */}
+
+                        <div className="cart-item-details">
+                          <div className="cart-item-header-row">
+                            <h4 className="cart-item-title">{itemName}</h4>
+
+                            <button
+                              type="button"
+                              className="cart-item-delete-btn"
+                              onClick={() => handleRemove(item.id)}
+                              aria-label={`Remove ${itemName} from cart`}
                             >
-                              <polyline points="3 6 5 6 21 6" />
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#f43f5e"
+                                strokeWidth="2.2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <polyline points="3 6 5 6 21 6" />
 
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
-                          </button>
-                        </div>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                              </svg>
+                            </button>
+                          </div>
 
-                        <p className="cart-item-price">
-                          ₹{item.price.toFixed(2)}
-                        </p>
+                          {/* ==================================================
+                                PRICE
+                            ================================================== */}
 
-                        <p className="cart-item-size">Size: {item.size}</p>
-
-                        {/* ================================================== */}
-                        {/* QUANTITY */}
-                        {/* ================================================== */}
-
-                        <div className="cart-item-qty-control">
-                          <button
-                            type="button"
-                            onClick={() => handleDecrease(item.id)}
-                            aria-label="Decrease quantity"
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              flexWrap: "wrap",
+                              gap: "8px",
+                              marginTop: "4px",
+                            }}
                           >
-                            -
-                          </button>
+                            <p
+                              className="cart-item-price"
+                              style={{
+                                margin: 0,
+                              }}
+                            >
+                              ₹{itemPrice.toFixed(2)}
+                            </p>
 
-                          <span aria-label={`Quantity: ${item.quantity}`}>
-                            {item.quantity}
-                          </span>
+                            {isTodayDiscount && originalPrice > itemPrice && (
+                              <>
+                                <span
+                                  style={{
+                                    fontSize: "12px",
+                                    color: "#888",
+                                    textDecoration: "line-through",
+                                  }}
+                                >
+                                  ₹{originalPrice.toFixed(2)}
+                                </span>
 
-                          <button
-                            type="button"
-                            onClick={() => handleIncrease(item.id)}
-                            aria-label="Increase quantity"
-                          >
-                            +
-                          </button>
+                                <span
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    padding: "3px 7px",
+                                    borderRadius: "999px",
+                                    background: "#dcfce7",
+                                    color: "#15803d",
+                                    fontSize: "10px",
+                                    fontWeight: 700,
+                                    lineHeight: 1,
+                                  }}
+                                >
+                                  TODAY DISCOUNT
+                                </span>
+                              </>
+                            )}
+                          </div>
+
+                          {/* ==================================================
+                                SAVING
+                            ================================================== */}
+
+                          {isTodayDiscount && originalPrice > itemPrice && (
+                            <p
+                              style={{
+                                margin: "4px 0 0",
+                                color: "#16a34a",
+                                fontSize: "11px",
+                                fontWeight: 600,
+                              }}
+                            >
+                              You save ₹{(originalPrice - itemPrice).toFixed(2)}
+                            </p>
+                          )}
+
+                          {/* SIZE */}
+
+                          <p className="cart-item-size">Size: {itemSize}</p>
+
+                          {/* QUANTITY */}
+
+                          <div className="cart-item-qty-control">
+                            <button
+                              type="button"
+                              onClick={() => handleDecrease(item.id)}
+                              aria-label="Decrease quantity"
+                            >
+                              -
+                            </button>
+
+                            <span aria-label={`Quantity: ${itemQuantity}`}>
+                              {itemQuantity}
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() => handleIncrease(item.id)}
+                              aria-label="Increase quantity"
+                            >
+                              +
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </article>
-                  ))}
+                      </article>
+                    );
+                  })}
                 </section>
 
-                {/* ================================================== */}
-                {/* RECOMMENDATIONS */}
-                {/* ================================================== */}
+                {/* ==================================================
+                    RECOMMENDATIONS
+                ================================================== */}
 
                 <section
                   className="cart-recommendations-section"
@@ -805,27 +1703,31 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
                   <div className="recommendation-card">
                     <div className="rec-img-wrap">
                       <img
-                        src={recommendations[activeRecIndex].image}
-                        alt={recommendations[activeRecIndex].name}
+                        src={activeRecommendation?.image}
+                        alt={getSafeText(
+                          activeRecommendation?.name,
+                          "Recommended Product",
+                        )}
                         loading="lazy"
                       />
                     </div>
 
                     <div className="rec-details">
                       <h4 className="rec-title">
-                        {recommendations[activeRecIndex].name}
+                        {getSafeText(activeRecommendation?.name, "Product")}
                       </h4>
 
                       <p className="rec-price">
-                        ₹{recommendations[activeRecIndex].price.toFixed(2)}
+                        ₹
+                        {getSafeNumber(activeRecommendation?.price, 0).toFixed(
+                          2,
+                        )}
                       </p>
 
                       <button
                         type="button"
                         className="rec-add-btn"
-                        onClick={() =>
-                          handleAddToCart(recommendations[activeRecIndex])
-                        }
+                        onClick={() => handleAddToCart(activeRecommendation)}
                       >
                         + Add to Cart
                       </button>
@@ -837,10 +1739,10 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
                     role="tablist"
                     aria-label="Recommendation carousel controls"
                   >
-                    {recommendations.map((_, idx) => (
+                    {recommendations.map((recommendation, idx) => (
                       <button
                         type="button"
-                        key={idx}
+                        key={recommendation.id}
                         role="tab"
                         aria-selected={activeRecIndex === idx}
                         aria-label={`Slide recommendation ${idx + 1}`}
@@ -854,11 +1756,13 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
                 </section>
               </div>
 
-              {/* ================================================== */}
-              {/* FOOTER */}
-              {/* ================================================== */}
+              {/* ==================================================
+                  FOOTER
+              ================================================== */}
 
               <footer className="cart-footer">
+                {/* BADGES */}
+
                 <div className="cart-badges-row">
                   <div
                     className="cart-badge-card"
@@ -913,9 +1817,9 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
                   </div>
                 </div>
 
-                {/* ================================================== */}
-                {/* TOTALS */}
-                {/* ================================================== */}
+                {/* ==================================================
+                    TOTALS
+                ================================================== */}
 
                 <div className="cart-totals-row">
                   <div className="total-col">
@@ -933,28 +1837,59 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
                   </div>
                 </div>
 
-                {/* ================================================== */}
-                {/* EACH ITEM PRICE DETAILS */}
-                {/* ================================================== */}
+                {/* ==================================================
+                    PRICE DETAILS
+                ================================================== */}
 
                 <div className="cart-item-price-details">
                   <h4 className="price-details-title">Price Details</h4>
 
                   {cartItems.map((item) => {
                     const itemTotal =
-                      Number(item.price || 0) * Number(item.quantity || 0);
+                      getSafeNumber(item?.price, 0) *
+                      getSafeNumber(item?.quantity, 0);
+
+                    const itemName = getSafeText(item?.name, "Product");
+
+                    const itemOriginalPrice = getSafeNumber(
+                      item?.originalPrice,
+                      0,
+                    );
+
+                    const itemCurrentPrice = getSafeNumber(item?.price, 0);
+
+                    const isDiscounted =
+                      Boolean(item?.isTodayDiscount) &&
+                      itemOriginalPrice > itemCurrentPrice;
 
                     return (
-                      <div className="cart-price-detail-item" key={item.id}>
+                      <div
+                        className="cart-price-detail-item"
+                        key={item.id || item.productId}
+                      >
                         <div className="cart-price-detail-info">
                           <span className="cart-price-detail-name">
-                            {item.name}
+                            {itemName}
                           </span>
 
                           <span className="cart-price-detail-quantity">
-                            {item.quantity} × ₹
-                            {Number(item.price || 0).toFixed(2)}
+                            {getSafeNumber(item?.quantity, 0)} × ₹
+                            {itemCurrentPrice.toFixed(2)}
                           </span>
+
+                          {isDiscounted && (
+                            <span
+                              style={{
+                                display: "block",
+                                marginTop: "2px",
+                                color: "#16a34a",
+                                fontSize: "10px",
+                                fontWeight: 600,
+                              }}
+                            >
+                              Today Discount
+                            </span>
+                          )}
                         </div>
 
                         <span className="cart-price-detail-total">
@@ -965,15 +1900,15 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
                   })}
                 </div>
 
-                {/* ================================================== */}
-                {/* ACTION BUTTONS */}
-                {/* ================================================== */}
+                {/* ==================================================
+                    ACTION BUTTONS
+                ================================================== */}
 
                 <div className="cart-action-buttons">
                   <button
                     type="button"
                     className="btn-view-cart"
-                    onClick={() => alert("Redirecting to full cart page...")}
+                    onClick={() => navigate("/cart")}
                   >
                     View Cart
                   </button>
@@ -981,7 +1916,7 @@ const CartSection = ({ isOpen: externalIsOpen, onClose }) => {
                   <button
                     type="button"
                     className="btn-checkout"
-                    onClick={() => alert("Proceeding to secure checkout...")}
+                    onClick={() => navigate("/checkout")}
                   >
                     Checkout
                   </button>

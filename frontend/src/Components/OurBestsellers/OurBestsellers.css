@@ -501,3 +501,298 @@
     font-size: 28px;
   }
 }
+
+
+
+
+/* =========================================================
+   BESTSELLER BUTTON WRAPPER
+========================================================= */
+
+.OurBestsellers-buttons {
+  display: grid;
+  grid-template-columns: 0.85fr 1.4fr;
+  gap: 10px;
+  width: 100%;
+  margin-top: 14px;
+}
+
+
+/* =========================================================
+   VIEW MORE BUTTON
+========================================================= */
+
+.OurBestsellers-view-more-btn {
+  min-height: 46px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 14px;
+
+  border: 1px solid #0d332e;
+  border-radius: 10px;
+
+  background: #ffffff;
+  color: #0d332e;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.OurBestsellers-view-more-btn:hover {
+  background: #0d332e;
+  color: #ffffff;
+
+  border-color: #0d332e;
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 18px rgba(13, 51, 46, 0.16);
+}
+
+.OurBestsellers-view-more-btn:active {
+  transform: translateY(0);
+}
+
+
+/* =========================================================
+   CART BUTTON
+========================================================= */
+
+.OurBestsellers-cart-btn {
+  min-height: 46px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  padding: 0 15px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: #0d332e;
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.OurBestsellers-cart-btn:hover:not(:disabled) {
+  background: #17483f;
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 18px rgba(13, 51, 46, 0.22);
+}
+
+.OurBestsellers-cart-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.OurBestsellers-cart-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+
+/* =========================================================
+   CART TOAST
+========================================================= */
+
+.OurBestsellers-cart-toast {
+  position: fixed;
+
+  right: 24px;
+  bottom: 24px;
+
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  max-width: min(
+    380px,
+    calc(100vw - 32px)
+  );
+
+  padding: 13px 18px;
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.08);
+
+  border-radius: 12px;
+
+  background: #0d332e;
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  box-shadow:
+    0 12px 35px
+    rgba(0, 0, 0, 0.25);
+
+  animation:
+    bestsellerToastIn
+    0.3s ease both;
+}
+
+.OurBestsellers-cart-toast svg {
+  flex-shrink: 0;
+
+  font-size: 16px;
+
+  color: #ffc21c;
+}
+
+
+/* =========================================================
+   MODAL VIEW MORE
+========================================================= */
+
+.OurBestsellers-modal-view-more {
+  width: 100%;
+
+  min-height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  margin-top: 16px;
+
+  border: 1px solid #0d332e;
+  border-radius: 10px;
+
+  background: transparent;
+  color: #0d332e;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s ease;
+}
+
+.OurBestsellers-modal-view-more:hover {
+  background: #0d332e;
+  color: #ffffff;
+
+  transform: translateY(-1px);
+}
+
+.OurBestsellers-modal-view-more svg {
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   TOAST ANIMATION
+========================================================= */
+
+@keyframes bestsellerToastIn {
+  from {
+    opacity: 0;
+    transform:
+      translateY(12px)
+      scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 768px) {
+
+  .OurBestsellers-buttons {
+    grid-template-columns:
+      1fr 1fr;
+
+    gap: 8px;
+  }
+
+  .OurBestsellers-view-more-btn,
+  .OurBestsellers-cart-btn {
+    min-height: 44px;
+
+    padding: 0 10px;
+
+    font-size: 12px;
+  }
+
+  .OurBestsellers-cart-toast {
+    right: 16px;
+    bottom: 16px;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+  .OurBestsellers-buttons {
+    grid-template-columns: 1fr;
+
+    gap: 8px;
+  }
+
+  .OurBestsellers-view-more-btn,
+  .OurBestsellers-cart-btn {
+    width: 100%;
+
+    min-height: 43px;
+  }
+
+  .OurBestsellers-cart-toast {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+
+    justify-content: center;
+
+    text-align: center;
+  }
+}

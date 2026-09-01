@@ -1,0 +1,1653 @@
+/* ======================================================
+   ROOT
+====================================================== */
+
+.TodayDiscounts {
+  width: 100%;
+  min-height: 100%;
+  padding: 28px;
+  background: #f6f8fb;
+  color: #172033;
+  box-sizing: border-box;
+}
+
+
+/* ======================================================
+   HEADER
+====================================================== */
+
+.TodayDiscounts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 26px;
+}
+
+.TodayDiscounts-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.TodayDiscounts-heading-icon {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: linear-gradient(
+    135deg,
+    #111827,
+    #334155
+  );
+  color: #fff;
+  font-size: 23px;
+  box-shadow:
+    0 12px 30px rgba(
+      15,
+      23,
+      42,
+      0.16
+    );
+}
+
+.TodayDiscounts-eyebrow,
+.TodayDiscounts-modal-eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  color: #7b8495;
+}
+
+.TodayDiscounts-title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.7px;
+  color: #111827;
+}
+
+.TodayDiscounts-subtitle {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #7b8495;
+}
+
+.TodayDiscounts-add-button {
+  height: 48px;
+  padding: 0 19px;
+  border: 0;
+  border-radius: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  background: #111827;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    0 10px 25px rgba(
+      15,
+      23,
+      42,
+      0.15
+    );
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.TodayDiscounts-add-button:hover {
+  transform: translateY(-2px);
+  background: #1f2937;
+  box-shadow:
+    0 14px 30px rgba(
+      15,
+      23,
+      42,
+      0.2
+    );
+}
+
+.TodayDiscounts-add-button svg {
+  font-size: 17px;
+}
+
+
+/* ======================================================
+   ALERTS
+====================================================== */
+
+.TodayDiscounts-alert {
+  min-height: 48px;
+  padding: 10px 13px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.TodayDiscounts-alert--success {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.TodayDiscounts-alert--error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.TodayDiscounts-alert > svg {
+  flex: 0 0 auto;
+}
+
+.TodayDiscounts-alert span {
+  flex: 1;
+}
+
+.TodayDiscounts-alert button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.TodayDiscounts-alert button:hover {
+  background: rgba(
+    0,
+    0,
+    0,
+    0.05
+  );
+}
+
+
+/* ======================================================
+   TOOLBAR
+====================================================== */
+
+.TodayDiscounts-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.TodayDiscounts-search {
+  height: 46px;
+  flex: 1;
+  max-width: 650px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 13px;
+  border: 1px solid #e4e8ef;
+  border-radius: 12px;
+  background: #fff;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.TodayDiscounts-search:focus-within {
+  border-color: #94a3b8;
+  box-shadow:
+    0 0 0 4px rgba(
+      148,
+      163,
+      184,
+      0.12
+    );
+}
+
+.TodayDiscounts-search > svg {
+  color: #98a1b2;
+  flex: 0 0 auto;
+}
+
+.TodayDiscounts-search input {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #172033;
+  font-size: 13px;
+}
+
+.TodayDiscounts-search input::placeholder {
+  color: #a2a9b7;
+}
+
+.TodayDiscounts-search > button {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: #f1f3f6;
+  color: #697386;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.TodayDiscounts-refresh {
+  height: 46px;
+  padding: 0 15px;
+  border: 1px solid #e4e8ef;
+  border-radius: 12px;
+  background: #fff;
+  color: #344054;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.TodayDiscounts-refresh:hover {
+  background: #f8fafc;
+}
+
+.TodayDiscounts-refresh:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.TodayDiscounts-spin {
+  animation: TodayDiscountsSpin 0.8s
+    linear infinite;
+}
+
+
+/* ======================================================
+   STATS
+====================================================== */
+
+.TodayDiscounts-stats {
+  display: grid;
+  grid-template-columns: repeat(
+    4,
+    minmax(0, 1fr)
+  );
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.TodayDiscounts-stat-card {
+  min-height: 90px;
+  padding: 17px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid #e7eaf0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow:
+    0 5px 18px rgba(
+      15,
+      23,
+      42,
+      0.035
+    );
+}
+
+.TodayDiscounts-stat-icon {
+  width: 43px;
+  height: 43px;
+  flex: 0 0 43px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.TodayDiscounts-stat-icon--green {
+  background: #ecfdf3;
+  color: #15803d;
+}
+
+.TodayDiscounts-stat-icon--orange {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.TodayDiscounts-stat-icon--purple {
+  background: #f5f3ff;
+  color: #6d28d9;
+}
+
+.TodayDiscounts-stat-card span {
+  display: block;
+  margin-bottom: 3px;
+  color: #8b94a5;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.TodayDiscounts-stat-card strong {
+  color: #172033;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+
+/* ======================================================
+   CARD
+====================================================== */
+
+.TodayDiscounts-card {
+  overflow: hidden;
+  border: 1px solid #e6e9ef;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow:
+    0 8px 28px rgba(
+      15,
+      23,
+      42,
+      0.045
+    );
+}
+
+.TodayDiscounts-card-header {
+  padding: 19px 20px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.TodayDiscounts-card-header h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.TodayDiscounts-card-header p {
+  margin: 5px 0 0;
+  color: #8b94a5;
+  font-size: 12px;
+}
+
+
+/* ======================================================
+   TABLE
+====================================================== */
+
+.TodayDiscounts-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.TodayDiscounts-table {
+  width: 100%;
+  min-width: 1000px;
+  border-collapse: collapse;
+}
+
+.TodayDiscounts-table th {
+  padding: 13px 18px;
+  background: #fafbfc;
+  border-bottom: 1px solid #edf0f4;
+  color: #7d8696;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.TodayDiscounts-table td {
+  padding: 15px 18px;
+  border-bottom: 1px solid #f0f2f5;
+  vertical-align: middle;
+}
+
+.TodayDiscounts-table tbody tr {
+  transition:
+    background 0.18s ease;
+}
+
+.TodayDiscounts-table tbody tr:hover {
+  background: #fbfcfe;
+}
+
+.TodayDiscounts-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+
+/* ======================================================
+   PRODUCT
+====================================================== */
+
+.TodayDiscounts-product {
+  min-width: 230px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.TodayDiscounts-product-image {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  overflow: hidden;
+  border: 1px solid #edf0f4;
+  border-radius: 12px;
+  background: #f7f8fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a0a8b6;
+}
+
+.TodayDiscounts-product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.TodayDiscounts-product-info {
+  min-width: 0;
+}
+
+.TodayDiscounts-product-info strong {
+  display: block;
+  max-width: 220px;
+  overflow: hidden;
+  color: #1d2738;
+  font-size: 13px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.TodayDiscounts-product-info span {
+  display: block;
+  margin-top: 4px;
+  color: #98a1b0;
+  font-size: 10px;
+}
+
+.TodayDiscounts-product-info small {
+  display: block;
+  margin-top: 3px;
+  color: #657084;
+  font-size: 10px;
+}
+
+
+/* ======================================================
+   CATEGORY
+====================================================== */
+
+.TodayDiscounts-category {
+  display: inline-flex;
+  padding: 6px 9px;
+  border: 1px solid #e8ebf0;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #667085;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+
+/* ======================================================
+   PRICING
+====================================================== */
+
+.TodayDiscounts-pricing strong {
+  display: block;
+  color: #172033;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.TodayDiscounts-pricing del {
+  display: block;
+  margin-top: 3px;
+  color: #a3aab7;
+  font-size: 10px;
+}
+
+
+/* ======================================================
+   DISCOUNT BADGE
+====================================================== */
+
+.TodayDiscounts-discount-badge {
+  display: inline-flex;
+  padding: 6px 9px;
+  border-radius: 8px;
+  background: #fff1f2;
+  color: #be123c;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+
+/* ======================================================
+   DURATION
+====================================================== */
+
+.TodayDiscounts-duration {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #667085;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.TodayDiscounts-duration svg {
+  transform: rotate(
+    -90deg
+  );
+  color: #b0b6c1;
+}
+
+
+/* ======================================================
+   STATUS
+====================================================== */
+
+.TodayDiscounts-status {
+  border: 0;
+  padding: 6px 9px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.TodayDiscounts-status span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.TodayDiscounts-status--active {
+  background: #ecfdf3;
+  color: #15803d;
+}
+
+.TodayDiscounts-status--active span {
+  background: #22c55e;
+}
+
+.TodayDiscounts-status--inactive {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.TodayDiscounts-status--inactive span {
+  background: #9ca3af;
+}
+
+
+/* ======================================================
+   ACTIONS
+====================================================== */
+
+.TodayDiscounts-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.TodayDiscounts-action {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e9ecf1;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.TodayDiscounts-action:hover {
+  transform: translateY(-1px);
+}
+
+.TodayDiscounts-action--edit {
+  color: #475569;
+}
+
+.TodayDiscounts-action--edit:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.TodayDiscounts-action--toggle {
+  color: #15803d;
+}
+
+.TodayDiscounts-action--toggle:hover {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.TodayDiscounts-action--delete {
+  color: #dc2626;
+}
+
+.TodayDiscounts-action--delete:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.TodayDiscounts-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+
+/* ======================================================
+   LOADING
+====================================================== */
+
+.TodayDiscounts-loading {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #8b94a5;
+  font-size: 12px;
+}
+
+.TodayDiscounts-loader {
+  width: 34px;
+  height: 34px;
+  border: 3px solid #e7eaf0;
+  border-top-color: #334155;
+  border-radius: 50%;
+  animation: TodayDiscountsSpin 0.8s
+    linear infinite;
+}
+
+
+/* ======================================================
+   EMPTY
+====================================================== */
+
+.TodayDiscounts-empty {
+  min-height: 330px;
+  padding: 35px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.TodayDiscounts-empty-icon {
+  width: 58px;
+  height: 58px;
+  margin-bottom: 13px;
+  border-radius: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 22px;
+}
+
+.TodayDiscounts-empty h3 {
+  margin: 0;
+  color: #172033;
+  font-size: 17px;
+}
+
+.TodayDiscounts-empty p {
+  max-width: 400px;
+  margin: 7px 0 17px;
+  color: #8b94a5;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.TodayDiscounts-empty button {
+  height: 40px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #111827;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+
+/* ======================================================
+   MODAL
+====================================================== */
+
+.TodayDiscounts-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  padding: 25px;
+  overflow-y: auto;
+  background: rgba(
+    15,
+    23,
+    42,
+    0.58
+  );
+  backdrop-filter: blur(7px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.TodayDiscounts-modal {
+  width: min(
+    720px,
+    100%
+  );
+  max-height: calc(
+    100vh - 50px
+  );
+  overflow-y: auto;
+  border: 1px solid rgba(
+    255,
+    255,
+    255,
+    0.7
+  );
+  border-radius: 22px;
+  background: #fff;
+  box-shadow:
+    0 30px 80px rgba(
+      15,
+      23,
+      42,
+      0.28
+    );
+  animation: TodayDiscountsModalIn
+    0.22s ease;
+}
+
+.TodayDiscounts-modal-header {
+  padding: 23px 25px;
+  border-bottom: 1px solid #edf0f4;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.TodayDiscounts-modal-header h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.TodayDiscounts-modal-header p {
+  margin: 6px 0 0;
+  color: #8b94a5;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.TodayDiscounts-modal-close {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border: 1px solid #e7eaf0;
+  border-radius: 10px;
+  background: #fff;
+  color: #667085;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.TodayDiscounts-modal-close:hover {
+  background: #f8fafc;
+  color: #111827;
+}
+
+
+/* ======================================================
+   MODAL ALERT
+====================================================== */
+
+.TodayDiscounts-modal-alert {
+  margin: 16px 25px 0;
+  padding: 11px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #b91c1c;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.TodayDiscounts-modal-alert span {
+  flex: 1;
+}
+
+.TodayDiscounts-modal-alert button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+
+/* ======================================================
+   FORM
+====================================================== */
+
+.TodayDiscounts-form {
+  padding: 23px 25px 25px;
+}
+
+.TodayDiscounts-field {
+  position: relative;
+  margin-bottom: 18px;
+}
+
+.TodayDiscounts-field > label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 7px;
+  color: #344054;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.TodayDiscounts-field > label span {
+  color: #dc2626;
+}
+
+
+/* ======================================================
+   PRODUCT SEARCH
+====================================================== */
+
+.TodayDiscounts-product-select {
+  position: relative;
+}
+
+.TodayDiscounts-product-search {
+  height: 46px;
+  padding: 0 11px;
+  border: 1px solid #dfe4eb;
+  border-radius: 11px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.TodayDiscounts-product-search:focus-within {
+  border-color: #94a3b8;
+  box-shadow:
+    0 0 0 4px rgba(
+      148,
+      163,
+      184,
+      0.12
+    );
+}
+
+.TodayDiscounts-product-search > svg {
+  color: #98a1b2;
+}
+
+.TodayDiscounts-product-search input {
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 12px;
+  color: #172033;
+}
+
+.TodayDiscounts-product-search button {
+  width: 27px;
+  height: 27px;
+  border: 0;
+  border-radius: 7px;
+  background: #f1f3f6;
+  color: #667085;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+
+/* ======================================================
+   PRODUCT DROPDOWN
+====================================================== */
+
+.TodayDiscounts-product-dropdown {
+  position: absolute;
+  z-index: 30;
+  top: calc(
+    100% + 7px
+  );
+  left: 0;
+  right: 0;
+  max-height: 285px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid #e3e7ed;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow:
+    0 20px 45px rgba(
+      15,
+      23,
+      42,
+      0.15
+    );
+}
+
+.TodayDiscounts-product-option {
+  width: 100%;
+  min-height: 61px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.TodayDiscounts-product-option:hover {
+  background: #f8fafc;
+}
+
+.TodayDiscounts-option-image {
+  width: 43px;
+  height: 43px;
+  flex: 0 0 43px;
+  overflow: hidden;
+  border-radius: 9px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+}
+
+.TodayDiscounts-option-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.TodayDiscounts-option-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.TodayDiscounts-option-info strong {
+  display: block;
+  overflow: hidden;
+  color: #273244;
+  font-size: 11px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.TodayDiscounts-option-info span {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #8b94a5;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.TodayDiscounts-option-price {
+  color: #172033;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.TodayDiscounts-dropdown-loading,
+.TodayDiscounts-dropdown-empty {
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: #8b94a5;
+  font-size: 11px;
+}
+
+.TodayDiscounts-dropdown-empty {
+  flex-direction: column;
+}
+
+.TodayDiscounts-dropdown-empty svg {
+  font-size: 21px;
+}
+
+.TodayDiscounts-mini-loader {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #475569;
+  border-radius: 50%;
+  animation: TodayDiscountsSpin 0.7s
+    linear infinite;
+}
+
+
+/* ======================================================
+   SELECTED PRODUCT
+====================================================== */
+
+.TodayDiscounts-selected-product {
+  margin-top: 9px;
+  padding: 10px;
+  border: 1px solid #e6e9ef;
+  border-radius: 12px;
+  background: #fafbfc;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.TodayDiscounts-selected-image {
+  width: 50px;
+  height: 50px;
+  flex: 0 0 50px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a0a8b6;
+}
+
+.TodayDiscounts-selected-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.TodayDiscounts-selected-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.TodayDiscounts-selected-info strong {
+  display: block;
+  color: #273244;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.TodayDiscounts-selected-info span {
+  display: block;
+  margin-top: 4px;
+  color: #8b94a5;
+  font-size: 10px;
+}
+
+.TodayDiscounts-selected-price {
+  text-align: right;
+}
+
+.TodayDiscounts-selected-price span {
+  display: block;
+  margin-bottom: 2px;
+  color: #98a1b0;
+  font-size: 9px;
+}
+
+.TodayDiscounts-selected-price strong {
+  color: #172033;
+  font-size: 13px;
+}
+
+
+/* ======================================================
+   FORM GRID
+====================================================== */
+
+.TodayDiscounts-form-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    2,
+    minmax(0, 1fr)
+  );
+  gap: 14px;
+}
+
+.TodayDiscounts-form-grid
+  .TodayDiscounts-field {
+  margin-bottom: 18px;
+}
+
+
+/* ======================================================
+   INPUTS
+====================================================== */
+
+.TodayDiscounts-input-prefix,
+.TodayDiscounts-input-icon,
+.TodayDiscounts-status-select {
+  height: 46px;
+  border: 1px solid #dfe4eb;
+  border-radius: 11px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.TodayDiscounts-input-prefix:focus-within,
+.TodayDiscounts-input-icon:focus-within,
+.TodayDiscounts-status-select:focus-within {
+  border-color: #94a3b8;
+  box-shadow:
+    0 0 0 4px rgba(
+      148,
+      163,
+      184,
+      0.11
+    );
+}
+
+.TodayDiscounts-input-prefix > span {
+  padding: 0 0 0 12px;
+  color: #667085;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.TodayDiscounts-input-prefix input,
+.TodayDiscounts-input-icon input,
+.TodayDiscounts-status-select select {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  padding: 0 11px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #172033;
+  font-size: 12px;
+}
+
+.TodayDiscounts-input-icon {
+  position: relative;
+}
+
+.TodayDiscounts-input-icon > svg {
+  margin-left: 12px;
+  flex: 0 0 auto;
+  color: #8992a2;
+}
+
+.TodayDiscounts-input-icon input {
+  padding-left: 8px;
+}
+
+.TodayDiscounts-status-select {
+  position: relative;
+}
+
+.TodayDiscounts-status-select select {
+  appearance: none;
+  padding-right: 34px;
+  cursor: pointer;
+}
+
+.TodayDiscounts-status-select > svg {
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+  color: #8b94a5;
+}
+
+
+/* ======================================================
+   PRICE HELPER
+====================================================== */
+
+.TodayDiscounts-price-helper {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #8b94a5;
+  font-size: 9px;
+}
+
+.TodayDiscounts-price-helper strong {
+  color: #be123c;
+}
+
+
+/* ======================================================
+   PREVIEW
+====================================================== */
+
+.TodayDiscounts-preview {
+  margin-top: 2px;
+  margin-bottom: 19px;
+  overflow: hidden;
+  border: 1px solid #e8ebf0;
+  border-radius: 14px;
+  background: #fafbfc;
+}
+
+.TodayDiscounts-preview-heading {
+  padding: 9px 12px;
+  border-bottom: 1px solid #e8ebf0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #8992a2;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.TodayDiscounts-preview-heading svg {
+  color: #64748b;
+}
+
+.TodayDiscounts-preview-content {
+  position: relative;
+  padding: 13px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.TodayDiscounts-preview-image {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+  overflow: hidden;
+  border-radius: 11px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+}
+
+.TodayDiscounts-preview-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.TodayDiscounts-preview-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.TodayDiscounts-preview-info > span {
+  color: #8b94a5;
+  font-size: 9px;
+}
+
+.TodayDiscounts-preview-info h3 {
+  margin: 3px 0 6px;
+  overflow: hidden;
+  color: #273244;
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.TodayDiscounts-preview-info > div {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.TodayDiscounts-preview-info strong {
+  color: #111827;
+  font-size: 14px;
+}
+
+.TodayDiscounts-preview-info del {
+  color: #9ca3af;
+  font-size: 9px;
+}
+
+.TodayDiscounts-preview-badge {
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #fff1f2;
+  color: #be123c;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+
+/* ======================================================
+   FORM ACTIONS
+====================================================== */
+
+.TodayDiscounts-form-actions {
+  padding-top: 18px;
+  border-top: 1px solid #edf0f4;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.TodayDiscounts-cancel,
+.TodayDiscounts-submit {
+  min-width: 125px;
+  height: 43px;
+  padding: 0 15px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.TodayDiscounts-cancel {
+  border: 1px solid #e1e5eb;
+  background: #fff;
+  color: #667085;
+}
+
+.TodayDiscounts-cancel:hover {
+  background: #f8fafc;
+}
+
+.TodayDiscounts-submit {
+  border: 0;
+  background: #111827;
+  color: #fff;
+  box-shadow:
+    0 8px 18px rgba(
+      15,
+      23,
+      42,
+      0.15
+    );
+}
+
+.TodayDiscounts-submit:hover {
+  background: #1f2937;
+}
+
+.TodayDiscounts-submit:disabled,
+.TodayDiscounts-cancel:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+
+/* ======================================================
+   SPINNER
+====================================================== */
+
+.TodayDiscounts-button-spinner,
+.TodayDiscounts-mini-spinner {
+  display: inline-block;
+  border-radius: 50%;
+  border-style: solid;
+  border-color: rgba(
+    255,
+    255,
+    255,
+    0.35
+  );
+  border-top-color: currentColor;
+  animation: TodayDiscountsSpin 0.7s
+    linear infinite;
+}
+
+.TodayDiscounts-button-spinner {
+  width: 14px;
+  height: 14px;
+}
+
+.TodayDiscounts-mini-spinner {
+  width: 13px;
+  height: 13px;
+  color: #dc2626;
+  border-color: #fecaca;
+  border-top-color: #dc2626;
+}
+
+
+/* ======================================================
+   ANIMATIONS
+====================================================== */
+
+@keyframes TodayDiscountsSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes TodayDiscountsModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px)
+      scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0)
+      scale(1);
+  }
+}
+
+
+/* ======================================================
+   RESPONSIVE
+====================================================== */
+
+@media (max-width: 1100px) {
+  .TodayDiscounts-stats {
+    grid-template-columns: repeat(
+      2,
+      minmax(0, 1fr)
+    );
+  }
+}
+
+@media (max-width: 760px) {
+  .TodayDiscounts {
+    padding: 18px;
+  }
+
+  .TodayDiscounts-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .TodayDiscounts-add-button {
+    width: 100%;
+  }
+
+  .TodayDiscounts-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .TodayDiscounts-search {
+    max-width: none;
+  }
+
+  .TodayDiscounts-refresh {
+    width: 100%;
+  }
+
+  .TodayDiscounts-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .TodayDiscounts-modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .TodayDiscounts-modal {
+    max-height: calc(
+      100vh - 24px
+    );
+    border-radius: 19px;
+  }
+
+  .TodayDiscounts-form-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .TodayDiscounts {
+    padding: 13px;
+  }
+
+  .TodayDiscounts-heading {
+    align-items: flex-start;
+  }
+
+  .TodayDiscounts-heading-icon {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+    border-radius: 13px;
+  }
+
+  .TodayDiscounts-title {
+    font-size: 23px;
+  }
+
+  .TodayDiscounts-subtitle {
+    font-size: 11px;
+  }
+
+  .TodayDiscounts-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .TodayDiscounts-stat-card {
+    min-height: 76px;
+  }
+
+  .TodayDiscounts-modal-header {
+    padding: 18px;
+  }
+
+  .TodayDiscounts-form {
+    padding: 18px;
+  }
+
+  .TodayDiscounts-modal-alert {
+    margin-left: 18px;
+    margin-right: 18px;
+  }
+
+  .TodayDiscounts-selected-product {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .TodayDiscounts-selected-price {
+    width: 100%;
+    padding-left: 60px;
+    text-align: left;
+  }
+
+  .TodayDiscounts-preview-content {
+    align-items: flex-start;
+  }
+
+  .TodayDiscounts-preview-badge {
+    align-self: flex-start;
+  }
+
+  .TodayDiscounts-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .TodayDiscounts-cancel,
+  .TodayDiscounts-submit {
+    width: 100%;
+  }
+}

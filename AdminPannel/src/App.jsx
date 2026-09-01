@@ -34,6 +34,7 @@ import Order from "./Pages/Order/Order";
 import ColdLeadManagement from "./Components/ColdLeadManagement/ColdLeadManagement";
 import Import from "./Components/Import/Import";
 import Catagory from "./Components/Catagory/Catagory";
+import TodayDiscounts from "./Components/TodayDiscounts/TodayDiscounts";
 
 const App = () => {
   return (
@@ -68,7 +69,7 @@ const App = () => {
             <Route path="products/brands" element={<Brands />} />
             <Route path="products/units" element={<EditUnit />} />
             <Route path="products/list-uploads" element={<ListUploads />} />
-
+            <Route path="today-discounts" element={<TodayDiscounts />} />
             {/* Orders */}
             <Route path="orders/all-orders" element={<Order />} />
             <Route path="orders/returns" element={<ReturnManagement />} />

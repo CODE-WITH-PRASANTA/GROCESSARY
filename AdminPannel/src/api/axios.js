@@ -60,9 +60,7 @@
       // Development Debug
       // ------------------------------------
 
-      console.log(
-        `API REQUEST: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`
-      );
+    
 
       return config;
     },
@@ -82,10 +80,7 @@
 
   API.interceptors.response.use(
     (response) => {
-      console.log(
-        `API RESPONSE: ${response.status}`,
-        response.data
-      );
+      
 
       return response;
     },

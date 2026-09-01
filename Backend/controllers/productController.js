@@ -13,12 +13,43 @@ const normalizeString = (value) => {
 };
 
 const normalizeArray = (value) => {
-  if (Array.isArray(value)) {
-    return value;
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return [];
   }
 
-  if (typeof value === "string" && value.trim()) {
+  // Already an array
+  if (Array.isArray(value)) {
     return value
+      .map((item) => String(item).trim())
+      .filter(Boolean);
+  }
+
+  // JSON array coming from FormData
+  if (typeof value === "string") {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(trimmedValue);
+
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((item) => String(item).trim())
+          .filter(Boolean);
+      }
+    } catch (error) {
+      // Not JSON, continue as comma-separated text
+    }
+
+    // Old comma-separated format
+    return trimmedValue
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean);
