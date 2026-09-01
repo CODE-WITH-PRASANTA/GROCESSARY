@@ -170,24 +170,27 @@
   height: 100%;
   background-color: #ffc220;
   border-radius: 10px;
-  background-image: linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.4) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.4) 50%,
-    rgba(255, 255, 255, 0.4) 75%,
-    transparent 75%,
-    transparent
-  );
+  background-image: linear-gradient(45deg,
+      rgba(255, 255, 255, 0.4) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.4) 50%,
+      rgba(255, 255, 255, 0.4) 75%,
+      transparent 75%,
+      transparent);
   background-size: 20px 20px;
   animation: moveStripes 1s linear infinite;
   transition: width 0.3s ease;
 }
 
 @keyframes moveStripes {
-  0% { background-position: 0 0; }
-  100% { background-position: 20px 0; }
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 20px 0;
+  }
 }
 
 .shipping-truck-icon-wrap {
@@ -208,8 +211,15 @@
 }
 
 @keyframes vehicleBounce {
-  0%, 100% { transform: translateY(-50%) scale(1); }
-  50% { transform: translateY(-56%) scale(1.05); }
+
+  0%,
+  100% {
+    transform: translateY(-50%) scale(1);
+  }
+
+  50% {
+    transform: translateY(-56%) scale(1.05);
+  }
 }
 
 /* --- CART ITEM CARD --- */
@@ -527,18 +537,53 @@
 
 .reopen-cart-btn {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+
+  /* Same right alignment as your floating buttons */
+  right: 14px;
+
+  /* Put cart ABOVE the floating call/WhatsApp buttons */
+  bottom: 210px;
+
   background-color: #102a27;
   color: #ffc220;
+
   border: none;
   padding: 12px 20px;
+
   border-radius: 30px;
+
   font-size: 14px;
   font-weight: 800;
+
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
-  z-index: 100;
+
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+
+  z-index: 9998;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  white-space: nowrap;
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.reopen-cart-btn:hover {
+  transform: translateY(-3px);
+
+  background-color: #163b36;
+
+  box-shadow: 0 9px 24px rgba(0, 0, 0, 0.28);
+}
+
+.reopen-cart-btn:active {
+  transform: translateY(-1px);
 }
 
 /* ==========================================================================
@@ -619,6 +664,16 @@
   font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
+}
+
+
+@media (max-width: 480px) {
+  .reopen-cart-btn {
+    right: 16px;
+    bottom: 174px;
+    padding: 11px 17px;
+    font-size: 13px;
+  }
 }
 
 body.cart-is-open .floating-call-btn,

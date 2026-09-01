@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import "./ProductDetailsVegetables.css";
 import { Helmet } from "react-helmet-async";
+import Swal from "sweetalert2";
 
 // ======================================================
 // LOCAL FALLBACK IMAGES
@@ -387,7 +388,12 @@ const ProductDetailsVegetables = ({ productId }) => {
       // CHECK PRODUCT
       // ==========================================
       if (!product?._id) {
-        alert("Product information is missing.");
+        Swal.fire({
+          icon: "error",
+          title: "Product Missing",
+          text: "Product information is missing.",
+          confirmButtonText: "OK",
+        });
         return;
       }
 
@@ -395,7 +401,12 @@ const ProductDetailsVegetables = ({ productId }) => {
       // CHECK QUANTITY
       // ==========================================
       if (quantity < 1) {
-        alert("Please select a valid quantity.");
+        Swal.fire({
+          icon: "warning",
+          title: "Invalid Quantity",
+          text: "Please select a valid quantity.",
+          confirmButtonText: "OK",
+        });
         return;
       }
 
@@ -403,12 +414,22 @@ const ProductDetailsVegetables = ({ productId }) => {
       // CHECK STOCK
       // ==========================================
       if (stockQuantity <= 0) {
-        alert("Product is out of stock.");
+        Swal.fire({
+          icon: "error",
+          title: "Out of Stock",
+          text: "This product is currently out of stock.",
+          confirmButtonText: "OK",
+        });
         return;
       }
 
       if (quantity > stockQuantity) {
-        alert(`Only ${stockQuantity} item(s) available in stock.`);
+        Swal.fire({
+          icon: "warning",
+          title: "Stock Limit",
+          text: `Only ${stockQuantity} item(s) available in stock.`,
+          confirmButtonText: "OK",
+        });
         return;
       }
 
@@ -451,7 +472,12 @@ const ProductDetailsVegetables = ({ productId }) => {
             Number(existingCart[existingIndex].quantity || 0) + quantity;
 
           if (newQuantity > stockQuantity) {
-            alert(`Only ${stockQuantity} item(s) available in stock.`);
+            await Swal.fire({
+              icon: "warning",
+              title: "Stock Limit",
+              text: `Only ${stockQuantity} item(s) available in stock.`,
+              confirmButtonText: "OK",
+            });
             return;
           }
 
@@ -465,7 +491,14 @@ const ProductDetailsVegetables = ({ productId }) => {
         // Optional event so navbar/cart icon can update immediately
         window.dispatchEvent(new Event("cartUpdated"));
 
-        alert("Product added to cart successfully.");
+        await Swal.fire({
+          icon: "success",
+          title: "Added to Cart!",
+          text: "Product added to cart successfully.",
+          confirmButtonText: "Continue Shopping",
+          timer: 1800,
+          timerProgressBar: true,
+        });
 
         return;
       }
@@ -487,18 +520,28 @@ const ProductDetailsVegetables = ({ productId }) => {
 
       const result = await response.json();
 
-      
-
       if (!response.ok) {
         throw new Error(result?.message || "Failed to add product to cart.");
       }
 
       window.dispatchEvent(new Event("cartUpdated"));
 
-      alert(result?.message || "Product added to cart successfully.");
+      await Swal.fire({
+        icon: "success",
+        title: "Added to Cart!",
+        text: result?.message || "Product added to cart successfully.",
+        confirmButtonText: "Continue Shopping",
+        timer: 1800,
+        timerProgressBar: true,
+      });
     } catch (error) {
       console.error("Add to cart error:", error);
-      alert(error?.message || "Unable to add product to cart.");
+      await Swal.fire({
+        icon: "error",
+        title: "Unable to Add",
+        text: error?.message || "Unable to add product to cart.",
+        confirmButtonText: "OK",
+      });
     }
   };
 
@@ -538,12 +581,22 @@ const ProductDetailsVegetables = ({ productId }) => {
     }
 
     if (!file.type.startsWith("image/")) {
-      alert("Please select a valid image.");
+      Swal.fire({
+        icon: "warning",
+        title: "Invalid Image",
+        text: "Please select a valid image.",
+        confirmButtonText: "OK",
+      });
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image size must be less than 5MB.");
+      Swal.fire({
+        icon: "warning",
+        title: "Image Too Large",
+        text: "Image size must be less than 5MB.",
+        confirmButtonText: "OK",
+      });
       return;
     }
 
@@ -640,8 +693,6 @@ const ProductDetailsVegetables = ({ productId }) => {
         averageRating,
         ratingBreakdown,
       });
-
-     
     } catch (error) {
       console.error("Fetch reviews error:", error);
 
@@ -683,7 +734,12 @@ const ProductDetailsVegetables = ({ productId }) => {
       // ==================================================
 
       if (!product?._id) {
-        alert("Product information is missing.");
+        await Swal.fire({
+          icon: "error",
+          title: "Product Missing",
+          text: "Product information is missing.",
+          confirmButtonText: "OK",
+        });
         return;
       }
 
@@ -694,12 +750,22 @@ const ProductDetailsVegetables = ({ productId }) => {
       const reviewerName = reviewGuestName.trim();
 
       if (!reviewerName) {
-        alert("Please enter your name.");
+        Swal.fire({
+          icon: "warning",
+          title: "Name Required",
+          text: "Please enter your name.",
+          confirmButtonText: "OK",
+        });
         return;
       }
 
       if (reviewerName.length > 100) {
-        alert("Name cannot exceed 100 characters.");
+        await Swal.fire({
+          icon: "warning",
+          title: "Name Too Long",
+          text: "Name cannot exceed 100 characters.",
+          confirmButtonText: "OK",
+        });
         return;
       }
 
@@ -714,7 +780,12 @@ const ProductDetailsVegetables = ({ productId }) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         if (!emailRegex.test(reviewerEmail)) {
-          alert("Please enter a valid email address.");
+          Swal.fire({
+            icon: "warning",
+            title: "Invalid Email",
+            text: "Please enter a valid email address.",
+            confirmButtonText: "OK",
+          });
           return;
         }
       }
@@ -726,7 +797,12 @@ const ProductDetailsVegetables = ({ productId }) => {
       const rating = Number(reviewRating);
 
       if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-        alert("Please select a rating between 1 and 5.");
+        await Swal.fire({
+          icon: "warning",
+          title: "Invalid Rating",
+          text: "Please select a rating between 1 and 5.",
+          confirmButtonText: "OK",
+        });
         return;
       }
 
@@ -737,12 +813,22 @@ const ProductDetailsVegetables = ({ productId }) => {
       const title = reviewTitle.trim();
 
       if (!title) {
-        alert("Please enter a review title.");
+        Swal.fire({
+          icon: "warning",
+          title: "Review Title Required",
+          text: "Please enter a review title.",
+          confirmButtonText: "OK",
+        });
         return;
       }
 
       if (title.length > 100) {
-        alert("Review title cannot exceed 100 characters.");
+        await Swal.fire({
+          icon: "warning",
+          title: "Title Too Long",
+          text: "Review title cannot exceed 100 characters.",
+          confirmButtonText: "OK",
+        });
         return;
       }
 
@@ -753,15 +839,24 @@ const ProductDetailsVegetables = ({ productId }) => {
       const comment = reviewMessage.trim();
 
       if (!comment) {
-        alert("Please write your review.");
+        Swal.fire({
+          icon: "warning",
+          title: "Review Required",
+          text: "Please write your review.",
+          confirmButtonText: "OK",
+        });
         return;
       }
 
       if (comment.length > 1000) {
-        alert("Review cannot exceed 1000 characters.");
+        await Swal.fire({
+          icon: "warning",
+          title: "Review Too Long",
+          text: "Review cannot exceed 1000 characters.",
+          confirmButtonText: "OK",
+        });
         return;
       }
-
       // ==================================================
       // START LOADING
       // ==================================================
@@ -786,8 +881,6 @@ const ProductDetailsVegetables = ({ productId }) => {
         title,
         comment,
       };
-
-    
 
       // ==================================================
       // HEADERS
@@ -846,7 +939,14 @@ const ProductDetailsVegetables = ({ productId }) => {
       // SUCCESS
       // ==================================================
 
-      alert(result?.message || "Review submitted successfully. ");
+      await Swal.fire({
+        icon: "success",
+        title: "Review Submitted!",
+        text: result?.message || "Review submitted successfully.",
+        confirmButtonText: "Done",
+        timer: 2000,
+        timerProgressBar: true,
+      });
 
       // ==================================================
       // CLOSE POPUP
@@ -873,7 +973,12 @@ const ProductDetailsVegetables = ({ productId }) => {
     } catch (error) {
       console.error("Submit review error:", error);
 
-      alert(error?.message || "Unable to submit review.");
+      await Swal.fire({
+        icon: "error",
+        title: "Review Failed",
+        text: error?.message || "Unable to submit review.",
+        confirmButtonText: "OK",
+      });
     } finally {
       setReviewSubmitting(false);
     }
@@ -946,8 +1051,6 @@ const ProductDetailsVegetables = ({ productId }) => {
           url: shareUrl,
         });
 
-     
-
         return;
       } catch (error) {
         // ------------------------------------------------
@@ -969,7 +1072,15 @@ const ProductDetailsVegetables = ({ productId }) => {
     try {
       await navigator.clipboard.writeText(shareUrl);
 
-      alert("Product link copied successfully!");
+      Swal.fire({
+        icon: "success",
+        title: "Link Copied!",
+        text: "Product link copied successfully.",
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+      });
     } catch (error) {
       console.error("Copy link failed:", error);
 
@@ -994,7 +1105,15 @@ const ProductDetailsVegetables = ({ productId }) => {
       try {
         document.execCommand("copy");
 
-        alert("Product link copied successfully!");
+        Swal.fire({
+          icon: "success",
+          title: "Link Copied!",
+          text: "Product link copied successfully.",
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 2000,
+        });
       } catch (copyError) {
         console.error("Fallback copy failed:", copyError);
       }

@@ -24,7 +24,8 @@ import {
   ShoppingBasket,
   Notebook,
   Book,
-  NotebookPen
+  NotebookPen,
+  BadgePercent 
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -63,6 +64,7 @@ const menuSections = [
     items: [
       { label: 'All Products', path: '/products/all-products', icon: Package },
       { label: 'Add Product', path: '/products/add-product', icon: PlusCircle },
+      { label: 'Today Discount', path: '/today-discounts', icon: BadgePercent  },
       { label: 'Categories', path: '/products/categories', icon: FolderTree },
       { label: 'Brands', path: '/products/brands', icon: Tag },
       { label: 'Units', path: '/products/units', icon: Scale },
