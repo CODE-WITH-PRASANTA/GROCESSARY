@@ -1,8 +1,6 @@
   import axios from "axios";
 
-  // ========================================
-  // BASE URL
-  // ========================================
+
 
   export const BASE_URL = "http://localhost:5000";
 
@@ -10,9 +8,6 @@
 
   export const IMG_URL = BASE_URL;
 
-  // ========================================
-  // AXIOS INSTANCE
-  // ========================================
 
   const API = axios.create({
     baseURL: API_URL,
@@ -27,15 +22,9 @@
     withCredentials: false,
   });
 
-  // ========================================
-  // REQUEST INTERCEPTOR
-  // ========================================
 
   API.interceptors.request.use(
     (config) => {
-      // ------------------------------------
-      // JWT Token
-      // ------------------------------------
 
       const token =
         localStorage.getItem("token");
@@ -45,22 +34,9 @@
           `Bearer ${token}`;
       }
 
-      // ------------------------------------
-      // IMPORTANT FOR FILE UPLOAD
-      // ------------------------------------
-      // Do NOT manually set multipart/form-data.
-      // Browser will automatically add boundary
-      // when data is FormData.
-
       if (config.data instanceof FormData) {
         delete config.headers["Content-Type"];
       }
-
-      // ------------------------------------
-      // Development Debug
-      // ------------------------------------
-
-    
 
       return config;
     },
