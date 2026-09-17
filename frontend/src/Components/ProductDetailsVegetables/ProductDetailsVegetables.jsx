@@ -345,11 +345,19 @@ const ProductDetailsVegetables = ({ productId }) => {
   // ====================================================
   // UNIT NAME
   // ====================================================
-
+  // unitNo
   const unitName =
     typeof product?.unit === "object"
       ? product?.unit?.name || product?.unit?.symbol || ""
       : product?.unit || "";
+
+  const unitNo =
+    typeof product?.unitNo === "object"
+      ? product?.unitNo?.name ||
+        product?.unitNo?.value ||
+        product?.unitNo?.number ||
+        ""
+      : (product?.unitNo ?? "");
 
   // ====================================================
   // PRICE
@@ -447,6 +455,7 @@ const ProductDetailsVegetables = ({ productId }) => {
         category: categoryName,
         brand: brandName,
         unit: unitName,
+        unitNob: unitNo,
         stockQuantity: stockQuantity,
       };
 
@@ -1448,11 +1457,15 @@ const ProductDetailsVegetables = ({ productId }) => {
 
                 {/* UNIT */}
 
-                {unitName && (
+                {/* UNIT */}
+                {(unitName || unitNo) && (
                   <div className="pdv__spec-item">
                     <span className="pdv__spec-label">Unit:</span>
 
-                    <span className="pdv__spec-val">{unitName}</span>
+                    <span className="pdv__spec-val">
+                      {unitNo && `${unitNo} `}
+                      {unitName}
+                    </span>
                   </div>
                 )}
 

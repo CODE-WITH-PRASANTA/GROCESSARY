@@ -10,14 +10,8 @@ const Product = require("../models/Product");
 
 const createReview = async (req, res) => {
   try {
-    const {
-      productId,
-      reviewerName,
-      reviewerEmail,
-      rating,
-      title,
-      comment,
-    } = req.body || {};
+    const { productId, reviewerName, reviewerEmail, rating, title, comment } =
+      req.body || {};
 
     // ======================================================
     // PRODUCT ID
@@ -34,24 +28,19 @@ const createReview = async (req, res) => {
     // REVIEWER NAME
     // ======================================================
 
-    if (
-      !reviewerName ||
-      !reviewerName.trim()
-    ) {
+    if (!reviewerName || !reviewerName.trim()) {
       return res.status(400).json({
         success: false,
         message: "Your name is required.",
       });
     }
 
-    const cleanName =
-      reviewerName.trim();
+    const cleanName = reviewerName.trim();
 
     if (cleanName.length > 100) {
       return res.status(400).json({
         success: false,
-        message:
-          "Name cannot exceed 100 characters.",
+        message: "Name cannot exceed 100 characters.",
       });
     }
 
@@ -62,21 +51,15 @@ const createReview = async (req, res) => {
 
     let cleanEmail = "";
 
-    if (
-      reviewerEmail &&
-      reviewerEmail.trim()
-    ) {
-      cleanEmail =
-        reviewerEmail.trim().toLowerCase();
+    if (reviewerEmail && reviewerEmail.trim()) {
+      cleanEmail = reviewerEmail.trim().toLowerCase();
 
-      const emailRegex =
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
       if (!emailRegex.test(cleanEmail)) {
         return res.status(400).json({
           success: false,
-          message:
-            "Please enter a valid email address.",
+          message: "Please enter a valid email address.",
         });
       }
     }
@@ -85,8 +68,7 @@ const createReview = async (req, res) => {
     // RATING
     // ======================================================
 
-    const reviewRating =
-      Number(rating);
+    const reviewRating = Number(rating);
 
     if (
       !Number.isInteger(reviewRating) ||
@@ -95,8 +77,7 @@ const createReview = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message:
-          "Rating must be between 1 and 5.",
+        message: "Rating must be between 1 and 5.",
       });
     }
 
@@ -104,50 +85,38 @@ const createReview = async (req, res) => {
     // TITLE
     // ======================================================
 
-    if (
-      !title ||
-      !title.trim()
-    ) {
+    if (!title || !title.trim()) {
       return res.status(400).json({
         success: false,
-        message:
-          "Review title is required.",
+        message: "Review title is required.",
       });
     }
 
-    const cleanTitle =
-      title.trim();
+    const cleanTitle = title.trim();
 
     // ======================================================
     // COMMENT
     // ======================================================
 
-    if (
-      !comment ||
-      !comment.trim()
-    ) {
+    if (!comment || !comment.trim()) {
       return res.status(400).json({
         success: false,
-        message:
-          "Review message is required.",
+        message: "Review message is required.",
       });
     }
 
-    const cleanComment =
-      comment.trim();
+    const cleanComment = comment.trim();
 
     // ======================================================
     // FIND PRODUCT
     // ======================================================
 
-    const product =
-      await Product.findById(productId);
+    const product = await Product.findById(productId);
 
     if (!product) {
       return res.status(404).json({
         success: false,
-        message:
-          "Product not found.",
+        message: "Product not found.",
       });
     }
 
@@ -163,17 +132,15 @@ const createReview = async (req, res) => {
     if (req.user?._id) {
       userId = req.user._id;
 
-      const existingReview =
-        await Review.findOne({
-          user: userId,
-          product: productId,
-        });
+      const existingReview = await Review.findOne({
+        user: userId,
+        product: productId,
+      });
 
       if (existingReview) {
         return res.status(400).json({
           success: false,
-          message:
-            "You have already reviewed this product.",
+          message: "You have already reviewed this product.",
         });
       }
     }
@@ -185,46 +152,34 @@ const createReview = async (req, res) => {
     // Admin must publish it.
     // ======================================================
 
-    const review =
-      await Review.create({
-        user: userId,
+    const review = await Review.create({
+      user: userId,
 
-        reviewerName:
-          cleanName,
+      reviewerName: cleanName,
 
-        reviewerEmail:
-          cleanEmail,
+      reviewerEmail: cleanEmail,
 
-        product: productId,
+      product: productId,
 
-        rating:
-          reviewRating,
+      rating: reviewRating,
 
-        title:
-          cleanTitle,
+      title: cleanTitle,
 
-        comment:
-          cleanComment,
+      comment: cleanComment,
 
-        verifiedPurchase:
-          false,
+      verifiedPurchase: false,
 
-        status:
-          "pending",
+      status: "pending",
 
-        publishedAt:
-          null,
-      });
+      publishedAt: null,
+    });
 
     // ======================================================
     // POPULATE USER IF AVAILABLE
     // ======================================================
 
     if (review.user) {
-      await review.populate(
-        "user",
-        "name email mobile"
-      );
+      await review.populate("user", "name email mobile");
     }
 
     // ======================================================
@@ -239,17 +194,12 @@ const createReview = async (req, res) => {
 
       review,
     });
-
   } catch (error) {
-    console.error(
-      "Create review error:",
-      error
-    );
+    console.error("Create review error:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Failed to submit review.",
+      message: "Failed to submit review.",
     });
   }
 };
@@ -261,27 +211,20 @@ const createReview = async (req, res) => {
 // ONLY PUBLISHED REVIEWS ARE RETURNED
 // ======================================================
 
-const getProductReviews = async (
-  req,
-  res
-) => {
+const getProductReviews = async (req, res) => {
   try {
-    const {
-      productId,
-    } = req.params;
+    const { productId } = req.params;
 
     // ======================================================
     // CHECK PRODUCT
     // ======================================================
 
-    const product =
-      await Product.findById(productId);
+    const product = await Product.findById(productId);
 
     if (!product) {
       return res.status(404).json({
         success: false,
-        message:
-          "Product not found.",
+        message: "Product not found.",
       });
     }
 
@@ -289,45 +232,29 @@ const getProductReviews = async (
     // ONLY PUBLISHED REVIEWS
     // ======================================================
 
-    const reviews =
-      await Review.find({
-        product: productId,
-        status: "published",
-      })
-        .populate(
-          "user",
-          "name email mobile"
-        )
-        .sort({
-          createdAt: -1,
-        });
+    const reviews = await Review.find({
+      product: productId,
+      status: "published",
+    })
+      .populate("user", "name email mobile")
+      .sort({
+        createdAt: -1,
+      });
 
     // ======================================================
     // SUMMARY
     // ======================================================
 
-    const totalReviews =
-      reviews.length;
+    const totalReviews = reviews.length;
 
     let totalRating = 0;
 
-    reviews.forEach(
-      (review) => {
-        totalRating += Number(
-          review.rating || 0
-        );
-      }
-    );
+    reviews.forEach((review) => {
+      totalRating += Number(review.rating || 0);
+    });
 
     const averageRating =
-      totalReviews > 0
-        ? Number(
-            (
-              totalRating /
-              totalReviews
-            ).toFixed(2)
-          )
-        : 0;
+      totalReviews > 0 ? Number((totalRating / totalReviews).toFixed(2)) : 0;
 
     // ======================================================
     // RATING BREAKDOWN
@@ -341,21 +268,13 @@ const getProductReviews = async (
       1: 0,
     };
 
-    reviews.forEach(
-      (review) => {
-        const reviewRating =
-          Number(review.rating);
+    reviews.forEach((review) => {
+      const reviewRating = Number(review.rating);
 
-        if (
-          reviewRating >= 1 &&
-          reviewRating <= 5
-        ) {
-          ratingBreakdown[
-            reviewRating
-          ]++;
-        }
+      if (reviewRating >= 1 && reviewRating <= 5) {
+        ratingBreakdown[reviewRating]++;
       }
-    );
+    });
 
     // ======================================================
     // RESPONSE
@@ -364,8 +283,7 @@ const getProductReviews = async (
     return res.status(200).json({
       success: true,
 
-      message:
-        "Product reviews fetched successfully.",
+      message: "Product reviews fetched successfully.",
 
       summary: {
         totalReviews,
@@ -375,17 +293,12 @@ const getProductReviews = async (
 
       reviews,
     });
-
   } catch (error) {
-    console.error(
-      "Get product reviews error:",
-      error
-    );
+    console.error("Get product reviews error:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Failed to fetch product reviews.",
+      message: "Failed to fetch product reviews.",
     });
   }
 };
@@ -394,41 +307,26 @@ const getProductReviews = async (
 // GET ALL REVIEWS FOR ADMIN
 // ======================================================
 
-const getAllReviews = async (
-  req,
-  res
-) => {
+const getAllReviews = async (req, res) => {
   try {
-    const reviews =
-      await Review.find()
-        .populate(
-          "user",
-          "name email mobile"
-        )
-        .populate(
-          "product",
-          "productName sku images"
-        )
-        .sort({
-          createdAt: -1,
-        });
+    const reviews = await Review.find()
+      .populate("user", "name email mobile")
+      .populate("product", "productName sku images")
+      .sort({
+        createdAt: -1,
+      });
 
     return res.status(200).json({
       success: true,
 
       reviews,
     });
-
   } catch (error) {
-    console.error(
-      "Get all reviews error:",
-      error
-    );
+    console.error("Get all reviews error:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Failed to fetch reviews.",
+      message: "Failed to fetch reviews.",
     });
   }
 };
@@ -438,55 +336,38 @@ const getAllReviews = async (
 // ADMIN
 // ======================================================
 
-const publishReview = async (
-  req,
-  res
-) => {
+const publishReview = async (req, res) => {
   try {
-    const {
-      reviewId,
-    } = req.params;
+    const { reviewId } = req.params;
 
-    const review =
-      await Review.findById(
-        reviewId
-      );
+    const review = await Review.findById(reviewId);
 
     if (!review) {
       return res.status(404).json({
         success: false,
-        message:
-          "Review not found.",
+        message: "Review not found.",
       });
     }
 
-    review.status =
-      "published";
+    review.status = "published";
 
-    review.publishedAt =
-      new Date();
+    review.publishedAt = new Date();
 
     await review.save();
 
     return res.status(200).json({
       success: true,
 
-      message:
-        "Review published successfully.",
+      message: "Review published successfully.",
 
       review,
     });
-
   } catch (error) {
-    console.error(
-      "Publish review error:",
-      error
-    );
+    console.error("Publish review error:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Failed to publish review.",
+      message: "Failed to publish review.",
     });
   }
 };
@@ -496,55 +377,38 @@ const publishReview = async (
 // ADMIN
 // ======================================================
 
-const rejectReview = async (
-  req,
-  res
-) => {
+const rejectReview = async (req, res) => {
   try {
-    const {
-      reviewId,
-    } = req.params;
+    const { reviewId } = req.params;
 
-    const review =
-      await Review.findById(
-        reviewId
-      );
+    const review = await Review.findById(reviewId);
 
     if (!review) {
       return res.status(404).json({
         success: false,
-        message:
-          "Review not found.",
+        message: "Review not found.",
       });
     }
 
-    review.status =
-      "rejected";
+    review.status = "rejected";
 
-    review.publishedAt =
-      null;
+    review.publishedAt = null;
 
     await review.save();
 
     return res.status(200).json({
       success: true,
 
-      message:
-        "Review rejected successfully.",
+      message: "Review rejected successfully.",
 
       review,
     });
-
   } catch (error) {
-    console.error(
-      "Reject review error:",
-      error
-    );
+    console.error("Reject review error:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Failed to reject review.",
+      message: "Failed to reject review.",
     });
   }
 };
@@ -554,55 +418,38 @@ const rejectReview = async (
 // ADMIN
 // ======================================================
 
-const unpublishReview = async (
-  req,
-  res
-) => {
+const unpublishReview = async (req, res) => {
   try {
-    const {
-      reviewId,
-    } = req.params;
+    const { reviewId } = req.params;
 
-    const review =
-      await Review.findById(
-        reviewId
-      );
+    const review = await Review.findById(reviewId);
 
     if (!review) {
       return res.status(404).json({
         success: false,
-        message:
-          "Review not found.",
+        message: "Review not found.",
       });
     }
 
-    review.status =
-      "pending";
+    review.status = "pending";
 
-    review.publishedAt =
-      null;
+    review.publishedAt = null;
 
     await review.save();
 
     return res.status(200).json({
       success: true,
 
-      message:
-        "Review unpublished successfully.",
+      message: "Review unpublished successfully.",
 
       review,
     });
-
   } catch (error) {
-    console.error(
-      "Unpublish review error:",
-      error
-    );
+    console.error("Unpublish review error:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Failed to unpublish review.",
+      message: "Failed to unpublish review.",
     });
   }
 };
@@ -612,95 +459,34 @@ const unpublishReview = async (
 // ADMIN / OWNER
 // ======================================================
 
-const deleteReview = async (
-  req,
-  res
-) => {
-  try {
-    const {
-      reviewId,
-    } = req.params;
+// ======================================================
+// DELETE REVIEW
+// ADMIN / OWNER
+// ======================================================
 
-    const review =
-      await Review.findById(
-        reviewId
-      );
+const deleteReview = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+
+    const review = await Review.findByIdAndDelete(reviewId);
 
     if (!review) {
       return res.status(404).json({
         success: false,
-        message:
-          "Review not found.",
+        message: "Review not found.",
       });
     }
-
-    // ======================================================
-    // ADMIN CAN DELETE
-    // ======================================================
-
-    const isAdmin =
-      req.user?.role === "admin" ||
-      req.user?.isAdmin === true;
-
-    if (isAdmin) {
-      await Review.findByIdAndDelete(
-        reviewId
-      );
-
-      return res.status(200).json({
-        success: true,
-        message:
-          "Review deleted successfully.",
-      });
-    }
-
-    // ======================================================
-    // OWNER CAN DELETE
-    // ======================================================
-
-    if (
-      !review.user ||
-      !req.user?._id
-    ) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "You are not allowed to delete this review.",
-      });
-    }
-
-    if (
-      review.user.toString() !==
-      req.user._id.toString()
-    ) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "You are not allowed to delete this review.",
-      });
-    }
-
-    await Review.findByIdAndDelete(
-      reviewId
-    );
 
     return res.status(200).json({
       success: true,
-
-      message:
-        "Review deleted successfully.",
+      message: "Review deleted successfully.",
     });
-
   } catch (error) {
-    console.error(
-      "Delete review error:",
-      error
-    );
+    console.error("Delete review error:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Failed to delete review.",
+      message: "Failed to delete review.",
     });
   }
 };

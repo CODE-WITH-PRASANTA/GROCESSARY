@@ -292,12 +292,12 @@ const Topbar = ({ toggleSidebar }) => {
                 }}
               >
                 <div className="ProfileMenu-dropdownHeader">
-                  <div className="ProfileMenu-avatar large">
+                  {/* <div className="ProfileMenu-avatar large">
                     {adminAvatar}
-                  </div>
+                  </div> */}
 
                   <div>
-                    <strong>{adminName}</strong>
+                    {/* <strong>{adminName}</strong> */}
                     {/* <span>{adminEmail}</span> */}
                   </div>
                 </div>

@@ -11,8 +11,10 @@ const ProductDetails = () => {
   return (
     <div>
       <ProductDetailsVegetables productId={id} />
+
       {/* <ProductDetailsDiscounts /> */}
-      <ProductDetailsTestimonials />
+
+      <ProductDetailsTestimonials productId={id} />
     </div>
   );
 };
