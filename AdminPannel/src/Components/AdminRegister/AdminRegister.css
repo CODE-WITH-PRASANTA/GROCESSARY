@@ -1,0 +1,135 @@
+/* src/Components/AdminRegister/AdminRegister.css */
+
+.register-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #f1f8e9, #e8f5e9);
+}
+
+.register-card {
+  width: 100%;
+  max-width: 450px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+}
+
+.register-header {
+  padding: 30px 20px;
+  text-align: center;
+  color: white;
+  background: linear-gradient(135deg, #2e7d32, #66bb6a);
+}
+
+.register-header h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.register-header p {
+  margin: 8px 0 0;
+  font-size: 12px;
+  letter-spacing: 4px;
+  font-weight: 700;
+}
+
+.register-body {
+  padding: 30px;
+}
+
+.register-body h2 {
+  margin: 0;
+  text-align: center;
+  color: #1b5e20;
+  font-size: 25px;
+}
+
+.register-subtitle {
+  margin: 8px 0 25px;
+  text-align: center;
+  color: #777;
+  font-size: 14px;
+}
+
+.register-input-group {
+  margin-bottom: 18px;
+}
+
+.register-input-group label {
+  display: block;
+  margin-bottom: 7px;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.register-input-group input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 14px;
+  border: 1px solid #d8d8d8;
+  border-radius: 10px;
+  outline: none;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.register-input-group input:focus {
+  border-color: #43a047;
+  box-shadow: 0 0 0 3px rgba(67, 160, 71, 0.12);
+}
+
+.register-submit-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  background: linear-gradient(135deg, #2e7d32, #43a047);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.register-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.register-error,
+.register-success {
+  margin-bottom: 18px;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.register-error {
+  color: #b71c1c;
+  background: #ffebee;
+}
+
+.register-success {
+  color: #1b5e20;
+  background: #e8f5e9;
+}
+
+.register-login-link {
+  margin-top: 22px;
+  text-align: center;
+  color: #777;
+  font-size: 14px;
+}
+
+.register-login-link button {
+  border: none;
+  background: transparent;
+  color: #2e7d32;
+  font-weight: 700;
+  cursor: pointer;
+}

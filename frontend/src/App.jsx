@@ -47,6 +47,14 @@ const App = () => {
         {/* Blog System Routes */}
         <Route path="/blogs" element={<BlogGrid />} />
         <Route path="/news/:id" element={<BlogReadmoreOne />} />
+        
+        <Route path="/BlogReadmoreOne" element={<BlogReadmoreOne />} />
+        
+        <Route
+          path="/BlogReadmoreOne"
+          element={<BlogReadmoreOne />}
+        />
+       
 
         {/* User & Store Routes */}
         <Route path="/account" element={<LoginPage />} />

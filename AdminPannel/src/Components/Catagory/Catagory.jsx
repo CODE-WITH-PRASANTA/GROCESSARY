@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
+import Barcode from "react-barcode";
 import {
   FiSearch,
   FiPlus,
@@ -38,11 +39,7 @@ const getImageUrl = (image) => {
   }
 
   if (typeof image === "object") {
-    image =
-      image?.url ||
-      image?.path ||
-      image?.secure_url ||
-      "";
+    image = image?.url || image?.path || image?.secure_url || "";
   }
 
   if (!image) {
@@ -265,18 +262,11 @@ const getBrandName = (brandValue, brandList = []) => {
 
   // Find brand by MongoDB ID
   const foundBrand = brandList.find(
-    (brand) =>
-      String(brand?._id) === brandId ||
-      String(brand?.id) === brandId,
+    (brand) => String(brand?._id) === brandId || String(brand?.id) === brandId,
   );
 
   if (foundBrand) {
-    return (
-      foundBrand?.name ||
-      foundBrand?.brandName ||
-      foundBrand?.title ||
-      ""
-    );
+    return foundBrand?.name || foundBrand?.brandName || foundBrand?.title || "";
   }
 
   return brandId;
@@ -295,19 +285,11 @@ const normalizeImportedProduct = (
     return null;
   }
 
-  const categoryName = getCategoryName(
-    product.category,
-    categoryList,
-  );
+  const categoryName = getCategoryName(product.category, categoryList);
 
-  const brandName = getBrandName(
-    product.brand,
-    brandList,
-  );
+  const brandName = getBrandName(product.brand, brandList);
 
-  const productImages = Array.isArray(product.images)
-    ? product.images
-    : [];
+  const productImages = Array.isArray(product.images) ? product.images : [];
 
   const firstImage = productImages[0];
 
@@ -325,44 +307,21 @@ const normalizeImportedProduct = (
   // Support both.
   // =====================================================
 
-  const sellingPrice = Number(
-    product?.sellingPrice ??
-      product?.price ??
-      0,
-  );
+  const sellingPrice = Number(product?.sellingPrice ?? product?.price ?? 0);
 
   const writtenPrice = Number(
-    product?.writtenPrice ??
-      product?.originalPrice ??
-      0,
+    product?.writtenPrice ?? product?.originalPrice ?? 0,
   );
 
-  const stock = Number(
-    product?.stock ??
-      product?.stockQuantity ??
-      0,
-  );
+  const stock = Number(product?.stock ?? product?.stockQuantity ?? 0);
 
-  let discount = Number(
-    product?.discount ?? 0,
-  );
+  let discount = Number(product?.discount ?? 0);
 
-  if (
-    !discount &&
-    writtenPrice > sellingPrice &&
-    writtenPrice > 0
-  ) {
-    discount = Math.round(
-      ((writtenPrice - sellingPrice) /
-        writtenPrice) *
-        100,
-    );
+  if (!discount && writtenPrice > sellingPrice && writtenPrice > 0) {
+    discount = Math.round(((writtenPrice - sellingPrice) / writtenPrice) * 100);
   }
 
-  const source =
-    product?.source === "import"
-      ? "import"
-      : "manual";
+  const source = product?.source === "import" ? "import" : "manual";
 
   return {
     ...product,
@@ -371,15 +330,9 @@ const normalizeImportedProduct = (
 
     source,
 
-    name:
-      product?.productName ||
-      product?.name ||
-      "Unnamed Product",
+    name: product?.productName || product?.name || "Unnamed Product",
 
-    productName:
-      product?.productName ||
-      product?.name ||
-      "Unnamed Product",
+    productName: product?.productName || product?.name || "Unnamed Product",
 
     category: categoryName,
 
@@ -387,44 +340,31 @@ const normalizeImportedProduct = (
 
     sku: product?.sku || "",
 
+    barcode: product?.barcode || "",
+
     unit:
       typeof product?.unit === "object"
-        ? product.unit?.name ||
-          product.unit?.unitName ||
-          ""
+        ? product.unit?.name || product.unit?.unitName || ""
         : product?.unit || "",
 
     quantity:
-      product?.quantity ||
-      product?.unit?.name ||
-      product?.unit ||
-      "1 unit",
+      product?.quantity || product?.unit?.name || product?.unit || "1 unit",
 
-    rating: Number(
-      product?.rating ?? 5,
-    ),
+    rating: Number(product?.rating ?? 5),
 
-    reviews: Number(
-      product?.reviews ?? 0,
-    ),
+    reviews: Number(product?.reviews ?? 0),
 
     sellingPrice,
 
     price: sellingPrice,
 
-    originalPrice:
-      writtenPrice || sellingPrice,
+    originalPrice: writtenPrice || sellingPrice,
 
-    writtenPrice:
-      writtenPrice || sellingPrice,
+    writtenPrice: writtenPrice || sellingPrice,
 
-    purchasePrice: Number(
-      product?.purchasePrice ?? 0,
-    ),
+    purchasePrice: Number(product?.purchasePrice ?? 0),
 
-    costPrice: Number(
-      product?.costPrice ?? 0,
-    ),
+    costPrice: Number(product?.costPrice ?? 0),
 
     discount,
 
@@ -432,22 +372,15 @@ const normalizeImportedProduct = (
 
     stockQuantity: stock,
 
-    inStock:
-      product?.inStock ??
-      stock > 0,
+    inStock: product?.inStock ?? stock > 0,
 
-    isOutOfStock:
-      product?.isOutOfStock ??
-      stock <= 0,
+    isOutOfStock: product?.isOutOfStock ?? stock <= 0,
 
-    status:
-      product?.status || "active",
+    status: product?.status || "active",
 
-    manufactureDate:
-      product?.manufactureDate || null,
+    manufactureDate: product?.manufactureDate || null,
 
-    expiryDate:
-      product?.expiryDate || null,
+    expiryDate: product?.expiryDate || null,
 
     images: productImages,
 
@@ -460,15 +393,9 @@ const normalizeImportedProduct = (
 // =====================================================
 
 const getProductStatus = (product) => {
-  const status = String(
-    product?.status || "",
-  ).toLowerCase();
+  const status = String(product?.status || "").toLowerCase();
 
-  if (
-    status === "active" ||
-    status === "published" ||
-    status === "publish"
-  ) {
+  if (status === "active" || status === "published" || status === "publish") {
     return "published";
   }
 
@@ -486,26 +413,19 @@ const Catagory = () => {
   // STATE
   // ===================================================
 
-  const [categories, setCategories] =
-    useState(initialCategories);
+  const [categories, setCategories] = useState(initialCategories);
 
-  const [brands, setBrands] =
-    useState([]);
+  const [brands, setBrands] = useState([]);
 
-  const [products, setProducts] =
-    useState(initialProducts);
+  const [products, setProducts] = useState(initialProducts);
 
-  const [selectedCategory, setSelectedCategory] =
-    useState("all");
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const [search, setSearch] =
-    useState("");
+  const [search, setSearch] = useState("");
 
-  const [sortBy, setSortBy] =
-    useState("popular");
+  const [sortBy, setSortBy] = useState("popular");
 
-  const [currentPage, setCurrentPage] =
-    useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const productsPerPage = 10;
 
@@ -513,79 +433,61 @@ const Catagory = () => {
   // SELECTED PRODUCTS
   // ===================================================
 
-  const [selectedProducts, setSelectedProducts] =
-    useState([]);
+  const [selectedProducts, setSelectedProducts] = useState([]);
 
-  const [isPublishing, setIsPublishing] =
-    useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   // ===================================================
   // MODALS
   // ===================================================
 
-  const [showProductModal, setShowProductModal] =
-    useState(false);
+  const [showProductModal, setShowProductModal] = useState(false);
 
-  const [showCategoryModal, setShowCategoryModal] =
-    useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
 
-  const [editingProduct, setEditingProduct] =
-    useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
 
   // ===================================================
   // CATEGORY FORM
   // ===================================================
 
-  const [newCatName, setNewCatName] =
-    useState("");
+  const [newCatName, setNewCatName] = useState("");
 
-  const [newCatIcon, setNewCatIcon] =
-    useState("📦");
+  const [newCatIcon, setNewCatIcon] = useState("📦");
 
   // ===================================================
   // PRODUCT FORM
   // ===================================================
 
-  const [productForm, setProductForm] =
-    useState({
-      name: "",
-      category: "",
-      brand: "",
-      quantity: "",
-      sellingPrice: "",
-      originalPrice: "",
-      discount: 0,
-      stock: 10,
-      image: "",
-    });
+  const [productForm, setProductForm] = useState({
+    name: "",
+    category: "",
+    brand: "",
+    quantity: "",
+    sellingPrice: "",
+    originalPrice: "",
+    discount: 0,
+    stock: 10,
+    image: "",
+  });
 
   // ===================================================
   // FETCH IMPORTED PRODUCTS
   // ===================================================
 
-  const fetchImportedProducts = async (
-    brandList = [],
-  ) => {
+  const fetchImportedProducts = async (brandList = []) => {
     try {
-      const response = await axios.get(
-        `${API_BASE_URL}/products`,
-      );
+      const response = await axios.get(`${API_BASE_URL}/products`);
 
       let allProducts = [];
 
       if (Array.isArray(response.data)) {
         allProducts = response.data;
-      } else if (
-        Array.isArray(response.data?.data)
-      ) {
+      } else if (Array.isArray(response.data?.data)) {
         allProducts = response.data.data;
-      } else if (
-        Array.isArray(response.data?.products)
-      ) {
+      } else if (Array.isArray(response.data?.products)) {
         allProducts = response.data.products;
-      } else if (
-        Array.isArray(response.data?.items)
-      ) {
+      } else if (Array.isArray(response.data?.items)) {
         allProducts = response.data.items;
       }
 
@@ -593,24 +495,13 @@ const Catagory = () => {
       // ONLY IMPORTED PRODUCTS
       // =================================================
 
-      const importedProducts =
-        allProducts.filter(
-          (product) =>
-            String(
-              product?.source || "",
-            ).toLowerCase() === "import",
-        );
+      const importedProducts = allProducts.filter(
+        (product) => String(product?.source || "").toLowerCase() === "import",
+      );
 
-      const normalizedProducts =
-        importedProducts
-          .map((product) =>
-            normalizeImportedProduct(
-              product,
-              brandList,
-              [],
-            ),
-          )
-          .filter(Boolean);
+      const normalizedProducts = importedProducts
+        .map((product) => normalizeImportedProduct(product, brandList, []))
+        .filter(Boolean);
 
       setProducts(normalizedProducts);
 
@@ -621,16 +512,13 @@ const Catagory = () => {
       const categoryMap = new Map();
 
       normalizedProducts.forEach((product) => {
-        const category = String(
-          product.category || "",
-        ).trim();
+        const category = String(product.category || "").trim();
 
         if (!category) {
           return;
         }
 
-        const key =
-          category.toLowerCase();
+        const key = category.toLowerCase();
 
         if (!categoryMap.has(key)) {
           categoryMap.set(key, {
@@ -647,18 +535,13 @@ const Catagory = () => {
           name: "All Categories",
           icon: "▦",
         },
-        ...Array.from(
-          categoryMap.values(),
-        ),
+        ...Array.from(categoryMap.values()),
       ]);
 
       setSelectedProducts([]);
       setCurrentPage(1);
     } catch (error) {
-      console.error(
-        "Failed to fetch imported products:",
-        error,
-      );
+      console.error("Failed to fetch imported products:", error);
 
       // Do NOT show manual/fallback products
       setProducts([]);
@@ -675,29 +558,18 @@ const Catagory = () => {
 
   const fetchBrands = async () => {
     try {
-      const response = await axios.get(
-        `${API_BASE_URL}/brands`,
-      );
+      const response = await axios.get(`${API_BASE_URL}/brands`);
 
       const brandData =
-        response.data?.data ||
-        response.data?.brands ||
-        response.data ||
-        [];
+        response.data?.data || response.data?.brands || response.data || [];
 
-      const safeBrands =
-        Array.isArray(brandData)
-          ? brandData
-          : [];
+      const safeBrands = Array.isArray(brandData) ? brandData : [];
 
       setBrands(safeBrands);
 
       return safeBrands;
     } catch (error) {
-      console.error(
-        "Failed to fetch brands:",
-        error,
-      );
+      console.error("Failed to fetch brands:", error);
 
       setBrands([]);
 
@@ -707,12 +579,9 @@ const Catagory = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      const brandList =
-        await fetchBrands();
+      const brandList = await fetchBrands();
 
-      await fetchImportedProducts(
-        brandList,
-      );
+      await fetchImportedProducts(brandList);
     };
 
     loadData();
@@ -723,55 +592,32 @@ const Catagory = () => {
   // ===================================================
 
   const getCategoryCount = (catId) => {
-    const safeProducts =
-      Array.isArray(products)
-        ? products
-        : [];
+    const safeProducts = Array.isArray(products) ? products : [];
 
-    if (
-      String(catId).toLowerCase() ===
-      "all"
-    ) {
+    if (String(catId).toLowerCase() === "all") {
       return safeProducts.length;
     }
 
-    return safeProducts.filter(
-      (product) => {
-        const productCategory =
-          String(
-            product?.category || "",
-          )
-            .trim()
-            .toLowerCase();
+    return safeProducts.filter((product) => {
+      const productCategory = String(product?.category || "")
+        .trim()
+        .toLowerCase();
 
-        return (
-          productCategory ===
-          String(catId)
-            .trim()
-            .toLowerCase()
-        );
-      },
-    ).length;
+      return productCategory === String(catId).trim().toLowerCase();
+    }).length;
   };
 
   // ===================================================
   // CHECKBOX SELECT PRODUCT
   // ===================================================
 
-  const handleSelectProduct = (
-    productId,
-  ) => {
+  const handleSelectProduct = (productId) => {
     setSelectedProducts((prev) => {
       if (prev.includes(productId)) {
-        return prev.filter(
-          (id) => id !== productId,
-        );
+        return prev.filter((id) => id !== productId);
       }
 
-      return [
-        ...prev,
-        productId,
-      ];
+      return [...prev, productId];
     });
   };
 
@@ -779,98 +625,53 @@ const Catagory = () => {
   // SELECT ALL VISIBLE PRODUCTS
   // ===================================================
 
-  const handleSelectAll = (
-    checked,
-  ) => {
-    const visibleIds =
-      displayedProducts
-        .map(
-          (product) =>
-            product._id,
-        )
-        .filter(Boolean);
+  const handleSelectAll = (checked) => {
+    const visibleIds = displayedProducts
+      .map((product) => product._id)
+      .filter(Boolean);
 
     if (!checked) {
-      setSelectedProducts(
-        (prev) =>
-          prev.filter(
-            (id) =>
-              !visibleIds.includes(id),
-          ),
+      setSelectedProducts((prev) =>
+        prev.filter((id) => !visibleIds.includes(id)),
       );
 
       return;
     }
 
-    setSelectedProducts(
-      (prev) => [
-        ...new Set([
-          ...prev,
-          ...visibleIds,
-        ]),
-      ],
-    );
+    setSelectedProducts((prev) => [...new Set([...prev, ...visibleIds])]);
   };
 
   // ===================================================
   // IMAGE UPLOAD - MAX 5
   // ===================================================
 
-  const handleCardImageUpload = async (
-    productId,
-    files,
-  ) => {
-    if (
-      !files ||
-      files.length === 0
-    ) {
+  const handleCardImageUpload = async (productId, files) => {
+    if (!files || files.length === 0) {
       return;
     }
 
-    const currentProduct =
-      products.find(
-        (product) =>
-          product?._id ===
-          productId,
-      );
+    const currentProduct = products.find(
+      (product) => product?._id === productId,
+    );
 
-    const existingImages =
-      Array.isArray(
-        currentProduct?.images,
-      )
-        ? currentProduct.images
-        : [];
+    const existingImages = Array.isArray(currentProduct?.images)
+      ? currentProduct.images
+      : [];
 
-    const remainingSlots =
-      Math.max(
-        5 -
-          existingImages.length,
-        0,
-      );
+    const remainingSlots = Math.max(5 - existingImages.length, 0);
 
     if (remainingSlots === 0) {
-      alert(
-        "You can upload maximum 5 images.",
-      );
+      alert("You can upload maximum 5 images.");
 
       return;
     }
 
-    const fileArray =
-      Array.from(files).slice(
-        0,
-        remainingSlots,
-      );
+    const fileArray = Array.from(files).slice(0, remainingSlots);
 
-    if (
-      files.length >
-      remainingSlots
-    ) {
+    if (files.length > remainingSlots) {
       alert(
         `You can upload maximum 5 images. Only ${remainingSlots} image${
-          remainingSlots > 1
-            ? "s"
-            : ""
+          remainingSlots > 1 ? "s" : ""
         } will be uploaded.`,
       );
     }
@@ -879,50 +680,33 @@ const Catagory = () => {
     // LOCAL PREVIEW
     // ===============================================
 
-    const previews =
-      fileArray.map(
-        (file) =>
-          URL.createObjectURL(file),
-      );
+    const previews = fileArray.map((file) => URL.createObjectURL(file));
 
     setProducts((prev) =>
       prev.map((item) => {
-        if (
-          item._id !== productId
-        ) {
+        if (item._id !== productId) {
           return item;
         }
 
-        const itemExistingImages =
-          Array.isArray(
-            item.images,
-          )
-            ? item.images
-            : [];
+        const itemExistingImages = Array.isArray(item.images)
+          ? item.images
+          : [];
 
-        const previewImages =
-          previews.map(
-            (url) => ({
-              url,
-            }),
-          );
+        const previewImages = previews.map((url) => ({
+          url,
+        }));
 
-        const combinedImages = [
-          ...itemExistingImages,
-          ...previewImages,
-        ].slice(0, 5);
+        const combinedImages = [...itemExistingImages, ...previewImages].slice(
+          0,
+          5,
+        );
 
-        const firstCombinedImage =
-          combinedImages[0];
+        const firstCombinedImage = combinedImages[0];
 
         return {
           ...item,
-          images:
-            combinedImages,
-          image:
-            getImageUrl(
-              firstCombinedImage,
-            ),
+          images: combinedImages,
+          image: getImageUrl(firstCombinedImage),
         };
       }),
     );
@@ -932,83 +716,50 @@ const Catagory = () => {
     // ===============================================
 
     try {
-      const formData =
-        new FormData();
+      const formData = new FormData();
 
-      fileArray.forEach(
-        (file) => {
-          formData.append(
-            "images",
-            file,
-          );
+      fileArray.forEach((file) => {
+        formData.append("images", file);
+      });
+
+      const response = await axios.post(
+        `${API_BASE_URL}/import/${productId}/images`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         },
       );
-
-      const response =
-        await axios.post(
-          `${API_BASE_URL}/import/${productId}/images`,
-          formData,
-          {
-            headers: {
-              "Content-Type":
-                "multipart/form-data",
-            },
-          },
-        );
 
       const updatedProduct =
-        response.data?.product ||
-        response.data?.data ||
-        response.data;
+        response.data?.product || response.data?.data || response.data;
 
-      if (
-        updatedProduct?._id
-      ) {
-        const normalizedProduct =
-          normalizeImportedProduct(
-            updatedProduct,
-            brands,
-            categories,
-          );
+      if (updatedProduct?._id) {
+        const normalizedProduct = normalizeImportedProduct(
+          updatedProduct,
+          brands,
+          categories,
+        );
 
-        setProducts(
-          (prev) =>
-            prev.map(
-              (item) =>
-                item._id ===
-                productId
-                  ? normalizedProduct
-                  : item,
-            ),
+        setProducts((prev) =>
+          prev.map((item) =>
+            item._id === productId ? normalizedProduct : item,
+          ),
         );
       } else {
-        await fetchImportedProducts(
-          brands,
-        );
+        await fetchImportedProducts(brands);
       }
     } catch (error) {
-      console.error(
-        "Multiple image upload failed:",
-        error,
-      );
+      console.error("Multiple image upload failed:", error);
 
-      alert(
-        error.response?.data
-          ?.message ||
-          "Image upload failed.",
-      );
+      alert(error.response?.data?.message || "Image upload failed.");
 
-      await fetchImportedProducts(
-        brands,
-      );
+      await fetchImportedProducts(brands);
     } finally {
-      previews.forEach(
-        (url) => {
-          URL.revokeObjectURL(
-            url,
-          );
-        },
-      );
+      previews.forEach((url) => {
+        URL.revokeObjectURL(url);
+      });
     }
   };
 
@@ -1016,28 +767,16 @@ const Catagory = () => {
   // PUBLISH / UNPUBLISH PRODUCTS
   // ===================================================
 
-  const handlePublishProducts = async (
-    status,
-  ) => {
-    if (
-      selectedProducts.length === 0
-    ) {
-      alert(
-        "Please select at least one product.",
-      );
+  const handlePublishProducts = async (status) => {
+    if (selectedProducts.length === 0) {
+      alert("Please select at least one product.");
 
       return;
     }
 
-    const nextStatus =
-      status === "published"
-        ? "active"
-        : "inactive";
+    const nextStatus = status === "published" ? "active" : "inactive";
 
-    const actionName =
-      status === "published"
-        ? "publish"
-        : "unpublish";
+    const actionName = status === "published" ? "publish" : "unpublish";
 
     if (
       !window.confirm(
@@ -1050,28 +789,20 @@ const Catagory = () => {
     setIsPublishing(true);
 
     try {
-      await axios.put(
-        `${API_BASE_URL}/products/bulk-status`,
-        {
-          ids: selectedProducts,
-          status: nextStatus,
-        },
-      );
+      await axios.put(`${API_BASE_URL}/products/bulk-status`, {
+        ids: selectedProducts,
+        status: nextStatus,
+      });
 
-      setProducts(
-        (prev) =>
-          prev.map(
-            (product) =>
-              selectedProducts.includes(
-                product._id,
-              )
-                ? {
-                    ...product,
-                    status:
-                      nextStatus,
-                  }
-                : product,
-          ),
+      setProducts((prev) =>
+        prev.map((product) =>
+          selectedProducts.includes(product._id)
+            ? {
+                ...product,
+                status: nextStatus,
+              }
+            : product,
+        ),
       );
 
       setSelectedProducts([]);
@@ -1082,20 +813,14 @@ const Catagory = () => {
           : "Selected products unpublished successfully.",
       );
     } catch (error) {
-      console.error(
-        "Publish/unpublish failed:",
-        error,
-      );
+      console.error("Publish/unpublish failed:", error);
 
       alert(
-        error.response?.data
-          ?.message ||
+        error.response?.data?.message ||
           `Failed to ${actionName} selected products.`,
       );
 
-      await fetchImportedProducts(
-        brands,
-      );
+      await fetchImportedProducts(brands);
     } finally {
       setIsPublishing(false);
     }
@@ -1105,256 +830,137 @@ const Catagory = () => {
   // EXCEL REPORT
   // ===================================================
 
-  const handleDownloadExcel =
-    () => {
-      try {
-        if (
-          products.length === 0
-        ) {
-          alert(
-            "No products available for the report.",
-          );
+  const handleDownloadExcel = () => {
+    try {
+      if (products.length === 0) {
+        alert("No products available for the report.");
 
-          return;
-        }
-
-        const reportData =
-          products.map(
-            (product, index) => {
-              const imageUrls =
-                Array.isArray(
-                  product.images,
-                )
-                  ? product.images
-                      .map(
-                        (image) => {
-                          if (
-                            typeof image ===
-                            "string"
-                          ) {
-                            return image;
-                          }
-
-                          return (
-                            image?.url ||
-                            image?.path ||
-                            image?.secure_url ||
-                            ""
-                          );
-                        },
-                      )
-                      .filter(Boolean)
-                      .join(" | ")
-                  : "";
-
-              return {
-                "S.No":
-                  index + 1,
-
-                "Product ID":
-                  product._id ||
-                  "",
-
-                "Product Name":
-                  product.name ||
-                  "",
-
-                Category:
-                  product.category ||
-                  "",
-
-                Brand:
-                  product.brand ||
-                  "",
-
-                SKU:
-                  product.sku ||
-                  "",
-
-                Quantity:
-                  product.quantity ||
-                  "",
-
-                Unit:
-                  product.unit ||
-                  "",
-
-                "Selling Price":
-                  Number(
-                    product.sellingPrice ||
-                      0,
-                  ),
-
-                "Written Price":
-                  Number(
-                    product.writtenPrice ||
-                      product.originalPrice ||
-                      0,
-                  ),
-
-                "Discount (%)":
-                  Number(
-                    product.discount ||
-                      0,
-                  ),
-
-                Stock:
-                  Number(
-                    product.stock ||
-                      0,
-                  ),
-
-                "In Stock":
-                  product.inStock
-                    ? "Yes"
-                    : "No",
-
-                Status:
-                  getProductStatus(
-                    product,
-                  ),
-
-                Rating:
-                  Number(
-                    product.rating ||
-                      0,
-                  ),
-
-                Reviews:
-                  Number(
-                    product.reviews ||
-                      0,
-                  ),
-
-                "Image Count":
-                  Array.isArray(
-                    product.images,
-                  )
-                    ? product
-                        .images
-                        .length
-                    : 0,
-
-                "Image URLs":
-                  imageUrls,
-
-                "Created At":
-                  product.createdAt
-                    ? new Date(
-                        product.createdAt,
-                      ).toLocaleString()
-                    : "",
-              };
-            },
-          );
-
-        const worksheet =
-          XLSX.utils.json_to_sheet(
-            reportData,
-          );
-
-        worksheet["!cols"] = [
-          { wch: 8 },
-          { wch: 26 },
-          { wch: 30 },
-          { wch: 25 },
-          { wch: 20 },
-          { wch: 20 },
-          { wch: 15 },
-          { wch: 12 },
-          { wch: 16 },
-          { wch: 16 },
-          { wch: 15 },
-          { wch: 12 },
-          { wch: 12 },
-          { wch: 15 },
-          { wch: 15 },
-          { wch: 12 },
-          { wch: 12 },
-          { wch: 14 },
-          { wch: 60 },
-          { wch: 24 },
-        ];
-
-        const workbook =
-          XLSX.utils.book_new();
-
-        XLSX.utils.book_append_sheet(
-          workbook,
-          worksheet,
-          "All Products",
-        );
-
-        const today =
-          new Date()
-            .toISOString()
-            .split("T")[0];
-
-        XLSX.writeFile(
-          workbook,
-          `all-products-report-${today}.xlsx`,
-        );
-      } catch (error) {
-        console.error(
-          "Excel report generation failed:",
-          error,
-        );
-
-        alert(
-          "Failed to generate Excel report.",
-        );
+        return;
       }
-    };
+
+      const reportData = products.map((product, index) => {
+        const imageUrls = Array.isArray(product.images)
+          ? product.images
+              .map((image) => {
+                if (typeof image === "string") {
+                  return image;
+                }
+
+                return image?.url || image?.path || image?.secure_url || "";
+              })
+              .filter(Boolean)
+              .join(" | ")
+          : "";
+
+        return {
+          "S.No": index + 1,
+
+          "Product ID": product._id || "",
+
+          "Product Name": product.name || "",
+
+          Category: product.category || "",
+
+          Brand: product.brand || "",
+
+          SKU: product.sku || "",
+          Barcode: product.barcode || "",
+          Quantity: product.unitNo || "",
+
+          Unit: product.unit || "",
+
+          "Selling Price": Number(product.sellingPrice || 0),
+
+          "Written Price": Number(
+            product.writtenPrice || product.originalPrice || 0,
+          ),
+
+          "Discount (%)": Number(product.discount || 0),
+
+          Stock: Number(product.stock || 0),
+
+          "In Stock": product.inStock ? "Yes" : "No",
+
+          Status: getProductStatus(product),
+
+          Rating: Number(product.rating || 0),
+
+          Reviews: Number(product.reviews || 0),
+
+          "Image Count": Array.isArray(product.images)
+            ? product.images.length
+            : 0,
+
+          "Image URLs": imageUrls,
+
+          "Created At": product.createdAt
+            ? new Date(product.createdAt).toLocaleString()
+            : "",
+        };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(reportData);
+
+      worksheet["!cols"] = [
+        { wch: 8 },
+        { wch: 26 },
+        { wch: 30 },
+        { wch: 25 },
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 15 },
+        { wch: 12 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 15 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 14 },
+        { wch: 60 },
+        { wch: 24 },
+      ];
+
+      const workbook = XLSX.utils.book_new();
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, "All Products");
+
+      const today = new Date().toISOString().split("T")[0];
+
+      XLSX.writeFile(workbook, `all-products-report-${today}.xlsx`);
+    } catch (error) {
+      console.error("Excel report generation failed:", error);
+
+      alert("Failed to generate Excel report.");
+    }
+  };
 
   // ===================================================
   // DELETE PRODUCT
   // ===================================================
 
-  const handleDeleteProduct = async (
-    id,
-    e,
-  ) => {
+  const handleDeleteProduct = async (id, e) => {
     e.stopPropagation();
 
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this product?",
-      )
-    ) {
+    if (!window.confirm("Are you sure you want to delete this product?")) {
       return;
     }
 
     try {
-      await axios.delete(
-        `${API_BASE_URL}/products/${id}`,
-      );
+      await axios.delete(`${API_BASE_URL}/products/${id}`);
 
-      setProducts(
-        (prev) =>
-          prev.filter(
-            (product) =>
-              product._id !== id,
-          ),
-      );
+      setProducts((prev) => prev.filter((product) => product._id !== id));
 
-      setSelectedProducts(
-        (prev) =>
-          prev.filter(
-            (productId) =>
-              productId !== id,
-          ),
+      setSelectedProducts((prev) =>
+        prev.filter((productId) => productId !== id),
       );
     } catch (error) {
-      console.error(
-        "Delete imported product failed:",
-        error,
-      );
+      console.error("Delete imported product failed:", error);
 
-      alert(
-        error.response?.data
-          ?.message ||
-          "Failed to delete product.",
-      );
+      alert(error.response?.data?.message || "Failed to delete product.");
     }
   };
 
@@ -1362,416 +968,228 @@ const Catagory = () => {
   // OPEN EDIT PRODUCT BY ID
   // ===================================================
 
-  const handleOpenEdit = (
-    prod,
-    e,
-  ) => {
+  const handleOpenEdit = (prod, e) => {
     e.stopPropagation();
 
     if (!prod?._id) {
-      alert(
-        "Product ID not found.",
-      );
+      alert("Product ID not found.");
 
       return;
     }
 
-    navigate(
-      `/products/add-product/${prod._id}`,
-    );
+    navigate(`/products/add-product/${prod._id}`);
   };
 
   // ===================================================
   // SAVE PRODUCT
   // ===================================================
 
-  const handleSaveProduct =
-    async (e) => {
-      e.preventDefault();
+  const handleSaveProduct = async (e) => {
+    e.preventDefault();
 
-      const payload = {
-        name:
-          productForm.name.trim(),
+    const payload = {
+      name: productForm.name.trim(),
 
-        category:
-          productForm.category,
+      category: productForm.category,
 
-        brand:
-          productForm.brand.trim(),
+      brand: productForm.brand.trim(),
 
-        quantity:
-          productForm.quantity,
+      quantity: productForm.quantity,
 
-        sellingPrice:
-          Number(
-            productForm.sellingPrice,
-          ),
+      sellingPrice: Number(productForm.sellingPrice),
 
-        writtenPrice:
-          Number(
-            productForm.originalPrice ||
-              productForm.sellingPrice,
-          ),
+      writtenPrice: Number(
+        productForm.originalPrice || productForm.sellingPrice,
+      ),
 
-        discount:
-          Number(
-            productForm.discount,
-          ),
+      discount: Number(productForm.discount),
 
-        stock:
-          Number(
-            productForm.stock,
-          ),
+      stock: Number(productForm.stock),
 
-        inStock:
-          Number(
-            productForm.stock,
-          ) > 0,
+      inStock: Number(productForm.stock) > 0,
 
-        status: editingProduct
-          ? editingProduct.status ||
-            "unpublished"
-          : "unpublished",
-      };
-
-      try {
-        if (editingProduct) {
-          const response =
-            await axios.put(
-              `${API_BASE_URL}/products/${editingProduct._id}`,
-              payload,
-            );
-
-          const updatedProduct =
-            response.data?.data ||
-            response.data?.product ||
-            response.data;
-
-          setProducts(
-            (prev) =>
-              prev.map(
-                (product) =>
-                  product._id ===
-                  editingProduct._id
-                    ? normalizeImportedProduct(
-                        updatedProduct,
-                        brands,
-                        categories,
-                      )
-                    : product,
-              ),
-          );
-
-          setShowProductModal(
-            false,
-          );
-
-          setEditingProduct(
-            null,
-          );
-
-          return;
-        }
-
-        const response =
-          await axios.post(
-            `${API_BASE_URL}/import`,
-            {
-              products: [
-                payload,
-              ],
-            },
-          );
-
-        const newProduct =
-          response.data?.products?.[0] ||
-          response.data?.data?.[0] ||
-          response.data?.product;
-
-        if (newProduct) {
-          setProducts(
-            (prev) => [
-              normalizeImportedProduct(
-                newProduct,
-              ),
-              ...prev,
-            ],
-          );
-        } else {
-          await fetchImportedProducts();
-        }
-
-        setShowProductModal(
-          false,
-        );
-
-        setEditingProduct(
-          null,
-        );
-      } catch (error) {
-        console.error(
-          "Save product failed:",
-          error,
-        );
-
-        alert(
-          error.response?.data
-            ?.message ||
-            "Failed to save product.",
-        );
-      }
+      status: editingProduct
+        ? editingProduct.status || "unpublished"
+        : "unpublished",
     };
+
+    try {
+      if (editingProduct) {
+        const response = await axios.put(
+          `${API_BASE_URL}/products/${editingProduct._id}`,
+          payload,
+        );
+
+        const updatedProduct =
+          response.data?.data || response.data?.product || response.data;
+
+        setProducts((prev) =>
+          prev.map((product) =>
+            product._id === editingProduct._id
+              ? normalizeImportedProduct(updatedProduct, brands, categories)
+              : product,
+          ),
+        );
+
+        setShowProductModal(false);
+
+        setEditingProduct(null);
+
+        return;
+      }
+
+      const response = await axios.post(`${API_BASE_URL}/import`, {
+        products: [payload],
+      });
+
+      const newProduct =
+        response.data?.products?.[0] ||
+        response.data?.data?.[0] ||
+        response.data?.product;
+
+      if (newProduct) {
+        setProducts((prev) => [normalizeImportedProduct(newProduct), ...prev]);
+      } else {
+        await fetchImportedProducts();
+      }
+
+      setShowProductModal(false);
+
+      setEditingProduct(null);
+    } catch (error) {
+      console.error("Save product failed:", error);
+
+      alert(error.response?.data?.message || "Failed to save product.");
+    }
+  };
 
   // ===================================================
   // ADD CATEGORY
   // ===================================================
 
-  const handleAddCategory =
-    async (e) => {
-      e.preventDefault();
+  const handleAddCategory = async (e) => {
+    e.preventDefault();
 
-      if (
-        !newCatName.trim()
-      ) {
-        return;
-      }
+    if (!newCatName.trim()) {
+      return;
+    }
 
-      const newCat = {
-        _id:
-          newCatName.trim(),
+    const newCat = {
+      _id: newCatName.trim(),
 
-        name:
-          newCatName.trim(),
+      name: newCatName.trim(),
 
-        icon:
-          newCatIcon || "📦",
-      };
-
-      try {
-        const response =
-          await axios.post(
-            `${API_BASE_URL}/categories`,
-            newCat,
-          );
-
-        setCategories(
-          (prev) => [
-            ...prev,
-            response.data,
-          ],
-        );
-      } catch (error) {
-        console.warn(
-          "Category API unavailable. Added locally.",
-        );
-
-        setCategories(
-          (prev) => [
-            ...prev,
-            newCat,
-          ],
-        );
-      }
-
-      setNewCatName("");
-      setNewCatIcon("📦");
-      setShowCategoryModal(
-        false,
-      );
+      icon: newCatIcon || "📦",
     };
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/categories`, newCat);
+
+      setCategories((prev) => [...prev, response.data]);
+    } catch (error) {
+      console.warn("Category API unavailable. Added locally.");
+
+      setCategories((prev) => [...prev, newCat]);
+    }
+
+    setNewCatName("");
+    setNewCatIcon("📦");
+    setShowCategoryModal(false);
+  };
 
   // ===================================================
   // FILTER
   // ===================================================
 
-  const filteredProducts =
-    (
-      Array.isArray(products)
-        ? products
-        : []
-    ).filter(
-      (product) => {
-        const productCategory =
-          String(
-            product.category ||
-              "",
-          )
-            .trim()
-            .toLowerCase();
+  const filteredProducts = (Array.isArray(products) ? products : []).filter(
+    (product) => {
+      const productCategory = String(product.category || "")
+        .trim()
+        .toLowerCase();
 
-        const selected =
-          String(
-            selectedCategory ||
-              "",
-          )
-            .trim()
-            .toLowerCase();
+      const selected = String(selectedCategory || "")
+        .trim()
+        .toLowerCase();
 
-        const matchesCategory =
-          selected === "all" ||
-          productCategory ===
-            selected;
+      const matchesCategory =
+        selected === "all" || productCategory === selected;
 
-        const productName =
-          String(
-            product.name ||
-              "",
-          ).toLowerCase();
+      const productName = String(product.name || "").toLowerCase();
 
-        const productBrand =
-          String(
-            product.brand ||
-              "",
-          ).toLowerCase();
+      const productBrand = String(product.brand || "").toLowerCase();
 
-        const productSku =
-          String(
-            product.sku ||
-              "",
-          ).toLowerCase();
+      const productSku = String(product.sku || "").toLowerCase();
 
-        const searchValue =
-          search
-            .toLowerCase()
-            .trim();
+      const searchValue = search.toLowerCase().trim();
 
-        const matchesSearch =
-          productName.includes(
-            searchValue,
-          ) ||
-          productBrand.includes(
-            searchValue,
-          ) ||
-          productSku.includes(
-            searchValue,
-          );
+      const matchesSearch =
+        productName.includes(searchValue) ||
+        productBrand.includes(searchValue) ||
+        productSku.includes(searchValue);
 
-        return (
-          matchesCategory &&
-          matchesSearch
-        );
-      },
-    );
+      return matchesCategory && matchesSearch;
+    },
+  );
 
   // ===================================================
   // SORT
   // ===================================================
 
-  const sortedProducts =
-    [
-      ...filteredProducts,
-    ].sort((a, b) => {
-      if (
-        sortBy ===
-        "price-low"
-      ) {
-        return (
-          Number(
-            a.sellingPrice ||
-              0,
-          ) -
-          Number(
-            b.sellingPrice ||
-              0,
-          )
-        );
-      }
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === "price-low") {
+      return Number(a.sellingPrice || 0) - Number(b.sellingPrice || 0);
+    }
 
-      if (
-        sortBy ===
-        "price-high"
-      ) {
-        return (
-          Number(
-            b.sellingPrice ||
-              0,
-          ) -
-          Number(
-            a.sellingPrice ||
-              0,
-          )
-        );
-      }
+    if (sortBy === "price-high") {
+      return Number(b.sellingPrice || 0) - Number(a.sellingPrice || 0);
+    }
 
-      if (
-        sortBy ===
-        "rating"
-      ) {
-        return (
-          Number(
-            b.rating || 0,
-          ) -
-          Number(
-            a.rating || 0,
-          )
-        );
-      }
+    if (sortBy === "rating") {
+      return Number(b.rating || 0) - Number(a.rating || 0);
+    }
 
-      return 0;
-    });
+    return 0;
+  });
 
   // ===================================================
   // PAGINATION
   // ===================================================
 
-  const totalPages =
-    Math.ceil(
-      sortedProducts.length /
-        productsPerPage,
-    ) || 1;
+  const totalPages = Math.ceil(sortedProducts.length / productsPerPage) || 1;
 
-  const startIndex =
-    (currentPage - 1) *
-    productsPerPage;
+  const startIndex = (currentPage - 1) * productsPerPage;
 
-  const displayedProducts =
-    sortedProducts.slice(
-      startIndex,
-      startIndex +
-        productsPerPage,
-    );
+  const displayedProducts = sortedProducts.slice(
+    startIndex,
+    startIndex + productsPerPage,
+  );
 
   // ===================================================
   // FIX: ALL VISIBLE SELECTED
   // ===================================================
 
   const allVisibleSelected =
-    displayedProducts.length >
-      0 &&
+    displayedProducts.length > 0 &&
     displayedProducts.every(
-      (product) =>
-        product._id &&
-        selectedProducts.includes(
-          product._id,
-        ),
+      (product) => product._id && selectedProducts.includes(product._id),
     );
 
   // ===================================================
   // ACTIVE CATEGORY
   // ===================================================
 
-  const safeCategories =
-    Array.isArray(categories)
-      ? categories
-      : [];
+  const safeCategories = Array.isArray(categories) ? categories : [];
 
-  const activeCategoryObj =
-    safeCategories.find(
-      (category) =>
-        String(
-          category?._id,
-        ).toLowerCase() ===
-        String(
-          selectedCategory,
-        ).toLowerCase(),
-    );
+  const activeCategoryObj = safeCategories.find(
+    (category) =>
+      String(category?._id).toLowerCase() ===
+      String(selectedCategory).toLowerCase(),
+  );
 
   const activeCategoryName =
     selectedCategory === "all"
       ? "All Products"
-      : activeCategoryObj?.name ||
-        selectedCategory ||
-        "Products";
+      : activeCategoryObj?.name || selectedCategory || "Products";
 
   // ===================================================
   // UI
@@ -1781,16 +1199,12 @@ const Catagory = () => {
     <div className="catagory">
       <div className="catagory-header">
         <div className="catagory-headerLeft">
-          <h1 className="catagory-title">
-            Categories & Products
-          </h1>
+          <h1 className="catagory-title">Categories & Products</h1>
 
           <div className="catagory-breadcrumb">
             <span>Home</span>
             {" > "}
-            <span className="catagory-activeCrumb">
-              Categories & Products
-            </span>
+            <span className="catagory-activeCrumb">Categories & Products</span>
           </div>
         </div>
       </div>
@@ -1802,9 +1216,7 @@ const Catagory = () => {
 
         <aside className="catagory-sidebar">
           <div className="catagory-sidebarHeader">
-            <h3 className="catagory-sidebarTitle">
-              Categories
-            </h3>
+            <h3 className="catagory-sidebarTitle">Categories</h3>
 
             {/* 
             <button
@@ -1819,80 +1231,46 @@ const Catagory = () => {
               <FiPlus />
               Add Category
             </button> */}
-
           </div>
 
           <div className="catagory-list">
-            {categories.map(
-              (cat) => {
-                const isSelected =
-                  String(
-                    selectedCategory,
-                  ).toLowerCase() ===
-                  String(
-                    cat._id,
-                  ).toLowerCase();
+            {categories.map((cat) => {
+              const isSelected =
+                String(selectedCategory).toLowerCase() ===
+                String(cat._id).toLowerCase();
 
-                const count =
-                  getCategoryCount(
-                    cat._id,
-                  );
+              const count = getCategoryCount(cat._id);
 
-                return (
-                  <button
-                    key={cat._id}
-                    type="button"
-                    className={`catagory-item ${
-                      isSelected
-                        ? "selected"
-                        : ""
-                    }`}
-                    onClick={() => {
-                      setSelectedCategory(
-                        cat._id,
-                      );
+              return (
+                <button
+                  key={cat._id}
+                  type="button"
+                  className={`catagory-item ${isSelected ? "selected" : ""}`}
+                  onClick={() => {
+                    setSelectedCategory(cat._id);
 
-                      setCurrentPage(
-                        1,
-                      );
+                    setCurrentPage(1);
 
-                      setSelectedProducts(
-                        [],
-                      );
-                    }}
-                  >
-                    <div className="catagory-itemContent">
-                      <span className="catagory-itemIcon">
-                        {cat.icon}
-                      </span>
+                    setSelectedProducts([]);
+                  }}
+                >
+                  <div className="catagory-itemContent">
+                    <span className="catagory-itemIcon">{cat.icon}</span>
 
-                      <span className="catagory-itemName">
-                        {cat.name}
-                      </span>
-                    </div>
+                    <span className="catagory-itemName">{cat.name}</span>
+                  </div>
 
-                    <span className="catagory-itemCount">
-                      {count}
-                    </span>
-                  </button>
-                );
-              },
-            )}
+                  <span className="catagory-itemCount">{count}</span>
+                </button>
+              );
+            })}
           </div>
 
           <div className="catagory-totalBox">
             <div className="catagory-totalText">
-              <span>
-                Total Categories
-              </span>
+              <span>Total Categories</span>
 
-              <h2>
-                {Math.max(
-                  categories.length -
-                    1,
-                  0,
-                )}
-              </h2>
+              <h2>{Math.max(categories.length - 1, 0)}</h2>
             </div>
 
             <div className="catagory-totalIcon">
@@ -1909,18 +1287,11 @@ const Catagory = () => {
           <div className="catagory-toolbar">
             <div className="catagory-toolbarLeft">
               <h2 className="catagory-toolbarTitle">
-                Products (
-                {
-                  activeCategoryName
-                }
-                )
+                Products ({activeCategoryName})
               </h2>
 
               <span className="catagory-toolbarCount">
-                {
-                  filteredProducts.length
-                }{" "}
-                Products
+                {filteredProducts.length} Products
               </span>
             </div>
 
@@ -1935,13 +1306,9 @@ const Catagory = () => {
                   placeholder="Search products..."
                   value={search}
                   onChange={(e) => {
-                    setSearch(
-                      e.target.value,
-                    );
+                    setSearch(e.target.value);
 
-                    setCurrentPage(
-                      1,
-                    );
+                    setCurrentPage(1);
                   }}
                   className="catagory-searchInput"
                 />
@@ -1950,38 +1317,24 @@ const Catagory = () => {
               {/* SORT */}
 
               <div className="catagory-selectWrapper">
-                <label>
-                  Sort by:
-                </label>
+                <label>Sort by:</label>
 
                 <select
                   value={sortBy}
                   onChange={(e) => {
-                    setSortBy(
-                      e.target.value,
-                    );
+                    setSortBy(e.target.value);
 
-                    setCurrentPage(
-                      1,
-                    );
+                    setCurrentPage(1);
                   }}
                   className="catagory-sortSelect"
                 >
-                  <option value="popular">
-                    Popular
-                  </option>
+                  <option value="popular">Popular</option>
 
-                  <option value="price-low">
-                    Price: Low to High
-                  </option>
+                  <option value="price-low">Price: Low to High</option>
 
-                  <option value="price-high">
-                    Price: High to Low
-                  </option>
+                  <option value="price-high">Price: High to Low</option>
 
-                  <option value="rating">
-                    Top Rated
-                  </option>
+                  <option value="rating">Top Rated</option>
                 </select>
               </div>
 
@@ -1990,73 +1343,42 @@ const Catagory = () => {
               <label
                 title="Select all products on this page"
                 style={{
-                  display:
-                    "flex",
-                  alignItems:
-                    "center",
+                  display: "flex",
+                  alignItems: "center",
                   gap: "6px",
-                  cursor:
-                    "pointer",
-                  whiteSpace:
-                    "nowrap",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
                 }}
               >
                 <input
                   type="checkbox"
-                  checked={
-                    allVisibleSelected
-                  }
-                  onChange={(e) =>
-                    handleSelectAll(
-                      e.target.checked,
-                    )
-                  }
+                  checked={allVisibleSelected}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
                   style={{
-                    width:
-                      "17px",
-                    height:
-                      "17px",
-                    cursor:
-                      "pointer",
+                    width: "17px",
+                    height: "17px",
+                    cursor: "pointer",
                   }}
                 />
 
-                <span>
-                  Select All
-                </span>
+                <span>Select All</span>
               </label>
 
               {/* PUBLISH */}
 
               <button
                 type="button"
-                disabled={
-                  selectedProducts.length ===
-                    0 ||
-                  isPublishing
-                }
-                onClick={() =>
-                  handlePublishProducts(
-                    "published",
-                  )
-                }
+                disabled={selectedProducts.length === 0 || isPublishing}
+                onClick={() => handlePublishProducts("published")}
                 title="Publish selected products"
                 style={{
-                  display:
-                    "flex",
-                  alignItems:
-                    "center",
+                  display: "flex",
+                  alignItems: "center",
                   gap: "6px",
                   opacity:
-                    selectedProducts.length ===
-                      0 ||
-                    isPublishing
-                      ? 0.5
-                      : 1,
+                    selectedProducts.length === 0 || isPublishing ? 0.5 : 1,
                   cursor:
-                    selectedProducts.length ===
-                      0 ||
-                    isPublishing
+                    selectedProducts.length === 0 || isPublishing
                       ? "not-allowed"
                       : "pointer",
                 }}
@@ -2069,33 +1391,17 @@ const Catagory = () => {
 
               <button
                 type="button"
-                disabled={
-                  selectedProducts.length ===
-                    0 ||
-                  isPublishing
-                }
-                onClick={() =>
-                  handlePublishProducts(
-                    "unpublished",
-                  )
-                }
+                disabled={selectedProducts.length === 0 || isPublishing}
+                onClick={() => handlePublishProducts("unpublished")}
                 title="Unpublish selected products"
                 style={{
-                  display:
-                    "flex",
-                  alignItems:
-                    "center",
+                  display: "flex",
+                  alignItems: "center",
                   gap: "6px",
                   opacity:
-                    selectedProducts.length ===
-                      0 ||
-                    isPublishing
-                      ? 0.5
-                      : 1,
+                    selectedProducts.length === 0 || isPublishing ? 0.5 : 1,
                   cursor:
-                    selectedProducts.length ===
-                      0 ||
-                    isPublishing
+                    selectedProducts.length === 0 || isPublishing
                       ? "not-allowed"
                       : "pointer",
                 }}
@@ -2108,20 +1414,14 @@ const Catagory = () => {
 
               <button
                 type="button"
-                onClick={
-                  handleDownloadExcel
-                }
+                onClick={handleDownloadExcel}
                 title="Download Excel report of all products"
                 style={{
-                  display:
-                    "flex",
-                  alignItems:
-                    "center",
+                  display: "flex",
+                  alignItems: "center",
                   gap: "6px",
-                  cursor:
-                    "pointer",
-                  whiteSpace:
-                    "nowrap",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
                 }}
               >
                 <FiDownload />
@@ -2183,54 +1483,31 @@ const Catagory = () => {
 
           {/* SELECTED COUNT */}
 
-          {selectedProducts.length >
-            0 && (
+          {selectedProducts.length > 0 && (
             <div
               style={{
-                display:
-                  "flex",
-                alignItems:
-                  "center",
-                justifyContent:
-                  "space-between",
-                padding:
-                  "10px 14px",
-                marginBottom:
-                  "12px",
-                borderRadius:
-                  "8px",
-                background:
-                  "#f5f7fa",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "10px 14px",
+                marginBottom: "12px",
+                borderRadius: "8px",
+                background: "#f5f7fa",
               }}
             >
               <span>
-                {
-                  selectedProducts.length
-                }{" "}
-                product
-                {selectedProducts.length >
-                1
-                  ? "s"
-                  : ""}{" "}
-                selected
+                {selectedProducts.length} product
+                {selectedProducts.length > 1 ? "s" : ""} selected
               </span>
 
               <button
                 type="button"
-                onClick={() =>
-                  setSelectedProducts(
-                    [],
-                  )
-                }
+                onClick={() => setSelectedProducts([])}
                 style={{
-                  border:
-                    "none",
-                  background:
-                    "transparent",
-                  cursor:
-                    "pointer",
-                  fontWeight:
-                    600,
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  fontWeight: 600,
                 }}
               >
                 Clear Selection
@@ -2241,41 +1518,24 @@ const Catagory = () => {
           {/* PRODUCTS GRID */}
 
           <div className="catagory-productsGrid">
-            {displayedProducts.map(
-              (prod) => (
-                <ProductCardItem
-                  key={prod._id}
-                  product={prod}
-                  selected={selectedProducts.includes(
-                    prod._id,
-                  )}
-                  onSelect={
-                    handleSelectProduct
-                  }
-                  onImageUpload={
-                    handleCardImageUpload
-                  }
-                  onEdit={
-                    handleOpenEdit
-                  }
-                  onDelete={
-                    handleDeleteProduct
-                  }
-                />
-              ),
-            )}
+            {displayedProducts.map((prod) => (
+              <ProductCardItem
+                key={prod._id}
+                product={prod}
+                selected={selectedProducts.includes(prod._id)}
+                onSelect={handleSelectProduct}
+                onImageUpload={handleCardImageUpload}
+                onEdit={handleOpenEdit}
+                onDelete={handleDeleteProduct}
+              />
+            ))}
           </div>
 
           {/* EMPTY */}
 
-          {displayedProducts.length ===
-            0 && (
+          {displayedProducts.length === 0 && (
             <div className="catagory-emptyState">
-              <p>
-                No products found
-                for this category
-                or search query.
-              </p>
+              <p>No products found for this category or search query.</p>
             </div>
           )}
 
@@ -2283,78 +1543,38 @@ const Catagory = () => {
 
           <div className="catagory-pagination">
             <span className="catagory-paginationInfo">
-              Showing{" "}
-              {displayedProducts.length >
-              0
-                ? startIndex + 1
-                : 0}{" "}
-              to{" "}
-              {Math.min(
-                startIndex +
-                  productsPerPage,
-                filteredProducts.length,
-              )}{" "}
-              of{" "}
-              {
-                filteredProducts.length
-              }{" "}
-              products
+              Showing {displayedProducts.length > 0 ? startIndex + 1 : 0} to{" "}
+              {Math.min(startIndex + productsPerPage, filteredProducts.length)}{" "}
+              of {filteredProducts.length} products
             </span>
 
             <div className="catagory-pageControls">
               <button
                 type="button"
-                disabled={
-                  currentPage ===
-                  1
-                }
-                onClick={() =>
-                  setCurrentPage(
-                    (p) => p - 1,
-                  )
-                }
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
                 className="catagory-pageNav"
               >
                 <FiChevronLeft />
               </button>
 
-              {[
-                ...Array(
-                  totalPages,
-                ),
-              ].map(
-                (_, i) => (
-                  <button
-                    key={i + 1}
-                    type="button"
-                    className={`catagory-pageNumber ${
-                      currentPage ===
-                      i + 1
-                        ? "active"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      setCurrentPage(
-                        i + 1,
-                      )
-                    }
-                  >
-                    {i + 1}
-                  </button>
-                ),
-              )}
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  type="button"
+                  className={`catagory-pageNumber ${
+                    currentPage === i + 1 ? "active" : ""
+                  }`}
+                  onClick={() => setCurrentPage(i + 1)}
+                >
+                  {i + 1}
+                </button>
+              ))}
 
               <button
                 type="button"
-                disabled={
-                  currentPage ===
-                  totalPages
-                }
-                onClick={() =>
-                  setCurrentPage(
-                    (p) => p + 1,
-                  )
-                }
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
                 className="catagory-pageNav"
               >
                 <FiChevronRight />
@@ -2372,96 +1592,53 @@ const Catagory = () => {
         <div className="catagory-modalOverlay">
           <div className="catagory-modal">
             <div className="catagory-modalHeader">
-              <h3>
-                {editingProduct
-                  ? "Edit Product"
-                  : "Add New Product"}
-              </h3>
+              <h3>{editingProduct ? "Edit Product" : "Add New Product"}</h3>
 
               <button
                 type="button"
                 className="catagory-modalClose"
-                onClick={() =>
-                  setShowProductModal(
-                    false,
-                  )
-                }
+                onClick={() => setShowProductModal(false)}
               >
                 <FiX />
               </button>
             </div>
 
-            <form
-              onSubmit={
-                handleSaveProduct
-              }
-              className="catagory-modalForm"
-            >
+            <form onSubmit={handleSaveProduct} className="catagory-modalForm">
               <div className="catagory-formGroup">
-                <label>
-                  Product Name *
-                </label>
+                <label>Product Name *</label>
 
                 <input
                   type="text"
                   required
                   placeholder="e.g. Fresh Banana"
-                  value={
-                    productForm.name
-                  }
+                  value={productForm.name}
                   onChange={(e) =>
-                    setProductForm(
-                      {
-                        ...productForm,
-                        name: e.target
-                          .value,
-                      },
-                    )
+                    setProductForm({
+                      ...productForm,
+                      name: e.target.value,
+                    })
                   }
                 />
               </div>
 
               <div className="catagory-formRow">
                 <div className="catagory-formGroup">
-                  <label>
-                    Category *
-                  </label>
+                  <label>Category *</label>
 
                   <select
                     required
-                    value={
-                      productForm.category
-                    }
+                    value={productForm.category}
                     onChange={(e) =>
-                      setProductForm(
-                        {
-                          ...productForm,
-                          category:
-                            e.target
-                              .value,
-                        },
-                      )
+                      setProductForm({
+                        ...productForm,
+                        category: e.target.value,
+                      })
                     }
                   >
-                    {(
-                      Array.isArray(
-                        categories,
-                      )
-                        ? categories
-                        : []
-                    )
-                      .filter(
-                        (c) =>
-                          c._id !==
-                          "all",
-                      )
+                    {(Array.isArray(categories) ? categories : [])
+                      .filter((c) => c._id !== "all")
                       .map((c) => (
-                        <option
-                          key={c._id}
-                          value={
-                            c._id
-                          }
-                        >
+                        <option key={c._id} value={c._id}>
                           {c.name}
                         </option>
                       ))}
@@ -2469,25 +1646,17 @@ const Catagory = () => {
                 </div>
 
                 <div className="catagory-formGroup">
-                  <label>
-                    Brand
-                  </label>
+                  <label>Brand</label>
 
                   <input
                     type="text"
                     placeholder="e.g. Local Farm"
-                    value={
-                      productForm.brand
-                    }
+                    value={productForm.brand}
                     onChange={(e) =>
-                      setProductForm(
-                        {
-                          ...productForm,
-                          brand: e
-                            .target
-                            .value,
-                        },
-                      )
+                      setProductForm({
+                        ...productForm,
+                        brand: e.target.value,
+                      })
                     }
                   />
                 </div>
@@ -2495,48 +1664,33 @@ const Catagory = () => {
 
               <div className="catagory-formRow">
                 <div className="catagory-formGroup">
-                  <label>
-                    Quantity / Unit
-                  </label>
+                  <label>Quantity / Unit</label>
 
                   <input
                     type="text"
                     placeholder="e.g. 1 kg / 500 g"
-                    value={
-                      productForm.quantity
-                    }
+                    value={productForm.quantity}
                     onChange={(e) =>
-                      setProductForm(
-                        {
-                          ...productForm,
-                          quantity:
-                            e.target
-                              .value,
-                        },
-                      )
+                      setProductForm({
+                        ...productForm,
+                        quantity: e.target.value,
+                      })
                     }
                   />
                 </div>
 
                 <div className="catagory-formGroup">
-                  <label>
-                    Stock
-                  </label>
+                  <label>Stock</label>
 
                   <input
                     type="number"
                     min="0"
-                    value={
-                      productForm.stock
-                    }
+                    value={productForm.stock}
                     onChange={(e) =>
-                      setProductForm(
-                        {
-                          ...productForm,
-                          stock: e.target
-                            .value,
-                        },
-                      )
+                      setProductForm({
+                        ...productForm,
+                        stock: e.target.value,
+                      })
                     }
                   />
                 </div>
@@ -2544,77 +1698,53 @@ const Catagory = () => {
 
               <div className="catagory-formRow">
                 <div className="catagory-formGroup">
-                  <label>
-                    Selling Price (₹) *
-                  </label>
+                  <label>Selling Price (₹) *</label>
 
                   <input
                     type="number"
                     step="0.01"
                     min="0"
                     required
-                    value={
-                      productForm.sellingPrice
-                    }
+                    value={productForm.sellingPrice}
                     onChange={(e) =>
-                      setProductForm(
-                        {
-                          ...productForm,
-                          sellingPrice:
-                            e.target
-                              .value,
-                        },
-                      )
+                      setProductForm({
+                        ...productForm,
+                        sellingPrice: e.target.value,
+                      })
                     }
                   />
                 </div>
 
                 <div className="catagory-formGroup">
-                  <label>
-                    Original Price (₹)
-                  </label>
+                  <label>Original Price (₹)</label>
 
                   <input
                     type="number"
                     step="0.01"
                     min="0"
-                    value={
-                      productForm.originalPrice
-                    }
+                    value={productForm.originalPrice}
                     onChange={(e) =>
-                      setProductForm(
-                        {
-                          ...productForm,
-                          originalPrice:
-                            e.target
-                              .value,
-                        },
-                      )
+                      setProductForm({
+                        ...productForm,
+                        originalPrice: e.target.value,
+                      })
                     }
                   />
                 </div>
 
                 <div className="catagory-formGroup">
-                  <label>
-                    Discount (%)
-                  </label>
+                  <label>Discount (%)</label>
 
                   <input
                     type="number"
                     min="0"
                     max="100"
-                    value={
-                      productForm.discount
-                    }
+                    value={productForm.discount}
                     onChange={(e) =>
-                      setProductForm(
-                        {
-                          ...productForm,
-                          discount:
-                            e.target
-                              .value,
-                        },
-                      )
+                      setProductForm({
+                        ...productForm,
+                        discount: e.target.value,
+                      })
                     }
                   />
                 </div>
@@ -2624,22 +1754,13 @@ const Catagory = () => {
                 <button
                   type="button"
                   className="catagory-btnCancel"
-                  onClick={() =>
-                    setShowProductModal(
-                      false,
-                    )
-                  }
+                  onClick={() => setShowProductModal(false)}
                 >
                   Cancel
                 </button>
 
-                <button
-                  type="submit"
-                  className="catagory-btnSubmit"
-                >
-                  {editingProduct
-                    ? "Update Product"
-                    : "Save Product"}
+                <button type="submit" className="catagory-btnSubmit">
+                  {editingProduct ? "Update Product" : "Save Product"}
                 </button>
               </div>
             </form>
@@ -2655,67 +1776,38 @@ const Catagory = () => {
         <div className="catagory-modalOverlay">
           <div className="catagory-modal catagory-smallModal">
             <div className="catagory-modalHeader">
-              <h3>
-                Add New Category
-              </h3>
+              <h3>Add New Category</h3>
 
               <button
                 type="button"
                 className="catagory-modalClose"
-                onClick={() =>
-                  setShowCategoryModal(
-                    false,
-                  )
-                }
+                onClick={() => setShowCategoryModal(false)}
               >
                 <FiX />
               </button>
             </div>
 
-            <form
-              onSubmit={
-                handleAddCategory
-              }
-              className="catagory-modalForm"
-            >
+            <form onSubmit={handleAddCategory} className="catagory-modalForm">
               <div className="catagory-formGroup">
-                <label>
-                  Category Name *
-                </label>
+                <label>Category Name *</label>
 
                 <input
                   type="text"
                   required
                   placeholder="e.g. Frozen Food"
-                  value={
-                    newCatName
-                  }
-                  onChange={(e) =>
-                    setNewCatName(
-                      e.target
-                        .value,
-                    )
-                  }
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
                 />
               </div>
 
               <div className="catagory-formGroup">
-                <label>
-                  Icon / Emoji
-                </label>
+                <label>Icon / Emoji</label>
 
                 <input
                   type="text"
                   placeholder="e.g. 🥦 or 📦"
-                  value={
-                    newCatIcon
-                  }
-                  onChange={(e) =>
-                    setNewCatIcon(
-                      e.target
-                        .value,
-                    )
-                  }
+                  value={newCatIcon}
+                  onChange={(e) => setNewCatIcon(e.target.value)}
                 />
               </div>
 
@@ -2723,19 +1815,12 @@ const Catagory = () => {
                 <button
                   type="button"
                   className="catagory-btnCancel"
-                  onClick={() =>
-                    setShowCategoryModal(
-                      false,
-                    )
-                  }
+                  onClick={() => setShowCategoryModal(false)}
                 >
                   Cancel
                 </button>
 
-                <button
-                  type="submit"
-                  className="catagory-btnSubmit"
-                >
+                <button type="submit" className="catagory-btnSubmit">
                   Save Category
                 </button>
               </div>
@@ -2759,22 +1844,16 @@ const ProductCardItem = ({
   onEdit,
   onDelete,
 }) => {
-  const fileInputRef =
-    useRef(null);
+  const fileInputRef = useRef(null);
 
-  const productStatus =
-    getProductStatus(
-      product,
-    );
+  const productStatus = getProductStatus(product);
 
   // ===================================================
   // IMAGE BOX CLICK
   // ===================================================
 
   const handleBoxClick = () => {
-    if (
-      fileInputRef.current
-    ) {
+    if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
@@ -2783,20 +1862,11 @@ const ProductCardItem = ({
   // IMAGE FILE CHANGE
   // ===================================================
 
-  const handleFileChange = (
-    e,
-  ) => {
-    const files =
-      e.target.files;
+  const handleFileChange = (e) => {
+    const files = e.target.files;
 
-    if (
-      files &&
-      files.length > 0
-    ) {
-      onImageUpload(
-        product._id,
-        files,
-      );
+    if (files && files.length > 0) {
+      onImageUpload(product._id, files);
     }
 
     e.target.value = "";
@@ -2806,58 +1876,42 @@ const ProductCardItem = ({
   // CHECKBOX
   // ===================================================
 
-  const handleCheckbox = (
-    e,
-  ) => {
+  const handleCheckbox = (e) => {
     e.stopPropagation();
 
-    onSelect(
-      product._id,
-    );
+    onSelect(product._id);
   };
 
   return (
     <div
       className="catagory-card"
       style={{
-        position:
-          "relative",
+        position: "relative",
       }}
     >
       {/* SELECT CHECKBOX */}
 
       <div
         style={{
-          position:
-            "absolute",
+          position: "absolute",
           top: "10px",
           left: "10px",
           zIndex: 10,
-          background:
-            "#fff",
-          borderRadius:
-            "5px",
+          background: "#fff",
+          borderRadius: "5px",
           padding: "3px",
-          boxShadow:
-            "0 1px 4px rgba(0,0,0,0.15)",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
         }}
       >
         <input
           type="checkbox"
-          checked={
-            selected
-          }
-          onChange={
-            handleCheckbox
-          }
+          checked={selected}
+          onChange={handleCheckbox}
           title="Select product"
           style={{
-            width:
-              "18px",
-            height:
-              "18px",
-            cursor:
-              "pointer",
+            width: "18px",
+            height: "18px",
+            cursor: "pointer",
           }}
         />
       </div>
@@ -2867,20 +1921,13 @@ const ProductCardItem = ({
       <div className="catagory-cardHeader">
         <span
           className={`catagory-stockBadge ${
-            product.inStock
-              ? "inStock"
-              : "outStock"
+            product.inStock ? "inStock" : "outStock"
           }`}
         >
-          {product.inStock
-            ? "In Stock"
-            : "Out of Stock"}
+          {product.inStock ? "In Stock" : "Out of Stock"}
         </span>
 
-        <button
-          type="button"
-          className="catagory-wishlistBtn"
-        >
+        <button type="button" className="catagory-wishlistBtn">
           <FiHeart />
         </button>
       </div>
@@ -2889,151 +1936,129 @@ const ProductCardItem = ({
 
       <div
         className="catagory-cardImageBox"
-        onClick={
-          handleBoxClick
-        }
+        onClick={handleBoxClick}
         title="Click to upload up to 5 images"
       >
         <input
           type="file"
           accept="image/jpeg,image/png,image/webp,image/jpg"
           multiple
-          ref={
-            fileInputRef
-          }
-          onChange={
-            handleFileChange
-          }
+          ref={fileInputRef}
+          onChange={handleFileChange}
           hidden
         />
 
-        {getImageUrl(
-          product.image,
-        ) ? (
+        {getImageUrl(product.image) ? (
           <img
-            src={getImageUrl(
-              product.image,
-            )}
-            alt={
-              product.name
-            }
+            src={getImageUrl(product.image)}
+            alt={product.name}
             className="catagory-cardImg"
             onError={(e) => {
-              e.currentTarget.style.display =
-                "none";
+              e.currentTarget.style.display = "none";
             }}
           />
         ) : (
           <div className="catagory-emptyImage">
             <FiUpload className="catagory-uploadIcon" />
 
-            <span>
-              Upload Image
-            </span>
+            <span>Upload Image</span>
           </div>
         )}
       </div>
 
       {/* IMAGE COUNT */}
 
-      {Array.isArray(
-        product.images,
-      ) &&
-        product.images
-          .length > 0 && (
-          <div
-            style={{
-              fontSize:
-                "12px",
-              textAlign:
-                "center",
-              marginTop:
-                "5px",
-              opacity:
-                0.7,
-            }}
-          >
-            {
-              product.images
-                .length
-            }{" "}
-            / 5 images
-          </div>
-        )}
+      {Array.isArray(product.images) && product.images.length > 0 && (
+        <div
+          style={{
+            fontSize: "12px",
+            textAlign: "center",
+            marginTop: "5px",
+            opacity: 0.7,
+          }}
+        >
+          {product.images.length} / 5 images
+        </div>
+      )}
 
       {/* PRODUCT INFO */}
 
       <div className="catagory-cardInfo">
-        <h4 className="catagory-cardName">
-          {product.name}
-        </h4>
+        <h4 className="catagory-cardName">{product.name}</h4>
 
         <div className="catagory-ratingRow">
           <span className="catagory-ratingStar">
-            <FiStar />{" "}
-            {Number(
-              product.rating ||
-                5,
-            ).toFixed(1)}
+            <FiStar /> {Number(product.rating || 5).toFixed(1)}
           </span>
 
           <span className="catagory-ratingReviews">
-            (
-            {
-              product.reviews ||
-              0
-            }
-            )
+            ({product.reviews || 0})
           </span>
         </div>
 
         <p className="catagory-cardBrand">
-          Brand:{" "}
-          <strong>
-            {product.brand ||
-              "Local Farm"}
-          </strong>
+          Brand: <strong>{product.brand || "Local Farm"}</strong>
         </p>
 
         <p className="catagory-cardQty">
-          {product.quantity ||
-            product.unit ||
-            "1 unit"}
+          {product.unitNo} - {product.quantity || product.unit || "1 unit"}
         </p>
+
+        {/* BARCODE */}
+        <div className="catagory-cardBarcode">
+          {product.barcode ? (
+            <>
+              <div className="catagory-barcodeHeader">
+                <span>BARCODE</span>
+              </div>
+
+              <div className="catagory-barcodeCanvas">
+                <Barcode
+                  value={String(product.barcode)}
+                  format="CODE128"
+                  width={1.4}
+                  height={40}
+                  displayValue={true}
+                  fontSize={13}
+                  fontOptions="bold"
+                  textMargin={6}
+                  margin={0}
+                  background="#ffffff"
+                  lineColor="#111827"
+                />
+              </div>
+            </>
+          ) : (
+            <div className="catagory-barcodeUnavailable">
+              <span className="catagory-barcodeUnavailableIcon">▦</span>
+              <span>Barcode not available</span>
+            </div>
+          )}
+        </div>
 
         {/* STATUS */}
 
         <div
           style={{
-            display:
-              "flex",
-            alignItems:
-              "center",
+            display: "flex",
+            alignItems: "center",
             gap: "5px",
-            marginBottom:
-              "8px",
-            fontSize:
-              "12px",
-            fontWeight:
-              600,
+            marginBottom: "8px",
+            fontSize: "12px",
+            fontWeight: 600,
           }}
         >
-          {productStatus ===
-          "published" ? (
+          {productStatus === "published" ? (
             <>
               <FiEye />
 
-              <span>
-                Published
-              </span>
+              <span>Published</span>
             </>
           ) : (
             <>
               <FiEyeOff />
 
-              <span>
-                Unpublished
-              </span>
+              <span>Unpublished</span>
             </>
           )}
         </div>
@@ -3043,38 +2068,20 @@ const ProductCardItem = ({
         <div className="catagory-priceRow">
           <div className="catagory-prices">
             <span className="catagory-sellPrice">
-              ₹
-              {Number(
-                product.sellingPrice ||
-                  0,
-              ).toFixed(2)}
+              ₹{Number(product.sellingPrice || 0).toFixed(2)}
             </span>
 
             {product.originalPrice &&
-              Number(
-                product.originalPrice,
-              ) >
-                Number(
-                  product.sellingPrice,
-                ) && (
+              Number(product.originalPrice) > Number(product.sellingPrice) && (
                 <span className="catagory-origPrice">
-                  ₹
-                  {Number(
-                    product.originalPrice,
-                  ).toFixed(2)}
+                  ₹{Number(product.originalPrice).toFixed(2)}
                 </span>
               )}
           </div>
 
-          {Number(
-            product.discount ||
-              0,
-          ) > 0 && (
+          {Number(product.discount || 0) > 0 && (
             <span className="catagory-discountTag">
-              {
-                product.discount
-              }
-              % OFF
+              {product.discount}% OFF
             </span>
           )}
         </div>
@@ -3085,12 +2092,7 @@ const ProductCardItem = ({
           <button
             type="button"
             className="catagory-actionBtn edit"
-            onClick={(e) =>
-              onEdit(
-                product,
-                e,
-              )
-            }
+            onClick={(e) => onEdit(product, e)}
           >
             <FiEdit />
             Edit
@@ -3099,12 +2101,7 @@ const ProductCardItem = ({
           <button
             type="button"
             className="catagory-actionBtn delete"
-            onClick={(e) =>
-              onDelete(
-                product._id,
-                e,
-              )
-            }
+            onClick={(e) => onDelete(product._id, e)}
           >
             <FiTrash2 />
             Delete

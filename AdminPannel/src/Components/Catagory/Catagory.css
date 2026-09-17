@@ -1682,3 +1682,101 @@
   }
 
 }
+
+
+.catagory-cardBarcode {
+  width: 100%;
+  max-width: 260px;
+  margin: 14px auto 4px;
+  padding: 10px 10px 10px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-sizing: border-box;
+  text-align: center;
+  overflow: hidden;
+}
+
+.catagory-barcodeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 9px;
+  padding: 0 4px;
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+
+.catagory-barcodeType {
+  padding: 3px 6px;
+  border-radius: 5px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 8px;
+  letter-spacing: 0.6px;
+}
+
+.catagory-barcodeCanvas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 64px;
+  padding: 7px 4px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.catagory-barcodeCanvas svg {
+  display: block;
+  width: 100%;
+  max-width: 235px;
+  height: auto;
+}
+
+.catagory-barcodeNumber {
+  margin-top: 8px;
+  color: #111827;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  word-break: break-all;
+}
+
+
+.catagory-barcodeUnavailable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 70px;
+  padding: 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.catagory-barcodeUnavailableIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 7px;
+  background: #e2e8f0;
+  color: #64748b;
+  font-size: 16px;
+}
