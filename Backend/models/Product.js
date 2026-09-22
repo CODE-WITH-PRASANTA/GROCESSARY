@@ -56,6 +56,15 @@ const productSchema = new mongoose.Schema(
       uppercase: true,
     },
 
+    // Barcode scanned by the cashier
+    barcode: {
+      type: String,
+      trim: true,
+      default: null,
+      unique: true,
+      sparse: true,
+    },
+
     // ====================================================
     // UNIT
     // ====================================================
@@ -246,7 +255,7 @@ const productSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // ======================================================
@@ -296,7 +305,4 @@ productSchema.index({
 // EXPORT
 // ======================================================
 
-module.exports = mongoose.model(
-  "Product",
-  productSchema
-);
+module.exports = mongoose.model("Product", productSchema);

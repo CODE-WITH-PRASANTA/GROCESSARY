@@ -17,7 +17,7 @@ import {
 
 import "./AddProducts.css";
 
-const API_BASE_URL = "http://localhost:5000";
+import API, { BASE_URL } from "../../../api/axios";
 
 const AddProducts = () => {
   const navigate = useNavigate();
@@ -52,6 +52,7 @@ const AddProducts = () => {
     category: "",
     brand: "",
     sku: "",
+    barcode: "",
     unit: "",
     unitNo: 1,
     tags: "",
@@ -125,54 +126,19 @@ const AddProducts = () => {
       setErrorMsg("");
 
       const [categoryResponse, brandResponse, unitResponse] = await Promise.all(
-        [
-          fetch(`${API_BASE_URL}/api/categories`),
-
-          fetch(`${API_BASE_URL}/api/brands`),
-
-          fetch(`${API_BASE_URL}/api/units`),
-        ],
+        [API.get("/categories"), API.get("/brands"), API.get("/units")],
       );
 
-      const [categoryResult, brandResult, unitResult] = await Promise.all([
-        categoryResponse.json(),
-        brandResponse.json(),
-        unitResponse.json(),
-      ]);
-
-      // =================================================
-      // CATEGORY
-      // =================================================
-
-      if (categoryResponse.ok) {
-        setCategories(categoryResult?.data || []);
-      } else {
-        console.error("Category API error:", categoryResult);
-      }
-
-      // =================================================
-      // BRAND
-      // =================================================
-
-      if (brandResponse.ok) {
-        setBrands(brandResult?.data || []);
-      } else {
-        console.error("Brand API error:", brandResult);
-      }
-
-      // =================================================
-      // UNIT
-      // =================================================
-
-      if (unitResponse.ok) {
-        setUnits(unitResult?.data || []);
-      } else {
-        console.error("Unit API error:", unitResult);
-      }
+      setCategories(categoryResponse.data?.data || []);
+      setBrands(brandResponse.data?.data || []);
+      setUnits(unitResponse.data?.data || []);
     } catch (error) {
       console.error("Master data error:", error);
 
-      setErrorMsg("Failed to load category, brand or unit data.");
+      setErrorMsg(
+        error.response?.data?.message ||
+          "Failed to load category, brand or unit data.",
+      );
     } finally {
       setLoadingMasterData(false);
     }
@@ -200,15 +166,10 @@ const AddProducts = () => {
       setLoadingProduct(true);
       setErrorMsg("");
 
-      const response = await fetch(`${API_BASE_URL}/api/import/${productId}`);
+      const response = await API.get(`/products/${productId}`);
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result?.message || "Failed to fetch product.");
-      }
-
-      const product = result?.data || result?.product || result;
+      const product =
+        response.data?.product || response.data?.data || response.data;
 
       if (!product?._id) {
         throw new Error("Product not found.");
@@ -216,21 +177,13 @@ const AddProducts = () => {
 
       setEditingProduct(product);
 
-      // ===============================================
-      // SET FORM DATA
-      // ===============================================
-
       setFormData({
         productName: product.productName || product.name || "",
-
         slug: product.slug || "",
-
         category: getId(product.category),
-
         brand: getId(product.brand),
-
         sku: product.sku || "",
-
+        barcode: product.barcode || "",
         unit: getId(product.unit),
         unitNo: product.unitNo ?? 1,
 
@@ -239,11 +192,8 @@ const AddProducts = () => {
           : product.tags || "",
 
         shortDescription: product.shortDescription || "",
-
         fullDescription: product.fullDescription || "",
-
         metaTitle: product.metaTitle || "",
-
         metaDescription: product.metaDescription || "",
 
         metaKeywords: Array.isArray(product.metaKeywords)
@@ -255,88 +205,35 @@ const AddProducts = () => {
                 .filter(Boolean)
             : [],
 
-        // ==========================================
-        // PRICE
-        // ==========================================
-
         price: product.price ?? product.sellingPrice ?? "",
-
-        // ==========================================
-        // WRITTEN PRICE
-        // ==========================================
-
         writtenPrice: product.writtenPrice ?? "",
-
-        // ==========================================
-        // DISCOUNT PRICE
-        // ==========================================
-
         discountPrice: product.discountPrice ?? "",
-
-        // ==========================================
-        // COST PRICE
-        // Imported Excel uses purchasePrice
-        // ==========================================
-
         costPrice: product.costPrice ?? product.purchasePrice ?? "",
-
-        // ==========================================
-        // MANUFACTURE DATE
-        // ==========================================
 
         manufactureDate: product.manufactureDate
           ? String(product.manufactureDate).slice(0, 10)
           : "",
 
-        // ==========================================
-        // EXPIRY DATE
-        // ==========================================
-
         expiryDate: product.expiryDate
           ? String(product.expiryDate).slice(0, 10)
           : "",
 
-        // ==========================================
-        // STOCK
-        // Imported Excel uses stock
-        // ==========================================
-
         stockQuantity: product.stockQuantity ?? product.stock ?? "",
-
-        // ==========================================
-        // LOW STOCK
-        // ==========================================
-
         lowStockAlert: product.lowStockAlert ?? "",
-
-        // ==========================================
-        // TAX
-        // ==========================================
-
         tax: product.tax ?? "",
-
-        // ==========================================
-        // OUT OF STOCK
-        // ==========================================
-
         isOutOfStock: product.isOutOfStock || false,
-
-        // ==========================================
-        // STATUS
-        // ==========================================
-
         status: product.status || "active",
       });
-
-      // ===============================================
-      // EXISTING IMAGES
-      // ===============================================
 
       setExistingImages(Array.isArray(product.images) ? product.images : []);
     } catch (error) {
       console.error("Fetch product by ID error:", error);
 
-      setErrorMsg(error.message || "Failed to load product.");
+      setErrorMsg(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to load product.",
+      );
     } finally {
       setLoadingProduct(false);
     }
@@ -504,7 +401,7 @@ const AddProducts = () => {
         brand: getId(editingProduct.brand),
 
         sku: editingProduct.sku || "",
-
+        barcode: editingProduct.barcode || "",
         unit: getId(editingProduct.unit),
         unitNo: editingProduct.unitNo ?? 1,
 
@@ -657,30 +554,19 @@ const AddProducts = () => {
 
     setErrorMsg("");
 
-    // =================================================
-    // VALIDATION
-    // =================================================
-
     const validationError = validateForm();
 
     if (validationError) {
       setErrorMsg(validationError);
-
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // ===============================================
-      // FORM DATA
-      // ===============================================
-
       const data = new FormData();
 
-      // ===============================================
-      // NORMAL FORM FIELDS
-      // ===============================================
+      // Normal form fields
       Object.keys(formData).forEach((key) => {
         if (key === "metaKeywords") {
           data.append(key, JSON.stringify(formData.metaKeywords || []));
@@ -689,68 +575,29 @@ const AddProducts = () => {
         }
       });
 
-      // ===============================================
-      // NEW IMAGES
-      // ===============================================
-
+      // New images
       productImages.forEach((imgObj) => {
         data.append("images", imgObj.file);
       });
 
-      // ===============================================
-      // EXISTING IMAGES
-      // ===============================================
-
+      // Existing images
       data.append("existingImages", JSON.stringify(existingImages));
-
-      // ===============================================
-      // EDIT OR CREATE
-      // ===============================================
 
       const isEditMode = Boolean(editingProduct?._id);
 
-      const url = isEditMode
-        ? `${API_BASE_URL}/api/products/${editingProduct._id}`
-        : `${API_BASE_URL}/api/products`;
-      // ===============================================
-      // REQUEST
-      // ===============================================
+      let response;
 
-      const response = await fetch(url, {
-        method: isEditMode ? "PUT" : "POST",
-
-        body: data,
-      });
-
-      // ===============================================
-      // RESPONSE
-      // ===============================================
-
-      let result;
-
-      try {
-        result = await response.json();
-      } catch (jsonError) {
-        throw new Error("Invalid response from server.");
+      if (isEditMode) {
+        response = await API.put(`/products/${editingProduct._id}`, data);
+      } else {
+        response = await API.post("/products", data);
       }
 
-      // ===============================================
-      // ERROR
-      // ===============================================
+      const result = response.data;
 
-      if (!response.ok) {
-        throw new Error(result?.message || "Failed to save product.");
-      }
-
-      // ===============================================
-      // SUCCESS
-      // ===============================================
+      console.log("Save product response:", result);
 
       alert(`Product ${isEditMode ? "Updated" : "Created"} Successfully!`);
-
-      // ===============================================
-      // CLEANUP
-      // ===============================================
 
       productImages.forEach((img) => {
         if (img.url) {
@@ -760,17 +607,17 @@ const AddProducts = () => {
 
       setProductImages([]);
 
-      // ===============================================
-      // NAVIGATE
-      // ===============================================
-
       navigate("/products/all-products", {
         replace: true,
       });
-    } catch (err) {
-      console.error("Save product error:", err);
+    } catch (error) {
+      console.error("Save product error:", error);
 
-      setErrorMsg(err.message || "Something went wrong while saving.");
+      setErrorMsg(
+        error.response?.data?.message ||
+          error.message ||
+          "Something went wrong while saving.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -807,7 +654,7 @@ const AddProducts = () => {
       return img;
     }
 
-    return `${API_BASE_URL}${img.startsWith("/") ? "" : "/"}${img}`;
+    return `${BASE_URL}${img.startsWith("/") ? "" : "/"}${img}`;
   };
 
   const handleMetaKeywordKeyDown = (e) => {
@@ -1031,6 +878,23 @@ const AddProducts = () => {
                 value={formData.sku}
                 onChange={handleChange}
                 required
+              />
+            </div>
+
+            {/* ===================================================== */}
+            {/* BARCODE */}
+            {/* ===================================================== */}
+
+            <div className="gs-form-group">
+              <label>Barcode</label>
+
+              <input
+                type="text"
+                name="barcode"
+                placeholder="Enter or scan barcode"
+                value={formData.barcode}
+                onChange={handleChange}
+                autoComplete="off"
               />
             </div>
             {/* ===========================================

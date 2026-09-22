@@ -1,58 +1,19 @@
-// ProductDetailsTestimonials.jsx
-import React, { useState, useEffect } from 'react';
-import './ProductDetailsTestimonials.css';
-import { FaStar, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import React, { useEffect, useState } from "react";
+import "./ProductDetailsTestimonials.css";
 
-const testimonialsData = [
-  {
-    id: 1,
-    score: '4.5 / 5.0',
-    rating: 5,
-    title: 'Great Customer Support',
-    text: "I'm so happy with my purchase from [company name]. The product is exactly what I was looking for, and it's even better...",
-    customerName: 'Ewan Sharpe',
-    role: 'Developer',
-    productName: 'Basil Leaves',
-    customerImage: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=120&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 2,
-    score: '4.5 / 5.0',
-    rating: 5,
-    title: 'Helpful Products',
-    text: 'Great theme with LOTS of options and GREAT support. Their support is awesome. Great communication and...',
-    customerName: 'Sarah Williams',
-    role: 'Patient',
-    productName: 'Basil Leaves',
-    customerImage: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=120&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 3,
-    score: '4.5 / 5.0',
-    rating: 5,
-    title: 'Excellent service!',
-    text: 'I was so impressed with the customer service I received from [company name]. The staff was friendly and helpful,...',
-    customerName: 'john doe',
-    role: 'Client',
-    productName: 'Basil Leaves',
-    customerImage: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=120&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 4,
-    score: '4.5 / 5.0',
-    rating: 5,
-    title: 'Great Products',
-    text: "I was hesitant to order online, but I'm so glad I did! The product arrived quickly and in perfect condition. I would...",
-    customerName: 'Isabel Hanson',
-    role: 'SEO',
-    productName: 'Basil Leaves',
-    customerImage: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=120&auto=format&fit=crop&q=80',
-  },
-];
+import {
+  FaStar,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
 
-const ProductDetailsTestimonials = () => {
+import API from "../../api/axios"; // Update this import according to your API file
+
+const ProductDetailsTestimonials = ({ productId }) => {
+  const [testimonialsData, setTestimonialsData] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cardsPerView, setCardsPerView] = useState(3);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const handleResize = () => {
@@ -66,50 +27,141 @@ const ProductDetailsTestimonials = () => {
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
-  const maxIndex = Math.max(0, testimonialsData.length - cardsPerView);
+  useEffect(() => {
+    const fetchProductReviews = async () => {
+      if (!productId) {
+        setTestimonialsData([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        const response = await API.get(
+          `/reviews/product/${productId}`
+        );
+
+        const reviews = response.data?.reviews || [];
+
+        // Backend already returns published reviews sorted by latest.
+        // Take only the latest four reviews.
+        const latestReviews = reviews.slice(0, 4);
+
+        const formattedReviews = latestReviews.map((review) => {
+          const customerName =
+            review.reviewerName ||
+            review.user?.name ||
+            "Anonymous Customer";
+
+          const customerImage =
+            review.user?.profileImage ||
+            review.user?.avatar ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+              customerName
+            )}&background=d1fae5&color=047857`;
+
+          return {
+            id: review._id,
+            score: `${review.rating}.0 / 5.0`,
+            rating: Number(review.rating) || 0,
+            title: review.title || "Customer Review",
+            text: review.comment || "",
+            customerName,
+            role: review.user ? "Verified Customer" : "Customer",
+            productName:
+              review.product?.productName || "this product",
+            customerImage,
+          };
+        });
+
+        setTestimonialsData(formattedReviews);
+        setCurrentIndex(0);
+      } catch (error) {
+        console.error("Error fetching product reviews:", error);
+        setTestimonialsData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductReviews();
+  }, [productId]);
+
+  const maxIndex = Math.max(
+    0,
+    testimonialsData.length - cardsPerView
+  );
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : maxIndex));
+    setCurrentIndex((prev) =>
+      prev > 0 ? prev - 1 : maxIndex
+    );
   };
 
   const nextSlide = () => {
-    setCurrentIndex((prev) => (prev < maxIndex ? prev + 1 : 0));
+    setCurrentIndex((prev) =>
+      prev < maxIndex ? prev + 1 : 0
+    );
   };
+
+  if (loading) {
+    return (
+      <section className="product-details-testimonials">
+        <div className="product-details-testimonials__container">
+          <p>Loading reviews...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (!testimonialsData.length) {
+    return null;
+  }
 
   return (
     <section className="product-details-testimonials">
       <div className="product-details-testimonials__container">
         {/* Left Side Info */}
         <div className="product-details-testimonials__intro">
-          <h2 className="product-details-testimonials__title">Testimonials</h2>
+          <h2 className="product-details-testimonials__title">
+            Customer Reviews
+          </h2>
+
           <p className="product-details-testimonials__description">
-            Grocery stores are an important part of the food supply chain. They
-            provide a convenient way for consumers to purchase a variety of food
-            products, and they play a role in ensuring that food is safe and
-            accessible to everyone.
+            See what customers are saying about this product.
+            These reviews are published by our admin team.
           </p>
         </div>
 
         {/* Right Side Carousel */}
         <div className="product-details-testimonials__carousel-wrapper">
-          <button
-            type="button"
-            className="product-details-testimonials__arrow product-details-testimonials__arrow--prev"
-            onClick={prevSlide}
-            aria-label="Previous testimonial"
-          >
-            <FaChevronLeft />
-          </button>
+          {testimonialsData.length > cardsPerView && (
+            <button
+              type="button"
+              className="product-details-testimonials__arrow product-details-testimonials__arrow--prev"
+              onClick={prevSlide}
+              aria-label="Previous testimonial"
+            >
+              <FaChevronLeft />
+            </button>
+          )}
 
           <div className="product-details-testimonials__slider-viewport">
             <div
               className="product-details-testimonials__track"
               style={{
-                transform: `translateX(-${currentIndex * (100 / cardsPerView)}%)`,
+                transform: `translateX(-${
+                  currentIndex * (100 / cardsPerView)
+                }%)`,
               }}
             >
               {testimonialsData.map((item) => (
@@ -118,37 +170,49 @@ const ProductDetailsTestimonials = () => {
                   key={item.id}
                 >
                   <div className="product-details-testimonials__card">
-                    {/* Rating Bar */}
+                    {/* Rating Header */}
                     <div className="product-details-testimonials__rating-header">
                       <div className="product-details-testimonials__stars">
-                        {[...Array(item.rating)].map((_, i) => (
-                          <FaStar key={i} />
+                        {[...Array(item.rating)].map((_, index) => (
+                          <FaStar key={index} />
                         ))}
                       </div>
+
                       <span className="product-details-testimonials__score">
                         {item.score}
                       </span>
                     </div>
 
-                    {/* Review Title & Body */}
+                    {/* Review Title */}
                     <h3 className="product-details-testimonials__review-title">
                       {item.title}
                     </h3>
+
+                    {/* Review Comment */}
                     <p className="product-details-testimonials__review-text">
                       {item.text}
                     </p>
 
-                    {/* Customer Info */}
+                    {/* Customer Information */}
                     <div className="product-details-testimonials__customer">
                       <img
                         src={item.customerImage}
                         alt={item.customerName}
                         className="product-details-testimonials__avatar"
+                        onError={(event) => {
+                          event.currentTarget.src =
+                            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                              item.customerName
+                            )}&background=d1fae5&color=047857`;
+                        }}
                       />
+
                       <div className="product-details-testimonials__meta">
                         <p className="product-details-testimonials__name-role">
-                          <strong>{item.customerName}</strong>, {item.role}
+                          <strong>{item.customerName}</strong>,{" "}
+                          {item.role}
                         </p>
+
                         <p className="product-details-testimonials__product-ref">
                           about {item.productName}
                         </p>
@@ -160,14 +224,16 @@ const ProductDetailsTestimonials = () => {
             </div>
           </div>
 
-          <button
-            type="button"
-            className="product-details-testimonials__arrow product-details-testimonials__arrow--next"
-            onClick={nextSlide}
-            aria-label="Next testimonial"
-          >
-            <FaChevronRight />
-          </button>
+          {testimonialsData.length > cardsPerView && (
+            <button
+              type="button"
+              className="product-details-testimonials__arrow product-details-testimonials__arrow--next"
+              onClick={nextSlide}
+              aria-label="Next testimonial"
+            >
+              <FaChevronRight />
+            </button>
+          )}
         </div>
       </div>
     </section>

@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const path = require("path");
+const cookieParser = require("cookie-parser");
 
 const connectDB = require("./config/db");
 
@@ -18,6 +19,7 @@ const authRoutes = require("./routes/authRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const todayDiscountRoutes = require("./routes/todayDiscountRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 // Load environment variables
 dotenv.config();
@@ -60,7 +62,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
+// Static uploads folder
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
@@ -77,12 +81,23 @@ app.use("/api/auth", authRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/today-discounts", todayDiscountRoutes);
+app.use("/api/admin", adminRoutes);
 
-// Test Route
+// Test route
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
     message: "Server is running successfully",
+  });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("Server Error:", err);
+
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
   });
 });
 

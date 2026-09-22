@@ -50,7 +50,7 @@ router.post(
 
 router.get(
   "/admin/all",
-  protect,
+  
   getAllReviews
 );
 
@@ -62,7 +62,7 @@ router.get(
 
 router.put(
   "/admin/:reviewId/publish",
-  protect,
+ 
   publishReview
 );
 
@@ -75,7 +75,7 @@ router.put(
 
 router.put(
   "/admin/:reviewId/reject",
-  protect,
+  
   rejectReview
 );
 
@@ -89,7 +89,7 @@ router.put(
 
 router.put(
   "/admin/:reviewId/unpublish",
-  protect,
+  
   unpublishReview
 );
 
@@ -100,7 +100,7 @@ router.put(
 
 router.delete(
   "/:reviewId",
-  protect,
+ 
   deleteReview
 );
 

@@ -8,8 +8,7 @@ import {
   FiMaximize, FiMinimize, FiCode, FiMinus, FiExternalLink
 } from 'react-icons/fi';
 import './BlogPosting.css';
-
-const API_BASE_URL = 'http://localhost:5000/api/blogs';
+import API from "../../api/axios";
 
 const BlogPosting = () => {
   const { id: urlId } = useParams();
@@ -44,17 +43,17 @@ const BlogPosting = () => {
   const fileInputRef = useRef(null);
   const contentTextareaRef = useRef(null);
 
-  // Load all blogs for table
+  // Load all blogs for table using centralized Axios instance
   const loadBlogs = async () => {
     try {
       setIsLoading(true);
       const url = appliedCategoryFilter && appliedCategoryFilter !== 'All Categories'
-        ? `${API_BASE_URL}?category=${encodeURIComponent(appliedCategoryFilter)}`
-        : API_BASE_URL;
-      const res = await fetch(url);
-      const json = await res.json();
-      if (json.success) {
-        setBlogs(json.data || []);
+        ? `/blogs?category=${encodeURIComponent(appliedCategoryFilter)}`
+        : '/blogs';
+      
+      const res = await API.get(url);
+      if (res.data.success) {
+        setBlogs(res.data.data || []);
       } else {
         setBlogs([]);
       }
@@ -75,10 +74,9 @@ const BlogPosting = () => {
     if (urlId) {
       const fetchBlogDetails = async () => {
         try {
-          const res = await fetch(`${API_BASE_URL}/${urlId}`);
-          const json = await res.json();
-          if (json.success && json.data) {
-            const blog = json.data;
+          const res = await API.get(`/blogs/${urlId}`);
+          if (res.data.success && res.data.data) {
+            const blog = res.data.data;
             setEditingId(blog._id);
             setFormData({
               title: blog.title || '',
@@ -163,14 +161,13 @@ const BlogPosting = () => {
       publishDate: ''
     });
     if (fileInputRef.current) fileInputRef.current.value = '';
-    if (urlId) navigate('/blog');
+    if (urlId) navigate('/blog/management');
   };
 
   const handleEditClick = (blog) => {
     navigate(`/blog/edit/${blog._id}`);
   };
 
-  // Navigates directly to /news/:id
   const handleReadMoreNavigation = (blogId) => {
     navigate(`/news/${blogId}`);
   };
@@ -198,40 +195,31 @@ const BlogPosting = () => {
       });
 
       if (editingId) {
-        const res = await fetch(`${API_BASE_URL}/${editingId}`, {
-          method: 'PUT',
-          body: data
-        });
-        const json = await res.json();
-        if (!json.success) throw new Error(json.message || 'Failed to update blog');
+        const res = await API.put(`/blogs/${editingId}`, data);
+        if (!res.data.success) throw new Error(res.data.message || 'Failed to update blog');
         alert('Blog updated successfully!');
       } else {
-        const res = await fetch(API_BASE_URL, {
-          method: 'POST',
-          body: data
-        });
-        const json = await res.json();
-        if (!json.success) throw new Error(json.message || 'Failed to publish blog');
+        const res = await API.post('/blogs', data);
+        if (!res.data.success) throw new Error(res.data.message || 'Failed to publish blog');
         alert('Blog published successfully!');
       }
 
       handleReset();
       loadBlogs();
     } catch (error) {
-      alert(`Error saving blog: ${error.message}`);
+      alert(`Error saving blog: ${error.response?.data?.message || error.message}`);
     }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this blog?')) {
       try {
-        const res = await fetch(`${API_BASE_URL}/${id}`, { method: 'DELETE' });
-        const json = await res.json();
-        if (!json.success) throw new Error(json.message || 'Failed to delete blog');
+        const res = await API.delete(`/blogs/${id}`);
+        if (!res.data.success) throw new Error(res.data.message || 'Failed to delete blog');
         loadBlogs();
         if (editingId === id) handleReset();
       } catch (error) {
-        alert(`Error deleting blog: ${error.message}`);
+        alert(`Error deleting blog: ${error.response?.data?.message || error.message}`);
       }
     }
   };
@@ -254,12 +242,7 @@ const BlogPosting = () => {
 
   return (
     <div className="BlogPosting">
-      {/* Top Metric Cards */}
-
-      {/* Top Action Bar */}
-      
-     
-      {/* Top Metric Cards Row (With Hover Animations) */}
+      {/* Top Metric Cards Row */}
       <div className="BlogPosting__metrics-grid">
         <div className="BlogPosting__metric-card">
           <div className="BlogPosting__metric-icon BlogPosting__metric-icon--green"><FiTag /></div>
@@ -586,7 +569,6 @@ const BlogPosting = () => {
                       </td>
                       <td>
                         <div className="BlogPosting__action-btns">
-                          {/* Navigate to /news/:id for reading the blog */}
                           <button 
                             type="button" 
                             className="BlogPosting__action-view" 

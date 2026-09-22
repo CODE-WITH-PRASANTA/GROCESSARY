@@ -12,20 +12,24 @@ const normalizeString = (value) => {
   return String(value).trim();
 };
 
+const normalizeBarcode = (value) => {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  const barcode = String(value).trim();
+
+  return barcode || null;
+};
+
 const normalizeArray = (value) => {
-  if (
-    value === undefined ||
-    value === null ||
-    value === ""
-  ) {
+  if (value === undefined || value === null || value === "") {
     return [];
   }
 
   // Already an array
   if (Array.isArray(value)) {
-    return value
-      .map((item) => String(item).trim())
-      .filter(Boolean);
+    return value.map((item) => String(item).trim()).filter(Boolean);
   }
 
   // JSON array coming from FormData
@@ -40,9 +44,7 @@ const normalizeArray = (value) => {
       const parsed = JSON.parse(trimmedValue);
 
       if (Array.isArray(parsed)) {
-        return parsed
-          .map((item) => String(item).trim())
-          .filter(Boolean);
+        return parsed.map((item) => String(item).trim()).filter(Boolean);
       }
     } catch (error) {
       // Not JSON, continue as comma-separated text
@@ -419,6 +421,12 @@ const createProduct = async (req, res) => {
     }
 
     // ==================================================
+    // BARCODE
+    // ==================================================
+
+    const barcode = normalizeBarcode(body.barcode);
+
+    // ==================================================
     // DUPLICATE SKU
     // ==================================================
 
@@ -432,6 +440,19 @@ const createProduct = async (req, res) => {
 
         message: "SKU already exists.",
       });
+    }
+
+    if (barcode) {
+      const existingBarcode = await Product.findOne({
+        barcode,
+      });
+
+      if (existingBarcode) {
+        return res.status(409).json({
+          success: false,
+          message: "Barcode already exists.",
+        });
+      }
     }
 
     // ==================================================
@@ -506,6 +527,7 @@ const createProduct = async (req, res) => {
       brand: body.brand || null,
 
       sku,
+      barcode,
 
       unit,
       unitNo,
@@ -570,7 +592,7 @@ const createProduct = async (req, res) => {
       return res.status(409).json({
         success: false,
 
-        message: "Product with the same SKU or slug already exists.",
+        message: "Product with the same SKU, barcode, or slug already exists.",
       });
     }
 
@@ -676,6 +698,32 @@ const updateProduct = async (req, res) => {
       }
 
       product.sku = sku;
+    }
+
+    // ==================================================
+    // BARCODE
+    // ==================================================
+
+    if (body.barcode !== undefined) {
+      const barcode = normalizeBarcode(body.barcode);
+
+      if (barcode) {
+        const duplicateBarcode = await Product.findOne({
+          barcode,
+          _id: {
+            $ne: product._id,
+          },
+        });
+
+        if (duplicateBarcode) {
+          return res.status(409).json({
+            success: false,
+            message: "Barcode already exists.",
+          });
+        }
+      }
+
+      product.barcode = barcode;
     }
 
     // ==================================================
@@ -878,7 +926,7 @@ const updateProduct = async (req, res) => {
       return res.status(409).json({
         success: false,
 
-        message: "SKU or slug already exists.",
+        message: "SKU, barcode, or slug already exists.",
       });
     }
 
