@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AllProduct.css";
-
-const API_BASE_URL = "http://localhost:5000";
+import API, { BASE_URL } from "../../../api/axios";
 
 const Allproduct = () => {
   const navigate = useNavigate();
@@ -20,7 +19,6 @@ const Allproduct = () => {
   // ======================================================
 
   const [activeTab, setActiveTab] = useState("All Products");
-
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
 
   // ======================================================
@@ -28,7 +26,6 @@ const Allproduct = () => {
   // ======================================================
 
   const [showFilterBar, setShowFilterBar] = useState(false);
-
   const [searchTerm, setSearchTerm] = useState("");
 
   // ======================================================
@@ -36,14 +33,13 @@ const Allproduct = () => {
   // ======================================================
 
   const [currentPage, setCurrentPage] = useState(1);
-
   const itemsPerPage = 1000;
+
   // ======================================================
   // VIEW MODAL
   // ======================================================
 
   const [showViewModal, setShowViewModal] = useState(false);
-
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   // ======================================================
@@ -56,15 +52,8 @@ const Allproduct = () => {
       setIsLoading(true);
       setErrorMessage("");
 
-      const response = await fetch(`${API_BASE_URL}/api/products?limit=1000`);
-
-      const result = await response.json();
-
-      
-
-      if (!response.ok) {
-        throw new Error(result?.message || "Failed to fetch products");
-      }
+      const response = await API.get("/products?limit=1000");
+      const result = response.data;
 
       // =====================================================
       // SUPPORT BOTH API RESPONSE FORMATS
@@ -78,13 +67,9 @@ const Allproduct = () => {
         productList = result.data;
       } else if (Array.isArray(result?.result)) {
         productList = result.result;
+      } else if (Array.isArray(result)) {
+        productList = result;
       }
-
-      
-
-      // =====================================================
-      // SHOW BOTH IMPORT + MANUAL PRODUCTS
-      // =====================================================
 
       setProducts(productList);
 
@@ -93,10 +78,8 @@ const Allproduct = () => {
       }
     } catch (error) {
       console.error("Fetch Products Error:", error);
-
       setProducts([]);
-
-      setErrorMessage(error.message || "Error connecting to server.");
+      setErrorMessage(error.response?.data?.message || error.message || "Error connecting to server.");
     } finally {
       setIsLoading(false);
     }
@@ -123,14 +106,14 @@ const Allproduct = () => {
   // ======================================================
 
   const handleEditProduct = (product) => {
-  if (!product?._id) {
-    console.error("Product ID is missing:", product);
-    alert("Product ID is missing.");
-    return;
-  }
+    if (!product?._id) {
+      console.error("Product ID is missing:", product);
+      alert("Product ID is missing.");
+      return;
+    }
 
-  navigate(`/products/add-product/${product._id}`);
-};
+    navigate(`/products/add-product/${product._id}`);
+  };
 
   // ======================================================
   // VIEW PRODUCT
@@ -162,11 +145,11 @@ const Allproduct = () => {
         return "https://via.placeholder.com/80";
       }
 
-      if (imgPath.startsWith("http://") || imgPath.startsWith("https://")) {
+      if (imgPath.startsWith("http://") || imgPath.startsWith("https://") || imgPath.startsWith("blob:")) {
         return imgPath;
       }
 
-      return `${API_BASE_URL}${imgPath.startsWith("/") ? "" : "/"}${imgPath}`;
+      return `${BASE_URL}${imgPath.startsWith("/") ? "" : "/"}${imgPath}`;
     }
 
     return "https://via.placeholder.com/80";
@@ -237,23 +220,12 @@ const Allproduct = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/products/${id}`, {
-        method: "DELETE",
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result?.message || "Failed to delete product");
-      }
-
+      await API.delete(`/products/${id}`);
       alert("Product deleted successfully!");
-
       await fetchProducts();
     } catch (error) {
       console.error("Delete Product Error:", error);
-
-      alert(error.message || "Failed to delete product");
+      alert(error.response?.data?.message || error.message || "Failed to delete product");
     }
   };
 
@@ -273,9 +245,7 @@ const Allproduct = () => {
     const csvRows = filteredProducts
       .map((p) => {
         const category = getCategoryName(p);
-
         const brand = getBrandName(p);
-
         const unit = getUnitName(p);
 
         return (
@@ -298,19 +268,12 @@ const Allproduct = () => {
     });
 
     const url = window.URL.createObjectURL(blob);
-
     const a = document.createElement("a");
-
     a.href = url;
-
     a.download = "products_export.csv";
-
     document.body.appendChild(a);
-
     a.click();
-
     document.body.removeChild(a);
-
     window.URL.revokeObjectURL(url);
   };
 
@@ -320,15 +283,10 @@ const Allproduct = () => {
 
   const filteredProducts = products.filter((p) => {
     const pStatus = (p.status || "").toLowerCase();
-
     const pName = (p.productName || "").toLowerCase();
-
     const pSku = (p.sku || "").toLowerCase();
-
     const pCat = getCategoryName(p).toLowerCase();
-
     const pBrand = getBrandName(p).toLowerCase();
-
     const search = searchTerm.toLowerCase().trim();
 
     // ================================================
@@ -352,9 +310,7 @@ const Allproduct = () => {
 
     if (activeTab === "Low Stock") {
       const stock = Number(p.stockQuantity || 0);
-
       const alertLevel = Number(p.lowStockAlert || 5);
-
       matchesTab = stock > 0 && stock <= alertLevel;
     }
 
@@ -393,9 +349,7 @@ const Allproduct = () => {
   }, [currentPage, totalPages]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
-
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-
   const currentProducts = filteredProducts.slice(
     indexOfFirstItem,
     indexOfLastItem,
@@ -452,7 +406,6 @@ const Allproduct = () => {
       <div className="ap-header">
         <div>
           <h1 className="ap-title">Products</h1>
-
           <p className="ap-breadcrumb">
             Dashboard &gt; Products &gt; <span>All Products</span>
           </p>
@@ -468,29 +421,23 @@ const Allproduct = () => {
       <div className="ap-metrics-grid">
         <div className="ap-metric-card">
           <div className="ap-metric-icon ap-icon-bg-1">🛒</div>
-
           <div className="ap-metric-info">
             <span className="ap-metric-label">Total Products</span>
-
             <h2 className="ap-metric-value">{products.length}</h2>
-
             <span className="ap-metric-trend ap-trend-up">↑ Updated live</span>
           </div>
         </div>
 
         <div className="ap-metric-card">
           <div className="ap-metric-icon ap-icon-bg-2">📁</div>
-
           <div className="ap-metric-info">
             <span className="ap-metric-label">Categories</span>
-
             <h2 className="ap-metric-value">
               {
                 new Set(products.map((p) => getCategoryName(p)).filter(Boolean))
                   .size
               }
             </h2>
-
             <span className="ap-metric-trend ap-trend-up">
               ↑ Active categories
             </span>
@@ -499,10 +446,8 @@ const Allproduct = () => {
 
         <div className="ap-metric-card">
           <div className="ap-metric-icon ap-icon-bg-3">👁️</div>
-
           <div className="ap-metric-info">
             <span className="ap-metric-label">Active Products</span>
-
             <h2 className="ap-metric-value">
               {
                 products.filter(
@@ -510,17 +455,14 @@ const Allproduct = () => {
                 ).length
               }
             </h2>
-
             <span className="ap-metric-trend ap-trend-up">↑ Live in store</span>
           </div>
         </div>
 
         <div className="ap-metric-card">
           <div className="ap-metric-icon ap-icon-bg-4">🚫</div>
-
           <div className="ap-metric-info">
             <span className="ap-metric-label">Inactive Products</span>
-
             <h2 className="ap-metric-value">
               {
                 products.filter(
@@ -528,7 +470,6 @@ const Allproduct = () => {
                 ).length
               }
             </h2>
-
             <span className="ap-metric-trend ap-trend-down">
               ↓ Drafts/Hidden
             </span>
@@ -544,7 +485,6 @@ const Allproduct = () => {
         <div className="ap-categories-panel">
           <div className="ap-panel-header">
             <h3>Categories</h3>
-
             <button className="ap-btn-plus" onClick={handleAddProduct}>
               +
             </button>
@@ -562,14 +502,12 @@ const Allproduct = () => {
                   }`}
                   onClick={() => {
                     setSelectedCategory(cat.name);
-
                     setCurrentPage(1);
                   }}
                 >
                   <span className="ap-cat-name">
                     <span className="ap-cat-icon">{cat.icon}</span> {cat.name}
                   </span>
-
                   <span className="ap-cat-count">{catCount}</span>
                 </li>
               );
@@ -596,7 +534,6 @@ const Allproduct = () => {
                   className={`ap-tab ${activeTab === tab ? "active" : ""}`}
                   onClick={() => {
                     setActiveTab(tab);
-
                     setCurrentPage(1);
                   }}
                 >
@@ -629,7 +566,6 @@ const Allproduct = () => {
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
-
                   setCurrentPage(1);
                 }}
                 className="ap-search-input"
@@ -658,9 +594,7 @@ const Allproduct = () => {
                 }}
               >
                 {errorMessage}
-
                 <br />
-
                 <button
                   className="ap-btn-outline"
                   style={{
@@ -676,17 +610,11 @@ const Allproduct = () => {
                 <thead>
                   <tr>
                     <th>Product</th>
-
                     <th>Category</th>
-
                     <th>Price</th>
-
                     <th>Discount Price</th>
-
                     <th>Stock</th>
-
                     <th>Status</th>
-
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -706,12 +634,10 @@ const Allproduct = () => {
                                   "https://via.placeholder.com/80";
                               }}
                             />
-
                             <div>
                               <div className="ap-product-title">
                                 {prod.productName}
                               </div>
-
                               <div className="ap-product-sku">
                                 SKU: {prod.sku}
                               </div>
@@ -821,7 +747,6 @@ const Allproduct = () => {
           <div className="ap-modal ap-view-modal">
             <div className="ap-modal-header">
               <h3>Product Details</h3>
-
               <button className="ap-close-btn" onClick={closeViewModal}>
                 ✕
               </button>
@@ -837,12 +762,10 @@ const Allproduct = () => {
                     e.currentTarget.src = "https://via.placeholder.com/100";
                   }}
                 />
-
                 <div>
                   <h4 className="ap-view-title">
                     {selectedProduct.productName}
                   </h4>
-
                   <span className="ap-view-sku">
                     SKU: {selectedProduct.sku}
                   </span>
@@ -852,7 +775,6 @@ const Allproduct = () => {
               <div className="ap-view-grid">
                 <div className="ap-view-box">
                   <span className="ap-view-label">Category</span>
-
                   <span className="ap-view-val cat-badge">
                     {getCategoryName(selectedProduct) || "N/A"}
                   </span>
@@ -860,7 +782,6 @@ const Allproduct = () => {
 
                 <div className="ap-view-box">
                   <span className="ap-view-label">Brand</span>
-
                   <span className="ap-view-val">
                     {getBrandName(selectedProduct) || "N/A"}
                   </span>
@@ -868,7 +789,6 @@ const Allproduct = () => {
 
                 <div className="ap-view-box">
                   <span className="ap-view-label">Unit</span>
-
                   <span className="ap-view-val">
                     {getUnitName(selectedProduct) || "N/A"}
                   </span>
@@ -876,7 +796,6 @@ const Allproduct = () => {
 
                 <div className="ap-view-box">
                   <span className="ap-view-label">Status</span>
-
                   <span
                     className={`ap-status-badge ${(
                       selectedProduct.status || "active"
@@ -890,7 +809,6 @@ const Allproduct = () => {
 
                 <div className="ap-view-box">
                   <span className="ap-view-label">Regular Price</span>
-
                   <span className="ap-view-val price-regular">
                     ₹{parseFloat(selectedProduct.price || 0).toFixed(2)}
                   </span>
@@ -898,7 +816,6 @@ const Allproduct = () => {
 
                 <div className="ap-view-box">
                   <span className="ap-view-label">Discount Price</span>
-
                   <span className="ap-view-val price-discount">
                     ₹{parseFloat(selectedProduct.discountPrice || 0).toFixed(2)}
                   </span>
@@ -906,7 +823,6 @@ const Allproduct = () => {
 
                 <div className="ap-view-box full-width">
                   <span className="ap-view-label">Available Stock</span>
-
                   <span className="ap-view-val stock-val">
                     {selectedProduct.stockQuantity || 0}{" "}
                     {getUnitName(selectedProduct) || "Items"} in Stock
@@ -915,7 +831,6 @@ const Allproduct = () => {
 
                 <div className="ap-view-box full-width">
                   <span className="ap-view-label">Slug</span>
-
                   <span className="ap-view-val">
                     {selectedProduct.slug || "N/A"}
                   </span>
@@ -923,7 +838,6 @@ const Allproduct = () => {
 
                 <div className="ap-view-box full-width">
                   <span className="ap-view-label">Short Description</span>
-
                   <span className="ap-view-val">
                     {selectedProduct.shortDescription || "N/A"}
                   </span>
