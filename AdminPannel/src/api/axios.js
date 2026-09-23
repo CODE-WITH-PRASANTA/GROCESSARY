@@ -4,7 +4,7 @@ import axios from "axios";
 // BASE URL
 // ========================================
 
-export const BASE_URL = "http://localhost:5000";
+export const BASE_URL = "http://localhost:5000"; // Update for production if needed
 export const API_URL = `${BASE_URL}/api`;
 export const IMG_URL = BASE_URL;
 
@@ -18,7 +18,6 @@ const API = axios.create({
   headers: {
     Accept: "application/json",
   },
-
   // Required for HTTP-only cookies
   withCredentials: true,
 });
@@ -29,7 +28,13 @@ const API = axios.create({
 
 API.interceptors.request.use(
   (config) => {
-    // Do not manually set Content-Type for FormData
+    // Attach token from localStorage if available
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Do not manually set Content-Type for FormData (let browser handle boundary)
     if (config.data instanceof FormData) {
       delete config.headers["Content-Type"];
     }
