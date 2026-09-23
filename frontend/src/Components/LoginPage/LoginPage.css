@@ -324,3 +324,102 @@
     gap: 12px;
   }
 }
+
+
+
+/* =====================================================
+   REFERRAL BANNER
+===================================================== */
+
+.auth-referral-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  margin: 0 auto 16px;
+  padding: 12px 18px;
+  max-width: 640px;
+
+  border-radius: 12px;
+
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  color: #047857;
+
+  border: 1px solid #a7f3d0;
+
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.auth-referral-code {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+
+  background: #047857;
+  color: #ffffff;
+
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+
+/* =====================================================
+   REFERRAL BANNER
+===================================================== */
+
+.auth-referral-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  margin: 0 auto 16px;
+  padding: 12px 18px;
+  max-width: 640px;
+
+  border-radius: 12px;
+
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  color: #047857;
+
+  border: 1px solid #a7f3d0;
+
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.auth-referral-code {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+
+  background: #047857;
+  color: #ffffff;
+
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+/* =====================================================
+   REFERRAL HINT (under the input)
+===================================================== */
+
+.auth-referral-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: #047857;
+  font-weight: 600;
+}

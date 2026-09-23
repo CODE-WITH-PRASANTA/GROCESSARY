@@ -1,33 +1,35 @@
 import React, { useEffect, useState } from "react";
 
 import "./ProductDetailsVegetables.css";
+
 import { Helmet } from "react-helmet-async";
+
 import Swal from "sweetalert2";
+
+import API from "../../api/axios";
+
+import { FaHeart } from "react-icons/fa";
 
 // ======================================================
 // LOCAL FALLBACK IMAGES
 // ======================================================
 
 import broccoliMain from "../../assets/vege1.webp";
+
 import broccoliThumb1 from "../../assets/vege2.webp";
+
 import broccoliThumb2 from "../../assets/vege4.webp";
 
+import { useNavigate } from "react-router-dom";
+
 const fallbackProductImages = [
-  broccoliMain ||
-    "https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?auto=format&fit=crop&w=800&q=80",
-
-  broccoliThumb1 ||
-    "https://images.unsplash.com/photo-1584270354949-c26b0d5b4a0c?auto=format&fit=crop&w=400&q=80",
-
-  broccoliThumb2 ||
-    "https://images.unsplash.com/photo-1583663848850-46af132dc08e?auto=format&fit=crop&w=400&q=80",
+  // broccoliMain ||
+  //   "https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?auto=format&fit=crop&w=800&q=80",
+  // broccoliThumb1 ||
+  //   "https://images.unsplash.com/photo-1584270354949-c26b0d5b4a0c?auto=format&fit=crop&w=400&q=80",
+  // broccoliThumb2 ||
+  //   "https://images.unsplash.com/photo-1583663848850-46af132dc08e?auto=format&fit=crop&w=400&q=80",
 ];
-
-// ======================================================
-// API
-// ======================================================
-
-const API_BASE_URL = "http://localhost:5000";
 
 // ======================================================
 // SVG ICONS
@@ -182,25 +184,16 @@ const ProductDetailsVegetables = ({ productId }) => {
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState("1 KG");
   const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const [isReviewPopupOpen, setIsReviewPopupOpen] = useState(false);
-
   const [reviewRating, setReviewRating] = useState(5);
-
   const [reviewTitle, setReviewTitle] = useState("");
-
   const [reviewMessage, setReviewMessage] = useState("");
-
   const [reviewImage, setReviewImage] = useState(null);
-
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
-
   const [reviewGuestName, setReviewGuestName] = useState("");
   const [reviewGuestEmail, setReviewGuestEmail] = useState("");
-
   const [reviews, setReviews] = useState([]);
   const [reviewSummary, setReviewSummary] = useState({
     totalReviews: 0,
@@ -214,6 +207,12 @@ const ProductDetailsVegetables = ({ productId }) => {
     },
   });
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const navigate = useNavigate();
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  const productName = product?.productName || product?.name || "Product";
+  const currentProductId = product?._id || product?.id || productId;
 
   // ====================================================
   // FETCH PRODUCT BY ID
@@ -231,29 +230,24 @@ const ProductDetailsVegetables = ({ productId }) => {
         setLoading(true);
         setError("");
 
-        const response = await fetch(
-          `${API_BASE_URL}/api/products/${productId}`,
-        );
+        const { data } = await API.get(`/products/${productId}`);
 
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result?.message || "Failed to fetch product.");
-        }
-
-        const productData = result?.product || result?.data || result;
+        const productData = data?.product || data?.data || data;
 
         if (!productData?._id) {
           throw new Error("Product not found.");
         }
 
         setProduct(productData);
-
         setActiveImage(0);
       } catch (err) {
         console.error("Product details fetch error:", err);
 
-        setError(err?.message || "Failed to load product.");
+        setError(
+          err.response?.data?.message ||
+            err?.message ||
+            "Failed to load product.",
+        );
       } finally {
         setLoading(false);
       }
@@ -271,7 +265,6 @@ const ProductDetailsVegetables = ({ productId }) => {
       return "";
     }
 
-    // Object image support
     if (typeof image === "object") {
       const objectImage = image?.url || image?.path || image?.secure_url || "";
 
@@ -286,8 +279,127 @@ const ProductDetailsVegetables = ({ productId }) => {
       return image;
     }
 
-    return `${API_BASE_URL}${image.startsWith("/") ? "" : "/"}${image}`;
+    // Use API's base URL prefix
+    const base =
+      API.defaults.baseURL?.replace(/\/api\/?$/, "") ||
+      "http://localhost:5000";
+
+    return `${base}${image.startsWith("/") ? "" : "/"}${image}`;
   };
+
+  const handleWishlist = async (productId) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("Please login first to add products to wishlist.");
+        navigate("/login");
+        return;
+      }
+
+      if (!productId) {
+        alert("Product ID is missing.");
+        return;
+      }
+
+      if (wishlistLoading) {
+        return;
+      }
+
+      setWishlistLoading(true);
+
+      // ==========================================
+      // REMOVE FROM WISHLIST
+      // ==========================================
+
+      if (isWishlisted) {
+        const response = await API.delete(`/wishlist/${productId}`);
+
+        if (response.data?.success) {
+          setIsWishlisted(false);
+
+          window.dispatchEvent(new Event("wishlistUpdated"));
+
+          Swal.fire({
+            icon: "success",
+            title: "Removed!",
+            text: response.data?.message || "Product removed from wishlist.",
+            confirmButtonText: "OK",
+          });
+        }
+
+        return;
+      }
+
+      // ==========================================
+      // ADD TO WISHLIST
+      // ==========================================
+
+      const response = await API.post(`/wishlist/${productId}`);
+
+      if (response.data?.success) {
+        setIsWishlisted(true);
+
+        window.dispatchEvent(new Event("wishlistUpdated"));
+
+        Swal.fire({
+          icon: "success",
+          title: "Added to Wishlist!",
+          text: response.data?.message || "Product added to wishlist.",
+          confirmButtonText: "OK",
+        });
+      }
+    } catch (error) {
+      console.error("Wishlist error:", error);
+
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+
+        alert("Your login session has expired.");
+
+        navigate("/login");
+
+        return;
+      }
+
+      if (error.response?.status === 409) {
+        setIsWishlisted(true);
+
+        alert(
+          error.response?.data?.message ||
+            "Product already exists in wishlist.",
+        );
+
+        return;
+      }
+
+      alert(error.response?.data?.message || "Unable to update wishlist.");
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const checkWishlistStatus = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        if (!token || !productId) {
+          setIsWishlisted(false);
+          return;
+        }
+
+        const response = await API.get(`/wishlist/check/${productId}`);
+
+        setIsWishlisted(Boolean(response.data?.isWishlisted));
+      } catch (error) {
+        console.error("Check wishlist error:", error);
+        setIsWishlisted(false);
+      }
+    };
+
+    checkWishlistStatus();
+  }, [productId]);
 
   // ====================================================
   // PRODUCT IMAGES
@@ -325,7 +437,7 @@ const ProductDetailsVegetables = ({ productId }) => {
   };
 
   // ====================================================
-  // CATEGORY NAME
+  // CATEGORY / BRAND / UNIT
   // ====================================================
 
   const categoryName =
@@ -333,19 +445,11 @@ const ProductDetailsVegetables = ({ productId }) => {
       ? product?.category?.name || "Category"
       : product?.category || "Category";
 
-  // ====================================================
-  // BRAND NAME
-  // ====================================================
-
   const brandName =
     typeof product?.brand === "object"
       ? product?.brand?.name || ""
       : product?.brand || "";
 
-  // ====================================================
-  // UNIT NAME
-  // ====================================================
-  // unitNo
   const unitName =
     typeof product?.unit === "object"
       ? product?.unit?.name || product?.unit?.symbol || ""
@@ -364,37 +468,23 @@ const ProductDetailsVegetables = ({ productId }) => {
   // ====================================================
 
   const price = Number(product?.price || 0);
-
-  // ====================================================
-  // TOTAL PRICE
-  // ====================================================
-
   const writtenPrice = Number(product?.writtenPrice || 0);
-
   const discountPrice = Number(product?.discountPrice || 0);
   const totalPrice = price * quantity;
 
-  // ====================================================
-  // STOCK
-  // ====================================================
-
   const stockQuantity = Number(product?.stockQuantity || 0);
 
-  // ====================================================
-  // DISCOUNT %
-  // ====================================================
-
   let discountPercent = 0;
-
   if (writtenPrice > price && writtenPrice > 0) {
     discountPercent = Math.round(((writtenPrice - price) / writtenPrice) * 100);
   }
 
+  // ====================================================
+  // ADD TO CART
+  // ====================================================
+
   const handleAddToCart = async () => {
     try {
-      // ==========================================
-      // CHECK PRODUCT
-      // ==========================================
       if (!product?._id) {
         Swal.fire({
           icon: "error",
@@ -405,9 +495,6 @@ const ProductDetailsVegetables = ({ productId }) => {
         return;
       }
 
-      // ==========================================
-      // CHECK QUANTITY
-      // ==========================================
       if (quantity < 1) {
         Swal.fire({
           icon: "warning",
@@ -418,9 +505,6 @@ const ProductDetailsVegetables = ({ productId }) => {
         return;
       }
 
-      // ==========================================
-      // CHECK STOCK
-      // ==========================================
       if (stockQuantity <= 0) {
         Swal.fire({
           icon: "error",
@@ -441,9 +525,6 @@ const ProductDetailsVegetables = ({ productId }) => {
         return;
       }
 
-      // ==========================================
-      // PRODUCT DATA FOR GUEST CART
-      // ==========================================
       const cartProduct = {
         productId: product._id,
         productName: product.productName || product.name || "Product",
@@ -459,14 +540,12 @@ const ProductDetailsVegetables = ({ productId }) => {
         stockQuantity: stockQuantity,
       };
 
-      // ==========================================
-      // CHECK LOGIN
-      // ==========================================
       const token = localStorage.getItem("token");
 
       // ==========================================
       // GUEST CART
       // ==========================================
+
       if (!token) {
         const existingCart = JSON.parse(
           localStorage.getItem("guestCart") || "[]",
@@ -497,7 +576,6 @@ const ProductDetailsVegetables = ({ productId }) => {
 
         localStorage.setItem("guestCart", JSON.stringify(existingCart));
 
-        // Optional event so navbar/cart icon can update immediately
         window.dispatchEvent(new Event("cartUpdated"));
 
         await Swal.fire({
@@ -513,49 +591,42 @@ const ProductDetailsVegetables = ({ productId }) => {
       }
 
       // ==========================================
-      // LOGGED-IN USER CART
+      // LOGGED-IN CART
       // ==========================================
-      const response = await fetch(`${API_BASE_URL}/api/cart/add`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          productId: product._id,
-          quantity: quantity,
-        }),
+
+      const response = await API.post("/cart/add", {
+        productId: product._id,
+        quantity: quantity,
       });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result?.message || "Failed to add product to cart.");
-      }
 
       window.dispatchEvent(new Event("cartUpdated"));
 
       await Swal.fire({
         icon: "success",
         title: "Added to Cart!",
-        text: result?.message || "Product added to cart successfully.",
+        text:
+          response.data?.message || "Product added to cart successfully.",
         confirmButtonText: "Continue Shopping",
         timer: 1800,
         timerProgressBar: true,
       });
     } catch (error) {
       console.error("Add to cart error:", error);
+
       await Swal.fire({
         icon: "error",
         title: "Unable to Add",
-        text: error?.message || "Unable to add product to cart.",
+        text:
+          error.response?.data?.message ||
+          error?.message ||
+          "Unable to add product to cart.",
         confirmButtonText: "OK",
       });
     }
   };
 
   // ====================================================
-  // OPEN REVIEW POPUP
+  // OPEN / CLOSE REVIEW POPUP
   // ====================================================
 
   const handleOpenReviewPopup = () => {
@@ -563,24 +634,15 @@ const ProductDetailsVegetables = ({ productId }) => {
     setReviewTitle("");
     setReviewMessage("");
     setReviewImage(null);
-
     setIsReviewPopupOpen(true);
   };
-  // ====================================================
-  // CLOSE REVIEW POPUP
-  // ====================================================
 
   const handleCloseReviewPopup = () => {
     if (reviewSubmitting) {
       return;
     }
-
     setIsReviewPopupOpen(false);
   };
-
-  // ====================================================
-  // SELECT REVIEW IMAGE
-  // ====================================================
 
   const handleReviewImageChange = (event) => {
     const file = event.target.files?.[0];
@@ -612,10 +674,6 @@ const ProductDetailsVegetables = ({ productId }) => {
     setReviewImage(file);
   };
 
-  // ====================================================
-  // SUBMIT REVIEW
-  // ====================================================
-
   // ======================================================
   // FETCH PRODUCT REVIEWS
   // ======================================================
@@ -626,25 +684,9 @@ const ProductDetailsVegetables = ({ productId }) => {
 
       setReviewsLoading(true);
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/reviews/product/${product._id}`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-        },
-      );
+      const response = await API.get(`/reviews/product/${product._id}`);
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result?.message || "Failed to fetch reviews.");
-      }
-
-      // ======================================================
-      // ONLY PUBLISHED REVIEWS
-      // ======================================================
+      const result = response.data;
 
       const publishedReviews = Array.isArray(result?.reviews)
         ? result.reviews.filter(
@@ -653,15 +695,7 @@ const ProductDetailsVegetables = ({ productId }) => {
           )
         : [];
 
-      // ======================================================
-      // SET REVIEWS
-      // ======================================================
-
       setReviews(publishedReviews);
-
-      // ======================================================
-      // CALCULATE SUMMARY ONLY FROM PUBLISHED REVIEWS
-      // ======================================================
 
       const totalReviews = publishedReviews.length;
 
@@ -672,10 +706,6 @@ const ProductDetailsVegetables = ({ productId }) => {
 
       const averageRating =
         totalReviews > 0 ? Number((totalRating / totalReviews).toFixed(2)) : 0;
-
-      // ======================================================
-      // RATING BREAKDOWN
-      // ======================================================
 
       const ratingBreakdown = {
         5: 0,
@@ -693,10 +723,6 @@ const ProductDetailsVegetables = ({ productId }) => {
         }
       });
 
-      // ======================================================
-      // SET SUMMARY
-      // ======================================================
-
       setReviewSummary({
         totalReviews,
         averageRating,
@@ -706,7 +732,6 @@ const ProductDetailsVegetables = ({ productId }) => {
       console.error("Fetch reviews error:", error);
 
       setReviews([]);
-
       setReviewSummary({
         totalReviews: 0,
         averageRating: 0,
@@ -738,10 +763,6 @@ const ProductDetailsVegetables = ({ productId }) => {
     event.preventDefault();
 
     try {
-      // ==================================================
-      // PRODUCT CHECK
-      // ==================================================
-
       if (!product?._id) {
         await Swal.fire({
           icon: "error",
@@ -751,10 +772,6 @@ const ProductDetailsVegetables = ({ productId }) => {
         });
         return;
       }
-
-      // ==================================================
-      // GUEST NAME
-      // ==================================================
 
       const reviewerName = reviewGuestName.trim();
 
@@ -778,11 +795,6 @@ const ProductDetailsVegetables = ({ productId }) => {
         return;
       }
 
-      // ==================================================
-      // GUEST EMAIL
-      // OPTIONAL
-      // ==================================================
-
       const reviewerEmail = reviewGuestEmail.trim();
 
       if (reviewerEmail) {
@@ -799,10 +811,6 @@ const ProductDetailsVegetables = ({ productId }) => {
         }
       }
 
-      // ==================================================
-      // RATING
-      // ==================================================
-
       const rating = Number(reviewRating);
 
       if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
@@ -814,10 +822,6 @@ const ProductDetailsVegetables = ({ productId }) => {
         });
         return;
       }
-
-      // ==================================================
-      // TITLE
-      // ==================================================
 
       const title = reviewTitle.trim();
 
@@ -841,10 +845,6 @@ const ProductDetailsVegetables = ({ productId }) => {
         return;
       }
 
-      // ==================================================
-      // COMMENT
-      // ==================================================
-
       const comment = reviewMessage.trim();
 
       if (!comment) {
@@ -866,21 +866,8 @@ const ProductDetailsVegetables = ({ productId }) => {
         });
         return;
       }
-      // ==================================================
-      // START LOADING
-      // ==================================================
 
       setReviewSubmitting(true);
-
-      // ==================================================
-      // OPTIONAL LOGIN
-      // ==================================================
-
-      const token = localStorage.getItem("token");
-
-      // ==================================================
-      // REQUEST BODY
-      // ==================================================
 
       const requestBody = {
         productId: product._id,
@@ -891,81 +878,19 @@ const ProductDetailsVegetables = ({ productId }) => {
         comment,
       };
 
-      // ==================================================
-      // HEADERS
-      // ==================================================
-
-      const headers = {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      };
-
-      // ==================================================
-      // LOGGED-IN USER
-      // ==================================================
-
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      // ==================================================
-      // API REQUEST
-      // ==================================================
-
-      const response = await fetch(`${API_BASE_URL}/api/reviews`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(requestBody),
-      });
-
-      // ==================================================
-      // RESPONSE
-      // ==================================================
-
-      const contentType = response.headers.get("content-type");
-
-      let result = {};
-
-      if (contentType && contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        const text = await response.text();
-
-        console.error("Review API non-JSON response:", text);
-
-        throw new Error("Invalid response from review API.");
-      }
-
-      // ==================================================
-      // ERROR
-      // ==================================================
-
-      if (!response.ok) {
-        throw new Error(result?.message || "Failed to submit review.");
-      }
-
-      // ==================================================
-      // SUCCESS
-      // ==================================================
+      const response = await API.post("/reviews", requestBody);
 
       await Swal.fire({
         icon: "success",
         title: "Review Submitted!",
-        text: result?.message || "Review submitted successfully.",
+        text:
+          response.data?.message || "Review submitted successfully.",
         confirmButtonText: "Done",
         timer: 2000,
         timerProgressBar: true,
       });
 
-      // ==================================================
-      // CLOSE POPUP
-      // ==================================================
-
       setIsReviewPopupOpen(false);
-
-      // ==================================================
-      // RESET FORM
-      // ==================================================
 
       setReviewRating(5);
       setReviewGuestName("");
@@ -974,10 +899,6 @@ const ProductDetailsVegetables = ({ productId }) => {
       setReviewMessage("");
       setReviewImage(null);
 
-      // ==================================================
-      // REFRESH REVIEWS
-      // ==================================================
-
       await fetchReviews();
     } catch (error) {
       console.error("Submit review error:", error);
@@ -985,7 +906,10 @@ const ProductDetailsVegetables = ({ productId }) => {
       await Swal.fire({
         icon: "error",
         title: "Review Failed",
-        text: error?.message || "Unable to submit review.",
+        text:
+          error.response?.data?.message ||
+          error?.message ||
+          "Unable to submit review.",
         confirmButtonText: "OK",
       });
     } finally {
@@ -1019,7 +943,6 @@ const ProductDetailsVegetables = ({ productId }) => {
 
   // ====================================================
   // PRODUCT SHARE
-  // NATIVE ANDROID / MOBILE SHARE SHEET
   // ====================================================
 
   const handleShare = async () => {
@@ -1029,17 +952,9 @@ const ProductDetailsVegetables = ({ productId }) => {
 
     const productName = product?.productName || product?.name || "Product";
 
-    const productId = product?._id || product?.id || productId;
+    const currentProductId = product?._id || product?.id || productId;
 
-    // ----------------------------------------------------
-    // CURRENT PRODUCT URL
-    // ----------------------------------------------------
-
-    const shareUrl = `${window.location.origin}/products/${productId}`;
-
-    // ----------------------------------------------------
-    // SHARE TEXT
-    // ----------------------------------------------------
+    const shareUrl = `${window.location.origin}/products/${currentProductId}`;
 
     const price = Number(product?.sellingPrice ?? product?.price ?? 0);
 
@@ -1047,10 +962,6 @@ const ProductDetailsVegetables = ({ productId }) => {
       price > 0
         ? `Check out ${productName} for ₹${price.toFixed(2)}.`
         : `Check out ${productName}.`;
-
-    // ----------------------------------------------------
-    // NATIVE SHARE
-    // ----------------------------------------------------
 
     if (navigator.share && typeof navigator.share === "function") {
       try {
@@ -1062,10 +973,6 @@ const ProductDetailsVegetables = ({ productId }) => {
 
         return;
       } catch (error) {
-        // ------------------------------------------------
-        // USER CLOSED SHARE SHEET
-        // ------------------------------------------------
-
         if (error?.name === "AbortError") {
           return;
         }
@@ -1074,62 +981,15 @@ const ProductDetailsVegetables = ({ productId }) => {
       }
     }
 
-    // ----------------------------------------------------
-    // FALLBACK - COPY LINK
-    // ----------------------------------------------------
-
     try {
       await navigator.clipboard.writeText(shareUrl);
 
-      Swal.fire({
-        icon: "success",
-        title: "Link Copied!",
-        text: "Product link copied successfully.",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 2000,
-      });
+      alert("Product link copied successfully!");
     } catch (error) {
       console.error("Copy link failed:", error);
-
-      // ------------------------------------------------
-      // OLD BROWSER FALLBACK
-      // ------------------------------------------------
-
-      const textarea = document.createElement("textarea");
-
-      textarea.value = shareUrl;
-
-      textarea.style.position = "fixed";
-
-      textarea.style.opacity = "0";
-
-      document.body.appendChild(textarea);
-
-      textarea.focus();
-
-      textarea.select();
-
-      try {
-        document.execCommand("copy");
-
-        Swal.fire({
-          icon: "success",
-          title: "Link Copied!",
-          text: "Product link copied successfully.",
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 2000,
-        });
-      } catch (copyError) {
-        console.error("Fallback copy failed:", copyError);
-      }
-
-      document.body.removeChild(textarea);
     }
   };
+
   // ====================================================
   // LOADING
   // ====================================================
@@ -1166,38 +1026,26 @@ const ProductDetailsVegetables = ({ productId }) => {
     <>
       <Helmet>
         <title>{seoTitle}</title>
-
         <meta name="description" content={seoDescription} />
-
         {seoKeywords && <meta name="keywords" content={seoKeywords} />}
-
         <meta name="robots" content="index, follow" />
-
         <link rel="canonical" href={productUrl} />
-
         <meta property="og:type" content="product" />
-
         <meta property="og:title" content={seoTitle} />
-
         <meta property="og:description" content={seoDescription} />
-
         <meta property="og:url" content={productUrl} />
-
         {seoImage && <meta property="og:image" content={seoImage} />}
-
         <meta name="twitter:card" content="summary_large_image" />
-
         <meta name="twitter:title" content={seoTitle} />
-
         <meta name="twitter:description" content={seoDescription} />
-
         {seoImage && <meta name="twitter:image" content={seoImage} />}
       </Helmet>
+
       <div className="pdv">
         <div className="pdv__container">
           {/* ==================================================
-            TOP HEADER NAVIGATION
-        ================================================== */}
+              TOP HEADER NAVIGATION
+          ================================================== */}
 
           <header className="pdv__top-bar">
             <button
@@ -1208,31 +1056,32 @@ const ProductDetailsVegetables = ({ productId }) => {
               <span className="pdv__back-circle">
                 <ArrowLeft />
               </span>
-
               <span>Back to category</span>
             </button>
 
             <button
-              className={`pdv__wishlist-btn ${
-                isWishlisted ? "pdv__wishlist-btn--active" : ""
-              }`}
-              onClick={() => setIsWishlisted(!isWishlisted)}
               type="button"
+              className={`OurBestsellers-icon-btn ${
+                isWishlisted ? "wishlisted" : ""
+              }`}
+              onClick={() => handleWishlist(productId)}
+              disabled={wishlistLoading}
+              aria-label={
+                isWishlisted
+                  ? `Remove ${productName} from wishlist`
+                  : `Add ${productName} to wishlist`
+              }
             >
-              <span>Add to wishlist</span>
-
-              <HeartIcon />
+              <FaHeart aria-hidden="true" />
             </button>
           </header>
 
           {/* ==================================================
-            3-COLUMN PRODUCT SHOWCASE
-        ================================================== */}
+              3-COLUMN PRODUCT SHOWCASE
+          ================================================== */}
 
           <div className="pdv__product-grid">
-            {/* ==================================================
-              COLUMN 1: INFO & CONTROLS
-          ================================================== */}
+            {/* COLUMN 1: INFO & CONTROLS */}
 
             <section className="pdv__col pdv__col--info">
               <span className="pdv__badge">{categoryName}</span>
@@ -1243,13 +1092,7 @@ const ProductDetailsVegetables = ({ productId }) => {
 
               <span className="pdv__category-sub">{categoryName}</span>
 
-              {/* ==================================================
-                SIZE
-            ================================================== */}
-
-              {/* ==================================================
-                QUANTITY
-            ================================================== */}
+              {/* QUANTITY */}
 
               <div className="pdv__option-group">
                 <div className="pdv__option-label">Quantity :</div>
@@ -1272,7 +1115,6 @@ const ProductDetailsVegetables = ({ productId }) => {
                         if (stockQuantity > 0) {
                           return Math.min(q + 1, stockQuantity);
                         }
-
                         return q + 1;
                       })
                     }
@@ -1283,14 +1125,12 @@ const ProductDetailsVegetables = ({ productId }) => {
                 </div>
               </div>
 
-              {/* ==================================================
-                PRICE
-            ================================================== */}
+              {/* PRICE */}
 
               <div className="pdv__price-tag">
                 ₹{totalPrice.toFixed(2)}
                 {quantity > 1 && (
-                  <span> {/* ({quantity} × ₹{price.toFixed(2)}) */}</span>
+                  <span>{/* ({quantity} × ₹{price.toFixed(2)}) */}</span>
                 )}
                 {writtenPrice > price && writtenPrice > 0 && (
                   <>
@@ -1300,9 +1140,7 @@ const ProductDetailsVegetables = ({ productId }) => {
                 )}
               </div>
 
-              {/* ==================================================
-                ACTIONS
-            ================================================== */}
+              {/* ACTIONS */}
 
               <div className="pdv__actions-stack">
                 <button
@@ -1313,16 +1151,14 @@ const ProductDetailsVegetables = ({ productId }) => {
                   <span>Add to Cart</span>
                   <span className="pdv__btn-chevron">›</span>
                 </button>
-
+{/* 
                 <button className="pdv__btn-buy-now" type="button">
                   Buy it now
-                </button>
+                </button> */}
               </div>
             </section>
 
-            {/* ==================================================
-              COLUMN 2: GALLERY & SLIDER
-          ================================================== */}
+            {/* COLUMN 2: GALLERY & SLIDER */}
 
             <section className="pdv__col pdv__col--gallery">
               <div className="pdv__main-image-wrap">
@@ -1387,9 +1223,7 @@ const ProductDetailsVegetables = ({ productId }) => {
               </div>
             </section>
 
-            {/* ==================================================
-              COLUMN 3: DESCRIPTION & META
-          ================================================== */}
+            {/* COLUMN 3: DESCRIPTION & META */}
 
             <section className="pdv__col pdv__col--meta">
               <div className="pdv__rating-header">
@@ -1408,9 +1242,7 @@ const ProductDetailsVegetables = ({ productId }) => {
                 </span>
               </div>
 
-              {/* ==================================================
-      DESCRIPTION
-  ================================================== */}
+              {/* DESCRIPTION */}
 
               <div className="pdv__meta-section">
                 <h2 className="pdv__section-heading">Description:</h2>
@@ -1422,46 +1254,31 @@ const ProductDetailsVegetables = ({ productId }) => {
                 </p>
               </div>
 
-              {/* ==================================================
-      ABOUT PRODUCT
-  ================================================== */}
+              {/* ABOUT PRODUCT */}
 
               <div className="pdv__meta-section">
                 <h2 className="pdv__section-heading">About Product:</h2>
 
-                {/* SKU */}
-
                 <div className="pdv__spec-item">
                   <span className="pdv__spec-label">SKU:</span>
-
                   <span className="pdv__spec-val">{product?.sku || "N/A"}</span>
                 </div>
 
-                {/* CATEGORY */}
-
                 <div className="pdv__spec-item">
                   <span className="pdv__spec-label">Category:</span>
-
                   <span className="pdv__spec-val">{categoryName}</span>
                 </div>
-
-                {/* BRAND */}
 
                 {brandName && (
                   <div className="pdv__spec-item">
                     <span className="pdv__spec-label">Brand:</span>
-
                     <span className="pdv__spec-val">{brandName}</span>
                   </div>
                 )}
 
-                {/* UNIT */}
-
-                {/* UNIT */}
                 {(unitName || unitNo) && (
                   <div className="pdv__spec-item">
                     <span className="pdv__spec-label">Unit:</span>
-
                     <span className="pdv__spec-val">
                       {unitNo && `${unitNo} `}
                       {unitName}
@@ -1469,50 +1286,40 @@ const ProductDetailsVegetables = ({ productId }) => {
                   </div>
                 )}
 
-                {/* STOCK */}
-
                 <div className="pdv__spec-item">
                   <span className="pdv__spec-label">Stock:</span>
-
                   <span className="pdv__spec-val">{stockQuantity}</span>
                 </div>
-
-                {/* MRP */}
 
                 {writtenPrice > 0 && (
                   <div className="pdv__spec-item">
                     <span className="pdv__spec-label">MRP:</span>
-
                     <span className="pdv__spec-val">
                       ₹{writtenPrice.toFixed(2)}
                     </span>
                   </div>
                 )}
 
-                {/* DISCOUNT */}
-
                 {discountPercent > 0 && (
                   <div className="pdv__spec-item">
                     <span className="pdv__spec-label">Discount:</span>
-
                     <span className="pdv__spec-val">{discountPercent}%</span>
                   </div>
                 )}
               </div>
 
-              {/* ==================================================
-      FOOTER ACTIONS
-  ================================================== */}
+              {/* FOOTER ACTIONS */}
 
               <div className="pdv__footer-actions">
                 <button
                   type="button"
                   className="pdv__link-action pdv__share-action"
                   onClick={handleShare}
-                  aria-label={`Share ${product?.productName || product?.name || "product"}`}
+                  aria-label={`Share ${
+                    product?.productName || product?.name || "product"
+                  }`}
                 >
                   <ShareIcon />
-
                   <span>Share</span>
                 </button>
               </div>
@@ -1520,20 +1327,14 @@ const ProductDetailsVegetables = ({ productId }) => {
           </div>
 
           {/* ==================================================
-            CUSTOMER REVIEWS
-        ================================================== */}
-
-          {/* ======================================================
-    CUSTOMER REVIEWS
-====================================================== */}
+              CUSTOMER REVIEWS
+          ================================================== */}
 
           <section className="pdv__reviews-wrapper">
             <h2 className="pdv__reviews-title">Customer Reviews</h2>
 
             <div className="pdv__reviews-summary-card">
-              {/* ==================================================
-        LEFT SCORE BLOCK
-    ================================================== */}
+              {/* LEFT SCORE BLOCK */}
 
               <div className="pdv__score-summary">
                 <div className="pdv__score-stars-row">
@@ -1562,9 +1363,7 @@ const ProductDetailsVegetables = ({ productId }) => {
                 </div>
               </div>
 
-              {/* ==================================================
-        MIDDLE RATING DISTRIBUTION
-    ================================================== */}
+              {/* MIDDLE RATING DISTRIBUTION */}
 
               <div className="pdv__rating-breakdown">
                 {[5, 4, 3, 2, 1].map((stars) => {
@@ -1573,7 +1372,6 @@ const ProductDetailsVegetables = ({ productId }) => {
                   );
 
                   const total = reviewSummary.totalReviews;
-
                   const percent = total > 0 ? (count / total) * 100 : 0;
 
                   return (
@@ -1603,9 +1401,7 @@ const ProductDetailsVegetables = ({ productId }) => {
                 })}
               </div>
 
-              {/* ==================================================
-        RIGHT REVIEW CTA
-    ================================================== */}
+              {/* RIGHT REVIEW CTA */}
 
               <div className="pdv__review-cta-wrap">
                 <button
@@ -1618,9 +1414,7 @@ const ProductDetailsVegetables = ({ productId }) => {
               </div>
             </div>
 
-            {/* ==================================================
-      REVIEW LIST
-  ================================================== */}
+            {/* REVIEW LIST */}
 
             <div className="pdv__review-card-wrap">
               {reviewsLoading ? (
@@ -1667,8 +1461,6 @@ const ProductDetailsVegetables = ({ productId }) => {
 
                   return (
                     <article className="pdv__review-card" key={review._id}>
-                      {/* REVIEW HEADER */}
-
                       <div className="pdv__review-card-head">
                         <div className="pdv__star-rating">
                           {[1, 2, 3, 4, 5].map((star) =>
@@ -1688,8 +1480,6 @@ const ProductDetailsVegetables = ({ productId }) => {
                         </time>
                       </div>
 
-                      {/* REVIEWER */}
-
                       <div className="pdv__reviewer-profile">
                         <div className="pdv__reviewer-avatar">
                           <UserPlaceholder />
@@ -1706,13 +1496,9 @@ const ProductDetailsVegetables = ({ productId }) => {
                         )}
                       </div>
 
-                      {/* REVIEW TITLE */}
-
                       <h3 className="pdv__review-headline">
                         {review?.title || "Customer Review"}
                       </h3>
-
-                      {/* REVIEW COMMENT */}
 
                       <p className="pdv__review-body">
                         {review?.comment || ""}
@@ -1726,8 +1512,8 @@ const ProductDetailsVegetables = ({ productId }) => {
         </div>
 
         {/* ======================================================
-    WRITE REVIEW POPUP
-====================================================== */}
+            WRITE REVIEW POPUP
+        ====================================================== */}
 
         {isReviewPopupOpen && (
           <div
@@ -1744,10 +1530,6 @@ const ProductDetailsVegetables = ({ productId }) => {
               aria-modal="true"
               aria-labelledby="review-modal-title"
             >
-              {/* ======================================================
-          HEADER
-      ====================================================== */}
-
               <div className="pdv__review-modal-header">
                 <div>
                   <span className="pdv__review-modal-eyebrow">
@@ -1777,15 +1559,7 @@ const ProductDetailsVegetables = ({ productId }) => {
                 </button>
               </div>
 
-              {/* ======================================================
-          FORM
-      ====================================================== */}
-
               <form className="pdv__review-form" onSubmit={handleSubmitReview}>
-                {/* ==================================================
-            GUEST NAME
-        ================================================== */}
-
                 <div className="pdv__review-field">
                   <label
                     htmlFor="review-guest-name"
@@ -1810,10 +1584,6 @@ const ProductDetailsVegetables = ({ productId }) => {
                   </span>
                 </div>
 
-                {/* ==================================================
-            GUEST EMAIL
-        ================================================== */}
-
                 <div className="pdv__review-field">
                   <label
                     htmlFor="review-guest-email"
@@ -1836,10 +1606,6 @@ const ProductDetailsVegetables = ({ productId }) => {
                     disabled={reviewSubmitting}
                   />
                 </div>
-
-                {/* ==================================================
-            RATING
-        ================================================== */}
 
                 <div className="pdv__review-field">
                   <label className="pdv__review-label">Your Rating</label>
@@ -1868,10 +1634,6 @@ const ProductDetailsVegetables = ({ productId }) => {
                   </div>
                 </div>
 
-                {/* ==================================================
-            TITLE
-        ================================================== */}
-
                 <div className="pdv__review-field">
                   <label htmlFor="review-title" className="pdv__review-label">
                     Review Title
@@ -1892,10 +1654,6 @@ const ProductDetailsVegetables = ({ productId }) => {
                     {reviewTitle.length}/100
                   </span>
                 </div>
-
-                {/* ==================================================
-            MESSAGE
-        ================================================== */}
 
                 <div className="pdv__review-field">
                   <label htmlFor="review-message" className="pdv__review-label">
@@ -1918,10 +1676,6 @@ const ProductDetailsVegetables = ({ productId }) => {
                   </span>
                 </div>
 
-                {/* ==================================================
-            ADMIN APPROVAL NOTICE
-        ================================================== */}
-
                 <div className="pdv__review-notice">
                   <CheckBadge />
 
@@ -1929,10 +1683,6 @@ const ProductDetailsVegetables = ({ productId }) => {
                     Your review will be published after admin approval.
                   </span>
                 </div>
-
-                {/* ==================================================
-            ACTIONS
-        ================================================== */}
 
                 <div className="pdv__review-modal-actions">
                   <button

@@ -1,8 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-} from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 import {
   MdMenu,
@@ -14,19 +10,25 @@ import {
   MdLogout,
 } from "react-icons/md";
 
+import { useNavigate } from "react-router-dom";
+
 import "./Topbar.css";
 
-const Topbar = ({
-  toggleSidebar,
-  setMobileOpen,
-}) => {
-  const [showNotification, setShowNotification] =
-    useState(false);
+import API from "../../api/axios";
 
-  const [showProfile, setShowProfile] =
-    useState(false);
+const Topbar = ({ toggleSidebar, setMobileOpen }) => {
+  const navigate = useNavigate();
+
+  const [showNotification, setShowNotification] = useState(false);
+
+  const [showProfile, setShowProfile] = useState(false);
+
+  const [user, setUser] = useState(null);
+
+  const [loadingUser, setLoadingUser] = useState(true);
 
   const notificationRef = useRef(null);
+
   const profileRef = useRef(null);
 
   const notifications = [
@@ -60,52 +62,166 @@ const Topbar = ({
     },
   ];
 
+  // ======================================================
+  // GET LOGGED-IN USER
+  // ======================================================
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        // No token
+        if (!token) {
+          setUser(null);
+          return;
+        }
+
+        const response = await API.get("/auth/me");
+
+        if (response.data?.success) {
+          setUser(response.data.user);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Failed to fetch logged-in user:", error);
+
+        setUser(null);
+      } finally {
+        setLoadingUser(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  // ======================================================
+  // CLOSE DROPDOWNS ON OUTSIDE CLICK
+  // ======================================================
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
         notificationRef.current &&
-        !notificationRef.current.contains(
-          event.target
-        )
+        !notificationRef.current.contains(event.target)
       ) {
         setShowNotification(false);
       }
 
-      if (
-        profileRef.current &&
-        !profileRef.current.contains(
-          event.target
-        )
-      ) {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
         setShowProfile(false);
       }
     };
 
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
+  // ======================================================
+  // USER NAME
+  // ======================================================
+
+  const getUserName = () => {
+    if (!user) {
+      return "Guest";
+    }
+
+    // If backend returns:
+    // { name: "Debashish Mallick" }
+    if (user.name && typeof user.name === "string" && user.name.trim()) {
+      return user.name.trim();
+    }
+
+    // If backend returns:
+    // { firstName: "Debashish", lastName: "Mallick" }
+
+    const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
+
+    if (fullName) {
+      return fullName;
+    }
+
+    // Fallback
+    if (user.email) {
+      return user.email.split("@")[0];
+    }
+
+    return "User";
+  };
+
+  // ======================================================
+  // USER EMAIL
+  // ======================================================
+
+  const getUserEmail = () => {
+    return user?.email || "";
+  };
+
+  // ======================================================
+  // PROFILE IMAGE
+  // ======================================================
+
+  const getProfileImage = () => {
+    if (user?.profileImage) {
+      return user.profileImage;
+    }
+
+    if (user?.avatar) {
+      return user.avatar;
+    }
+
+    if (user?.image) {
+      return user.image;
+    }
+
+    return "https://i.pravatar.cc/150?img=32";
+  };
+
+  // ======================================================
+  // PROFILE REDIRECT
+  // ======================================================
+
+  const handleProfile = () => {
+    setShowProfile(false);
+
+    navigate("/profile");
+  };
+
+  // ======================================================
+  // LOGOUT
+  // ======================================================
+
+  const handleLogout = () => {
+    // Remove Project 2 authentication token
+    localStorage.removeItem("token");
+
+    // Clear user state
+    setUser(null);
+
+    // Close profile dropdown
+    setShowProfile(false);
+
+    // Redirect to Project 1
+    window.location.href = "http://localhost:5174/";
+  };
+
   return (
     <header className="Topbar">
+      {/* LEFT */}
+
       <div className="Topbar_Left">
         {/* Desktop Sidebar Toggle */}
-        <button
-          className="Topbar_Menu"
-          onClick={toggleSidebar}
-        >
+
+        <button className="Topbar_Menu" onClick={toggleSidebar}>
           <MdMenu />
         </button>
 
         {/* Mobile Sidebar Toggle */}
+
         <button
           className="Topbar_MobileMenu"
           onClick={() => setMobileOpen(true)}
@@ -114,134 +230,118 @@ const Topbar = ({
         </button>
       </div>
 
-      <div className="Topbar_Right">
+      {/* RIGHT */}
 
-        {/* Notification */}
-        <div
-          className="Topbar_NotificationWrapper"
-          ref={notificationRef}
-        >
+      <div className="Topbar_Right">
+        {/* ==================================================
+            NOTIFICATION
+        ================================================== */}
+
+        <div className="Topbar_NotificationWrapper" ref={notificationRef}>
           <button
             className="Topbar_Notification"
             onClick={() => {
-              setShowNotification(
-                !showNotification
-              );
+              setShowNotification(!showNotification);
+
               setShowProfile(false);
             }}
           >
             <MdNotifications />
 
-            <span>
-              {notifications.length}
-            </span>
+            <span>{notifications.length}</span>
           </button>
 
           <div
             className={`Topbar_NotificationCard ${
-              showNotification
-                ? "Topbar_NotificationCardActive"
-                : ""
+              showNotification ? "Topbar_NotificationCardActive" : ""
             }`}
           >
             <div className="Topbar_NotificationHeader">
-              <h3>
-                {notifications.length} Notifications
-              </h3>
+              <h3>{notifications.length} Notifications</h3>
             </div>
 
             <div className="Topbar_NotificationList">
-              {notifications.map(
-                (item, index) => (
-                  <div
-                    key={index}
-                    className="Topbar_NotificationItem"
-                  >
-                    <h4>{item.title}</h4>
+              {notifications.map((item, index) => (
+                <div key={index} className="Topbar_NotificationItem">
+                  <h4>{item.title}</h4>
 
-                    <p>{item.time}</p>
-                  </div>
-                )
-              )}
+                  <p>{item.time}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Profile Dropdown */}
-        <div
-          className="Topbar_ProfileWrapper"
-          ref={profileRef}
-        >
+        {/* ==================================================
+            PROFILE
+        ================================================== */}
+
+        <div className="Topbar_ProfileWrapper" ref={profileRef}>
           <div
             className="Topbar_Profile"
             onClick={() => {
               setShowProfile(!showProfile);
+
               setShowNotification(false);
             }}
           >
-            <img
-              src="https://i.pravatar.cc/150?img=32"
-              alt="Profile"
-            />
+            <img src={getProfileImage()} alt="Profile" />
 
             <div className="Topbar_ProfileInfo">
-              <h4>Popin Kumar</h4>
+              <h4>{loadingUser ? "Loading..." : getUserName()}</h4>
 
-              <p>Premium Member</p>
+              <p>{loadingUser ? "" : getUserEmail()}</p>
             </div>
           </div>
+
+          {/* ==================================================
+              PROFILE DROPDOWN
+          ================================================== */}
 
           <div
             className={`Topbar_ProfileCard ${
-              showProfile
-                ? "Topbar_ProfileCardActive"
-                : ""
+              showProfile ? "Topbar_ProfileCardActive" : ""
             }`}
           >
+            {/* Profile Header */}
+
             <div className="Topbar_ProfileCardHeader">
-              <img
-                src="https://i.pravatar.cc/150?img=32"
-                alt="Profile"
-              />
+              <img src={getProfileImage()} alt="Profile" />
 
-              <h3>Popin Kumar</h3>
+              <h3>{getUserName()}</h3>
 
-              <p>Premium Member</p>
+              <p>{getUserEmail()}</p>
             </div>
 
-            <div className="Topbar_ProfileCardMenu">
+            {/* Profile Menu */}
 
-              <button>
+            <div className="Topbar_ProfileCardMenu">
+              {/* MY PROFILE */}
+
+              <button onClick={handleProfile}>
                 <MdPerson />
+
                 <span>My Profile</span>
               </button>
 
-              <button>
-                <MdEdit />
-                <span>Edit Profile</span>
-              </button>
+              {/* ACTIVITY */}
 
               <button>
                 <MdHistory />
+
                 <span>Activity Logs</span>
               </button>
 
-              <button>
-                <MdSettings />
-                <span>
-                  Account Settings
-                </span>
-              </button>
+              {/* LOGOUT */}
 
-              <button className="Topbar_ProfileLogout">
+              <button className="Topbar_ProfileLogout" onClick={handleLogout}>
                 <MdLogout />
+
                 <span>Sign Out</span>
               </button>
-
             </div>
           </div>
         </div>
-
       </div>
     </header>
   );

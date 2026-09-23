@@ -525,3 +525,34 @@
     align-items: center;
   }
 }
+
+
+
+
+/* ======================================================
+   LOADING / ERROR STATES
+====================================================== */
+
+.th-loading,
+.th-error {
+  padding: 60px 24px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #4b6b66;
+}
+
+.th-error button {
+  margin-top: 16px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #0f2e2a;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.th-error button:hover {
+  background: #1b4c45;
+}

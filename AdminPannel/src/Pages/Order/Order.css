@@ -920,3 +920,137 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+
+
+/* ======================================================
+   LOADING / ERROR
+====================================================== */
+
+.Order-loading,
+.Order-error {
+  padding: 80px 24px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
+.Order-error button {
+  margin-top: 16px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #0f2e2a;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.Order-error button:hover {
+  background: #1b4c45;
+}
+
+/* ======================================================
+   DROPDOWN DIVIDER
+====================================================== */
+
+.Order-dropdown-divider {
+  height: 1px;
+  margin: 6px 8px;
+  background: #eef0f0;
+}
+
+/* ======================================================
+   MODAL — ITEMS LIST
+====================================================== */
+
+.Order-view-items-list {
+  margin-top: 18px;
+}
+
+.Order-view-items-title {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f2e2a;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.Order-view-item-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.Order-view-item-row:last-child {
+  border-bottom: none;
+}
+
+.Order-view-item-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #f5f7f6;
+  flex-shrink: 0;
+}
+
+.Order-view-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.Order-view-item-total {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #0f2e2a;
+  white-space: nowrap;
+}
+
+/* ======================================================
+   MODAL — ADDRESS
+====================================================== */
+
+.Order-view-address {
+  margin-top: 18px;
+}
+
+.Order-view-address-text {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f8fbfa;
+  border: 1px solid #e4ecea;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #4b6b66;
+}
+
+.Order-view-address-text strong {
+  color: #0f2e2a;
+}
+
+/* ======================================================
+   FORM NOTE
+====================================================== */
+
+.Order-form-note {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.icon-purple { color: #7c3aed; }
+.icon-cyan   { color: #0891b2; }

@@ -16,6 +16,8 @@ import {
 import logo from "../../assets/Grocessary Sathi Png.png";
 import "./Navbar.css";
 import CartSection from "../CartSection/CartSection";
+import UserAuth from "../UserAuth/UserAuth";
+import API from "../../api/axios";
 
 // ======================================================
 // NAVIGATION PATHS
@@ -34,13 +36,6 @@ const NAV_PATHS = {
 };
 
 // ======================================================
-// API
-// ======================================================
-
-const API_BASE_URL = "http://localhost:5000/api";
-const SERVER_BASE_URL = "http://localhost:5000";
-
-// ======================================================
 // COMPONENT
 // ======================================================
 
@@ -48,15 +43,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ======================================================
-  // CART POPUP
-  // ======================================================
-
   const [isCartOpen, setIsCartOpen] = useState(false);
-
-  // ======================================================
-  // CATEGORY
-  // ======================================================
 
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
@@ -66,19 +53,7 @@ const Navbar = () => {
   const [products, setProducts] = useState([]);
 
   const [loadingCategories, setLoadingCategories] = useState(false);
-
   const [loadingProducts, setLoadingProducts] = useState(false);
-
-  // ======================================================
-  // USER
-  // ======================================================
-
-  const [currentUser, setCurrentUser] = useState(null);
-  const [userLoading, setUserLoading] = useState(true);
-
-  // ======================================================
-  // CART
-  // ======================================================
 
   const [cartItemCount, setCartItemCount] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
@@ -130,78 +105,25 @@ const Navbar = () => {
     return fallback;
   };
 
-  // ======================================================
-  // GET OBJECT ID
-  // ======================================================
-
   const getObjectId = (value) => {
-    if (!value) {
-      return "";
-    }
-
-    if (typeof value === "string") {
-      return value;
-    }
-
+    if (!value) return "";
+    if (typeof value === "string") return value;
     if (typeof value === "object") {
       return value?._id || value?.id || value?.value || "";
     }
-
     return "";
   };
 
-  // ======================================================
-  // USER NAME
-  // ======================================================
-
-  const getUserName = (user) => {
-    if (!user) {
-      return "";
-    }
-
-    return getSafeString(
-      user?.name ||
-        user?.fullName ||
-        user?.username ||
-        user?.userName ||
-        user?.firstName ||
-        user?.email?.split("@")[0],
-      "User",
-    );
-  };
-
-  // ======================================================
-  // CATEGORY NAME
-  // ======================================================
-
   const getCategoryName = (category) => {
-    if (!category) {
-      return "";
-    }
-
+    if (!category) return "";
     return getSafeString(category, "");
   };
 
-  // ======================================================
-  // CATEGORY ID
-  // ======================================================
-
-  const getCategoryId = (category) => {
-    return getObjectId(category);
-  };
-
-  // ======================================================
-  // CATEGORY SLUG
-  // ======================================================
+  const getCategoryId = (category) => getObjectId(category);
 
   const getCategorySlug = (category) => {
-    if (!category) {
-      return "";
-    }
-
-    if (typeof category === "string") {
-      return category.trim();
-    }
+    if (!category) return "";
+    if (typeof category === "string") return category.trim();
 
     return getSafeString(
       category?.slug || category?._id || category?.id || "",
@@ -209,29 +131,15 @@ const Navbar = () => {
     );
   };
 
-  // ======================================================
-  // CATEGORY KEY
-  // ======================================================
-
   const getCategoryKey = (category) => {
-    if (!category) {
-      return "";
-    }
-
+    if (!category) return "";
     return (
       category?._id || category?.id || category?.slug || category?.name || ""
     );
   };
 
-  // ======================================================
-  // SUBCATEGORY NAME
-  // ======================================================
-
   const getSubCategoryName = (subCategory) => {
-    if (!subCategory) {
-      return "";
-    }
-
+    if (!subCategory) return "";
     return getSafeString(
       subCategory?.name ||
         subCategory?.title ||
@@ -241,26 +149,11 @@ const Navbar = () => {
     );
   };
 
-  // ======================================================
-  // SUBCATEGORY ID
-  // ======================================================
-
-  const getSubCategoryId = (subCategory) => {
-    return getObjectId(subCategory);
-  };
-
-  // ======================================================
-  // SUBCATEGORY SLUG
-  // ======================================================
+  const getSubCategoryId = (subCategory) => getObjectId(subCategory);
 
   const getSubCategorySlug = (subCategory) => {
-    if (!subCategory) {
-      return "";
-    }
-
-    if (typeof subCategory === "string") {
-      return subCategory.trim();
-    }
+    if (!subCategory) return "";
+    if (typeof subCategory === "string") return subCategory.trim();
 
     return getSafeString(
       subCategory?.slug || subCategory?._id || subCategory?.id || "",
@@ -268,14 +161,8 @@ const Navbar = () => {
     );
   };
 
-  // ======================================================
-  // GET SUBCATEGORIES
-  // ======================================================
-
   const getSubCategories = (category) => {
-    if (!category) {
-      return [];
-    }
+    if (!category) return [];
 
     const list =
       category?.subCategories ||
@@ -283,33 +170,15 @@ const Navbar = () => {
       category?.children ||
       [];
 
-    if (!Array.isArray(list)) {
-      return [];
-    }
+    if (!Array.isArray(list)) return [];
 
     return list.filter(Boolean);
   };
 
-  // ======================================================
-  // GET PRODUCT ID
-  // ======================================================
-
-  const getProductId = (product) => {
-    if (!product) {
-      return "";
-    }
-
-    return getObjectId(product);
-  };
-
-  // ======================================================
-  // PRODUCT NAME
-  // ======================================================
+  const getProductId = (product) => (!product ? "" : getObjectId(product));
 
   const getProductName = (product) => {
-    if (!product) {
-      return "Unnamed Product";
-    }
+    if (!product) return "Unnamed Product";
 
     return getSafeString(
       product?.productName || product?.name || product?.title,
@@ -317,62 +186,37 @@ const Navbar = () => {
     );
   };
 
-  // ======================================================
-  // PRODUCT CATEGORY
-  // ======================================================
-
   const getProductCategory = (product) => {
-    if (!product) {
-      return null;
-    }
+    if (!product) return null;
 
     return (
       product?.category || product?.categoryId || product?.category_id || null
     );
   };
 
-  // ======================================================
-  // PRODUCT CATEGORY ID
-  // ======================================================
-
   const getProductCategoryId = (product) => {
     return getObjectId(getProductCategory(product));
   };
-
-  // ======================================================
-  // PRODUCT CATEGORY NAME
-  // ======================================================
 
   const getProductCategoryName = (product) => {
     return getCategoryName(getProductCategory(product));
   };
 
-  // ======================================================
-  // PRODUCT IMAGE
-  // ======================================================
-
   const getProductImage = (product) => {
-    if (!product) {
-      return "";
-    }
+    if (!product) return "";
 
     let image =
       Array.isArray(product?.images) && product.images.length > 0
         ? product.images[0]
         : product?.image || product?.thumbnail || product?.imageUrl || "";
 
-    if (!image) {
-      return "";
-    }
+    if (!image) return "";
 
     if (typeof image === "object") {
-      image =
-        image?.url || image?.path || image?.secure_url || image?.src || "";
+      image = image?.url || image?.path || image?.secure_url || image?.src || "";
     }
 
-    if (!image) {
-      return "";
-    }
+    if (!image) return "";
 
     const imageString = String(image).trim();
 
@@ -383,19 +227,16 @@ const Navbar = () => {
       return imageString;
     }
 
-    return `${SERVER_BASE_URL}${
-      imageString.startsWith("/") ? imageString : `/${imageString}`
-    }`;
+    // Use API's base URL prefix
+    const base =
+      API.defaults.baseURL?.replace(/\/api\/?$/, "") ||
+      "http://localhost:5000";
+
+    return `${base}${imageString.startsWith("/") ? imageString : `/${imageString}`}`;
   };
 
-  // ======================================================
-  // NUMBER HELPER
-  // ======================================================
-
   const getNumber = (value) => {
-    if (value === null || value === undefined || value === "") {
-      return 0;
-    }
+    if (value === null || value === undefined || value === "") return 0;
 
     const number = Number(
       typeof value === "object"
@@ -406,48 +247,20 @@ const Navbar = () => {
     return Number.isFinite(number) ? number : 0;
   };
 
-  // ======================================================
-  // PRODUCT PRICE
-  // ======================================================
-
   const getProductPrice = (product) => {
-    if (!product) {
-      return 0;
-    }
+    if (!product) return 0;
 
-    const discountPrice = getNumber(product?.discountPrice);
+    const discountPrice = Number(product.discountPrice || 0);
+    const sellingPrice = Number(product.sellingPrice || 0);
+    const price = Number(product.price || 0);
 
-    const sellingPrice = getNumber(product?.sellingPrice);
-
-    const price = getNumber(product?.price);
-
-    // ==================================================
-    // TODAY DISCOUNT PRICE HAS HIGHEST PRIORITY
-    // ==================================================
-
-    if (product?.todayDiscount === true && discountPrice > 0) {
+    if (product.todayDiscount === true && discountPrice > 0) {
       return discountPrice;
     }
-
-    // ==================================================
-    // ALSO SUPPORT DISCOUNT PRICE WITHOUT FLAG
-    // ==================================================
-
-    if (discountPrice > 0 && product?.todayDiscount !== false) {
-      return discountPrice;
-    }
-
-    // ==================================================
-    // NORMAL SELLING PRICE
-    // ==================================================
 
     if (sellingPrice > 0) {
       return sellingPrice;
     }
-
-    // ==================================================
-    // NORMAL PRODUCT PRICE
-    // ==================================================
 
     if (price > 0) {
       return price;
@@ -456,26 +269,13 @@ const Navbar = () => {
     return 0;
   };
 
-  // ======================================================
-  // ORIGINAL / MRP PRICE
-  // ======================================================
-
   const getOriginalPrice = (product) => {
-    if (!product) {
-      return 0;
-    }
+    if (!product) return 0;
 
     const writtenPrice = getNumber(product?.writtenPrice);
-
     const price = getNumber(product?.price);
-
     const sellingPrice = getNumber(product?.sellingPrice);
-
     const discountPrice = getNumber(product?.discountPrice);
-
-    // ==================================================
-    // WRITTEN PRICE / MRP
-    // ==================================================
 
     if (writtenPrice > 0 && discountPrice > 0 && writtenPrice > discountPrice) {
       return writtenPrice;
@@ -489,10 +289,6 @@ const Navbar = () => {
       return writtenPrice;
     }
 
-    // ==================================================
-    // PRODUCT PRICE CAN ALSO BE ORIGINAL PRICE
-    // ==================================================
-
     if (price > 0 && discountPrice > 0 && price > discountPrice) {
       return price;
     }
@@ -504,31 +300,16 @@ const Navbar = () => {
     return writtenPrice || price || sellingPrice || discountPrice || 0;
   };
 
-  // ======================================================
-  // TODAY DISCOUNT PRICE
-  // ======================================================
-
   const getDiscountPrice = (product) => {
-    if (!product) {
-      return 0;
-    }
-
+    if (!product) return 0;
     const discountPrice = getNumber(product?.discountPrice);
-
     return discountPrice > 0 ? discountPrice : 0;
   };
 
-  // ======================================================
-  // DISCOUNT PERCENTAGE
-  // ======================================================
-
   const getDiscountPercentage = (product) => {
-    if (!product) {
-      return 0;
-    }
+    if (!product) return 0;
 
     const currentPrice = getProductPrice(product);
-
     const originalPrice = getOriginalPrice(product);
 
     if (
@@ -544,56 +325,23 @@ const Navbar = () => {
     return Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
   };
 
-  // ======================================================
-  // HAS DISCOUNT
-  // ======================================================
-
   const hasDiscount = (product) => {
-    if (!product) {
-      return false;
-    }
+    if (!product) return false;
 
     const discountPrice = getDiscountPrice(product);
-
     const currentPrice = getProductPrice(product);
-
     const originalPrice = getOriginalPrice(product);
 
-    return (
-      discountPrice > 0 && currentPrice > 0 && originalPrice > currentPrice
-    );
+    return discountPrice > 0 && currentPrice > 0 && originalPrice > currentPrice;
   };
 
-  // ======================================================
-  // GET DISCOUNT PRODUCT ID
-  // ======================================================
-
   const getDiscountProductId = (discount) => {
-    if (!discount) {
-      return "";
-    }
-
-    // product can be:
-    // ObjectId string
-    // populated object
-    // { _id: ... }
-    // { id: ... }
-
+    if (!discount) return "";
     return getObjectId(discount?.product);
   };
 
-  // ======================================================
-  // CHECK ACTIVE DISCOUNT DATE
-  // ======================================================
-
   const isDiscountCurrentlyActive = (discount) => {
-    if (!discount) {
-      return false;
-    }
-
-    // ==================================================
-    // STATUS
-    // ==================================================
+    if (!discount) return false;
 
     const status = String(discount?.status ?? "active")
       .trim()
@@ -603,14 +351,8 @@ const Navbar = () => {
       return false;
     }
 
-    // ==================================================
-    // DATE
-    // ==================================================
-
     const now = new Date();
-
     const startDate = discount?.startDate ? new Date(discount.startDate) : null;
-
     const endDate = discount?.endDate ? new Date(discount.endDate) : null;
 
     if (startDate && !Number.isNaN(startDate.getTime()) && now < startDate) {
@@ -621,113 +363,35 @@ const Navbar = () => {
       return false;
     }
 
-    // ==================================================
-    // PRICE
-    // ==================================================
-
     const discountPrice = getNumber(discount?.discountPrice);
-
-    if (discountPrice <= 0) {
-      return false;
-    }
+    if (discountPrice <= 0) return false;
 
     return true;
   };
 
   // ======================================================
-  // FETCH CURRENT USER
-  // ======================================================
-
-  const fetchCurrentUser = useCallback(async () => {
-    try {
-      const token = getToken();
-
-      if (!token) {
-        setCurrentUser(null);
-        setUserLoading(false);
-        return;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          localStorage.removeItem("token");
-
-          setCurrentUser(null);
-          setCartItemCount(0);
-          setCartTotal(0);
-        }
-
-        setUserLoading(false);
-        return;
-      }
-
-      const result = await response.json();
-
-      const user = result?.user || result?.data?.user || result?.data || null;
-
-      setCurrentUser(user);
-    } catch (error) {
-      console.error("Fetch current user error:", error);
-
-      setCurrentUser(null);
-    } finally {
-      setUserLoading(false);
-    }
-  }, []);
-
-  // ======================================================
-  // FETCH ACTIVE TODAY DISCOUNTS
+  // FETCH TODAY DISCOUNTS
   // ======================================================
 
   const fetchTodayDiscounts = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/today-discounts/active`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Today discounts API failed: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const { data } = await API.get("/today-discounts/active");
 
       let discountList = [];
 
-      if (Array.isArray(result)) {
-        discountList = result;
-      } else if (Array.isArray(result?.discounts)) {
-        discountList = result.discounts;
-      } else if (Array.isArray(result?.todayDiscounts)) {
-        discountList = result.todayDiscounts;
-      } else if (Array.isArray(result?.data)) {
-        discountList = result.data;
-      } else if (Array.isArray(result?.data?.discounts)) {
-        discountList = result.data.discounts;
-      } else if (Array.isArray(result?.data?.todayDiscounts)) {
-        discountList = result.data.todayDiscounts;
-      }
+      if (Array.isArray(data)) discountList = data;
+      else if (Array.isArray(data?.discounts)) discountList = data.discounts;
+      else if (Array.isArray(data?.todayDiscounts))
+        discountList = data.todayDiscounts;
+      else if (Array.isArray(data?.data)) discountList = data.data;
+      else if (Array.isArray(data?.data?.discounts))
+        discountList = data.data.discounts;
+      else if (Array.isArray(data?.data?.todayDiscounts))
+        discountList = data.data.todayDiscounts;
 
-      // ==================================================
-      // ONLY CURRENTLY ACTIVE DISCOUNTS
-      // ==================================================
-
-      const activeDiscounts = discountList.filter(isDiscountCurrentlyActive);
-
-      return activeDiscounts;
+      return discountList.filter(isDiscountCurrentlyActive);
     } catch (error) {
       console.error("Today discounts fetch error:", error);
-
       return [];
     }
   }, []);
@@ -740,43 +404,20 @@ const Navbar = () => {
     try {
       setLoadingProducts(true);
 
-      // ==================================================
-      // FETCH PRODUCTS
-      // ==================================================
-
-      const productResponse = await fetch(`${API_BASE_URL}/products`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-      });
-
-      if (!productResponse.ok) {
-        throw new Error(`Products API failed: ${productResponse.status}`);
-      }
-
-      const productResult = await productResponse.json();
+      const { data: productResult } = await API.get("/products");
 
       let productList = [];
 
-      if (Array.isArray(productResult)) {
-        productList = productResult;
-      } else if (Array.isArray(productResult?.products)) {
+      if (Array.isArray(productResult)) productList = productResult;
+      else if (Array.isArray(productResult?.products))
         productList = productResult.products;
-      } else if (Array.isArray(productResult?.data)) {
+      else if (Array.isArray(productResult?.data))
         productList = productResult.data;
-      } else if (Array.isArray(productResult?.data?.products)) {
+      else if (Array.isArray(productResult?.data?.products))
         productList = productResult.data.products;
-      }
-
-      // ==================================================
-      // ACTIVE PRODUCTS ONLY
-      // ==================================================
 
       const activeProducts = productList.filter((product) => {
-        if (!product) {
-          return false;
-        }
+        if (!product) return false;
 
         const status = String(product?.status ?? "active")
           .trim()
@@ -790,98 +431,50 @@ const Navbar = () => {
         );
       });
 
-      // ==================================================
-      // FETCH ACTIVE TODAY DISCOUNTS
-      // ==================================================
-
       const discountList = await fetchTodayDiscounts();
-
-      // ==================================================
-      // CREATE DISCOUNT MAP
-      // ==================================================
 
       const discountMap = new Map();
 
       discountList.forEach((discount) => {
         const discountProductId = getDiscountProductId(discount);
-
-        if (!discountProductId) {
-          return;
-        }
+        if (!discountProductId) return;
 
         const discountPrice = getNumber(discount?.discountPrice);
-
-        if (discountPrice <= 0) {
-          return;
-        }
+        if (discountPrice <= 0) return;
 
         discountMap.set(String(discountProductId), discount);
       });
 
-      // ==================================================
-      // MERGE DISCOUNTS WITH PRODUCTS
-      // ==================================================
-
       const productsWithDiscount = activeProducts.map((product) => {
         const productId = getProductId(product);
-
         const discount = discountMap.get(String(productId));
-
-        // ==========================================
-        // PRODUCT HAS TODAY DISCOUNT
-        // ==========================================
 
         if (discount) {
           return {
             ...product,
-
             discountPrice: getNumber(discount?.discountPrice),
-
             todayDiscount: true,
-
             todayDiscountId: discount?._id || null,
-
             todayDiscountStartDate: discount?.startDate || null,
-
             todayDiscountEndDate: discount?.endDate || null,
-
             todayDiscountStatus: discount?.status || "active",
           };
         }
 
-        // ==========================================
-        // NO TODAY DISCOUNT
-        // ==========================================
-
         return {
           ...product,
-
           discountPrice: getNumber(product?.discountPrice),
-
           todayDiscount: false,
-
           todayDiscountId: null,
-
           todayDiscountStartDate: null,
-
           todayDiscountEndDate: null,
-
           todayDiscountStatus: null,
         };
       });
 
-      // ==================================================
-      // DEBUG
-      // ==================================================
-
-      const discountedProducts = productsWithDiscount.filter(
-        (product) => product?.todayDiscount === true,
-      );
-
       setProducts(productsWithDiscount);
     } catch (error) {
       console.error("Navbar product fetch error:", error);
-
       setProducts([]);
     } finally {
       setLoadingProducts(false);
@@ -909,39 +502,30 @@ const Navbar = () => {
           return;
         }
 
-        let guestCart;
+        let guestCart = [];
 
         try {
           guestCart = JSON.parse(storedCart);
-        } catch {
-          guestCart = [];
-        }
-
-        if (!Array.isArray(guestCart)) {
-          localStorage.removeItem("guestCart");
-
+        } catch (error) {
+          console.error("Guest cart parse error:", error);
           setCartItemCount(0);
           setCartTotal(0);
-
           return;
         }
 
-        const validCart = guestCart.filter(
-          (item) => item && Number(item?.quantity) > 0,
-        );
-
-        if (validCart.length !== guestCart.length) {
-          localStorage.setItem("guestCart", JSON.stringify(validCart));
+        if (!Array.isArray(guestCart)) {
+          setCartItemCount(0);
+          setCartTotal(0);
+          return;
         }
 
-        const totalQuantity = validCart.reduce(
-          (total, item) => total + Number(item?.quantity || 0),
-          0,
-        );
+        const totalQuantity = guestCart.reduce((total, item) => {
+          return total + Number(item?.quantity || 0);
+        }, 0);
 
-        const totalPrice = validCart.reduce((total, item) => {
-          const price = getNumber(
-            item?.price ?? item?.sellingPrice ?? item?.discountPrice ?? 0,
+        const totalPrice = guestCart.reduce((total, item) => {
+          const price = Number(
+            item?.discountPrice > 0 ? item.discountPrice : item?.price || 0,
           );
 
           const quantity = Number(item?.quantity || 0);
@@ -950,8 +534,7 @@ const Navbar = () => {
         }, 0);
 
         setCartItemCount(totalQuantity);
-
-        setCartTotal(Number.isFinite(totalPrice) ? totalPrice : 0);
+        setCartTotal(totalPrice);
 
         return;
       }
@@ -960,30 +543,10 @@ const Navbar = () => {
       // LOGGED-IN CART
       // ==================================================
 
-      const response = await fetch(`${API_BASE_URL}/cart`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          setCartItemCount(0);
-          setCartTotal(0);
-        }
-
-        return;
-      }
-
-      const result = await response.json();
+      const { data } = await API.get("/cart");
 
       const items =
-        result?.cart?.items ||
-        result?.data?.cart?.items ||
-        result?.data?.items ||
-        [];
+        data?.cart?.items || data?.data?.cart?.items || data?.data?.items || [];
 
       if (!Array.isArray(items)) {
         setCartItemCount(0);
@@ -998,19 +561,23 @@ const Navbar = () => {
 
       const totalPrice = items.reduce((total, item) => {
         const product = item?.product || {};
-
         const price = getProductPrice(product);
-
         const quantity = Number(item?.quantity || 0);
 
         return total + price * quantity;
       }, 0);
 
       setCartItemCount(totalQuantity);
-
       setCartTotal(Number.isFinite(totalPrice) ? totalPrice : 0);
     } catch (error) {
       console.error("Navbar cart fetch error:", error);
+
+      // If token is invalid, we simply reset the count.
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        setCartItemCount(0);
+        setCartTotal(0);
+        return;
+      }
 
       setCartItemCount(0);
       setCartTotal(0);
@@ -1025,39 +592,18 @@ const Navbar = () => {
     try {
       setLoadingCategories(true);
 
-      const response = await fetch(`${API_BASE_URL}/categories`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Category API failed: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const { data: result } = await API.get("/categories");
 
       let categoryList = [];
 
-      if (Array.isArray(result)) {
-        categoryList = result;
-      } else if (Array.isArray(result?.categories)) {
-        categoryList = result.categories;
-      } else if (Array.isArray(result?.data)) {
-        categoryList = result.data;
-      } else if (Array.isArray(result?.data?.categories)) {
+      if (Array.isArray(result)) categoryList = result;
+      else if (Array.isArray(result?.categories)) categoryList = result.categories;
+      else if (Array.isArray(result?.data)) categoryList = result.data;
+      else if (Array.isArray(result?.data?.categories))
         categoryList = result.data.categories;
-      }
-
-      // ==================================================
-      // ONLY VALID CATEGORIES
-      // ==================================================
 
       const activeCategories = categoryList.filter((category) => {
-        if (!category) {
-          return false;
-        }
+        if (!category) return false;
 
         const status = String(category?.status ?? "active")
           .trim()
@@ -1074,7 +620,6 @@ const Navbar = () => {
       setCategories(activeCategories);
     } catch (error) {
       console.error("Navbar category fetch error:", error);
-
       setCategories([]);
     } finally {
       setLoadingCategories(false);
@@ -1088,9 +633,8 @@ const Navbar = () => {
   useEffect(() => {
     fetchCategories();
     fetchProducts();
-    fetchCurrentUser();
     fetchCart();
-  }, [fetchCategories, fetchProducts, fetchCurrentUser, fetchCart]);
+  }, [fetchCategories, fetchProducts, fetchCart]);
 
   // ======================================================
   // REFRESH CART WHEN ROUTE CHANGES
@@ -1102,7 +646,6 @@ const Navbar = () => {
 
   // ======================================================
   // REFRESH PRODUCTS WHEN ROUTE CHANGES
-  // Useful after returning from product/update pages
   // ======================================================
 
   useEffect(() => {
@@ -1151,7 +694,6 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleAuthChanged = () => {
-      fetchCurrentUser();
       fetchCart();
     };
 
@@ -1160,7 +702,7 @@ const Navbar = () => {
     return () => {
       window.removeEventListener("authChanged", handleAuthChanged);
     };
-  }, [fetchCurrentUser, fetchCart]);
+  }, [fetchCart]);
 
   // ======================================================
   // STORAGE EVENT
@@ -1169,7 +711,6 @@ const Navbar = () => {
   useEffect(() => {
     const handleStorage = (event) => {
       if (event.key === "token" || event.key === "guestCart") {
-        fetchCurrentUser();
         fetchCart();
       }
     };
@@ -1179,7 +720,7 @@ const Navbar = () => {
     return () => {
       window.removeEventListener("storage", handleStorage);
     };
-  }, [fetchCurrentUser, fetchCart]);
+  }, [fetchCart]);
 
   // ======================================================
   // GET PRODUCTS BY CATEGORY
@@ -1187,9 +728,7 @@ const Navbar = () => {
 
   const getProductsByCategory = useCallback(
     (category) => {
-      if (!category || !Array.isArray(products)) {
-        return [];
-      }
+      if (!category || !Array.isArray(products)) return [];
 
       const categoryId = String(getCategoryId(category) || "")
         .trim()
@@ -1198,9 +737,7 @@ const Navbar = () => {
       const categoryName = getCategoryName(category).trim().toLowerCase();
 
       return products.filter((product) => {
-        if (!product) {
-          return false;
-        }
+        if (!product) return false;
 
         const productStatus = String(product?.status ?? "active")
           .trim()
@@ -1215,10 +752,7 @@ const Navbar = () => {
         }
 
         const productCategory = getProductCategory(product);
-
-        if (!productCategory) {
-          return false;
-        }
+        if (!productCategory) return false;
 
         const productCategoryId = String(getObjectId(productCategory) || "")
           .trim()
@@ -1228,10 +762,6 @@ const Navbar = () => {
           .trim()
           .toLowerCase();
 
-        // ==========================================
-        // ID MATCH
-        // ==========================================
-
         if (
           categoryId &&
           productCategoryId &&
@@ -1239,10 +769,6 @@ const Navbar = () => {
         ) {
           return true;
         }
-
-        // ==========================================
-        // NAME MATCH
-        // ==========================================
 
         if (
           categoryName &&
@@ -1252,16 +778,9 @@ const Navbar = () => {
           return true;
         }
 
-        // ==========================================
-        // STRING CATEGORY
-        // ==========================================
-
         if (typeof productCategory === "string") {
           const value = productCategory.trim().toLowerCase();
-
-          if (value === categoryId || value === categoryName) {
-            return true;
-          }
+          if (value === categoryId || value === categoryName) return true;
         }
 
         return false;
@@ -1275,19 +794,13 @@ const Navbar = () => {
   // ======================================================
 
   const visibleCategories = useMemo(() => {
-    if (loadingProducts) {
-      return [];
-    }
+    if (loadingProducts) return [];
 
     return categories.filter((category) => {
       const name = getCategoryName(category);
-
-      if (!name) {
-        return false;
-      }
+      if (!name) return false;
 
       const categoryProducts = getProductsByCategory(category);
-
       return categoryProducts.length > 0;
     });
   }, [categories, loadingProducts, getProductsByCategory]);
@@ -1297,15 +810,11 @@ const Navbar = () => {
   // ======================================================
 
   const handleProductClick = (product) => {
-    if (!product) {
-      return;
-    }
+    if (!product) return;
 
     const productId = getProductId(product);
-
     if (!productId) {
       console.error("Product ID not found:", product);
-
       return;
     }
 
@@ -1325,9 +834,7 @@ const Navbar = () => {
       event.stopPropagation();
     }
 
-    if (!category) {
-      return;
-    }
+    if (!category) return;
 
     const categoryKey = getCategoryKey(category);
 
@@ -1367,7 +874,6 @@ const Navbar = () => {
     }
 
     const categorySlug = getCategorySlug(category);
-
     const subCategorySlug = getSubCategorySlug(subCategory);
 
     closeCategoryMenu();
@@ -1375,7 +881,6 @@ const Navbar = () => {
 
     if (categorySlug && subCategorySlug) {
       navigate(`${NAV_PATHS.CATEGORIES}/${categorySlug}/${subCategorySlug}`);
-
       return;
     }
 
@@ -1426,36 +931,6 @@ const Navbar = () => {
   };
 
   // ======================================================
-  // ACCOUNT
-  // ======================================================
-
-  const handleAccountClick = (event) => {
-    const token = getToken();
-
-    if (!token) {
-      event.preventDefault();
-      navigate("/account");
-      return;
-    }
-  };
-
-  // ======================================================
-  // LOGOUT
-  // ======================================================
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-
-    setCurrentUser(null);
-    setCartItemCount(0);
-    setCartTotal(0);
-
-    window.dispatchEvent(new Event("authChanged"));
-
-    navigate("/");
-  };
-
-  // ======================================================
   // CLOSE CART
   // ======================================================
 
@@ -1469,46 +944,27 @@ const Navbar = () => {
 
   return (
     <>
-      {/* ==================================================
-          SEO
-      ================================================== */}
-
+      {/* SEO */}
       <script type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
-
           "@type": "WebSite",
-
           name: "Grocery Sathi",
-
           url: "https://www.grocerysathi.com",
-
           potentialAction: {
             "@type": "SearchAction",
-
             target:
               "https://www.grocerysathi.com/search?q={search_term_string}",
-
             "query-input": "required name=search_term_string",
           },
         })}
       </script>
 
-      {/* ==================================================
-          HEADER
-      ================================================== */}
-
       <header className="navbar-header" role="banner">
-        {/* ==================================================
-            TOP BAR
-        ================================================== */}
-
+        {/* TOP BAR */}
         <div className="navbar-top-bar">
           <div className="navbar-container navbar-top-container">
-            {/* ==================================================
-                LOGO
-            ================================================== */}
-
+            {/* LOGO */}
             <div className="navbar-logo-container">
               <Link
                 to={NAV_PATHS.HOME}
@@ -1523,10 +979,7 @@ const Navbar = () => {
               </Link>
             </div>
 
-            {/* ==================================================
-                SEARCH
-            ================================================== */}
-
+            {/* SEARCH */}
             <form
               className="navbar-search-box"
               action={NAV_PATHS.SEARCH}
@@ -1549,20 +1002,15 @@ const Navbar = () => {
               />
             </form>
 
-            {/* ==================================================
-                CONTACT
-            ================================================== */}
-
+            {/* CONTACT */}
             <div className="navbar-info-wrapper">
               <div className="navbar-info-item">
                 <span className="navbar-info-title">Monday - Friday:</span>
-
                 <span className="navbar-info-sub">8:00 AM - 9:00 PM</span>
               </div>
 
               <div className="navbar-info-item">
                 <span className="navbar-info-title">Support 24/7:</span>
-
                 <a
                   href="tel:+919887868746"
                   className="navbar-info-phone"
@@ -1573,36 +1021,12 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* ==================================================
-                USER ACTIONS
-            ================================================== */}
-
+            {/* USER ACTIONS */}
             <div className="navbar-user-actions">
               {/* USER */}
-
-              <Link
-                to={currentUser ? NAV_PATHS.ACCOUNT : "/account"}
-                className={`navbar-icon-btn ${
-                  currentUser ? "navbar-user-logged-in" : ""
-                }`}
-                aria-label={
-                  currentUser
-                    ? `Account of ${getUserName(currentUser)}`
-                    : "Login"
-                }
-                onClick={handleAccountClick}
-              >
-                <User size={22} aria-hidden="true" />
-
-                {!userLoading && (
-                  <span className="navbar-user-name">
-                    {currentUser ? getUserName(currentUser) : "Login"}
-                  </span>
-                )}
-              </Link>
+              <UserAuth onNavigate={closeMobileMenu} />
 
               {/* CART */}
-
               <button
                 type="button"
                 className="navbar-cart-container"
@@ -1613,7 +1037,6 @@ const Navbar = () => {
               >
                 <div className="navbar-cart-text">
                   <span className="navbar-cart-label">My Cart:</span>
-
                   <span className="navbar-cart-price">
                     ₹{cartTotal.toFixed(2)}
                   </span>
@@ -1636,7 +1059,6 @@ const Navbar = () => {
               </button>
 
               {/* MOBILE */}
-
               <button
                 type="button"
                 className="navbar-mobile-toggle"
@@ -1654,10 +1076,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* ==================================================
-            BOTTOM NAVIGATION
-        ================================================== */}
-
+        {/* BOTTOM NAVIGATION */}
         <nav
           className={`navbar-bottom-bar ${
             isMobileMenuOpen ? "navbar-mobile-active" : ""
@@ -1665,10 +1084,7 @@ const Navbar = () => {
           aria-label="Main Navigation"
         >
           <div className="navbar-container navbar-bottom-container">
-            {/* ==================================================
-                ALL CATEGORIES
-            ================================================== */}
-
+            {/* ALL CATEGORIES */}
             <div className="navbar-category-wrapper">
               <button
                 type="button"
@@ -1681,7 +1097,6 @@ const Navbar = () => {
               >
                 <div className="navbar-category-btn-left">
                   <Grid size={18} aria-hidden="true" />
-
                   <span>All Categories</span>
                 </div>
 
@@ -1694,10 +1109,7 @@ const Navbar = () => {
                 />
               </button>
 
-              {/* ==================================================
-                  CATEGORY DROPDOWN
-              ================================================== */}
-
+              {/* CATEGORY DROPDOWN */}
               <div
                 id="category-dropdown-menu"
                 className={`navbar-dropdown-menu ${
@@ -1726,19 +1138,13 @@ const Navbar = () => {
                   ) : (
                     visibleCategories.map((category) => {
                       const categoryKey = getCategoryKey(category);
-
                       const categoryName = getCategoryName(category);
-
                       const subCategories = getSubCategories(category);
-
                       const categoryProducts = getProductsByCategory(category);
-
                       const isSubOpen = activeCategory === categoryKey;
 
                       return (
                         <li key={categoryKey} className="navbar-dropdown-item">
-                          {/* CATEGORY HEADER */}
-
                           <div className="navbar-dropdown-item-header">
                             <button
                               type="button"
@@ -1752,13 +1158,10 @@ const Navbar = () => {
                                 className="navbar-dropdown-icon"
                                 aria-hidden="true"
                               />
-
                               <span className="navbar-category-title-text">
                                 {categoryName}
                               </span>
                             </button>
-
-                            {/* CATEGORY ARROW */}
 
                             <button
                               type="button"
@@ -1766,7 +1169,6 @@ const Navbar = () => {
                               onClick={(event) => {
                                 event.preventDefault();
                                 event.stopPropagation();
-
                                 handleCategoryToggle(categoryKey);
                               }}
                               aria-expanded={isSubOpen}
@@ -1780,20 +1182,12 @@ const Navbar = () => {
                             </button>
                           </div>
 
-                          {/* ==================================================
-                                SUB DROPDOWN
-                            ================================================== */}
-
                           <div
                             className={`navbar-sub-dropdown ${
                               isSubOpen ? "navbar-sub-dropdown-show" : ""
                             }`}
                           >
                             <ul className="navbar-sub-list">
-                              {/* ==================================================
-                                    SUBCATEGORIES
-                                ================================================== */}
-
                               {subCategories.map((subCategory) => {
                                 const subKey =
                                   getSubCategoryId(subCategory) ||
@@ -1801,12 +1195,9 @@ const Navbar = () => {
                                   getSubCategoryName(subCategory);
 
                                 const subName = getSubCategoryName(subCategory);
-
                                 const subSlug = getSubCategorySlug(subCategory);
 
-                                if (!subName) {
-                                  return null;
-                                }
+                                if (!subName) return null;
 
                                 return (
                                   <li key={subKey} className="navbar-sub-item">
@@ -1828,10 +1219,6 @@ const Navbar = () => {
                                 );
                               })}
 
-                              {/* ==================================================
-                                    PRODUCTS
-                                ================================================== */}
-
                               {loadingProducts ? (
                                 <li className="navbar-sub-item">
                                   Loading products...
@@ -1839,24 +1226,10 @@ const Navbar = () => {
                               ) : (
                                 categoryProducts.map((product) => {
                                   const productId = getProductId(product);
-
                                   const productName = getProductName(product);
-
                                   const image = getProductImage(product);
 
-                                  const currentPrice = getProductPrice(product);
-
-                                  const originalPrice =
-                                    getOriginalPrice(product);
-
-                                  const discountPercentage =
-                                    getDiscountPercentage(product);
-
-                                  const discounted = hasDiscount(product);
-
-                                  if (!productId) {
-                                    return null;
-                                  }
+                                  if (!productId) return null;
 
                                   return (
                                     <li
@@ -1909,10 +1282,7 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* ==================================================
-                SPECIAL OFFER
-            ================================================== */}
-
+            {/* SPECIAL OFFER */}
             <div className="navbar-offer-text">
               <strong>-30% off</strong> on your first order over ₹200.{" "}
               <Link
@@ -1923,10 +1293,7 @@ const Navbar = () => {
               </Link>
             </div>
 
-            {/* ==================================================
-                QUICK NAVIGATION
-            ================================================== */}
-
+            {/* QUICK NAVIGATION */}
             <div className="navbar-nav-links">
               <Link to={NAV_PATHS.HOME} onClick={closeMobileMenu}>
                 Home
@@ -1952,10 +1319,7 @@ const Navbar = () => {
         </nav>
       </header>
 
-      {/* ==================================================
-          CART POPUP
-      ================================================== */}
-
+      {/* CART POPUP */}
       <CartSection
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}

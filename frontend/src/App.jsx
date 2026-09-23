@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Layout Components
@@ -28,8 +28,22 @@ import DeliveryTime from "./Components/DeliveryTime/DeliveryTime";
 import MyOrders from "./Components/MyOrders/MyOrders";
 import ListUpload from "./Components/ListUpload/ListUpload";
 import ProductDetails from "./Pages/ProductDetails/ProductDetails";
+import { useDispatch } from "react-redux";
+import { fetchCart } from "./Utils/cartSlice";
 
 const App = () => {
+
+
+  const dispatch = useDispatch()
+   useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      dispatch(fetchCart());
+    }
+  }, [dispatch]);
+
+
   return (
     <BrowserRouter>
       <Navbar />

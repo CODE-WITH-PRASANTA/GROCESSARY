@@ -14,9 +14,8 @@ import API from "../../api/axios";
 // CONSTANTS
 // ======================================================
 
-const SERVER_BASE_URL = "http://localhost:5000";
-
 const GUEST_CART_KEY = "guestCart";
+const PROJECT2_URL = import.meta.env.VITE_PROJECT2_URL;
 
 // ======================================================
 // COMPONENT
@@ -30,6 +29,12 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
   // ======================================================
 
   const [internalIsOpen, setInternalIsOpen] = useState(true);
+
+  // ======================================================
+  // CHECKOUT POPUP STATE
+  // ======================================================
+
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const isCartOpen =
     externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
@@ -46,15 +51,94 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
     }
   };
 
-  const handleOpenCart = () => {
-    // If parent controls the cart, tell parent to open it
-    if (onOpen) {
-      onOpen();
-      return;
-    }
+  const handleOpenCart = async () => {
+    try {
+      const token = localStorage.getItem("token");
 
-    // Otherwise use internal state
-    setInternalIsOpen(true);
+      if (!token) {
+        alert("Please login to view your cart.");
+        navigate("/login");
+        return;
+      }
+
+      const { data } = await API.post("/auth/create-handoff");
+
+      if (!data?.success) {
+        throw new Error(data?.message || "Unable to open cart.");
+      }
+
+      const code = data?.code;
+
+      if (!code) {
+        throw new Error("Handoff code was not returned.");
+      }
+
+      setInternalIsOpen(false);
+
+      if (onClose) {
+        onClose();
+      }
+
+      window.location.href = `${PROJECT2_URL}/sso?code=${encodeURIComponent(
+        code,
+      )}&redirect=/cart`;
+    } catch (error) {
+      console.error("Open cart SSO error:", error);
+
+      alert(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Unable to open cart.",
+      );
+    }
+  };
+
+  // ======================================================
+  // CHECKOUT — SSO HANDOFF TO PROJECT 2 CART (POPUP AUTO-OPEN)
+  // ======================================================
+
+  const handleCheckout = async () => {
+    try {
+      setCheckoutLoading(true);
+
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("Please login to continue to checkout.");
+        navigate("/login");
+        return;
+      }
+
+      const { data } = await API.post("/auth/create-handoff");
+
+      if (!data?.success) {
+        throw new Error(data?.message || "Unable to continue to checkout.");
+      }
+
+      const code = data?.code;
+
+      if (!code) {
+        throw new Error("Handoff code was not returned.");
+      }
+
+      setInternalIsOpen(false);
+
+      if (onClose) onClose();
+
+      window.location.href = `${PROJECT2_URL}/sso?code=${encodeURIComponent(
+        code,
+      )}&redirect=/cart&openCheckout=1`;
+    } catch (error) {
+      console.error("Checkout SSO error:", error);
+
+      alert(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Unable to continue to checkout.",
+      );
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   // ======================================================
@@ -306,9 +390,10 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
       return imageString;
     }
 
-    return `${SERVER_BASE_URL}${
-      imageString.startsWith("/") ? "" : "/"
-    }${imageString}`;
+    const base =
+      API.defaults.baseURL?.replace(/\/api\/?$/, "") || "http://localhost:5000";
+
+    return `${base}${imageString.startsWith("/") ? "" : "/"}${imageString}`;
   };
 
   // ======================================================
@@ -392,10 +477,6 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
 
     const discount = getTodayDiscountForProduct(productId);
 
-    // --------------------------------------------------
-    // NO ACTIVE TODAY DISCOUNT
-    // --------------------------------------------------
-
     if (!discount) {
       const fallbackOriginalPrice = getSafeNumber(item?.originalPrice, 0);
 
@@ -417,10 +498,6 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
       };
     }
 
-    // --------------------------------------------------
-    // ACTIVE TODAY DISCOUNT
-    // --------------------------------------------------
-
     const originalPrice = getSafeNumber(
       item?.originalPrice,
       getSafeNumber(item?.product?.price, getSafeNumber(item?.price, 0)),
@@ -428,7 +505,6 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
 
     const discountPrice = getSafeNumber(discount?.discountPrice, 0);
 
-    // Safety check
     if (
       discountPrice <= 0 ||
       (originalPrice > 0 && discountPrice >= originalPrice)
@@ -621,9 +697,7 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
 
   const fetchTodayDiscounts = useCallback(async () => {
     try {
-      const response = await API.get("/today-discounts/active");
-
-      const data = response?.data;
+      const { data } = await API.get("/today-discounts/active");
 
       const discounts = Array.isArray(data?.data)
         ? data.data
@@ -702,15 +776,8 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
 
       setCartError("");
 
-      // ------------------------------------------------
-      // IMPORTANT:
-      // Fetch active Today Discounts first.
-      // ------------------------------------------------
-
       const activeDiscounts = await fetchTodayDiscounts();
 
-      // Keep local copy so this fetch immediately
-      // applies discounts without waiting for state update.
       const discountList = Array.isArray(activeDiscounts)
         ? activeDiscounts
         : [];
@@ -821,9 +888,9 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
       // BACKEND CART
       // ==================================================
 
-      const response = await API.get("/cart");
+      const { data } = await API.get("/cart");
 
-      const formattedItems = getCartItemsFromResponse(response?.data);
+      const formattedItems = getCartItemsFromResponse(data);
 
       const discountedItems = applyCurrentDiscounts(formattedItems);
 
@@ -832,8 +899,7 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
       console.error("Fetch cart error:", error);
 
       setCartError(
-        error?.apiMessage ||
-          error?.response?.data?.message ||
+        error?.response?.data?.message ||
           error?.message ||
           "Unable to load cart.",
       );
@@ -908,19 +974,11 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
         throw new Error("Product ID is missing.");
       }
 
-      // ==================================================
-      // REMOVE IF ZERO
-      // ==================================================
-
       if (safeQuantity <= 0) {
         await handleRemove(item.id);
 
         return;
       }
-
-      // ==================================================
-      // STOCK
-      // ==================================================
 
       if (item.stockQuantity > 0 && safeQuantity > item.stockQuantity) {
         alert(`Only ${item.stockQuantity} item(s) available in stock.`);
@@ -962,16 +1020,13 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
       // LOGGED-IN
       // ==================================================
 
-      const response = await API.put(`/cart/update/${productId}`, {
+      const { data } = await API.put(`/cart/update/${productId}`, {
         quantity: safeQuantity,
       });
 
-      const returnedItems = getCartItemsFromResponse(response?.data);
+      const returnedItems = getCartItemsFromResponse(data);
 
-      if (returnedItems.length > 0 || response?.data?.cart?.items) {
-        setCartItems(returnedItems);
-
-        // Re-apply current Today Discount
+      if (returnedItems.length > 0 || data?.cart?.items) {
         setCartItems(applyTodayDiscountsToCart(returnedItems));
       } else {
         await fetchCart();
@@ -982,8 +1037,7 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
       console.error("Update cart error:", error);
 
       alert(
-        error?.apiMessage ||
-          error?.response?.data?.message ||
+        error?.response?.data?.message ||
           error?.message ||
           "Unable to update cart.",
       );
@@ -1080,11 +1134,11 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
         throw new Error("Product ID is missing.");
       }
 
-      const response = await API.delete(`/cart/remove/${productId}`);
+      const { data } = await API.delete(`/cart/remove/${productId}`);
 
-      const returnedItems = getCartItemsFromResponse(response?.data);
+      const returnedItems = getCartItemsFromResponse(data);
 
-      if (returnedItems.length > 0 || response?.data?.cart?.items) {
+      if (returnedItems.length > 0 || data?.cart?.items) {
         setCartItems(applyTodayDiscountsToCart(returnedItems));
       } else {
         await fetchCart();
@@ -1095,8 +1149,7 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
       console.error("Remove cart error:", error);
 
       alert(
-        error?.apiMessage ||
-          error?.response?.data?.message ||
+        error?.response?.data?.message ||
           error?.message ||
           "Unable to remove product.",
       );
@@ -1114,10 +1167,6 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
       }
 
       const productId = recItem?.productId || recItem?._id;
-
-      // ==================================================
-      // DEMO RECOMMENDATION
-      // ==================================================
 
       if (!productId) {
         alert("This recommendation is currently a demo product.");
@@ -1184,14 +1233,14 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
       // LOGGED-IN
       // ==================================================
 
-      const response = await API.post("/cart/add", {
+      const { data } = await API.post("/cart/add", {
         productId,
         quantity: 1,
       });
 
-      const returnedItems = getCartItemsFromResponse(response?.data);
+      const returnedItems = getCartItemsFromResponse(data);
 
-      if (returnedItems.length > 0 || response?.data?.cart?.items) {
+      if (returnedItems.length > 0 || data?.cart?.items) {
         setCartItems(applyTodayDiscountsToCart(returnedItems));
       } else {
         await fetchCart();
@@ -1199,13 +1248,12 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
 
       window.dispatchEvent(new Event("cartUpdated"));
 
-      alert(response?.data?.message || "Product added to cart successfully.");
+      alert(data?.message || "Product added to cart successfully.");
     } catch (error) {
       console.error("Recommendation cart error:", error);
 
       alert(
-        error?.apiMessage ||
-          error?.response?.data?.message ||
+        error?.response?.data?.message ||
           error?.message ||
           "Unable to add product to cart.",
       );
@@ -1229,10 +1277,6 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
     return total + price * quantity;
   }, 0);
 
-  // ======================================================
-  // TOTAL SAVINGS
-  // ======================================================
-
   const totalDiscountAmount = cartItems.reduce((total, item) => {
     if (!item?.isTodayDiscount) {
       return total;
@@ -1249,20 +1293,12 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
     return total + saving * quantity;
   }, 0);
 
-  // ======================================================
-  // FREE SHIPPING
-  // ======================================================
-
   const freeShippingThreshold = 1000;
 
   const progressPercent = Math.min(
     (subtotalAmount / freeShippingThreshold) * 100,
     100,
   );
-
-  // ======================================================
-  // ACTIVE RECOMMENDATION
-  // ======================================================
 
   const activeRecommendation =
     recommendations[activeRecIndex] || recommendations[0];
@@ -1273,33 +1309,21 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
 
   return (
     <>
-      {/* ==================================================
-          SEO
-      ================================================== */}
-
       <script type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
-
           "@type": "WebPage",
-
           name: "Grocery Sathi Shopping Cart",
-
           description:
             "Review your selected fresh organic grocery items, check shipping progress, and proceed to secure checkout on Grocery Sathi.",
-
           publisher: {
             "@type": "Organization",
-
             name: "Grocery Sathi",
           },
         })}
       </script>
 
-      {/* ==================================================
-          REOPEN CART
-      ================================================== */}
-
+      {/* REOPEN CART */}
       {!isCartOpen && (
         <button
           type="button"
@@ -1311,10 +1335,7 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
         </button>
       )}
 
-      {/* ==================================================
-          CART OVERLAY
-      ================================================== */}
-
+      {/* CART OVERLAY */}
       <div
         className={`cart-drawer-overlay ${isCartOpen ? "open" : ""}`}
         onClick={handleCloseCart}
@@ -1327,10 +1348,6 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
           aria-modal="true"
           aria-label="Shopping Cart Drawer"
         >
-          {/* ==================================================
-              HEADER
-          ================================================== */}
-
           <header className="cart-header">
             <div className="cart-header-title-wrap">
               <h2 className="cart-header-title">Shopping Cart</h2>
@@ -1350,10 +1367,6 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
               ×
             </button>
           </header>
-
-          {/* ==================================================
-              LOADING
-          ================================================== */}
 
           {cartLoading ? (
             <div className="empty-cart-container">
@@ -1378,70 +1391,55 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
               </button>
             </div>
           ) : cartItems.length === 0 ? (
-            <>
-              {/* ==================================================
-                  EMPTY CART
-              ================================================== */}
-
-              <div className="empty-cart-container">
-                <div className="empty-cart-icon-wrap">
-                  <svg
-                    width="48"
-                    height="48"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M6 8h12l1 13H5L6 8Z" />
-                    <path d="M9 8a3 3 0 0 1 6 0" />
-                  </svg>
-                </div>
-
-                <h3 className="empty-cart-title">Your cart is empty</h3>
-
-                <button
-                  type="button"
-                  className="btn-continue-shopping"
-                  onClick={() => {
-                    handleCloseCart();
-
-                    navigate("/");
-                  }}
+            <div className="empty-cart-container">
+              <div className="empty-cart-icon-wrap">
+                <svg
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
                 >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <line x1="19" y1="12" x2="5" y2="12" />
-
-                    <polyline points="12 19 5 12 12 5" />
-                  </svg>
-                  Continue shopping
-                </button>
+                  <path d="M6 8h12l1 13H5L6 8Z" />
+                  <path d="M9 8a3 3 0 0 1 6 0" />
+                </svg>
               </div>
-            </>
+
+              <h3 className="empty-cart-title">Your cart is empty</h3>
+
+              <button
+                type="button"
+                className="btn-continue-shopping"
+                onClick={() => {
+                  handleCloseCart();
+
+                  navigate("/");
+                }}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="19" y1="12" x2="5" y2="12" />
+                  <polyline points="12 19 5 12 12 5" />
+                </svg>
+                Continue shopping
+              </button>
+            </div>
           ) : (
             <>
-              {/* ==================================================
-                  CART BODY
-              ================================================== */}
-
               <div className="cart-body">
-                {/* ==================================================
-                    SHIPPING
-                ================================================== */}
-
                 <div className="shipping-bar-container">
                   <p className="shipping-msg">
                     {subtotalAmount >= freeShippingThreshold ? (
@@ -1489,20 +1487,13 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                         strokeLinejoin="round"
                       >
                         <rect x="1" y="3" width="15" height="13" rx="2" />
-
                         <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
-
                         <circle cx="5.5" cy="18.5" r="2.5" />
-
                         <circle cx="18.5" cy="18.5" r="2.5" />
                       </svg>
                     </div>
                   </div>
                 </div>
-
-                {/* ==================================================
-                    SAVINGS MESSAGE
-                ================================================== */}
 
                 {totalDiscountAmount > 0 && (
                   <div
@@ -1521,22 +1512,13 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                   </div>
                 )}
 
-                {/* ==================================================
-                    CART ITEMS
-                ================================================== */}
-
                 <section className="cart-items-list" aria-label="Cart Items">
                   {cartItems.map((item) => {
                     const itemName = getSafeText(item?.name, "Product");
-
                     const itemSize = getSafeText(item?.size, "Standard Pack");
-
                     const itemPrice = getSafeNumber(item?.price, 0);
-
                     const originalPrice = getSafeNumber(item?.originalPrice, 0);
-
                     const itemQuantity = getSafeNumber(item?.quantity, 1);
-
                     const isTodayDiscount = Boolean(item?.isTodayDiscount);
 
                     return (
@@ -1544,8 +1526,6 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                         key={item.id || item.productId}
                         className="cart-item-card"
                       >
-                        {/* IMAGE */}
-
                         <div className="cart-item-img-wrap">
                           <img
                             src={item.image || avocadoImg}
@@ -1556,8 +1536,6 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                             }}
                           />
                         </div>
-
-                        {/* DETAILS */}
 
                         <div className="cart-item-details">
                           <div className="cart-item-header-row">
@@ -1581,15 +1559,10 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                                 aria-hidden="true"
                               >
                                 <polyline points="3 6 5 6 21 6" />
-
                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                               </svg>
                             </button>
                           </div>
-
-                          {/* ==================================================
-                                PRICE
-                            ================================================== */}
 
                           <div
                             style={{
@@ -1602,9 +1575,7 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                           >
                             <p
                               className="cart-item-price"
-                              style={{
-                                margin: 0,
-                              }}
+                              style={{ margin: 0 }}
                             >
                               ₹{itemPrice.toFixed(2)}
                             </p>
@@ -1640,10 +1611,6 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                             )}
                           </div>
 
-                          {/* ==================================================
-                                SAVING
-                            ================================================== */}
-
                           {isTodayDiscount && originalPrice > itemPrice && (
                             <p
                               style={{
@@ -1657,11 +1624,7 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                             </p>
                           )}
 
-                          {/* SIZE */}
-
                           <p className="cart-item-size">Size: {itemSize}</p>
-
-                          {/* QUANTITY */}
 
                           <div className="cart-item-qty-control">
                             <button
@@ -1689,10 +1652,6 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                     );
                   })}
                 </section>
-
-                {/* ==================================================
-                    RECOMMENDATIONS
-                ================================================== */}
 
                 <section
                   className="cart-recommendations-section"
@@ -1756,13 +1715,7 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                 </section>
               </div>
 
-              {/* ==================================================
-                  FOOTER
-              ================================================== */}
-
               <footer className="cart-footer">
-                {/* BADGES */}
-
                 <div className="cart-badges-row">
                   <div
                     className="cart-badge-card"
@@ -1780,11 +1733,8 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                       aria-hidden="true"
                     >
                       <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z" />
-
                       <line x1="9" y1="9" x2="9.01" y2="9" />
-
                       <line x1="15" y1="15" x2="15.01" y2="15" />
-
                       <line x1="15" y1="9" x2="9" y2="15" />
                     </svg>
 
@@ -1807,9 +1757,7 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                       aria-hidden="true"
                     >
                       <polyline points="20 12 20 22 4 22 4 12" />
-
                       <rect x="2" y="7" width="20" height="5" />
-
                       <line x1="12" y1="22" x2="12" y2="7" />
                     </svg>
 
@@ -1817,29 +1765,19 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                   </div>
                 </div>
 
-                {/* ==================================================
-                    TOTALS
-                ================================================== */}
-
                 <div className="cart-totals-row">
                   <div className="total-col">
                     <span className="total-label">Total Items</span>
-
                     <span className="total-value">{totalItemsCount}</span>
                   </div>
 
                   <div className="total-col right">
                     <span className="total-label">Subtotal</span>
-
                     <span className="total-value">
                       ₹{subtotalAmount.toFixed(2)}
                     </span>
                   </div>
                 </div>
-
-                {/* ==================================================
-                    PRICE DETAILS
-                ================================================== */}
 
                 <div className="cart-item-price-details">
                   <h4 className="price-details-title">Price Details</h4>
@@ -1900,15 +1838,11 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                   })}
                 </div>
 
-                {/* ==================================================
-                    ACTION BUTTONS
-                ================================================== */}
-
                 <div className="cart-action-buttons">
                   <button
                     type="button"
                     className="btn-view-cart"
-                    onClick={() => navigate("/cart")}
+                    onClick={handleOpenCart}
                   >
                     View Cart
                   </button>
@@ -1916,9 +1850,10 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                   <button
                     type="button"
                     className="btn-checkout"
-                    onClick={() => navigate("/checkout")}
+                    onClick={handleCheckout}
+                    disabled={checkoutLoading}
                   >
-                    Checkout
+                    {checkoutLoading ? "Redirecting..." : "Checkout"}
                   </button>
                 </div>
               </footer>

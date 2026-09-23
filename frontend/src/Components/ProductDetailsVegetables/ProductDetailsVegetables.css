@@ -2642,3 +2642,17 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+.OurBestsellers-icon-btn.wishlisted {
+  color: #ef4444;
+}
+
+.OurBestsellers-icon-btn.wishlisted svg {
+  fill: #ef4444;
+  color: #ef4444;
+}
+
+.OurBestsellers-icon-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

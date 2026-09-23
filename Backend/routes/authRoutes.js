@@ -6,60 +6,27 @@ const {
   forgotPassword,
   resetPassword,
   getMe,
+  updateMe,
+  createHandoff,
+  consumeHandoff,
 } = require("../controllers/authController");
 
-const {
-  protect,
-} = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 
-const router =
-  express.Router();
+const router = express.Router();
 
-// ======================================================
-// REGISTER
-// ======================================================
+router.post("/register", register);
 
+router.post("/login", login);
 
-router.post(
-  "/register",
-  register
-);
+router.post("/forgot-password", forgotPassword);
 
-// ======================================================
-// LOGIN
-// ======================================================
+router.post("/reset-password", resetPassword);
 
-router.post(
-  "/login",
-  login
-);
-
-// ======================================================
-// FORGOT PASSWORD
-// ======================================================
-
-router.post(
-  "/forgot-password",
-  forgotPassword
-);
-
-// ======================================================
-// RESET PASSWORD
-// ======================================================
-
-router.post(
-  "/reset-password",
-  resetPassword
-);
-
-// ======================================================
-// CURRENT USER
-// ======================================================
-
-router.get(
-  "/me",
-  protect,
-  getMe
-);
+// Logged-in user only
+router.get("/me", protect, getMe);
+router.put("/me", protect, updateMe);
+router.post("/create-handoff", protect, createHandoff);
+router.post("/consume-handoff", consumeHandoff);
 
 module.exports = router;

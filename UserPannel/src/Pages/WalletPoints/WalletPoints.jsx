@@ -1,202 +1,398 @@
-import React, { useState } from 'react';
-import { 
-  FaWallet, 
-  FaStar, 
-  FaGift, 
-  FaArrowRight, 
-  FaPlusCircle, 
-  FaUniversity, 
-  FaTicketAlt, 
-  FaHistory, 
-  FaReceipt, 
+import React, { useEffect, useState } from "react";
+import {
+  FaWallet,
+  FaStar,
+  FaGift,
+  FaArrowRight,
+  FaPlusCircle,
+  FaUniversity,
+  FaTicketAlt,
+  FaHistory,
+  FaReceipt,
   FaShoppingBag,
-  FaTimes 
-} from 'react-icons/fa';
-import './WalletPoints.css';
+  FaTimes,
+} from "react-icons/fa";
+import API from "../../api/axios";
+import "./WalletPoints.css";
+
+// ======================================================
+// HELPERS
+// ======================================================
+
+const formatCurrency = (value) => {
+  const n = Number(value) || 0;
+  return n.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+const formatDateTime = (date) => {
+  if (!date) return "-";
+  try {
+    return new Date(date).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return "-";
+  }
+};
+
+const formatDateShort = (date) => {
+  if (!date) return "-";
+  try {
+    return new Date(date).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return "-";
+  }
+};
+
+// Human-readable labels for each backend transaction type
+const WALLET_TXN_LABELS = {
+  add_money: "Added Money",
+  order_payment: "Order Payment",
+  refund: "Refund",
+  referral_bonus: "Referral Bonus",
+  cashback: "Cashback Received",
+  withdrawal: "Money Sent to Bank",
+  admin_credit: "Admin Credit",
+  admin_debit: "Admin Debit",
+  points_conversion: "Points Converted",
+};
+
+const POINTS_TXN_LABELS = {
+  earned_order: "Points Earned",
+  earned_referral: "Referral Reward",
+  earned_welcome: "Welcome Bonus",
+  redeemed_order: "Points Used",
+  redeemed_wallet: "Converted to Wallet",
+  expired: "Points Expired",
+  admin_adjust: "Adjustment",
+};
+
+// Icon map — keeps JSX clean
+const getWalletTxnIcon = (type) => {
+  switch (type) {
+    case "add_money":
+    case "admin_credit":
+      return <FaPlusCircle />;
+    case "order_payment":
+      return <FaShoppingBag />;
+    case "referral_bonus":
+    case "cashback":
+      return <FaReceipt />;
+    case "withdrawal":
+      return <FaUniversity />;
+    default:
+      return <FaWallet />;
+  }
+};
+
+// ======================================================
+// COMPONENT
+// ======================================================
 
 const WalletPoints = () => {
-  const [balance, setBalance] = useState(1250.00);
-  const [rewardPoints, setRewardPoints] = useState(850);
+  // ---- WALLET ----
+  const [balance, setBalance] = useState(0);
+  const [walletTransactions, setWalletTransactions] = useState([]);
+  const [walletLoading, setWalletLoading] = useState(true);
+  const [walletError, setWalletError] = useState("");
 
-  // Modal State
+  // ---- POINTS ----
+  const [rewardPoints, setRewardPoints] = useState(0);
+  const [pointsTotalEarned, setPointsTotalEarned] = useState(0);
+  const [pointsTotalUsed, setPointsTotalUsed] = useState(0);
+  const [pointsActivity, setPointsActivity] = useState([]);
+  const [pointsLoading, setPointsLoading] = useState(true);
+  const [pointsError, setPointsError] = useState("");
+
+  // ---- MODAL ----
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
-  const [addAmount, setAddAmount] = useState('');
-  const [selectedMethod, setSelectedMethod] = useState('UPI - PhonePe');
+  const [addAmount, setAddAmount] = useState("");
+  const [selectedMethod, setSelectedMethod] = useState("UPI - PhonePe");
+  const [saving, setSaving] = useState(false);
 
-  // Sample data matching the reference image exactly
-  const [walletTransactions, setWalletTransactions] = useState([
-    {
-      id: 1,
-      type: 'Added Money',
-      subtext: 'Via UPI - PhonePe',
-      date: '25 May 2026, 10:30 AM',
-      amount: '+ ₹500.00',
-      status: 'Success',
-      isCredit: true,
-      icon: <FaPlusCircle />
-    },
-    {
-      id: 2,
-      type: 'Order Payment',
-      subtext: 'Order #FM12548',
-      date: '24 May 2026, 07:45 PM',
-      amount: '- ₹349.00',
-      status: 'Success',
-      isCredit: false,
-      icon: <FaShoppingBag />
-    },
-    {
-      id: 3,
-      type: 'Cashback Received',
-      subtext: 'Order #FM12520',
-      date: '22 May 2026, 06:20 PM',
-      amount: '+ ₹50.00',
-      status: 'Success',
-      isCredit: true,
-      icon: <FaReceipt />
-    },
-    {
-      id: 4,
-      type: 'Money Sent to Bank',
-      subtext: 'To HDFC Bank •••• 4321',
-      date: '20 May 2026, 11:15 AM',
-      amount: '- ₹300.00',
-      status: 'Success',
-      isCredit: false,
-      icon: <FaUniversity />
-    },
-    {
-      id: 5,
-      type: 'Added Money',
-      subtext: 'Via UPI - Google Pay',
-      date: '18 May 2026, 09:40 AM',
-      amount: '+ ₹300.00',
-      status: 'Success',
-      isCredit: true,
-      icon: <FaPlusCircle />
-    }
-  ]);
+  // ======================================================
+  // FETCH WALLET
+  // ======================================================
 
-  const pointsActivity = [
-    {
-      id: 1,
-      title: 'Points Earned',
-      subtext: 'Order #FM12548',
-      date: '24 May 2026',
-      points: '+150 pts',
-      isCredit: true
-    },
-    {
-      id: 2,
-      title: 'Points Used',
-      subtext: 'Order Discount',
-      date: '22 May 2026',
-      points: '-100 pts',
-      isCredit: false
-    },
-    {
-      id: 3,
-      title: 'Points Earned',
-      subtext: 'Order #FM12520',
-      date: '20 May 2026',
-      points: '+120 pts',
-      isCredit: true
-    },
-    {
-      id: 4,
-      title: 'Welcome Bonus',
-      subtext: 'Account Created',
-      date: '15 May 2026',
-      points: '+200 pts',
-      isCredit: true
+  const fetchWallet = async () => {
+    try {
+      setWalletLoading(true);
+      setWalletError("");
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setWalletError("Please login to view your wallet.");
+        return;
+      }
+
+      const { data } = await API.get("/wallet");
+
+      if (data.success) {
+        const wallet = data.wallet || {};
+        setBalance(Number(wallet.balance) || 0);
+
+        const txns = (wallet.transactions || []).map((t) => ({
+          id: t._id,
+          type: WALLET_TXN_LABELS[t.type] || t.type,
+          subtext: t.reference || "",
+          date: formatDateTime(t.createdAt),
+          amount: `${
+            t.direction === "credit" ? "+" : "-"
+          } ₹${formatCurrency(t.amount)}`,
+          status: t.status === "success" ? "Success" : t.status,
+          isCredit: t.direction === "credit",
+          icon: getWalletTxnIcon(t.type),
+        }));
+
+        setWalletTransactions(txns);
+      } else {
+        setWalletError(data.message || "Failed to load wallet.");
+      }
+    } catch (err) {
+      console.error("Fetch wallet error:", err);
+      setWalletError(
+        err.response?.data?.message || "Failed to load wallet."
+      );
+    } finally {
+      setWalletLoading(false);
     }
-  ];
+  };
+
+  // ======================================================
+  // FETCH POINTS
+  // ======================================================
+
+  const fetchPoints = async () => {
+    try {
+      setPointsLoading(true);
+      setPointsError("");
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setPointsError("Please login to view your points.");
+        return;
+      }
+
+      const { data } = await API.get("/points");
+
+      if (data.success) {
+        const points = data.points || {};
+        setRewardPoints(Number(points.availablePoints) || 0);
+        setPointsTotalEarned(Number(points.totalEarned) || 0);
+        setPointsTotalUsed(Number(points.totalUsed) || 0);
+
+        const activity = (points.transactions || []).map((t) => ({
+          id: t._id,
+          title: POINTS_TXN_LABELS[t.type] || t.type,
+          subtext: t.reference || t.note || "",
+          date: formatDateShort(t.createdAt),
+          points: `${t.direction === "credit" ? "+" : "-"}${t.points} pts`,
+          isCredit: t.direction === "credit",
+        }));
+
+        setPointsActivity(activity);
+      } else {
+        setPointsError(data.message || "Failed to load points.");
+      }
+    } catch (err) {
+      console.error("Fetch points error:", err);
+      setPointsError(
+        err.response?.data?.message || "Failed to load points."
+      );
+    } finally {
+      setPointsLoading(false);
+    }
+  };
+
+  // ======================================================
+  // INITIAL LOAD
+  // ======================================================
+
+  useEffect(() => {
+    fetchWallet();
+    fetchPoints();
+  }, []);
+
+  // ======================================================
+  // MODAL HANDLERS
+  // ======================================================
 
   const handleOpenModal = () => setIsAddMoneyOpen(true);
+
   const handleCloseModal = () => {
     setIsAddMoneyOpen(false);
-    setAddAmount('');
+    setAddAmount("");
+    setSaving(false);
   };
 
   const handleQuickAdd = (value) => {
-    setAddAmount((prev) => (Number(prev || 0) + value).toString());
+    setAddAmount((prev) => String(Number(prev || 0) + value));
   };
 
-  const handleConfirmAddMoney = (e) => {
+  // ======================================================
+  // ADD MONEY (backend)
+  // ======================================================
+
+  const handleConfirmAddMoney = async (e) => {
     e.preventDefault();
+
     const numValue = parseFloat(addAmount);
-    if (isNaN(numValue) || numValue <= 0) return;
+    if (isNaN(numValue) || numValue <= 0) {
+      alert("Please enter a valid amount.");
+      return;
+    }
 
-    // Update balance
-    setBalance((prev) => prev + numValue);
+    try {
+      setSaving(true);
 
-    // Add new transaction log
-    const newTxn = {
-      id: Date.now(),
-      type: 'Added Money',
-      subtext: `Via ${selectedMethod}`,
-      date: 'Just Now',
-      amount: `+ ₹${numValue.toFixed(2)}`,
-      status: 'Success',
-      isCredit: true,
-      icon: <FaPlusCircle />
-    };
+      // NOTE: this calls your existing /api/wallet/add.
+      // If you later add a Razorpay flow for wallet top-ups,
+      // replace this with /wallet/create-order + /wallet/verify.
+      const { data } = await API.post("/wallet/add", {
+        amount: numValue,
+        method: selectedMethod,
+      });
 
-    setWalletTransactions([newTxn, ...walletTransactions]);
-    handleCloseModal();
+      if (!data.success) {
+        alert(data.message || "Failed to add money.");
+        return;
+      }
+
+      // Refresh wallet from backend to get accurate balance + txn history
+      await fetchWallet();
+
+      handleCloseModal();
+    } catch (err) {
+      console.error("Add money error:", err);
+      alert(err.response?.data?.message || "Failed to add money.");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSendToBank = () => alert('Send to Bank action triggered!');
-  const handleVouchers = () => alert('My Vouchers opened!');
-  const handlePointsHistory = () => alert('Navigating to Points History!');
-  const handleShopNow = () => alert('Redirecting to Shop!');
+  // ======================================================
+  // OTHER ACTIONS
+  // ======================================================
+
+  const handleSendToBank = () => {
+    const amount = prompt("Enter amount to withdraw (₹):");
+    if (!amount) return;
+
+    const value = parseFloat(amount);
+    if (isNaN(value) || value <= 0) {
+      alert("Invalid amount.");
+      return;
+    }
+
+    API.post("/wallet/withdraw", { amount: value })
+      .then(({ data }) => {
+        if (data.success) {
+          alert("Withdrawal request submitted.");
+          fetchWallet();
+        } else {
+          alert(data.message || "Withdrawal failed.");
+        }
+      })
+      .catch((err) => {
+        alert(err.response?.data?.message || "Withdrawal failed.");
+      });
+  };
+
+  const handleVouchers = () => alert("My Vouchers opened!");
+  const handlePointsHistory = () => alert("Navigating to Points History!");
+  const handleShopNow = () => alert("Redirecting to Shop!");
+
+  // ======================================================
+  // RENDER
+  // ======================================================
 
   return (
     <div className="WalletPoints-container">
-      {/* Top Cards Section */}
+      {/* ==================================================
+          TOP CARDS
+      ================================================== */}
+
       <div className="WalletPoints-top-grid">
-        {/* Wallet Balance Card */}
+        {/* WALLET CARD */}
         <div className="WalletPoints-card WalletPoints-balance-card">
           <div className="WalletPoints-card-header">
             <div className="WalletPoints-icon-wrapper green-bg">
               <FaWallet className="WalletPoints-icon green-text" />
             </div>
+
             <div className="WalletPoints-title-group">
               <span className="WalletPoints-card-label">Wallet Balance</span>
-              <h2 className="WalletPoints-balance-amount">₹{balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
+              <h2 className="WalletPoints-balance-amount">
+                ₹{formatCurrency(balance)}
+              </h2>
             </div>
           </div>
+
           <div className="WalletPoints-card-footer">
-            <span className="WalletPoints-badge green-badge">Total Balance</span>
-            <button className="WalletPoints-btn-primary" onClick={handleOpenModal}>
+            <span className="WalletPoints-badge green-badge">
+              Total Balance
+            </span>
+
+            <button
+              className="WalletPoints-btn-primary"
+              onClick={handleOpenModal}
+            >
               <FaPlusCircle /> Add Money
             </button>
           </div>
         </div>
 
-        {/* Reward Points Card */}
+        {/* POINTS CARD */}
         <div className="WalletPoints-card WalletPoints-points-card">
           <div className="WalletPoints-card-header">
             <div className="WalletPoints-icon-wrapper orange-bg">
               <FaStar className="WalletPoints-icon orange-text" />
             </div>
+
             <div className="WalletPoints-title-group">
               <span className="WalletPoints-card-label">Reward Points</span>
               <h2 className="WalletPoints-points-amount">
-                {rewardPoints} <span className="WalletPoints-pts-unit">pts</span>
+                {rewardPoints}{" "}
+                <span className="WalletPoints-pts-unit">pts</span>
               </h2>
             </div>
           </div>
+
           <div className="WalletPoints-card-footer">
-            <span className="WalletPoints-badge orange-badge">Available Points</span>
-            <button className="WalletPoints-btn-secondary" onClick={() => alert('Earn Points Information')}>
+            <span className="WalletPoints-badge orange-badge">
+              Available Points
+            </span>
+
+            <button
+              className="WalletPoints-btn-secondary"
+              onClick={() =>
+                alert(
+                  "Earn 5% of every order value as points. Redeem 1 pt = ₹0.25 at checkout."
+                )
+              }
+            >
               <FaGift /> How to Earn Points
             </button>
           </div>
         </div>
       </div>
 
-      {/* Action Bar Section */}
+      {/* ==================================================
+          ACTION BAR
+      ================================================== */}
+
       <div className="WalletPoints-actions-bar">
         <div className="WalletPoints-action-item" onClick={handleOpenModal}>
           <div className="WalletPoints-action-icon green-bg-light">
@@ -239,53 +435,100 @@ const WalletPoints = () => {
         </div>
       </div>
 
-      {/* Main Content Grid */}
+      {/* ==================================================
+          MAIN CONTENT
+      ================================================== */}
+
       <div className="WalletPoints-main-grid">
-        {/* Left Column: Recent Wallet Transactions */}
+        {/* LEFT: WALLET TRANSACTIONS */}
         <div className="WalletPoints-card WalletPoints-transactions-card">
           <div className="WalletPoints-section-header">
             <div className="WalletPoints-header-left">
               <FaReceipt className="WalletPoints-section-icon green-text" />
               <h3>Recent Wallet Transactions</h3>
             </div>
-            <button className="WalletPoints-link-btn" onClick={() => alert('View All Transactions')}>
-              View All <FaArrowRight />
+
+            <button
+              className="WalletPoints-link-btn"
+              onClick={fetchWallet}
+            >
+              Refresh <FaArrowRight />
             </button>
           </div>
 
           <div className="WalletPoints-list">
-            {walletTransactions.map((item) => (
-              <div key={item.id} className="WalletPoints-list-item">
-                <div className="WalletPoints-item-left">
-                  <div className={`WalletPoints-item-icon ${item.isCredit ? 'blue-bg-light blue-text' : 'pink-bg-light pink-text'}`}>
-                    {item.icon}
-                  </div>
-                  <div className="WalletPoints-item-details">
-                    <h4>{item.type}</h4>
-                    <p className="WalletPoints-subtext">{item.subtext}</p>
-                    <span className="WalletPoints-date">{item.date}</span>
-                  </div>
-                </div>
-                <div className="WalletPoints-item-right">
-                  <span className={`WalletPoints-amount ${item.isCredit ? 'credit' : 'debit'}`}>
-                    {item.amount}
-                  </span>
-                  <span className="WalletPoints-status">{item.status}</span>
-                </div>
+            {walletLoading && (
+              <div className="WalletPoints-list-item">
+                <p className="WalletPoints-subtext">Loading transactions…</p>
               </div>
-            ))}
+            )}
+
+            {!walletLoading && walletError && (
+              <div className="WalletPoints-list-item">
+                <p className="WalletPoints-subtext">{walletError}</p>
+              </div>
+            )}
+
+            {!walletLoading && !walletError && walletTransactions.length === 0 && (
+              <div className="WalletPoints-list-item">
+                <p className="WalletPoints-subtext">
+                  No wallet transactions yet.
+                </p>
+              </div>
+            )}
+
+            {!walletLoading &&
+              walletTransactions.map((item) => (
+                <div key={item.id} className="WalletPoints-list-item">
+                  <div className="WalletPoints-item-left">
+                    <div
+                      className={`WalletPoints-item-icon ${
+                        item.isCredit
+                          ? "blue-bg-light blue-text"
+                          : "pink-bg-light pink-text"
+                      }`}
+                    >
+                      {item.icon}
+                    </div>
+
+                    <div className="WalletPoints-item-details">
+                      <h4>{item.type}</h4>
+                      {item.subtext && (
+                        <p className="WalletPoints-subtext">{item.subtext}</p>
+                      )}
+                      <span className="WalletPoints-date">{item.date}</span>
+                    </div>
+                  </div>
+
+                  <div className="WalletPoints-item-right">
+                    <span
+                      className={`WalletPoints-amount ${
+                        item.isCredit ? "credit" : "debit"
+                      }`}
+                    >
+                      {item.amount}
+                    </span>
+                    <span className="WalletPoints-status">{item.status}</span>
+                  </div>
+                </div>
+              ))}
           </div>
 
-          <div className="WalletPoints-center-btn">
-            <button className="WalletPoints-link-btn bold" onClick={() => alert('View All Transactions')}>
-              View All Transactions <FaArrowRight />
-            </button>
-          </div>
+          {walletTransactions.length > 0 && (
+            <div className="WalletPoints-center-btn">
+              <button
+                className="WalletPoints-link-btn bold"
+                onClick={fetchWallet}
+              >
+                View All Transactions <FaArrowRight />
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Right Column: Points Summary & Recent Activity */}
+        {/* RIGHT COLUMN */}
         <div className="WalletPoints-right-column">
-          {/* Points Summary Card */}
+          {/* POINTS SUMMARY */}
           <div className="WalletPoints-card WalletPoints-summary-card">
             <div className="WalletPoints-section-header">
               <div className="WalletPoints-header-left">
@@ -298,73 +541,119 @@ const WalletPoints = () => {
               <div className="WalletPoints-summary-rows">
                 <div className="WalletPoints-summary-row">
                   <span>Total Points Earned</span>
-                  <strong>1,250 pts</strong>
+                  <strong>{pointsTotalEarned} pts</strong>
                 </div>
+
                 <div className="WalletPoints-summary-row">
                   <span>Total Points Used</span>
-                  <strong>400 pts</strong>
+                  <strong>{pointsTotalUsed} pts</strong>
                 </div>
+
                 <div className="WalletPoints-summary-row">
                   <span>Available Points</span>
-                  <strong className="orange-text">850 pts</strong>
+                  <strong className="orange-text">{rewardPoints} pts</strong>
                 </div>
               </div>
+
               <div className="WalletPoints-trophy-illustration">🏆</div>
             </div>
           </div>
 
-          {/* Recent Points Activity Card */}
+          {/* POINTS ACTIVITY */}
           <div className="WalletPoints-card WalletPoints-activity-card">
             <div className="WalletPoints-section-header">
               <div className="WalletPoints-header-left">
                 <FaReceipt className="WalletPoints-section-icon green-text" />
                 <h3>Recent Points Activity</h3>
               </div>
-              <button className="WalletPoints-link-btn" onClick={() => alert('View All Points Activity')}>
-                View All <FaArrowRight />
+
+              <button
+                className="WalletPoints-link-btn"
+                onClick={fetchPoints}
+              >
+                Refresh <FaArrowRight />
               </button>
             </div>
 
             <div className="WalletPoints-list">
-              {pointsActivity.map((act) => (
-                <div key={act.id} className="WalletPoints-list-item">
-                  <div className="WalletPoints-item-left">
-                    <div className="WalletPoints-item-icon orange-bg-light orange-text">
-                      <FaStar />
-                    </div>
-                    <div className="WalletPoints-item-details">
-                      <h4>{act.title}</h4>
-                      <p className="WalletPoints-subtext">{act.subtext}</p>
-                    </div>
-                  </div>
-                  <div className="WalletPoints-item-right">
-                    <span className={`WalletPoints-amount ${act.isCredit ? 'credit' : 'debit'}`}>
-                      {act.points}
-                    </span>
-                    <span className="WalletPoints-date">{act.date}</span>
-                  </div>
+              {pointsLoading && (
+                <div className="WalletPoints-list-item">
+                  <p className="WalletPoints-subtext">Loading activity…</p>
                 </div>
-              ))}
+              )}
+
+              {!pointsLoading && pointsError && (
+                <div className="WalletPoints-list-item">
+                  <p className="WalletPoints-subtext">{pointsError}</p>
+                </div>
+              )}
+
+              {!pointsLoading && !pointsError && pointsActivity.length === 0 && (
+                <div className="WalletPoints-list-item">
+                  <p className="WalletPoints-subtext">
+                    No points activity yet.
+                  </p>
+                </div>
+              )}
+
+              {!pointsLoading &&
+                pointsActivity.map((act) => (
+                  <div key={act.id} className="WalletPoints-list-item">
+                    <div className="WalletPoints-item-left">
+                      <div className="WalletPoints-item-icon orange-bg-light orange-text">
+                        <FaStar />
+                      </div>
+
+                      <div className="WalletPoints-item-details">
+                        <h4>{act.title}</h4>
+                        {act.subtext && (
+                          <p className="WalletPoints-subtext">{act.subtext}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="WalletPoints-item-right">
+                      <span
+                        className={`WalletPoints-amount ${
+                          act.isCredit ? "credit" : "debit"
+                        }`}
+                      >
+                        {act.points}
+                      </span>
+                      <span className="WalletPoints-date">{act.date}</span>
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom Promo Banner */}
+      {/* ==================================================
+          PROMO BANNER
+      ================================================== */}
+
       <div className="WalletPoints-promo-banner">
         <div className="WalletPoints-promo-left">
           <div className="WalletPoints-promo-icon">👛</div>
           <div className="WalletPoints-promo-text">
             <h3>Use your wallet balance for faster checkout!</h3>
-            <p>Your wallet balance can be used to pay for orders, get exclusive discounts and much more.</p>
+            <p>
+              Your wallet balance can be used to pay for orders, get exclusive
+              discounts and much more.
+            </p>
           </div>
         </div>
+
         <button className="WalletPoints-btn-shop" onClick={handleShopNow}>
           Shop Now
         </button>
       </div>
 
-      {/* Smooth Add Money Modal */}
+      {/* ==================================================
+          ADD MONEY MODAL
+      ================================================== */}
+
       {isAddMoneyOpen && (
         <div className="modal-overlay" onClick={handleCloseModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -390,13 +679,23 @@ const WalletPoints = () => {
                 />
 
                 <div className="quick-add-chips">
-                  <button type="button" onClick={() => handleQuickAdd(100)}>+ ₹100</button>
-                  <button type="button" onClick={() => handleQuickAdd(200)}>+ ₹200</button>
-                  <button type="button" onClick={() => handleQuickAdd(500)}>+ ₹500</button>
-                  <button type="button" onClick={() => handleQuickAdd(1000)}>+ ₹1000</button>
+                  <button type="button" onClick={() => handleQuickAdd(100)}>
+                    + ₹100
+                  </button>
+                  <button type="button" onClick={() => handleQuickAdd(200)}>
+                    + ₹200
+                  </button>
+                  <button type="button" onClick={() => handleQuickAdd(500)}>
+                    + ₹500
+                  </button>
+                  <button type="button" onClick={() => handleQuickAdd(1000)}>
+                    + ₹1000
+                  </button>
                 </div>
 
-                <label className="input-label" style={{ marginTop: '16px' }}>Select Payment Method</label>
+                <label className="input-label" style={{ marginTop: "16px" }}>
+                  Select Payment Method
+                </label>
                 <select
                   className="modal-select"
                   value={selectedMethod}
@@ -405,16 +704,28 @@ const WalletPoints = () => {
                   <option value="UPI - PhonePe">UPI - PhonePe</option>
                   <option value="UPI - Google Pay">UPI - Google Pay</option>
                   <option value="UPI - Paytm">UPI - Paytm</option>
-                  <option value="Credit / Debit Card">Credit / Debit Card</option>
+                  <option value="Credit / Debit Card">
+                    Credit / Debit Card
+                  </option>
                 </select>
               </div>
 
               <div className="modal-footer">
-                <button type="button" className="btn-cancel" onClick={handleCloseModal}>
+                <button
+                  type="button"
+                  className="btn-cancel"
+                  onClick={handleCloseModal}
+                  disabled={saving}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="WalletPoints-btn-primary">
-                  Proceed to Pay
+
+                <button
+                  type="submit"
+                  className="WalletPoints-btn-primary"
+                  disabled={saving}
+                >
+                  {saving ? "Processing…" : "Proceed to Pay"}
                 </button>
               </div>
             </form>

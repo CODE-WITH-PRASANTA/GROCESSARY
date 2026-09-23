@@ -45,10 +45,25 @@
   justify-content: center;
 }
 
-.icon-green { background-color: #e6f4ea; color: #16a34a; }
-.icon-emerald { background-color: #e6f7f0; color: #059669; }
-.icon-orange { background-color: #fff2e6; color: #ea580c; }
-.icon-purple { background-color: #f3e8ff; color: #9333ea; }
+.icon-green {
+  background-color: #e6f4ea;
+  color: #16a34a;
+}
+
+.icon-emerald {
+  background-color: #e6f7f0;
+  color: #059669;
+}
+
+.icon-orange {
+  background-color: #fff2e6;
+  color: #ea580c;
+}
+
+.icon-purple {
+  background-color: #f3e8ff;
+  color: #9333ea;
+}
 
 .orders-card-info {
   display: flex;
@@ -74,10 +89,21 @@
   font-weight: 500;
 }
 
-.text-green { color: #16a34a; }
-.text-emerald { color: #059669; }
-.text-orange { color: #ea580c; }
-.text-purple { color: #9333ea; }
+.text-green {
+  color: #16a34a;
+}
+
+.text-emerald {
+  color: #059669;
+}
+
+.text-orange {
+  color: #ea580c;
+}
+
+.text-purple {
+  color: #9333ea;
+}
 
 /* Table Section Wrapper */
 .orders-table-wrapper {
@@ -300,9 +326,20 @@
   text-align: center;
 }
 
-.badge-delivered { background-color: #dcfce7; color: #15803d; }
-.badge-processing { background-color: #ffedd5; color: #c2410c; }
-.badge-cancelled { background-color: #fee2e2; color: #b91c1c; }
+.badge-delivered {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.badge-processing {
+  background-color: #ffedd5;
+  color: #c2410c;
+}
+
+.badge-cancelled {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
 
 .orders-status-date {
   font-size: 10px;
@@ -519,8 +556,13 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .orders-modal-header {
@@ -638,7 +680,7 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   margin-top: 4px;
   z-index: 50;
   max-height: 220px;
@@ -883,9 +925,179 @@
 
 /* Responsive */
 @media (max-width: 640px) {
+
   .form-grid-3,
   .pricing-grid,
   .add-order-items-grid {
     grid-template-columns: 1fr;
   }
+}
+
+
+
+
+/* ======================================================
+   MODAL ADDRESS / ITEM DETAILS
+====================================================== */
+
+.orders-modal-address {
+  margin: 6px 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f8fbfa;
+  border: 1px solid #e4ecea;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #4b6b66;
+}
+
+.orders-modal-address strong {
+  color: #0f2e2a;
+}
+
+.orders-modal-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.orders-modal-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.orders-modal-item-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: #0f2e2a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orders-modal-item-qty {
+  font-size: 0.75rem;
+  color: #7d948f;
+}
+
+/* ======================================================
+   LOADING / ERROR STATES
+====================================================== */
+
+.orders-loading,
+.orders-error {
+  padding: 60px 24px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #4b6b66;
+}
+
+.orders-error button {
+  margin-top: 16px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #0f2e2a;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.orders-error button:hover {
+  background: #1b4c45;
+}
+
+/* ======================================================
+   LOADING / ERROR STATES
+====================================================== */
+
+.orders-loading,
+.orders-error {
+  padding: 60px 24px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #4b6b66;
+}
+
+.orders-error button {
+  margin-top: 16px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #0f2e2a;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.orders-error button:hover {
+  background: #1b4c45;
+}
+
+/* ======================================================
+   MODAL ITEM INFO
+====================================================== */
+
+.orders-modal-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.orders-modal-item-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #0f2e2a;
+}
+
+.orders-modal-item-qty {
+  font-size: 0.72rem;
+  color: #7d948f;
+}
+
+
+/* Order status badges — one per backend enum */
+.badge-pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.badge-confirmed {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.badge-processing {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.badge-shipped {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badge-out_for_delivery {
+  background: #cffafe;
+  color: #0e7490;
+}
+
+.badge-delivered {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge-cancelled {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.badge-refunded {
+  background: #f3e8ff;
+  color: #7e22ce;
 }

@@ -20,33 +20,77 @@ const cartRoutes = require("./routes/cartRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const todayDiscountRoutes = require("./routes/todayDiscountRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const wishlistRoutes = require("./routes/wishlistRoutes");
+const deliveryAddressRoutes = require("./routes/deliveryAddressRoutes");
 
-// Load environment variables
+// ======================================================
+// WALLET / POINTS / REFERRAL / CHECKOUT
+// ======================================================
+
+const walletRoutes = require("./routes/walletRoutes");
+const pointsRoutes = require("./routes/pointsRoutes");
+const referralRoutes = require("./routes/referralRoutes");
+const checkoutRoutes = require("./routes/checkoutRoutes");
+
+// ======================================================
+// ORDERS + PAYMENTS  (NEW)
+// ======================================================
+
+const orderRoutes = require("./routes/orderRoutes");
+
+// ======================================================
+// LOAD ENV + CONNECT DB
+// ======================================================
+
 dotenv.config();
-
-// Connect MongoDB
 connectDB();
 
 const app = express();
 
-// Middleware
+// ======================================================
+// CORS
+// ======================================================
+
 app.use(
   cors({
     origin: "http://localhost:5173",
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  })
+  }),
 );
 
-app.use(express.json());
+// ======================================================
+// BODY PARSERS
+// ======================================================
+//
+// IMPORTANT:
+// Razorpay webhooks verify the signature against the RAW
+// request body. We stash the raw buffer on `req.rawBody`
+// so the webhook handler can use it later.
+// ======================================================
+
+app.use(
+  express.json({
+    verify: (req, res, buf) => {
+      req.rawBody = buf.toString("utf8");
+    },
+  }),
+);
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Static uploads folder
+// ======================================================
+// STATIC UPLOADS
+// ======================================================
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Routes
+// ======================================================
+// ROUTES
+// ======================================================
+
 app.use("/api/list-upload", listUploadRoutes);
 app.use("/api/units", unitRoutes);
 app.use("/api/categories", categoryRoutes);
@@ -57,13 +101,29 @@ app.use("/api/brands", brandRoutes);
 app.use("/api/cold-leads", coldLeadRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/import", importRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/cart", cartRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/today-discounts", todayDiscountRoutes);
+
 app.use("/api/admin", adminRoutes);
 
-// Test route
+app.use("/api/auth", authRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/delivery-address", deliveryAddressRoutes);
+
+// Wallet / Points / Referrals / Checkout
+app.use("/api/wallet", walletRoutes);
+app.use("/api/points", pointsRoutes);
+app.use("/api/referrals", referralRoutes);
+app.use("/api/checkout", checkoutRoutes);
+
+// Orders + Payments
+app.use("/api/orders", orderRoutes);
+
+// ======================================================
+// HEALTH CHECK
+// ======================================================
+
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
@@ -71,7 +131,21 @@ app.get("/", (req, res) => {
   });
 });
 
-// Global error handler
+// ======================================================
+// 404 HANDLER (before global error handler)
+// ======================================================
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route not found: ${req.method} ${req.originalUrl}`,
+  });
+});
+
+// ======================================================
+// GLOBAL ERROR HANDLER
+// ======================================================
+
 app.use((err, req, res, next) => {
   console.error("Server Error:", err);
 
@@ -81,7 +155,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Port
+// ======================================================
+// START SERVER
+// ======================================================
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

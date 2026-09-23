@@ -1,41 +1,141 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+
 import MainLayout from "./Layout/MainLayout/MainLayout";
+
 import DashBoard from "./Pages/DashBoard/DashBoard";
+
 import Orders from "./Components/Orders/Orders";
+
 import OrderHistory from "./Components/OrderHistory/OrderHistory";
+
 import TrasactionHistory from "./Components/TransactionHistory/TransactionHistory";
+
 import ReferEarn from "./Components/ReferEarn/ReferEarn";
+
 import WalletPoints from "./Pages/WalletPoints/WalletPoints";
+
 import DeliveryAddresses from "./Pages/DeliveryAddresses/DeliveryAddresses";
+
 import MyWishlist from "./Pages/MyWishlist/MyWishlist";
+
+import Profile from "./Pages/Profile/Profile";
+
+// SSO
+import SSO from "./Pages/SSO/SSO";
+import Cart from "./Components/Cart/Cart";
 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Main Application Layout Wrapper */}
-        <Route path="/" element={<MainLayout />}>
-          
-          {/* Default Redirect from "/" to "/dashboard" */}
-          <Route index element={<Navigate to="/dashboard" replace />} />
 
-          {/* Dashboard Route */}
-          <Route path="dashboard" element={<DashBoard />} />
+        {/* ==================================================
+            SSO AUTHENTICATION
+            Project 1 → Project 2
+        ================================================== */}
+        <Route
+          path="/sso"
+          element={<SSO />}
+        />
 
-          {/* Add future protected/dashboard nested sub-routes here */}
+        {/* ==================================================
+            MAIN APPLICATION LAYOUT
+        ================================================== */}
+        <Route
+          path="/"
+          element={<MainLayout />}
+        >
+          {/* Default Redirect */}
+          <Route
+            index
+            element={
+              <Navigate
+                to="/dashboard"
+                replace
+              />
+            }
+          />
 
-            <Route path="/my-orders" element={<Orders />} />
-            <Route path="/order-history" element={<OrderHistory />} />
-            <Route path="/trasanction-history" element={<TrasactionHistory/>} />
-            <Route path="/rafer-earn" element={<ReferEarn/>} />
-            <Route path="/wallet" element={<WalletPoints/>}/>
-            <Route path="/addresses" element={<DeliveryAddresses/>}/>
-            <Route path="/wishlist" element={<MyWishlist/>}/>
+          {/* Dashboard */}
+          <Route
+            path="dashboard"
+            element={<DashBoard />}
+          />
+
+          {/* My Orders */}
+          <Route
+            path="my-orders"
+            element={<Orders />}
+          />
+
+          {/* Order History */}
+          <Route
+            path="order-history"
+            element={<OrderHistory />}
+          />
+
+          {/* Transaction History */}
+          <Route
+            path="trasanction-history"
+            element={
+              <TrasactionHistory />
+            }
+          />
+
+          {/* Refer & Earn */}
+          <Route
+            path="rafer-earn"
+            element={<ReferEarn />}
+          />
+
+          {/* Wallet */}
+          <Route
+            path="wallet"
+            element={<WalletPoints />}
+          />
+
+          {/* Addresses */}
+          <Route
+            path="addresses"
+            element={
+              <DeliveryAddresses />
+            }
+          />
+
+          {/* Wishlist */}
+          <Route
+            path="wishlist"
+            element={<MyWishlist />}
+          />
+          <Route path="/cart" element={<Cart />} />
+
+          {/* Profile */}
+          <Route
+            path="profile"
+            element={<Profile />}
+          />
         </Route>
 
-        {/* 404 Fallback - Redirects unknown URLs back to Dashboard */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* ==================================================
+            404 FALLBACK
+        ================================================== */}
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/dashboard"
+              replace
+            />
+          }
+        />
+
       </Routes>
     </BrowserRouter>
   );
