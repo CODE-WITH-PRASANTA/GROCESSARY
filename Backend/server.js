@@ -47,7 +47,6 @@ connectDB();
 
 const app = express();
 
-<<<<<<< HEAD
 // ======================================================
 // CORS
 // ======================================================
@@ -79,7 +78,6 @@ app.use(
   }),
 );
 
-=======
 // CORS Configuration
 const allowedOrigins = [
   "http://grocerysathi.com",
@@ -89,6 +87,7 @@ const allowedOrigins = [
   "http://backend.grocerysathi.com",
   "https://backend.grocerysathi.com",
 ];
+
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -112,7 +111,6 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
->>>>>>> 1e95328cecab86b33272dcea13e8bf5ec2de41cc
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
