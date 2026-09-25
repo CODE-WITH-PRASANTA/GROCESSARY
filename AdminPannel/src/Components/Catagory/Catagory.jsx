@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
 import Barcode from "react-barcode";
 import API, { BASE_URL } from "../../api/axios";
+import BarcodeScanner from "../BarcodeScanner/BarcodeScanner";
 
 import {
   FiSearch,
@@ -20,6 +21,7 @@ import {
   FiCheck,
   FiEye,
   FiEyeOff,
+  FiCamera,
 } from "react-icons/fi";
 import "./Catagory.css";
 
@@ -372,6 +374,9 @@ const Catagory = () => {
   const [newCatName, setNewCatName] = useState("");
   const [newCatIcon, setNewCatIcon] = useState("📦");
 
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerTargetId, setScannerTargetId] = useState(null);
+
   const [productForm, setProductForm] = useState({
     name: "",
     category: "",
@@ -596,15 +601,11 @@ const Catagory = () => {
         formData.append("images", file);
       });
 
-      const response = await API.post(
-        `/import/${productId}/images`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+      const response = await API.post(`/import/${productId}/images`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
         },
-      );
+      });
 
       const updatedProduct =
         response.data?.product || response.data?.data || response.data;
@@ -686,6 +687,34 @@ const Catagory = () => {
       await fetchImportedProducts(brands);
     } finally {
       setIsPublishing(false);
+    }
+  };
+
+  const handleBarcodeDetected = async (barcodeValue) => {
+    if (!barcodeValue || !scannerTargetId) {
+      setScannerOpen(false);
+      setScannerTargetId(null);
+      return;
+    }
+
+    const targetId = scannerTargetId;
+
+    // Optimistic local update
+    setProducts((prev) =>
+      prev.map((p) =>
+        p._id === targetId ? { ...p, barcode: barcodeValue } : p,
+      ),
+    );
+
+    setScannerOpen(false);
+    setScannerTargetId(null);
+
+    try {
+      await API.put(`/products/${targetId}`, { barcode: barcodeValue });
+    } catch (err) {
+      console.error("Barcode save failed:", err);
+      alert(err.response?.data?.message || "Failed to save barcode.");
+      await fetchImportedProducts(brands);
     }
   };
 
@@ -1167,6 +1196,10 @@ const Catagory = () => {
                 onImageUpload={handleCardImageUpload}
                 onEdit={handleOpenEdit}
                 onDelete={handleDeleteProduct}
+                onScanBarcode={(product) => {
+                  setScannerTargetId(product._id);
+                  setScannerOpen(true);
+                }}
               />
             ))}
           </div>
@@ -1219,6 +1252,14 @@ const Catagory = () => {
           </div>
         </main>
       </div>
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => {
+          setScannerOpen(false);
+          setScannerTargetId(null);
+        }}
+        onDetected={handleBarcodeDetected}
+      />
     </div>
   );
 };
@@ -1234,6 +1275,7 @@ const ProductCardItem = ({
   onImageUpload,
   onEdit,
   onDelete,
+  onScanBarcode,
 }) => {
   const fileInputRef = useRef(null);
   const productStatus = getProductStatus(product);
@@ -1374,6 +1416,15 @@ const ProductCardItem = ({
             <>
               <div className="catagory-barcodeHeader">
                 <span>BARCODE</span>
+                <button
+                  type="button"
+                  className="catagory-scanBarcodeBtn"
+                  onClick={() => onScanBarcode?.(product)}
+                  title="Rescan barcode with camera"
+                  aria-label="Rescan barcode"
+                >
+                  <FiCamera />
+                </button>
               </div>
               <div className="catagory-barcodeCanvas">
                 <Barcode
@@ -1392,10 +1443,14 @@ const ProductCardItem = ({
               </div>
             </>
           ) : (
-            <div className="catagory-barcodeUnavailable">
-              <span className="catagory-barcodeUnavailableIcon">▦</span>
-              <span>Barcode not available</span>
-            </div>
+            <button
+              type="button"
+              className="catagory-scanBarcodeEmpty"
+              onClick={() => onScanBarcode?.(product)}
+            >
+              <FiCamera />
+              <span>Scan Barcode</span>
+            </button>
           )}
         </div>
 

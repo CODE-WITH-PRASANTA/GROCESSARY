@@ -196,17 +196,15 @@ const Topbar = ({ toggleSidebar, setMobileOpen }) => {
   // ======================================================
 
   const handleLogout = () => {
-    // Remove Project 2 authentication token
     localStorage.removeItem("token");
-
-    // Clear user state
+    localStorage.removeItem("adminToken");
     setUser(null);
-
-    // Close profile dropdown
     setShowProfile(false);
 
-    // Redirect to Project 1
-    window.location.href = "http://localhost:5174/";
+    // Read from env, fallback to localhost for safety
+    const project1Url = import.meta.env.VITE_PROJECT1_URL;
+
+    window.location.href = `${project1Url}/?logout=1`;
   };
 
   return (

@@ -381,7 +381,7 @@ const UserAuth = ({ onNavigate }) => {
         </div>
       ) : (
         <Link
-          to="/account"
+          to="/login"
           className="navbar-icon-btn"
           aria-label="Login"
           onClick={onNavigate}

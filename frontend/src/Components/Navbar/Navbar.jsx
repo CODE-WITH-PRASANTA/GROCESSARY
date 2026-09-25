@@ -17,7 +17,7 @@ import logo from "../../assets/Grocessary Sathi Png.png";
 import "./Navbar.css";
 import CartSection from "../CartSection/CartSection";
 import UserAuth from "../UserAuth/UserAuth";
-import API from "../../api/axios";
+import API, { BASE_URL } from "../../api/axios";
 
 // ======================================================
 // NAVIGATION PATHS
@@ -25,7 +25,7 @@ import API from "../../api/axios";
 
 const NAV_PATHS = {
   HOME: "/",
-  ACCOUNT: "/account",
+  ACCOUNT: "/login",
   CART: "/cart",
   FAQ: "/faq",
   BLOG: "/blogs",
@@ -202,37 +202,53 @@ const Navbar = () => {
     return getCategoryName(getProductCategory(product));
   };
 
-  const getProductImage = (product) => {
-    if (!product) return "";
+  const getProductImage = (product, fallback = "") => {
+    if (!product) return fallback;
 
-    let image =
-      Array.isArray(product?.images) && product.images.length > 0
-        ? product.images[0]
-        : product?.image || product?.thumbnail || product?.imageUrl || "";
+    // ---- 1. Pick the first candidate image ----
+    let candidate;
 
-    if (!image) return "";
-
-    if (typeof image === "object") {
-      image = image?.url || image?.path || image?.secure_url || image?.src || "";
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      // Prefer first non-empty entry
+      candidate = product.images.find(Boolean);
     }
 
-    if (!image) return "";
-
-    const imageString = String(image).trim();
-
-    if (
-      imageString.startsWith("http://") ||
-      imageString.startsWith("https://")
-    ) {
-      return imageString;
+    if (!candidate) {
+      candidate =
+        product.image ||
+        product.thumbnail ||
+        product.imageUrl ||
+        product.image_url ||
+        product.photo ||
+        product.cover ||
+        "";
     }
 
-    // Use API's base URL prefix
-    const base =
-      API.defaults.baseURL?.replace(/\/api\/?$/, "") ||
-      "http://localhost:5000";
+    // ---- 2. Unwrap object shapes: { url }, { path }, { secure_url }, ... ----
+    if (candidate && typeof candidate === "object") {
+      candidate =
+        candidate.url ||
+        candidate.path ||
+        candidate.secure_url ||
+        candidate.src ||
+        candidate.filename ||
+        "";
+    }
 
-    return `${base}${imageString.startsWith("/") ? imageString : `/${imageString}`}`;
+    if (typeof candidate !== "string") return fallback;
+
+    const str = candidate.trim();
+    if (!str) return fallback;
+
+    // ---- 3. Already absolute (http, https, data, blob, file, protocol-relative) ----
+    if (/^(https?:|data:|blob:|file:)/i.test(str)) return str;
+    if (str.startsWith("//")) return `https:${str}`;
+
+    // ---- 4. Prefix with backend origin ----
+    const origin =
+      BASE_URL || API.defaults.baseURL?.replace(/\/api\/?$/, "") || "";
+    const path = str.startsWith("/") ? str : `/${str}`;
+    return `${origin}${path}`;
   };
 
   const getNumber = (value) => {
@@ -332,7 +348,9 @@ const Navbar = () => {
     const currentPrice = getProductPrice(product);
     const originalPrice = getOriginalPrice(product);
 
-    return discountPrice > 0 && currentPrice > 0 && originalPrice > currentPrice;
+    return (
+      discountPrice > 0 && currentPrice > 0 && originalPrice > currentPrice
+    );
   };
 
   const getDiscountProductId = (discount) => {
@@ -485,104 +503,135 @@ const Navbar = () => {
   // FETCH CART
   // ======================================================
 
-  const fetchCart = useCallback(async () => {
-    try {
-      const token = getToken();
+ const fetchCart = useCallback(async () => {
+  try {
+    const token = getToken();
 
-      // ==================================================
-      // GUEST CART
-      // ==================================================
+    // ==================================================
+    // GUEST CART
+    // ==================================================
+    if (!token) {
+      const storedCart = localStorage.getItem("guestCart");
 
-      if (!token) {
-        const storedCart = localStorage.getItem("guestCart");
-
-        if (!storedCart) {
-          setCartItemCount(0);
-          setCartTotal(0);
-          return;
-        }
-
-        let guestCart = [];
-
-        try {
-          guestCart = JSON.parse(storedCart);
-        } catch (error) {
-          console.error("Guest cart parse error:", error);
-          setCartItemCount(0);
-          setCartTotal(0);
-          return;
-        }
-
-        if (!Array.isArray(guestCart)) {
-          setCartItemCount(0);
-          setCartTotal(0);
-          return;
-        }
-
-        const totalQuantity = guestCart.reduce((total, item) => {
-          return total + Number(item?.quantity || 0);
-        }, 0);
-
-        const totalPrice = guestCart.reduce((total, item) => {
-          const price = Number(
-            item?.discountPrice > 0 ? item.discountPrice : item?.price || 0,
-          );
-
-          const quantity = Number(item?.quantity || 0);
-
-          return total + price * quantity;
-        }, 0);
-
-        setCartItemCount(totalQuantity);
-        setCartTotal(totalPrice);
-
-        return;
-      }
-
-      // ==================================================
-      // LOGGED-IN CART
-      // ==================================================
-
-      const { data } = await API.get("/cart");
-
-      const items =
-        data?.cart?.items || data?.data?.cart?.items || data?.data?.items || [];
-
-      if (!Array.isArray(items)) {
+      if (!storedCart) {
         setCartItemCount(0);
         setCartTotal(0);
         return;
       }
 
-      const totalQuantity = items.reduce(
-        (total, item) => total + Number(item?.quantity || 0),
+      let guestCart = [];
+      try {
+        guestCart = JSON.parse(storedCart);
+      } catch (error) {
+        console.error("Guest cart parse error:", error);
+        setCartItemCount(0);
+        setCartTotal(0);
+        return;
+      }
+
+      if (!Array.isArray(guestCart)) {
+        setCartItemCount(0);
+        setCartTotal(0);
+        return;
+      }
+
+      // Fetch today's discounts so guest cart also reflects them
+      const activeDiscounts = await fetchTodayDiscounts();
+      const discountList = Array.isArray(activeDiscounts) ? activeDiscounts : [];
+
+      const findDiscount = (productId) =>
+        discountList.find(
+          (d) => String(getObjectId(d?.product)) === String(productId),
+        );
+
+      const totalQuantity = guestCart.reduce(
+        (t, item) => t + Number(item?.quantity || 0),
         0,
       );
 
-      const totalPrice = items.reduce((total, item) => {
-        const product = item?.product || {};
-        const price = getProductPrice(product);
-        const quantity = Number(item?.quantity || 0);
+      const totalPrice = guestCart.reduce((t, item) => {
+        const productId =
+          item?.productId || item?._id || item?.id || "";
 
-        return total + price * quantity;
+        const discount = findDiscount(productId);
+
+        // Prefer today's discountPrice from /today-discounts/active,
+        // then the item's stored discountPrice, then price.
+        const price = discount
+          ? getNumber(discount?.discountPrice)
+          : item?.discountPrice > 0
+            ? Number(item.discountPrice)
+            : Number(item?.price || 0);
+
+        const quantity = Number(item?.quantity || 0);
+        return t + price * quantity;
       }, 0);
 
       setCartItemCount(totalQuantity);
-      setCartTotal(Number.isFinite(totalPrice) ? totalPrice : 0);
-    } catch (error) {
-      console.error("Navbar cart fetch error:", error);
+      setCartTotal(totalPrice);
+      return;
+    }
 
-      // If token is invalid, we simply reset the count.
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        setCartItemCount(0);
-        setCartTotal(0);
-        return;
-      }
+    // ==================================================
+    // LOGGED-IN CART
+    // ==================================================
+    const activeDiscounts = await fetchTodayDiscounts();
+    const discountList = Array.isArray(activeDiscounts) ? activeDiscounts : [];
 
+    const { data } = await API.get("/cart");
+
+    const items =
+      data?.cart?.items ||
+      data?.data?.cart?.items ||
+      data?.data?.items ||
+      data?.items ||
+      [];
+
+    if (!Array.isArray(items)) {
       setCartItemCount(0);
       setCartTotal(0);
+      return;
     }
-  }, []);
+
+    const totalQuantity = items.reduce(
+      (t, item) => t + Number(item?.quantity || 0),
+      0,
+    );
+
+    const totalPrice = items.reduce((t, item) => {
+      const product = item?.product || {};
+      const productId = product?._id || product?.id || item?.productId || "";
+
+      // 👇 find a today discount for this product
+      const discount = discountList.find(
+        (d) => String(getObjectId(d?.product)) === String(productId),
+      );
+
+      // If a today discount applies, use its price.
+      // Otherwise fall back to the product's own price.
+      const price = discount
+        ? getNumber(discount?.discountPrice)
+        : getProductPrice(product);
+
+      const quantity = Number(item?.quantity || 0);
+      return t + price * quantity;
+    }, 0);
+
+    setCartItemCount(totalQuantity);
+    setCartTotal(Number.isFinite(totalPrice) ? totalPrice : 0);
+  } catch (error) {
+    console.error("Navbar cart fetch error:", error);
+
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      setCartItemCount(0);
+      setCartTotal(0);
+      return;
+    }
+
+    setCartItemCount(0);
+    setCartTotal(0);
+  }
+}, [fetchTodayDiscounts]);
 
   // ======================================================
   // FETCH CATEGORIES
@@ -597,7 +646,8 @@ const Navbar = () => {
       let categoryList = [];
 
       if (Array.isArray(result)) categoryList = result;
-      else if (Array.isArray(result?.categories)) categoryList = result.categories;
+      else if (Array.isArray(result?.categories))
+        categoryList = result.categories;
       else if (Array.isArray(result?.data)) categoryList = result.data;
       else if (Array.isArray(result?.data?.categories))
         categoryList = result.data.categories;

@@ -8,7 +8,8 @@ import grapeImg from "../../assets/garpecart.avif";
 import mangoImg from "../../assets/mangocart.avif";
 
 import { useNavigate } from "react-router-dom";
-import API from "../../api/axios";
+import API, { BASE_URL } from "../../api/axios";
+import { useRef } from "react";
 
 // ======================================================
 // CONSTANTS
@@ -28,13 +29,16 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
   // DRAWER STATE
   // ======================================================
 
-  const [internalIsOpen, setInternalIsOpen] = useState(true);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
 
   // ======================================================
   // CHECKOUT POPUP STATE
   // ======================================================
 
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const mergeInProgressRef = useRef(false);
+  const mergeCompletedRef = useRef(false);
 
   const isCartOpen =
     externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
@@ -56,8 +60,12 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        alert("Please login to view your cart.");
-        navigate("/login");
+        setCheckoutLoading(false);
+        setInternalIsOpen(false);
+        if (onClose) onClose();
+        document.body.classList.remove("cart-is-open");
+        alert("Please login to continue to checkout.");
+        navigate("/login", { replace: true });
         return;
       }
 
@@ -363,37 +371,46 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
   // ======================================================
 
   const getImageUrl = (image) => {
-    if (!image) {
-      return avocadoImg;
+    // ---- 1. Unwrap objects and arrays ----
+    let value = image;
+
+    if (Array.isArray(value)) {
+      value = value[0];
     }
 
-    if (typeof image === "object") {
-      image =
-        image?.url ||
-        image?.path ||
-        image?.secure_url ||
-        image?.filename ||
-        image?.src ||
+    if (value && typeof value === "object") {
+      value =
+        value.url ||
+        value.path ||
+        value.secure_url ||
+        value.src ||
+        value.image ||
+        value.filename ||
         "";
     }
 
-    if (!image) {
+    if (typeof value !== "string") {
       return avocadoImg;
     }
 
-    const imageString = String(image).trim();
+    const str = value.trim();
+    if (!str) return avocadoImg;
 
-    if (
-      imageString.startsWith("http://") ||
-      imageString.startsWith("https://")
-    ) {
-      return imageString;
+    // ---- 2. Already absolute (http, https, data, blob) ----
+    if (/^(https?:|data:|blob:)/i.test(str)) {
+      return str;
     }
 
-    const base =
-      API.defaults.baseURL?.replace(/\/api\/?$/, "") || "http://localhost:5000";
+    // ---- 3. Protocol-relative URL (//cdn.example.com/x.jpg) ----
+    if (str.startsWith("//")) {
+      return `https:${str}`;
+    }
 
-    return `${base}${imageString.startsWith("/") ? "" : "/"}${imageString}`;
+    // ---- 4. Relative path → prefix with backend origin ----
+    const origin =
+      BASE_URL || API.defaults.baseURL?.replace(/\/api\/?$/, "") || "";
+    const path = str.startsWith("/") ? str : `/${str}`;
+    return `${origin}${path}`;
   };
 
   // ======================================================
@@ -722,47 +739,57 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
   // ======================================================
 
   const mergeGuestCartToBackend = async (token) => {
+    // Already merged this session?
+    if (mergeCompletedRef.current) return true;
+
+    // Another call is already merging?
+    if (mergeInProgressRef.current) return true;
+
     try {
+      mergeInProgressRef.current = true;
+
       const guestCart = getGuestCart();
 
       if (!token || guestCart.length === 0) {
+        mergeCompletedRef.current = true;
         return true;
       }
+
+      // 🚨 Capture and CLEAR the guest cart BEFORE making any network calls.
+      // This prevents a second concurrent fetchCart() from re-merging it.
+      localStorage.removeItem(GUEST_CART_KEY);
 
       let success = true;
 
       for (const item of guestCart) {
         const productId = getProductId(item);
-
-        if (!productId) {
-          continue;
-        }
+        if (!productId) continue;
 
         const quantity = Math.max(1, getSafeNumber(item?.quantity, 1));
 
         try {
-          await API.post("/cart/add", {
-            productId,
-            quantity,
-          });
+          await API.post("/cart/add", { productId, quantity });
         } catch (error) {
           console.error("Guest cart merge item error:", error);
-
           success = false;
         }
       }
 
-      if (success) {
-        localStorage.removeItem(GUEST_CART_KEY);
-
+      if (!success) {
+        // Put it back if merge failed partially — user can retry later
+        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(guestCart));
+        mergeCompletedRef.current = false;
+      } else {
+        mergeCompletedRef.current = true;
         window.dispatchEvent(new Event("cartUpdated"));
       }
 
       return success;
     } catch (error) {
       console.error("Merge guest cart error:", error);
-
       return false;
+    } finally {
+      mergeInProgressRef.current = false;
     }
   };
 
@@ -1349,13 +1376,29 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
           aria-label="Shopping Cart Drawer"
         >
           <header className="cart-header">
-            <div className="cart-header-title-wrap">
-              <h2 className="cart-header-title">Shopping Cart</h2>
-
-              <span className="cart-total-item-count">
-                {totalItemsCount} item
-                {totalItemsCount !== 1 ? "s" : ""}
-              </span>
+            <div className="cart-header-left">
+              <div className="cart-header-icon" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="9" cy="20" r="1.6" />
+                  <circle cx="17" cy="20" r="1.6" />
+                  <path d="M3 3h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 7H6" />
+                </svg>
+              </div>
+              <div className="cart-header-title-wrap">
+                <h2 className="cart-header-title">Your Cart</h2>
+                <span className="cart-total-item-count">
+                  {totalItemsCount} item{totalItemsCount !== 1 ? "s" : ""}
+                </span>
+              </div>
             </div>
 
             <button
@@ -1364,7 +1407,18 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
               onClick={handleCloseCart}
               aria-label="Close shopping cart"
             >
-              ×
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+              >
+                <line x1="6" y1="6" x2="18" y2="18" />
+                <line x1="18" y1="6" x2="6" y2="18" />
+              </svg>
             </button>
           </header>
 
@@ -1440,7 +1494,7 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
           ) : (
             <>
               <div className="cart-body">
-                <div className="shipping-bar-container">
+                {/* <div className="shipping-bar-container">
                   <p className="shipping-msg">
                     {subtotalAmount >= freeShippingThreshold ? (
                       <>
@@ -1493,7 +1547,7 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                       </svg>
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {totalDiscountAmount > 0 && (
                   <div
@@ -1653,7 +1707,7 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                   })}
                 </section>
 
-                <section
+                {/* <section
                   className="cart-recommendations-section"
                   aria-label="Recommended Products"
                 >
@@ -1712,12 +1766,12 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                       />
                     ))}
                   </div>
-                </section>
+                </section> */}
               </div>
 
               <footer className="cart-footer">
                 <div className="cart-badges-row">
-                  <div
+                  {/* <div
                     className="cart-badge-card"
                     aria-label="Coupon available badge"
                   >
@@ -1739,9 +1793,9 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                     </svg>
 
                     <span>Save More</span>
-                  </div>
+                  </div> */}
 
-                  <div
+                  {/* <div
                     className="cart-badge-card"
                     aria-label="Secure package delivery badge"
                   >
@@ -1762,7 +1816,7 @@ const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
                     </svg>
 
                     <span>Express Delivery</span>
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="cart-totals-row">
