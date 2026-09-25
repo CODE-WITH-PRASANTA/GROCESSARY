@@ -206,7 +206,7 @@ const Topbar = ({ toggleSidebar, setMobileOpen }) => {
     setShowProfile(false);
 
     // Redirect to Project 1
-    window.location.href = "http://localhost:5174/";
+    window.location.href = "https://grocerysathi.com";
   };
 
   return (

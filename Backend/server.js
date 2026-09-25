@@ -47,43 +47,15 @@ connectDB();
 
 const app = express();
 
-<<<<<<< HEAD
 // ======================================================
-// CORS
-// ======================================================
-
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
-
-// ======================================================
-// BODY PARSERS
-// ======================================================
-//
-// IMPORTANT:
-// Razorpay webhooks verify the signature against the RAW
-// request body. We stash the raw buffer on `req.rawBody`
-// so the webhook handler can use it later.
+// CORS CONFIGURATION
 // ======================================================
 
-app.use(
-  express.json({
-    verify: (req, res, buf) => {
-      req.rawBody = buf.toString("utf8");
-    },
-  }),
-);
-
-=======
-// CORS Configuration
 const allowedOrigins = [
+  "http://localhost:5173",
   "http://grocerysathi.com",
   "https://grocerysathi.com",
+  "https://user.grocerysathi.com",
   "http://admin.grocerysathi.com",
   "https://admin.grocerysathi.com",
   "http://backend.grocerysathi.com",
@@ -109,10 +81,26 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
-// Middleware
 app.use(cors(corsOptions));
-app.use(express.json());
->>>>>>> 1e95328cecab86b33272dcea13e8bf5ec2de41cc
+
+// ======================================================
+// BODY PARSERS & COOKIE PARSER
+// ======================================================
+//
+// IMPORTANT:
+// Razorpay webhooks verify the signature against the RAW
+// request body. We stash the raw buffer on `req.rawBody`
+// so the webhook handler can use it later.
+// ======================================================
+
+app.use(
+  express.json({
+    verify: (req, res, buf) => {
+      req.rawBody = buf.toString("utf8");
+    },
+  })
+);
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 

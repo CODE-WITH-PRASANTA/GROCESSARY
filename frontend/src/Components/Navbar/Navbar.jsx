@@ -25,7 +25,7 @@ import API from "../../api/axios";
 
 const NAV_PATHS = {
   HOME: "/",
-  ACCOUNT: "/account",
+  ACCOUNT: "/login",
   CART: "/cart",
   FAQ: "/faq",
   BLOG: "/blogs",

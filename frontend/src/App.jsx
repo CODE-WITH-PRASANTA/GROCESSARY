@@ -71,7 +71,7 @@ const App = () => {
        
 
         {/* User & Store Routes */}
-        <Route path="/account" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/cart" element={<CartSection />} />
         <Route path="/deliverytime" element={<DeliveryTime />} />
         <Route path="/myorders" element={<MyOrders />} />
