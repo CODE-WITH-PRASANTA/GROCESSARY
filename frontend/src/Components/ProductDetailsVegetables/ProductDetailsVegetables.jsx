@@ -282,7 +282,7 @@ const ProductDetailsVegetables = ({ productId }) => {
     // Use API's base URL prefix
     const base =
       API.defaults.baseURL?.replace(/\/api\/?$/, "") ||
-      "http://localhost:5000";
+      "";
 
     return `${base}${image.startsWith("/") ? "" : "/"}${image}`;
   };

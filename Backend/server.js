@@ -26,22 +26,19 @@ const deliveryAddressRoutes = require("./routes/deliveryAddressRoutes");
 // ======================================================
 // WALLET / POINTS / REFERRAL / CHECKOUT
 // ======================================================
-
 const walletRoutes = require("./routes/walletRoutes");
 const pointsRoutes = require("./routes/pointsRoutes");
 const referralRoutes = require("./routes/referralRoutes");
 const checkoutRoutes = require("./routes/checkoutRoutes");
 
 // ======================================================
-// ORDERS + PAYMENTS  (NEW)
+// ORDERS + PAYMENTS
 // ======================================================
-
 const orderRoutes = require("./routes/orderRoutes");
 
 // ======================================================
 // LOAD ENV + CONNECT DB
 // ======================================================
-
 dotenv.config();
 connectDB();
 
@@ -50,7 +47,6 @@ const app = express();
 // ======================================================
 // CORS CONFIGURATION
 // ======================================================
-
 const allowedOrigins = [
   "http://localhost:5173",
   "http://grocerysathi.com",
@@ -86,13 +82,9 @@ app.use(cors(corsOptions));
 // ======================================================
 // BODY PARSERS & COOKIE PARSER
 // ======================================================
-//
-// IMPORTANT:
-// Razorpay webhooks verify the signature against the RAW
-// request body. We stash the raw buffer on `req.rawBody`
-// so the webhook handler can use it later.
+// IMPORTANT: Razorpay webhooks verify the signature against the RAW
+// request body. We stash the raw buffer on `req.rawBody`.
 // ======================================================
-
 app.use(
   express.json({
     verify: (req, res, buf) => {
@@ -107,13 +99,11 @@ app.use(cookieParser());
 // ======================================================
 // STATIC UPLOADS
 // ======================================================
-
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ======================================================
 // ROUTES
 // ======================================================
-
 app.use("/api/list-upload", listUploadRoutes);
 app.use("/api/units", unitRoutes);
 app.use("/api/categories", categoryRoutes);
@@ -145,7 +135,6 @@ app.use("/api/orders", orderRoutes);
 // ======================================================
 // HEALTH CHECK
 // ======================================================
-
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
@@ -154,9 +143,8 @@ app.get("/", (req, res) => {
 });
 
 // ======================================================
-// 404 HANDLER (before global error handler)
+// 404 HANDLER
 // ======================================================
-
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -167,7 +155,6 @@ app.use((req, res) => {
 // ======================================================
 // GLOBAL ERROR HANDLER
 // ======================================================
-
 app.use((err, req, res, next) => {
   console.error("Server Error:", err);
 
@@ -180,7 +167,6 @@ app.use((err, req, res, next) => {
 // ======================================================
 // START SERVER
 // ======================================================
-
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

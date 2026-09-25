@@ -253,15 +253,27 @@ const UserAuth = ({ onNavigate }) => {
   // LOGOUT
   // ======================================================
 
+  // ======================================================
+  // LOGOUT — clear Project 1 and notify Project 2
+  // ======================================================
+
   const handleLogout = () => {
+    // 1. Clear Project 1's own auth
     localStorage.removeItem("token");
+    localStorage.removeItem("adminToken");
+    sessionStorage.clear();
+
+    // 2. Reset local component state
     setCurrentUser(null);
     setReferralLink("");
     setIsAccountOpen(false);
 
+    // 3. Notify other listeners in this app
     window.dispatchEvent(new Event("authChanged"));
 
-    handleNavigate("/");
+    // 4. Notify Project 2 via redirect with a logout flag
+    const project2Url = PROJECT2_URL;
+    window.location.href = `${project2Url}/?logout=1`;
   };
 
   // ======================================================
@@ -381,7 +393,7 @@ const UserAuth = ({ onNavigate }) => {
         </div>
       ) : (
         <Link
-          to="/account"
+          to="/login"
           className="navbar-icon-btn"
           aria-label="Login"
           onClick={onNavigate}

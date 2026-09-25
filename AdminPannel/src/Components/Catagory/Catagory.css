@@ -1780,3 +1780,52 @@
   color: #64748b;
   font-size: 16px;
 }
+
+.catagory-barcodeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.catagory-scanBarcodeBtn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid #d4dde4;
+  background: #ffffff;
+  color: #102a27;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.catagory-scanBarcodeBtn:hover {
+  border-color: #16a34a;
+  color: #16a34a;
+  transform: scale(1.05);
+}
+
+.catagory-scanBarcodeEmpty {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1.5px dashed #d4dde4;
+  background: #f8fafb;
+  color: #102a27;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.catagory-scanBarcodeEmpty:hover {
+  border-color: #16a34a;
+  color: #16a34a;
+  background: #f0fdf4;
+}

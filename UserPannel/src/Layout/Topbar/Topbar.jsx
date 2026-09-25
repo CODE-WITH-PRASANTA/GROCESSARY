@@ -1,77 +1,44 @@
 import React, { useState, useEffect, useRef } from "react";
-
 import {
   MdMenu,
   MdNotifications,
   MdPerson,
-  MdEdit,
   MdHistory,
-  MdSettings,
   MdLogout,
 } from "react-icons/md";
-
 import { useNavigate } from "react-router-dom";
-
 import "./Topbar.css";
-
 import API from "../../api/axios";
 
 const Topbar = ({ toggleSidebar, setMobileOpen }) => {
   const navigate = useNavigate();
 
   const [showNotification, setShowNotification] = useState(false);
-
   const [showProfile, setShowProfile] = useState(false);
-
   const [user, setUser] = useState(null);
-
   const [loadingUser, setLoadingUser] = useState(true);
 
   const notificationRef = useRef(null);
-
   const profileRef = useRef(null);
 
   const notifications = [
-    {
-      title: "Project approved",
-      time: "4 hours ago",
-    },
-    {
-      title: "New files available",
-      time: "10 hours ago",
-    },
-    {
-      title: "Review received",
-      time: "1 day ago",
-    },
-    {
-      title: "Updates available",
-      time: "2 days ago",
-    },
-    {
-      title: "Fee submitted",
-      time: "3 days ago",
-    },
-    {
-      title: "Admission confirmed",
-      time: "5 days ago",
-    },
-    {
-      title: "Attendance updated",
-      time: "1 week ago",
-    },
+    { title: "Project approved", time: "4 hours ago" },
+    { title: "New files available", time: "10 hours ago" },
+    { title: "Review received", time: "1 day ago" },
+    { title: "Updates available", time: "2 days ago" },
+    { title: "Fee submitted", time: "3 days ago" },
+    { title: "Admission confirmed", time: "5 days ago" },
+    { title: "Attendance updated", time: "1 week ago" },
   ];
 
   // ======================================================
   // GET LOGGED-IN USER
   // ======================================================
-
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem("token");
 
-        // No token
         if (!token) {
           setUser(null);
           return;
@@ -86,7 +53,6 @@ const Topbar = ({ toggleSidebar, setMobileOpen }) => {
         }
       } catch (error) {
         console.error("Failed to fetch logged-in user:", error);
-
         setUser(null);
       } finally {
         setLoadingUser(false);
@@ -99,7 +65,6 @@ const Topbar = ({ toggleSidebar, setMobileOpen }) => {
   // ======================================================
   // CLOSE DROPDOWNS ON OUTSIDE CLICK
   // ======================================================
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -122,105 +87,57 @@ const Topbar = ({ toggleSidebar, setMobileOpen }) => {
   }, []);
 
   // ======================================================
-  // USER NAME
+  // USER HELPERS
   // ======================================================
-
   const getUserName = () => {
-    if (!user) {
-      return "Guest";
-    }
+    if (!user) return "Guest";
 
-    // If backend returns:
-    // { name: "Debashish Mallick" }
     if (user.name && typeof user.name === "string" && user.name.trim()) {
       return user.name.trim();
     }
 
-    // If backend returns:
-    // { firstName: "Debashish", lastName: "Mallick" }
-
     const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
+    if (fullName) return fullName;
 
-    if (fullName) {
-      return fullName;
-    }
-
-    // Fallback
-    if (user.email) {
-      return user.email.split("@")[0];
-    }
+    if (user.email) return user.email.split("@")[0];
 
     return "User";
   };
 
-  // ======================================================
-  // USER EMAIL
-  // ======================================================
-
-  const getUserEmail = () => {
-    return user?.email || "";
-  };
-
-  // ======================================================
-  // PROFILE IMAGE
-  // ======================================================
+  const getUserEmail = () => user?.email || "";
 
   const getProfileImage = () => {
-    if (user?.profileImage) {
-      return user.profileImage;
-    }
-
-    if (user?.avatar) {
-      return user.avatar;
-    }
-
-    if (user?.image) {
-      return user.image;
-    }
-
+    if (user?.profileImage) return user.profileImage;
+    if (user?.avatar) return user.avatar;
+    if (user?.image) return user.image;
     return "https://i.pravatar.cc/150?img=32";
   };
 
   // ======================================================
-  // PROFILE REDIRECT
+  // NAVIGATION & ACTIONS
   // ======================================================
-
   const handleProfile = () => {
     setShowProfile(false);
-
     navigate("/profile");
   };
 
-  // ======================================================
-  // LOGOUT
-  // ======================================================
-
   const handleLogout = () => {
-    // Remove Project 2 authentication token
     localStorage.removeItem("token");
-
-    // Clear user state
+    localStorage.removeItem("adminToken");
     setUser(null);
-
-    // Close profile dropdown
     setShowProfile(false);
 
-    // Redirect to Project 1
-    window.location.href = "https://grocerysathi.com";
+    const project1Url = import.meta.env.VITE_PROJECT1_URL || "https://grocerysathi.com";
+    window.location.href = `${project1Url}/?logout=1`;
   };
 
   return (
     <header className="Topbar">
       {/* LEFT */}
-
       <div className="Topbar_Left">
-        {/* Desktop Sidebar Toggle */}
-
         <button className="Topbar_Menu" onClick={toggleSidebar}>
           <MdMenu />
         </button>
-
-        {/* Mobile Sidebar Toggle */}
 
         <button
           className="Topbar_MobileMenu"
@@ -231,23 +148,17 @@ const Topbar = ({ toggleSidebar, setMobileOpen }) => {
       </div>
 
       {/* RIGHT */}
-
       <div className="Topbar_Right">
-        {/* ==================================================
-            NOTIFICATION
-        ================================================== */}
-
+        {/* NOTIFICATION */}
         <div className="Topbar_NotificationWrapper" ref={notificationRef}>
           <button
             className="Topbar_Notification"
             onClick={() => {
               setShowNotification(!showNotification);
-
               setShowProfile(false);
             }}
           >
             <MdNotifications />
-
             <span>{notifications.length}</span>
           </button>
 
@@ -264,7 +175,6 @@ const Topbar = ({ toggleSidebar, setMobileOpen }) => {
               {notifications.map((item, index) => (
                 <div key={index} className="Topbar_NotificationItem">
                   <h4>{item.title}</h4>
-
                   <p>{item.time}</p>
                 </div>
               ))}
@@ -272,71 +182,47 @@ const Topbar = ({ toggleSidebar, setMobileOpen }) => {
           </div>
         </div>
 
-        {/* ==================================================
-            PROFILE
-        ================================================== */}
-
+        {/* PROFILE */}
         <div className="Topbar_ProfileWrapper" ref={profileRef}>
           <div
             className="Topbar_Profile"
             onClick={() => {
               setShowProfile(!showProfile);
-
               setShowNotification(false);
             }}
           >
             <img src={getProfileImage()} alt="Profile" />
-
             <div className="Topbar_ProfileInfo">
               <h4>{loadingUser ? "Loading..." : getUserName()}</h4>
-
               <p>{loadingUser ? "" : getUserEmail()}</p>
             </div>
           </div>
 
-          {/* ==================================================
-              PROFILE DROPDOWN
-          ================================================== */}
-
+          {/* PROFILE DROPDOWN */}
           <div
             className={`Topbar_ProfileCard ${
               showProfile ? "Topbar_ProfileCardActive" : ""
             }`}
           >
-            {/* Profile Header */}
-
             <div className="Topbar_ProfileCardHeader">
               <img src={getProfileImage()} alt="Profile" />
-
               <h3>{getUserName()}</h3>
-
               <p>{getUserEmail()}</p>
             </div>
 
-            {/* Profile Menu */}
-
             <div className="Topbar_ProfileCardMenu">
-              {/* MY PROFILE */}
-
               <button onClick={handleProfile}>
                 <MdPerson />
-
                 <span>My Profile</span>
               </button>
 
-              {/* ACTIVITY */}
-
               <button>
                 <MdHistory />
-
                 <span>Activity Logs</span>
               </button>
 
-              {/* LOGOUT */}
-
               <button className="Topbar_ProfileLogout" onClick={handleLogout}>
                 <MdLogout />
-
                 <span>Sign Out</span>
               </button>
             </div>
