@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import API, { BASE_URL } from "../../api/axios";
+import Swal from "sweetalert2";
 
 import {
   FaHeart,
@@ -18,13 +19,6 @@ import {
 } from "react-icons/fa";
 
 import "./OurBestsellers.css";
-
-// =========================================================
-// API CONFIG
-// =========================================================
-
-const BASE_URL = "http://localhost:5000";
-const API_URL = `${BASE_URL}/api`;
 
 // =========================================================
 // COMPONENT
@@ -61,6 +55,10 @@ export const OurBestsellers = () => {
   const [productsLoading, setProductsLoading] = useState(false);
 
   const [viewingProductId, setViewingProductId] = useState(null);
+
+  const [wishlistIds, setWishlistIds] = useState(() => new Set());
+
+  const [wishlistBusyId, setWishlistBusyId] = useState(null);
 
   // =======================================================
   // SAFE TEXT
@@ -206,6 +204,38 @@ export const OurBestsellers = () => {
 
   const normalizeOption = (option) => {
     return getSafeText(option, "");
+  };
+
+  // =======================================================
+  // UNIT DISPLAY
+  // =======================================================
+
+  const getUnitDisplay = (product) => {
+    const unitName = getSafeText(
+      product?.unitName ??
+        product?.unit?.name ??
+        product?.unit ??
+        "",
+      ""
+    );
+
+    const unitNo = Number(
+      product?.unitNo ??
+        product?.unit_no ??
+        product?.quantity ??
+        product?.packageSize ??
+        0
+    );
+
+    if (unitNo > 0 && unitName) {
+      return `${unitNo} ${unitName}`;
+    }
+
+    if (unitNo > 0) {
+      return String(unitNo);
+    }
+
+    return unitName;
   };
 
   // =======================================================
@@ -492,6 +522,22 @@ export const OurBestsellers = () => {
     const unit =
       getUnitName(product?.unit);
 
+    const unitName = getSafeText(
+      product?.unitName ??
+        product?.unit?.name ??
+        product?.unit ??
+        "",
+      ""
+    );
+
+    const unitNo = Number(
+      product?.unitNo ??
+        product?.unit_no ??
+        product?.quantity ??
+        product?.packageSize ??
+        0
+    );
+
     const brandName =
       getBrandName(product?.brand);
 
@@ -580,7 +626,8 @@ export const OurBestsellers = () => {
       brandName,
 
       unit: product?.unit ?? null,
-      unitName: unit,
+      unitName: unitName || unit,
+      unitNo,
 
       image,
       gallery,
@@ -617,56 +664,71 @@ export const OurBestsellers = () => {
     try {
       setProductsLoading(true);
 
-      const response = await axios.get(
-        `${API_URL}/products`,
-        {
-          params: {
-            limit: 1000,
-          },
-
-          headers: {
-            Accept: "application/json",
-          },
-
-          timeout: 30000,
-        }
-      );
+      const response = await API.get("/products", {
+        params: {
+          limit: 1000,
+        },
+      });
 
       const result = response?.data;
 
-     
+      const productList = extractArray(result, [
+        "data",
+        "products",
+        "result",
+      ]);
 
-      const productList = extractArray(
-        result,
-        [
-          "data",
-          "products",
-          "result",
-        ]
-      );
+      const activeProducts = productList.filter((product) => {
+        if (!product) {
+          return false;
+        }
 
-      
+        return (
+          product?.status === undefined ||
+          product?.status === "active" ||
+          product?.status === "Active" ||
+          product?.status === true
+        );
+      });
 
-      const activeProducts =
-        productList.filter((product) => {
-          if (!product) {
-            return false;
-          }
+      const productIds = activeProducts
+        .map((product) => getProductId(product))
+        .filter(Boolean);
 
-          return (
-            product?.status === undefined ||
-            product?.status === "active" ||
-            product?.status === "Active" ||
-            product?.status === true
-          );
-        });
+      let productsWithReviews = activeProducts;
 
-      setBackendProducts(activeProducts);
+      if (productIds.length > 0) {
+        try {
+          const { data } = await API.get("/reviews/summaries", {
+            params: { productIds: productIds.join(",") },
+          });
+
+          const reviewSummaries = data?.data || {};
+
+          productsWithReviews = activeProducts.map((product) => {
+            const productId = getProductId(product);
+            const summary = reviewSummaries[String(productId)] || {};
+
+            return {
+              ...product,
+              averageRating:
+                Number(summary.averageRating) ||
+                Number(product?.averageRating) ||
+                0,
+              totalReviews:
+                Number(summary.totalReviews) ||
+                Number(product?.totalReviews) ||
+                0,
+            };
+          });
+        } catch (ratingError) {
+          console.error("Fetch review summaries error:", ratingError);
+        }
+      }
+
+      setBackendProducts(productsWithReviews);
     } catch (error) {
-      console.error(
-        "Fetch bestseller products error:",
-        error
-      );
+      console.error("Fetch bestseller products error:", error);
 
       console.error(
         "Products API response:",
@@ -685,16 +747,7 @@ export const OurBestsellers = () => {
 
   const fetchBackendCategories = async () => {
     try {
-      const response = await axios.get(
-        `${API_URL}/categories`,
-        {
-          headers: {
-            Accept: "application/json",
-          },
-
-          timeout: 30000,
-        }
-      );
+      const response = await API.get("/categories");
 
       const result = response?.data;
 
@@ -731,6 +784,104 @@ export const OurBestsellers = () => {
     fetchBackendProducts();
     fetchBackendCategories();
   }, []);
+
+  useEffect(() => {
+    const syncWishlist = (event) => {
+      const { productId, isWishlisted } = event.detail || {};
+      if (!productId) return;
+
+      setWishlistIds((previous) => {
+        const next = new Set(previous);
+        if (isWishlisted) next.add(String(productId));
+        else next.delete(String(productId));
+        return next;
+      });
+    };
+
+    window.addEventListener("wishlistUpdated", syncWishlist);
+    return () => window.removeEventListener("wishlistUpdated", syncWishlist);
+  }, []);
+
+  useEffect(() => {
+    if (!localStorage.getItem("token")) return;
+
+    API.get("/wishlist")
+      .then(({ data }) => {
+        if (!data?.success || !Array.isArray(data.wishlist)) return;
+        setWishlistIds(new Set(
+          data.wishlist
+            .map((entry) => entry.product?._id || entry.product)
+            .filter(Boolean)
+            .map(String),
+        ));
+      })
+      .catch((error) => {
+        console.error("Fetch wishlist error:", error);
+      });
+  }, []);
+
+  const handleWishlistToggle = async (item) => {
+    const productId = getProductId(item);
+    if (!productId || wishlistBusyId) return;
+
+    if (!localStorage.getItem("token")) {
+      const result = await Swal.fire({
+        icon: "info",
+        title: "Login required",
+        text: "Please log in to save products to your wishlist.",
+        showCancelButton: true,
+        confirmButtonText: "Log in",
+        cancelButtonText: "Continue shopping",
+      });
+      if (result.isConfirmed) navigate("/login");
+      return;
+    }
+
+    const isWishlisted = wishlistIds.has(String(productId));
+    setWishlistBusyId(String(productId));
+
+    try {
+      const { data } = isWishlisted
+        ? await API.delete(`/wishlist/${productId}`)
+        : await API.post(`/wishlist/${productId}`);
+
+      if (!data?.success) throw new Error(data?.message || "Wishlist update failed.");
+
+      const nextState = !isWishlisted;
+      setWishlistIds((previous) => {
+        const next = new Set(previous);
+        if (nextState) next.add(String(productId));
+        else next.delete(String(productId));
+        return next;
+      });
+      window.dispatchEvent(new CustomEvent("wishlistUpdated", {
+        detail: { productId: String(productId), isWishlisted: nextState },
+      }));
+
+      await Swal.fire({
+        icon: "success",
+        title: nextState ? "Added to Wishlist" : "Removed from Wishlist",
+        text: data.message || (nextState ? "Product saved." : "Product removed."),
+        timer: 1600,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+      }
+      const result = await Swal.fire({
+        icon: error.response?.status === 401 ? "warning" : "error",
+        title: error.response?.status === 401 ? "Session expired" : "Wishlist update failed",
+        text: error.response?.data?.message || error.message || "Please try again.",
+        showCancelButton: error.response?.status === 401,
+        confirmButtonText: error.response?.status === 401 ? "Log in" : "OK",
+        cancelButtonText: "Cancel",
+      });
+      if (error.response?.status === 401 && result.isConfirmed) navigate("/login");
+    } finally {
+      setWishlistBusyId(null);
+    }
+  };
 
   // =======================================================
   // NORMALIZED PRODUCTS
@@ -903,16 +1054,7 @@ export const OurBestsellers = () => {
     }
 
     try {
-      const response = await axios.get(
-        `${API_URL}/products/${productId}`,
-        {
-          headers: {
-            Accept: "application/json",
-          },
-
-          timeout: 30000,
-        }
-      );
+      const response = await API.get(`/products/${productId}`);
 
       const result = response?.data;
 
@@ -1820,15 +1962,18 @@ export const OurBestsellers = () => {
                     <div className="OurBestsellers-action-icons">
                       <button
                         type="button"
-                        className="OurBestsellers-icon-btn"
-                        aria-label={`Add ${productName} to wishlist`}
+                        className={`OurBestsellers-icon-btn ${wishlistIds.has(String(productId)) ? "is-wishlisted" : ""}`}
+                        aria-label={`${wishlistIds.has(String(productId)) ? "Remove" : "Add"} ${productName} ${wishlistIds.has(String(productId)) ? "from" : "to"} wishlist`}
+                        aria-pressed={wishlistIds.has(String(productId))}
+                        disabled={wishlistBusyId === String(productId)}
+                        onClick={() => handleWishlistToggle(item)}
                       >
                         <FaHeart
                           aria-hidden="true"
                         />
                       </button>
 
-                      <button
+                      {/* <button
                         type="button"
                         className="OurBestsellers-icon-btn"
                         aria-label={`Compare ${productName}`}
@@ -1836,7 +1981,7 @@ export const OurBestsellers = () => {
                         <FaExchangeAlt
                           aria-hidden="true"
                         />
-                      </button>
+                      </button> */}
 
                       <button
                         type="button"
@@ -1882,6 +2027,16 @@ export const OurBestsellers = () => {
                       {productName}
                     </h3>
 
+                    {(() => {
+                      const unitDisplay = getUnitDisplay(item);
+
+                      return unitDisplay ? (
+                        <div className="OurBestsellers-unitDisplay">
+                          {unitDisplay}
+                        </div>
+                      ) : null;
+                    })()}
+
                     {/* RATING */}
 
                     <div
@@ -1903,6 +2058,16 @@ export const OurBestsellers = () => {
                               aria-hidden="true"
                             />
                           )
+                      )}
+
+                      <span className="OurBestsellers-rating-value">
+                        {Number(item?.averageRating ?? item?.rating ?? 0).toFixed(1)}
+                      </span>
+
+                      {Number(item?.totalReviews ?? 0) > 0 && (
+                        <span className="OurBestsellers-rating-count">
+                          ({Number(item.totalReviews)})
+                        </span>
                       )}
                     </div>
 
@@ -1949,56 +2114,7 @@ export const OurBestsellers = () => {
                       )}
                     </div>
 
-                    {/* OPTION */}
-
-                    {options.length > 0 && (
-                      <div className="OurBestsellers-dropdown-group">
-                        <label
-                          htmlFor={`select-option-${productId}`}
-                          className="OurBestsellers-drop-label"
-                        >
-                          {optionLabel}
-                        </label>
-
-                        <div className="OurBestsellers-select-wrapper">
-                          <select
-                            id={`select-option-${productId}`}
-                            value={
-                              selectedOption ||
-                              options[0] ||
-                              ""
-                            }
-                            onChange={(e) =>
-                              handleDropdownChange(
-                                productId,
-                                e.target.value
-                              )
-                            }
-                            className="OurBestsellers-select"
-                            aria-label={`Select ${optionLabel}`}
-                          >
-                            {options.map(
-                              (
-                                opt,
-                                index
-                              ) => (
-                                <option
-                                  key={`${productId}-${opt}-${index}`}
-                                  value={opt}
-                                >
-                                  {opt}
-                                </option>
-                              )
-                            )}
-                          </select>
-
-                          <FaChevronDown
-                            className="OurBestsellers-select-icon"
-                            aria-hidden="true"
-                          />
-                        </div>
-                      </div>
-                    )}
+                    
 
                     {/* VIEW MORE + ADD TO CART */}
 

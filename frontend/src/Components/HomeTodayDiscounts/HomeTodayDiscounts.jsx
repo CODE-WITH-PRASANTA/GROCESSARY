@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   FiHeart,
@@ -107,6 +108,38 @@ const getUnitName = (unit) => {
 };
 
 // ======================================================
+// UNIT DISPLAY
+// ======================================================
+
+const getUnitDisplay = (product) => {
+  const unitName = getSafeText(
+    product?.unitName ??
+      product?.unit?.name ??
+      product?.unit ??
+      "",
+    "",
+  );
+
+  const unitNo = Number(
+    product?.unitNo ??
+      product?.unit_no ??
+      product?.quantity ??
+      product?.packageSize ??
+      0,
+  );
+
+  if (unitNo > 0 && unitName) {
+    return `${unitNo} ${unitName}`;
+  }
+
+  if (unitNo > 0) {
+    return String(unitNo);
+  }
+
+  return unitName;
+};
+
+// ======================================================
 // PRODUCT IMAGE
 // ======================================================
 
@@ -181,6 +214,19 @@ const normalizeDiscount = (discount) => {
 
   const unit = getUnitName(product.unit);
 
+  const unitName = getSafeText(
+    product?.unitName ?? product?.unit?.name ?? product?.unit ?? "",
+    "",
+  );
+
+  const unitNo = Number(
+    product?.unitNo ??
+      product?.unit_no ??
+      product?.quantity ??
+      product?.packageSize ??
+      0,
+  );
+
   const gallery = getProductGallery(product);
 
   const image = getProductImage(product);
@@ -226,7 +272,8 @@ const normalizeDiscount = (discount) => {
 
     brandName: brand,
 
-    unitName: unit,
+    unitName: unitName || unit,
+    unitNo,
 
     primaryImage: image,
 
@@ -261,6 +308,7 @@ const normalizeDiscount = (discount) => {
 // ======================================================
 
 const HomeTodayDiscounts = () => {
+  const navigate = useNavigate();
   // ==================================================
   // STATE
   // ==================================================
@@ -272,6 +320,106 @@ const HomeTodayDiscounts = () => {
   const [loading, setLoading] = useState(true);
 
   const [error, setError] = useState("");
+  const [wishlistIds, setWishlistIds] = useState(() => new Set());
+  const [wishlistBusyId, setWishlistBusyId] = useState(null);
+
+  useEffect(() => {
+    const syncWishlist = (event) => {
+      const { productId, isWishlisted } = event.detail || {};
+      if (!productId) return;
+
+      setWishlistIds((previous) => {
+        const next = new Set(previous);
+        if (isWishlisted) next.add(String(productId));
+        else next.delete(String(productId));
+        return next;
+      });
+    };
+
+    window.addEventListener("wishlistUpdated", syncWishlist);
+    return () => window.removeEventListener("wishlistUpdated", syncWishlist);
+  }, []);
+
+  useEffect(() => {
+    if (!localStorage.getItem("token")) return;
+
+    API.get("/wishlist")
+      .then(({ data }) => {
+        if (!data?.success || !Array.isArray(data.wishlist)) return;
+        setWishlistIds(new Set(
+          data.wishlist
+            .map((entry) => entry.product?._id || entry.product)
+            .filter(Boolean)
+            .map(String),
+        ));
+      })
+      .catch((requestError) => {
+        console.error("Fetch wishlist error:", requestError);
+      });
+  }, []);
+
+  const handleWishlistToggle = async (product) => {
+    const productId = product?.productId || product?._id;
+    if (!productId || wishlistBusyId) return;
+
+    if (!localStorage.getItem("token")) {
+      const result = await Swal.fire({
+        icon: "info",
+        title: "Login required",
+        text: "Please log in to save products to your wishlist.",
+        showCancelButton: true,
+        confirmButtonText: "Log in",
+        cancelButtonText: "Continue shopping",
+      });
+      if (result.isConfirmed) navigate("/login");
+      return;
+    }
+
+    const isWishlisted = wishlistIds.has(String(productId));
+    setWishlistBusyId(String(productId));
+
+    try {
+      const { data } = isWishlisted
+        ? await API.delete(`/wishlist/${productId}`)
+        : await API.post(`/wishlist/${productId}`);
+
+      if (!data?.success) throw new Error(data?.message || "Wishlist update failed.");
+
+      const nextState = !isWishlisted;
+      setWishlistIds((previous) => {
+        const next = new Set(previous);
+        if (nextState) next.add(String(productId));
+        else next.delete(String(productId));
+        return next;
+      });
+      window.dispatchEvent(new CustomEvent("wishlistUpdated", {
+        detail: { productId: String(productId), isWishlisted: nextState },
+      }));
+
+      await Swal.fire({
+        icon: "success",
+        title: nextState ? "Added to Wishlist" : "Removed from Wishlist",
+        text: data.message || (nextState ? "Product saved." : "Product removed."),
+        timer: 1600,
+        showConfirmButton: false,
+      });
+    } catch (requestError) {
+      const isUnauthorized = requestError.response?.status === 401;
+      if (isUnauthorized) localStorage.removeItem("token");
+
+      const result = await Swal.fire({
+        icon: isUnauthorized ? "warning" : "error",
+        title: isUnauthorized ? "Session expired" : "Wishlist update failed",
+        text: requestError.response?.data?.message || requestError.message || "Please try again.",
+        showCancelButton: isUnauthorized,
+        confirmButtonText: isUnauthorized ? "Log in" : "OK",
+        cancelButtonText: "Cancel",
+      });
+      if (isUnauthorized && result.isConfirmed) navigate("/login");
+    } finally {
+      setWishlistBusyId(null);
+    }
+  };
 
   // ==================================================
   // FETCH ACTIVE TODAY DISCOUNTS
@@ -308,7 +456,37 @@ const HomeTodayDiscounts = () => {
         return status === "active" || status === "";
       });
 
-      setProducts(activeProducts);
+      let productsWithRatings = activeProducts.map((product) => ({
+        ...product,
+        averageRating: 0,
+        totalReviews: 0,
+      }));
+
+      const productIds = activeProducts
+        .map((product) => product.productId)
+        .filter(Boolean);
+
+      if (productIds.length) {
+        try {
+          const { data } = await API.get("/reviews/summaries", {
+            params: { productIds: productIds.join(",") },
+          });
+          const reviewSummaries = data?.data || {};
+
+          productsWithRatings = activeProducts.map((product) => {
+            const summary = reviewSummaries[String(product.productId)] || {};
+            return {
+              ...product,
+              averageRating: Number(summary.averageRating) || 0,
+              totalReviews: Number(summary.totalReviews) || 0,
+            };
+          });
+        } catch (ratingError) {
+          console.error("Fetch product rating summaries error:", ratingError);
+        }
+      }
+
+      setProducts(productsWithRatings);
 
       // ==========================================
       // DEFAULT OPTIONS
@@ -316,7 +494,7 @@ const HomeTodayDiscounts = () => {
 
       const defaultOptions = {};
 
-      activeProducts.forEach((product) => {
+      productsWithRatings.forEach((product) => {
         if (Array.isArray(product.options) && product.options.length > 0) {
           defaultOptions[product.productId] = product.options[0];
         }
@@ -609,7 +787,8 @@ const HomeTodayDiscounts = () => {
 
             const category = getCategoryName(product.category);
 
-            const rating = Number(product.rating || 0);
+            const rating = Number(product.averageRating || 0);
+            const totalReviews = Number(product.totalReviews || 0);
 
             const currentPrice = Number(product.price || 0);
 
@@ -650,20 +829,27 @@ const HomeTodayDiscounts = () => {
                     ================================== */}
 
                 <div className="HomeTodayDiscounts-actions">
-                  <button type="button" aria-label={`Add ${title} to Wishlist`}>
+                  <button
+                    type="button"
+                    className={wishlistIds.has(String(productId)) ? "is-wishlisted" : ""}
+                    aria-label={`${wishlistIds.has(String(productId)) ? "Remove" : "Add"} ${title} ${wishlistIds.has(String(productId)) ? "from" : "to"} wishlist`}
+                    aria-pressed={wishlistIds.has(String(productId))}
+                    disabled={wishlistBusyId === String(productId)}
+                    onClick={() => handleWishlistToggle(product)}
+                  >
                     <FiHeart aria-hidden="true" />
                   </button>
 
-                  <button type="button" aria-label={`Compare ${title}`}>
+                  {/* <button type="button" aria-label={`Compare ${title}`}>
                     <LuArrowRightLeft aria-hidden="true" />
-                  </button>
+                  </button> */}
 
-                  <button
+                  {/* <button
                     type="button"
                     aria-label={`Quick view details for ${title}`}
                   >
                     <FiEye aria-hidden="true" />
-                  </button>
+                  </button> */}
                 </div>
 
                 {/* ==================================
@@ -742,21 +928,34 @@ const HomeTodayDiscounts = () => {
                     </a>
                   </h3>
 
+                  {(() => {
+                    const unitDisplay = getUnitDisplay(product);
+
+                    return unitDisplay ? (
+                      <div className="HomeTodayDiscounts-unitDisplay">
+                        {unitDisplay}
+                      </div>
+                    ) : null;
+                  })()}
+
                   {/* =================================
                           RATING
                       ================================= */}
 
                   <div
                     className="HomeTodayDiscounts-rating"
-                    aria-label={`Rated ${rating} out of 5 stars`}
+                    aria-label={`${rating.toFixed(1)} out of 5 from ${totalReviews} reviews`}
                   >
                     {[1, 2, 3, 4, 5].map((star) => (
                       <FiStar
                         key={star}
-                        className={star <= rating ? "star filled" : "star"}
+                        className={star <= Math.round(rating) ? "star filled" : "star"}
                         aria-hidden="true"
                       />
                     ))}
+                    <span className="HomeTodayDiscounts-ratingValue">
+                      {rating.toFixed(1)} ({totalReviews})
+                    </span>
                   </div>
 
                   {/* =================================
@@ -788,46 +987,7 @@ const HomeTodayDiscounts = () => {
                     )}
                   </div>
 
-                  {/* =================================
-                          OPTION
-                      ================================= */}
-
-                  {options.length > 0 && (
-                    <div className="HomeTodayDiscounts-optionGroup">
-                      <label htmlFor={`option-select-${productId}`}>
-                        {product.optionLabel}
-                      </label>
-
-                      <div className="HomeTodayDiscounts-selectWrapper">
-                        <select
-                          id={`option-select-${productId}`}
-                          value={selectedOptions[productId] || options[0]}
-                          onChange={(event) =>
-                            handleOptionChange(productId, event.target.value)
-                          }
-                          aria-label={`Select ${product.optionLabel}`}
-                        >
-                          {options.map((option, index) => {
-                            const safeOption = getSafeText(option, "");
-
-                            return (
-                              <option
-                                key={`${productId}-${safeOption}-${index}`}
-                                value={safeOption}
-                              >
-                                {safeOption}
-                              </option>
-                            );
-                          })}
-                        </select>
-
-                        <FiChevronDown
-                          className="select-arrow"
-                          aria-hidden="true"
-                        />
-                      </div>
-                    </div>
-                  )}
+               
 
                   {/* =================================
                           ADD TO CART

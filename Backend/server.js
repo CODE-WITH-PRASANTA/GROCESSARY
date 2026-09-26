@@ -31,6 +31,7 @@ const walletRoutes = require("./routes/walletRoutes");
 const pointsRoutes = require("./routes/pointsRoutes");
 const referralRoutes = require("./routes/referralRoutes");
 const checkoutRoutes = require("./routes/checkoutRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 // ======================================================
 // ORDERS + PAYMENTS  (NEW)
@@ -151,6 +152,10 @@ app.use("/api/checkout", checkoutRoutes);
 
 // Orders + Payments
 app.use("/api/orders", orderRoutes);
+
+app.use("/api/dashboard", dashboardRoutes);
+
+
 
 // ======================================================
 // HEALTH CHECK

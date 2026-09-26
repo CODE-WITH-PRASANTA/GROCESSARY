@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Review = require("../models/Review");
 const Product = require("../models/Product");
 
@@ -7,6 +8,36 @@ const Product = require("../models/Product");
 //
 // Guest users + logged-in users can submit
 // ======================================================
+
+const getLatestPublishedReviews = async (req, res) => {
+  try {
+    const limit = Math.min(
+      Number(req.query.limit) || 5,
+      20,
+    );
+
+    const reviews = await Review.find({
+      status: "published",
+    })
+      .populate("product", "productName name images image")
+      .populate("user", "name email mobile")
+      .sort({ createdAt: -1 })
+      .limit(limit);
+
+    return res.status(200).json({
+      success: true,
+      message: "Latest reviews fetched successfully.",
+      reviews,
+    });
+  } catch (error) {
+    console.error("Get latest reviews error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch latest reviews.",
+    });
+  }
+};
 
 const createReview = async (req, res) => {
   try {
@@ -304,6 +335,58 @@ const getProductReviews = async (req, res) => {
 };
 
 // ======================================================
+// GET PUBLISHED REVIEW SUMMARIES FOR MULTIPLE PRODUCTS
+// PUBLIC
+// ======================================================
+
+const getProductReviewSummaries = async (req, res) => {
+  try {
+    const productIds = [
+      ...new Set(
+        String(req.query.productIds || "")
+          .split(",")
+          .filter((id) => mongoose.isValidObjectId(id)),
+      ),
+    ].slice(0, 100);
+
+    if (!productIds.length) {
+      return res.status(200).json({ success: true, data: {} });
+    }
+
+    const summaries = await Review.aggregate([
+      {
+        $match: {
+          product: { $in: productIds.map((id) => new mongoose.Types.ObjectId(id)) },
+          status: "published",
+        },
+      },
+      {
+        $group: {
+          _id: "$product",
+          totalReviews: { $sum: 1 },
+          averageRating: { $avg: "$rating" },
+        },
+      },
+    ]);
+
+    const data = Object.fromEntries(
+      summaries.map((summary) => [String(summary._id), {
+        totalReviews: summary.totalReviews,
+        averageRating: Number(summary.averageRating.toFixed(2)),
+      }]),
+    );
+
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("Get product review summaries error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch product rating summaries.",
+    });
+  }
+};
+
+// ======================================================
 // GET ALL REVIEWS FOR ADMIN
 // ======================================================
 
@@ -495,6 +578,8 @@ const deleteReview = async (req, res) => {
 module.exports = {
   createReview,
   getProductReviews,
+  getProductReviewSummaries,
+  getLatestPublishedReviews,
   getAllReviews,
   publishReview,
   rejectReview,

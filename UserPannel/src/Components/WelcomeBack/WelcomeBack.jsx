@@ -1,29 +1,50 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import API, { BASE_URL } from '../../api/axios';
 import './WelcomeBack.css';
 
-// --- IMAGE IMPORTS ---
-import bannerImg from '../../assets/g1.png'; 
-import riceImg from '../../assets/bas.png'; 
-import oilImg from '../../assets/fortune.png'; 
-import milkImg from '../../assets/amul.png'; 
+import bannerImg from '../../assets/g1.png';
 
-// --- SAMPLE DATA ---
-const ALL_RECENT_ORDERS = [
-  { id: 1, name: 'Daawat Basmati Rice 1kg', image: riceImg, price: '₹120.00', qty: '1 Qty', date: '12 May 2025' },
-  { id: 2, name: 'Fortune Sunflower Oil 1L', image: oilImg, price: '₹135.00', qty: '1 Qty', date: '10 May 2025' },
-  { id: 3, name: 'Amul Taaza Milk 1L', image: milkImg, price: '₹56.00', qty: '2 Qty', date: '08 May 2025' },
-  { id: 4, name: 'Sample Extra Item 1', image: riceImg, price: '₹150.00', qty: '1 Qty', date: '07 May 2025' },
-  { id: 5, name: 'Sample Extra Item 2', image: oilImg, price: '₹200.00', qty: '3 Qty', date: '06 May 2025' },
-  { id: 6, name: 'Sample Extra Item 3', image: milkImg, price: '₹68.00', qty: '1 Qty', date: '05 May 2025' },
-];
+const formatCurrency = (value) => `₹${(Number(value) || 0).toLocaleString('en-IN', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})}`;
+
+const getImageUrl = (image) => {
+  if (!image) return '';
+  if (typeof image === 'object') {
+    image = image.url || image.path || image.secure_url || image.src || '';
+  }
+  if (!image) return '';
+  return /^https?:\/\//i.test(image) ? image : `${BASE_URL}${image.startsWith('/') ? image : `/${image}`}`;
+};
+
+const formatDate = (date) => date
+  ? new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+  : '-';
 
 const WelcomeBack = () => {
   const [showAllOrders, setShowAllOrders] = useState(false);
+  const [summary, setSummary] = useState(null);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Determine which orders to display
-  const displayedOrders = showAllOrders ? ALL_RECENT_ORDERS : ALL_RECENT_ORDERS.slice(0, 3);
+  useEffect(() => {
+    let active = true;
+    API.get('/dashboard/summary')
+      .then(({ data }) => {
+        if (active && data.success) setSummary(data.data);
+        else if (active) setError(data.message || 'Unable to load dashboard data.');
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.response?.data?.message || 'Unable to load dashboard data.');
+      });
+
+    return () => { active = false; };
+  }, []);
+
+  const recentOrders = summary?.recentOrders || [];
+  const displayedOrders = showAllOrders ? recentOrders : recentOrders.slice(0, 3);
 
   const toggleOrders = () => {
     setShowAllOrders(!showAllOrders);
@@ -37,8 +58,9 @@ const WelcomeBack = () => {
     <div className="wb-container">
       {/* --- Header --- */}
       <header className="wb-header">
-        <h1 className="wb-title">Welcome back, Jagan! <span className="wb-wave">👋</span></h1>
+        <h1 className="wb-title">Welcome back, {summary?.user?.name || 'there'}! <span className="wb-wave">👋</span></h1>
         <p className="wb-subtitle">Here's what's happening with your account today.</p>
+        {error && <p role="alert" className="wb-subtitle">{error}</p>}
       </header>
 
       {/* --- Stat Cards --- */}
@@ -57,7 +79,7 @@ const WelcomeBack = () => {
           </div>
           <div className="wb-stat-info">
             <span className="wb-stat-label">Total Orders</span>
-            <span className="wb-stat-value">24</span>
+            <span className="wb-stat-value">{summary ? summary.stats.totalOrders : '...'}</span>
             <a href="/orders" className="wb-stat-link">View all orders <span>&rarr;</span></a>
           </div>
         </div>
@@ -74,7 +96,7 @@ const WelcomeBack = () => {
           </div>
           <div className="wb-stat-info">
             <span className="wb-stat-label">Wallet Balance</span>
-            <span className="wb-stat-value">₹1,250.00</span>
+            <span className="wb-stat-value">{summary ? formatCurrency(summary.stats.walletBalance) : '...'}</span>
             <a href="/wallet" className="wb-stat-link">Add money <span>&rarr;</span></a>
           </div>
         </div>
@@ -91,7 +113,7 @@ const WelcomeBack = () => {
           </div>
           <div className="wb-stat-info">
             <span className="wb-stat-label">Available Coupons</span>
-            <span className="wb-stat-value">08</span>
+            <span className="wb-stat-value">{summary ? summary.stats.coupons : '...'}</span>
             <a href="/coupons" className="wb-stat-link">View coupons <span>&rarr;</span></a>
           </div>
         </div>
@@ -105,7 +127,7 @@ const WelcomeBack = () => {
           </div>
           <div className="wb-stat-info">
             <span className="wb-stat-label">Wishlist Items</span>
-            <span className="wb-stat-value">15</span>
+            <span className="wb-stat-value">{summary ? summary.stats.wishlist : '...'}</span>
             <a href="/wishlist" className="wb-stat-link">View wishlist <span>&rarr;</span></a>
           </div>
         </div>
@@ -130,27 +152,29 @@ const WelcomeBack = () => {
         <section className="wb-recent-orders-section">
           <div className="wb-recent-orders-header">
             <h3 className="wb-recent-orders-title">Recent Order</h3>
-            <button className="wb-view-all-button" onClick={toggleOrders}>
-              {showAllOrders ? 'Show Less' : 'View All'} <span>&rarr;</span>
-            </button>
+            {recentOrders.length > 3 && (
+              <button className="wb-view-all-button" onClick={toggleOrders}>
+                {showAllOrders ? 'Show Less' : 'View All'} <span>&rarr;</span>
+              </button>
+            )}
           </div>
 
           <ul className={`wb-recent-orders-list ${showAllOrders ? 'scrollable' : ''}`}>
-            {displayedOrders.map((order) => (
+            {displayedOrders.length ? displayedOrders.map((order) => (
               <li key={order.id} className="wb-order-item">
                 <div className="wb-order-image-container">
-                  <img src={order.image} alt={order.name} />
+                  {getImageUrl(order.image) && <img src={getImageUrl(order.image)} alt={order.name} />}
                 </div>
                 <div className="wb-order-details">
                   <span className="wb-order-name">{order.name}</span>
-                  <span className="wb-order-meta">{order.price} • {order.qty}</span>
+                  <span className="wb-order-meta">{formatCurrency(order.price)} · {order.qty} {order.qty === 1 ? 'item' : 'items'}</span>
                 </div>
                 <div className="wb-order-status">
-                  <span className="wb-status-text">Delivered</span>
-                  <span className="wb-date-text">{order.date}</span>
+                  <span className="wb-status-text">{String(order.status || 'pending').replaceAll('_', ' ')}</span>
+                  <span className="wb-date-text">{formatDate(order.date)}</span>
                 </div>
               </li>
-            ))}
+            )) : <li className="wb-order-empty">{summary ? 'No orders yet.' : 'Loading recent orders...'}</li>}
           </ul>
         </section>
       </div>

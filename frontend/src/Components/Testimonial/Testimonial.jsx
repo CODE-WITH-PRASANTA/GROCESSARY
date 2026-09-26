@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import API, { IMG_URL } from '../../api/axios';
 import './Testimonial.css';
 
-const testimonialsData = [
+const fallbackTestimonials = [
   {
     id: 1,
     rating: 4.5,
@@ -44,8 +45,64 @@ const testimonialsData = [
   }
 ];
 
+const normalizeReviewImage = (image) => {
+  if (!image) return '';
+  if (typeof image === 'string') {
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+      return image;
+    }
+    return `${IMG_URL}${image.startsWith('/') ? '' : '/'}${image}`;
+  }
+  if (typeof image === 'object') {
+    const direct = image.url || image.path || image.secure_url || image.src || '';
+    if (direct) return normalizeReviewImage(direct);
+  }
+  return '';
+};
+
 const Testimonial = () => {
   const scrollRef = useRef(null);
+  const [testimonials, setTestimonials] = useState([]);
+
+  useEffect(() => {
+    const fetchLatestReviews = async () => {
+      try {
+        const { data } = await API.get('/reviews/latest?limit=5');
+        const reviews = Array.isArray(data?.reviews) ? data.reviews : [];
+
+        if (!reviews.length) {
+          setTestimonials(fallbackTestimonials);
+          return;
+        }
+
+        const mapped = reviews.map((review) => {
+          const product = review.product || {};
+          const productName = product.productName || product.name || 'Grocery Sathi Product';
+          const productImage = Array.isArray(product.images) && product.images.length
+            ? product.images[0]
+            : product.image || '';
+
+          return {
+            id: review._id || review.id,
+            rating: Number(review.rating) || 0,
+            title: review.title || 'Great experience',
+            text: review.comment || review.text || '',
+            author: review.reviewerName || review.user?.name || 'Verified Customer',
+            role: review.verifiedPurchase ? 'Verified Buyer' : 'Verified Customer',
+            product: productName,
+            avatar: normalizeReviewImage(productImage) || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&q=80&w=150',
+          };
+        });
+
+        setTestimonials(mapped);
+      } catch (error) {
+        console.error('Fetch latest reviews error:', error);
+        setTestimonials(fallbackTestimonials);
+      }
+    };
+
+    fetchLatestReviews();
+  }, []);
 
   const scroll = (direction) => {
     const { current } = scrollRef;
@@ -99,7 +156,7 @@ const Testimonial = () => {
 
         {/* Right Side: Scrollable Cards Section */}
         <div className="testimonial-slider" ref={scrollRef}>
-          {testimonialsData.map((item) => (
+          {(testimonials || []).map((item) => (
             <article 
               className="testimonial-card" 
               key={item.id}
@@ -119,7 +176,7 @@ const Testimonial = () => {
                 <div className="testimonial-stars" aria-label={`Rated ${item.rating} out of 5 stars`}>
                   {'★'.repeat(5)}
                 </div>
-                <span className="testimonial-rating-score">{item.rating.toFixed(1)} / 5.0</span>
+                <span className="testimonial-rating-score">{Number(item.rating || 0).toFixed(1)} / 5.0</span>
               </div>
 
               {/* Review Content */}
@@ -142,7 +199,7 @@ const Testimonial = () => {
                   <p className="testimonial-author-name">
                     <strong itemProp="name">{item.author}</strong>, <span className="testimonial-role">{item.role}</span>
                   </p>
-                  <p className="testimonial-product">{item.product}</p>
+                  {/* <p className="testimonial-product">{item.product}</p> */}
                 </div>
               </div>
 
