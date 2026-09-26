@@ -26,7 +26,6 @@ const deliveryAddressRoutes = require("./routes/deliveryAddressRoutes");
 // ======================================================
 // WALLET / POINTS / REFERRAL / CHECKOUT
 // ======================================================
-
 const walletRoutes = require("./routes/walletRoutes");
 const pointsRoutes = require("./routes/pointsRoutes");
 const referralRoutes = require("./routes/referralRoutes");
@@ -34,61 +33,31 @@ const checkoutRoutes = require("./routes/checkoutRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 
 // ======================================================
-// ORDERS + PAYMENTS  (NEW)
+// ORDERS + PAYMENTS
 // ======================================================
-
 const orderRoutes = require("./routes/orderRoutes");
 
 // ======================================================
 // LOAD ENV + CONNECT DB
 // ======================================================
-
 dotenv.config();
 connectDB();
 
 const app = express();
 
 // ======================================================
-// CORS
+// CORS CONFIGURATION
 // ======================================================
-
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
-
-// ======================================================
-// BODY PARSERS
-// ======================================================
-//
-// IMPORTANT:
-// Razorpay webhooks verify the signature against the RAW
-// request body. We stash the raw buffer on `req.rawBody`
-// so the webhook handler can use it later.
-// ======================================================
-
-app.use(
-  express.json({
-    verify: (req, res, buf) => {
-      req.rawBody = buf.toString("utf8");
-    },
-  }),
-);
-
-// CORS Configuration
 const allowedOrigins = [
+  "http://localhost:5173",
   "http://grocerysathi.com",
   "https://grocerysathi.com",
+  "https://user.grocerysathi.com",
   "http://admin.grocerysathi.com",
   "https://admin.grocerysathi.com",
   "http://backend.grocerysathi.com",
   "https://backend.grocerysathi.com",
 ];
-
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -109,22 +78,33 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
-// Middleware
 app.use(cors(corsOptions));
-app.use(express.json());
+
+// ======================================================
+// BODY PARSERS & COOKIE PARSER
+// ======================================================
+// IMPORTANT: Razorpay webhooks verify the signature against the RAW
+// request body. We stash the raw buffer on `req.rawBody`.
+// ======================================================
+app.use(
+  express.json({
+    verify: (req, res, buf) => {
+      req.rawBody = buf.toString("utf8");
+    },
+  })
+);
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // ======================================================
 // STATIC UPLOADS
 // ======================================================
-
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ======================================================
 // ROUTES
 // ======================================================
-
 app.use("/api/list-upload", listUploadRoutes);
 app.use("/api/units", unitRoutes);
 app.use("/api/categories", categoryRoutes);
@@ -160,7 +140,6 @@ app.use("/api/dashboard", dashboardRoutes);
 // ======================================================
 // HEALTH CHECK
 // ======================================================
-
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
@@ -169,9 +148,8 @@ app.get("/", (req, res) => {
 });
 
 // ======================================================
-// 404 HANDLER (before global error handler)
+// 404 HANDLER
 // ======================================================
-
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -179,11 +157,9 @@ app.use((req, res) => {
   });
 });
 
-
 // ======================================================
 // GLOBAL ERROR HANDLER
 // ======================================================
-
 app.use((err, req, res, next) => {
   console.error("Server Error:", err);
 
@@ -196,7 +172,6 @@ app.use((err, req, res, next) => {
 // ======================================================
 // START SERVER
 // ======================================================
-
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
