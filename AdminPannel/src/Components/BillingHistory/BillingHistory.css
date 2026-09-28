@@ -1,0 +1,1438 @@
+/* =========================================================
+   GROCERY SATI - BILLING HISTORY
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+.BillingHistory {
+  width: 100%;
+  min-height: 100vh;
+  background: #f4f8f7;
+  color: #111b35;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  overflow: hidden;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.BillingHistory-header {
+  height: 72px;
+  margin: 8px 10px 0;
+  padding: 0 18px;
+  background: #ffffff;
+  border: 1px solid #e3e9ef;
+  border-radius: 17px;
+  box-shadow: 0 5px 18px rgba(18, 40, 61, 0.07);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.BillingHistory-headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 300px;
+}
+
+.BillingHistory-menuButton {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  background: #f5f8fa;
+  border-radius: 11px;
+  color: #1e3d68;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.BillingHistory-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.BillingHistory-logoIcon {
+  width: 43px;
+  height: 43px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #07963a;
+}
+
+.BillingHistory-logo h1 {
+  margin: 0;
+  color: #0d1530;
+  font-size: 23px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+}
+
+.BillingHistory-logo p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #26344d;
+}
+
+.BillingHistory-headerSearch {
+  height: 45px;
+  max-width: 450px;
+  flex: 1;
+
+  border: 1px solid #d9e1e8;
+  border-radius: 10px;
+  background: #fff;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+
+  color: #718096;
+}
+
+.BillingHistory-headerSearch input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #18233d;
+  font-size: 13px;
+}
+
+.BillingHistory-headerSearch input::placeholder {
+  color: #8290a6;
+}
+
+.BillingHistory-headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.BillingHistory-dateTime {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+  font-size: 12px;
+  color: #1c2943;
+}
+
+.BillingHistory-offline {
+  height: 38px;
+  padding: 0 13px;
+  border-radius: 10px;
+  background: #e5faea;
+  color: #08772e;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.BillingHistory-headerIcon {
+  width: 39px;
+  height: 39px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #1d2d4b;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.BillingHistory-headerIcon:hover {
+  background: #f1f5f7;
+}
+
+.BillingHistory-profile {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: #07963a;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* =========================================================
+   BODY
+   ========================================================= */
+
+.BillingHistory-body {
+  height: calc(100vh - 88px);
+  margin: 10px;
+  display: flex;
+  gap: 10px;
+  position: relative;
+}
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.BillingHistory-sidebar {
+  width: 192px;
+  flex: 0 0 192px;
+  padding: 18px 10px 12px;
+  background: #ffffff;
+  border: 1px solid #e4e9ed;
+  border-radius: 16px;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.BillingHistory-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.BillingHistory-navItem {
+  width: 100%;
+  height: 49px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  color: #203557;
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  gap: 13px;
+
+  cursor: pointer;
+  font-size: 14px;
+  text-align: left;
+}
+
+.BillingHistory-navItem:hover {
+  background: #f1f8f3;
+}
+
+.BillingHistory-activeNav {
+  background: #08a03d;
+  color: #fff;
+  box-shadow: 0 5px 12px rgba(8, 160, 61, 0.18);
+  font-weight: 700;
+}
+
+
+.BillingHistory-mobileSidebarHeader {
+  display: none;
+}
+
+.BillingHistory-sidebarOverlay {
+  display: none;
+}
+
+/* =========================================================
+   MAIN
+   ========================================================= */
+
+.BillingHistory-main {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: 10px 0 20px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd8d0 transparent;
+}
+
+.BillingHistory-pageHeader {
+  min-height: 65px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.BillingHistory-titleArea {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.BillingHistory-titleIcon {
+  width: 53px;
+  height: 53px;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(145deg, #0aaa40, #078c37);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 5px 13px rgba(8, 160, 61, 0.2);
+}
+
+.BillingHistory-titleArea h2 {
+  margin: 0;
+  font-size: 27px;
+  line-height: 1;
+  color: #111936;
+  letter-spacing: -0.7px;
+}
+
+.BillingHistory-titleArea p {
+  margin: 5px 0 0;
+  color: #2e4161;
+  font-size: 14px;
+}
+
+.BillingHistory-newBillButton {
+  border: 0;
+  min-width: 150px;
+  height: 47px;
+  padding: 0 19px;
+  border-radius: 9px;
+  background: #079b3b;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  cursor: pointer;
+  box-shadow: 0 5px 12px rgba(8, 160, 61, 0.18);
+}
+
+.BillingHistory-newBillButton:hover {
+  background: #078b35;
+}
+
+/* =========================================================
+   FILTER
+   ========================================================= */
+
+.BillingHistory-filterCard {
+  margin: 10px 10px 12px;
+  padding: 15px;
+  background: #fff;
+  border: 1px solid #e1e8ed;
+  border-radius: 13px;
+  box-shadow: 0 4px 15px rgba(21, 44, 67, 0.045);
+}
+
+.BillingHistory-filterGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.05fr 1.35fr;
+  gap: 13px;
+}
+
+.BillingHistory-filterGroup {
+  min-width: 0;
+}
+
+.BillingHistory-filterGroup label {
+  display: block;
+  margin-bottom: 6px;
+  color: #182844;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.BillingHistory-inputBox {
+  height: 40px;
+  width: 100%;
+  border: 1px solid #d8e1e8;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  color: #49617f;
+}
+
+.BillingHistory-inputBox input,
+.BillingHistory-inputBox select {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #20304b;
+  font-size: 12px;
+  min-width: 0;
+}
+
+.BillingHistory-inputBox select {
+  appearance: none;
+}
+
+.BillingHistory-filterBottom {
+  margin-top: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.BillingHistory-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.BillingHistory-tab {
+  border: 0;
+  background: #f2f5f8;
+  color: #21375d;
+  padding: 9px 16px;
+  border-radius: 18px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.BillingHistory-activeTab {
+  background: #079b3b;
+  color: #fff;
+  font-weight: 700;
+}
+
+.BillingHistory-filterActions {
+  display: flex;
+  gap: 9px;
+}
+
+.BillingHistory-resetButton,
+.BillingHistory-searchButton {
+  height: 39px;
+  padding: 0 15px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.BillingHistory-resetButton {
+  background: #fff;
+  color: #243c60;
+  border: 1px solid #d2dde5;
+}
+
+.BillingHistory-searchButton {
+  background: #079b3b;
+  color: #fff;
+  border: 1px solid #079b3b;
+}
+
+/* =========================================================
+   STATISTICS
+   ========================================================= */
+
+.BillingHistory-statGrid {
+  margin: 0 10px 12px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.BillingHistory-statCard {
+  min-height: 100px;
+  padding: 15px;
+  border: 1px solid #e0e8ed;
+  border-radius: 12px;
+  background: #fff;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.BillingHistory-statIcon {
+  width: 53px;
+  height: 53px;
+  flex: 0 0 53px;
+  border-radius: 11px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.BillingHistory-statIcon.green {
+  background: linear-gradient(145deg, #0aaa40, #078d38);
+}
+
+.BillingHistory-statIcon.blue {
+  background: linear-gradient(145deg, #2589f7, #0873e8);
+}
+
+.BillingHistory-statIcon.orange {
+  background: linear-gradient(145deg, #ff9c18, #ed7800);
+}
+
+.BillingHistory-statIcon.purple {
+  background: linear-gradient(145deg, #8b55e8, #7041d0);
+}
+
+.BillingHistory-statCard span {
+  display: block;
+  color: #324867;
+  font-size: 11px;
+}
+
+.BillingHistory-statCard strong {
+  display: block;
+  margin: 3px 0;
+  color: #121a34;
+  font-size: 20px;
+}
+
+.BillingHistory-statCard small {
+  color: #138d3e;
+  font-size: 10px;
+}
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.BillingHistory-tableCard {
+  margin: 0 10px;
+  background: #fff;
+  border: 1px solid #e0e7ec;
+  border-radius: 13px;
+  overflow: hidden;
+}
+
+.BillingHistory-tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.BillingHistory-table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+}
+
+.BillingHistory-table th {
+  height: 48px;
+  background: #f5f7f9;
+  border-bottom: 1px solid #dde5ea;
+  color: #172541;
+  font-size: 12px;
+  text-align: left;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.BillingHistory-table td {
+  height: 59px;
+  padding: 7px 10px;
+  border-bottom: 1px solid #e8edf0;
+  color: #192d4b;
+  font-size: 12px;
+}
+
+.BillingHistory-table tbody tr:hover {
+  background: #f8fcf9;
+}
+
+.BillingHistory-selectedRow {
+  background: #ebfaef !important;
+}
+
+.BillingHistory-dateCell {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+}
+
+.BillingHistory-dateCell strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.BillingHistory-dateCell span {
+  color: #263f60;
+}
+
+.BillingHistory-invoiceNumber {
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.BillingHistory-totalCell {
+  color: #17223b;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.BillingHistory-paymentBadge {
+  min-width: 59px;
+  padding: 6px 9px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.BillingHistory-paymentBadge.cash {
+  background: #dcf7e3;
+  color: #087b32;
+}
+
+.BillingHistory-paymentBadge.upi {
+  background: #fff0d6;
+  color: #dc7900;
+}
+
+.BillingHistory-paymentBadge.card {
+  background: #e1efff;
+  color: #1470d7;
+}
+
+.BillingHistory-actionButtons {
+  display: flex;
+  gap: 5px;
+}
+
+.BillingHistory-actionButtons button {
+  width: 36px;
+  height: 34px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: #fff;
+}
+
+.BillingHistory-viewAction {
+  border: 1px solid #d4dde8;
+  color: #203b63;
+}
+
+.BillingHistory-printAction {
+  border: 1px solid #bed7f8;
+  color: #0875df;
+}
+
+.BillingHistory-deleteAction {
+  border: 1px solid #ffd0d0;
+  color: #ef3434;
+}
+
+.BillingHistory-actionButtons button:hover {
+  transform: translateY(-1px);
+}
+
+.BillingHistory-emptyState {
+  height: 250px !important;
+  text-align: center;
+  color: #8a98a9 !important;
+}
+
+.BillingHistory-emptyState svg,
+.BillingHistory-emptyState strong,
+.BillingHistory-emptyState span {
+  display: block;
+  margin: 7px auto;
+}
+
+/* =========================================================
+   PAGINATION
+   ========================================================= */
+
+.BillingHistory-pagination {
+  min-height: 72px;
+  padding: 0 17px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.BillingHistory-pagination > span {
+  color: #243b60;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.BillingHistory-pageNumbers {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.BillingHistory-pageNumbers button {
+  min-width: 38px;
+  height: 37px;
+  border: 1px solid #d8e1e8;
+  background: #fff;
+  border-radius: 7px;
+  color: #1d3558;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.BillingHistory-pageNumbers button:hover:not(:disabled) {
+  background: #f0f8f2;
+}
+
+.BillingHistory-pageNumbers button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.BillingHistory-pageNumbers .BillingHistory-activePage {
+  background: #079b3b;
+  color: #fff;
+  border-color: #079b3b;
+}
+
+.BillingHistory-perPage {
+  height: 37px;
+  min-width: 110px;
+  border: 1px solid #d8e1e8;
+  border-radius: 7px;
+  padding: 0 8px;
+
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.BillingHistory-perPage select {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  width: 100%;
+  color: #253c5d;
+  font-size: 11px;
+}
+
+/* =========================================================
+   DETAILS PANEL
+   ========================================================= */
+
+.BillingHistory-detailsPanel {
+  width: 405px;
+  flex: 0 0 405px;
+  background: #fff;
+  border: 1px solid #e2e8ed;
+  border-radius: 16px;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+}
+
+.BillingHistory-detailsHeader {
+  height: 66px;
+  padding: 0 17px;
+  border-bottom: 1px solid #e5eaee;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.BillingHistory-detailsHeader > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #078f38;
+}
+
+.BillingHistory-detailsHeader h3 {
+  margin: 0;
+  color: #111936;
+  font-size: 19px;
+}
+
+.BillingHistory-closeDetails {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  color: #21324f;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.BillingHistory-detailsContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  scrollbar-width: thin;
+}
+
+/* Invoice */
+
+.BillingHistory-invoiceBanner {
+  min-height: 78px;
+  padding: 13px;
+  background: #e5faeb;
+  border-radius: 11px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.BillingHistory-invoiceCart {
+  width: 62px;
+  height: 54px;
+  color: #078e39;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid #cbe9d2;
+}
+
+.BillingHistory-invoiceBanner strong {
+  display: block;
+  color: #111d35;
+  font-size: 16px;
+}
+
+.BillingHistory-invoiceBanner span {
+  display: block;
+  margin-top: 5px;
+  color: #1e3b5a;
+  font-size: 11px;
+}
+
+/* Customer */
+
+.BillingHistory-customerSection {
+  padding: 16px 4px 13px;
+  border-bottom: 1px solid #e5eaee;
+}
+
+.BillingHistory-sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #078f38;
+  margin-bottom: 10px;
+}
+
+.BillingHistory-sectionTitle strong {
+  color: #17223b;
+  font-size: 14px;
+}
+
+.BillingHistory-customerRows {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.BillingHistory-customerRows > div {
+  display: grid;
+  grid-template-columns: 68px 15px 1fr;
+  font-size: 12px;
+}
+
+.BillingHistory-customerRows span {
+  color: #162d4e;
+}
+
+.BillingHistory-customerRows b {
+  color: #162d4e;
+}
+
+.BillingHistory-customerRows strong {
+  font-weight: 500;
+  color: #192844;
+}
+
+/* Items */
+
+.BillingHistory-itemsSection {
+  padding: 13px 4px;
+  border-bottom: 1px solid #e5eaee;
+}
+
+.BillingHistory-itemTable {
+  border: 1px solid #dfe7ec;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.BillingHistory-itemHeader,
+.BillingHistory-itemRow {
+  display: grid;
+  grid-template-columns: 28px minmax(125px, 1fr) 53px 35px 55px;
+  align-items: center;
+}
+
+.BillingHistory-itemHeader {
+  min-height: 37px;
+  background: #f3f5f7;
+  color: #17223b;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.BillingHistory-itemHeader span,
+.BillingHistory-itemRow > span,
+.BillingHistory-itemRow > strong {
+  padding: 0 5px;
+}
+
+.BillingHistory-itemRow {
+  min-height: 59px;
+  border-top: 1px solid #e5e9ed;
+  color: #1d304e;
+  font-size: 10px;
+}
+
+.BillingHistory-productInfo {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.BillingHistory-productInfo img {
+  width: 35px;
+  height: 38px;
+  object-fit: contain;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.BillingHistory-productInfo span {
+  min-width: 0;
+  color: #17223b;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.BillingHistory-productInfo small {
+  display: block;
+  font-size: 9px;
+  color: #455975;
+}
+
+.BillingHistory-itemRow > strong {
+  font-size: 10px;
+}
+
+/* Totals */
+
+.BillingHistory-totalSection {
+  padding: 13px 4px;
+}
+
+.BillingHistory-totalSection > div:not(.BillingHistory-grandTotal) {
+  min-height: 27px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #1b2e4c;
+  font-size: 12px;
+}
+
+.BillingHistory-totalSection > div strong {
+  color: #101b33;
+}
+
+.BillingHistory-grandTotal {
+  min-height: 54px;
+  margin-top: 7px;
+  padding: 0 12px;
+  background: #e2f9e8;
+  border-radius: 9px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.BillingHistory-grandTotal span {
+  color: #0c7130;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.BillingHistory-grandTotal strong {
+  color: #086b2b !important;
+  font-size: 24px !important;
+}
+
+/* Details Actions */
+
+.BillingHistory-detailsActions {
+  padding: 12px;
+  border-top: 1px solid #e4e9ed;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.BillingHistory-detailsActions button {
+  height: 47px;
+  border-radius: 8px;
+  background: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.BillingHistory-printBill {
+  border: 1px solid #1988ee;
+  color: #0877db;
+}
+
+.BillingHistory-downloadBill {
+  border: 1px solid #d6dee7;
+  color: #182c4d;
+}
+
+.BillingHistory-deleteBill {
+  border: 1px solid #ffcccc;
+  color: #e72c2c;
+}
+
+.BillingHistory-detailsActions button:hover {
+  background: #f7fafb;
+}
+
+/* =========================================================
+   RESPONSIVE - LARGE LAPTOP
+   ========================================================= */
+
+@media (max-width: 1350px) {
+  .BillingHistory-detailsPanel {
+    width: 365px;
+    flex-basis: 365px;
+  }
+
+  .BillingHistory-sidebar {
+    width: 180px;
+    flex-basis: 180px;
+  }
+
+  .BillingHistory-filterGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .BillingHistory-statGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1100px) {
+  .BillingHistory-header {
+    gap: 10px;
+  }
+
+  .BillingHistory-headerSearch {
+    max-width: 300px;
+  }
+
+  .BillingHistory-dateTime span:last-child {
+    display: none;
+  }
+
+  .BillingHistory-sidebar {
+    position: fixed;
+    z-index: 1000;
+    left: -260px;
+    top: 0;
+    bottom: 0;
+    width: 240px;
+    height: 100vh;
+    border-radius: 0 15px 15px 0;
+    transition: left 0.28s ease;
+  }
+
+  .BillingHistory-sidebarOpen {
+    left: 0;
+  }
+
+  .BillingHistory-menuButton {
+    display: flex;
+  }
+
+  .BillingHistory-sidebarOverlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(10, 25, 43, 0.35);
+    backdrop-filter: blur(2px);
+  }
+
+  .BillingHistory-mobileSidebarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px 18px;
+    color: #142440;
+  }
+
+  .BillingHistory-mobileSidebarHeader button {
+    border: 0;
+    background: #f1f5f7;
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .BillingHistory-body {
+    height: calc(100vh - 88px);
+  }
+
+  .BillingHistory-detailsPanel {
+    width: 360px;
+    flex-basis: 360px;
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 800px) {
+  .BillingHistory {
+    overflow: auto;
+  }
+
+  .BillingHistory-header {
+    height: auto;
+    min-height: 70px;
+    padding: 9px 11px;
+    margin: 6px;
+    flex-wrap: wrap;
+    border-radius: 13px;
+  }
+
+  .BillingHistory-headerLeft {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .BillingHistory-menuButton {
+    width: 38px;
+    height: 38px;
+  }
+
+  .BillingHistory-logo h1 {
+    font-size: 18px;
+  }
+
+  .BillingHistory-logo p {
+    font-size: 10px;
+  }
+
+  .BillingHistory-logoIcon {
+    width: 35px;
+  }
+
+  .BillingHistory-headerSearch {
+    order: 3;
+    max-width: none;
+    flex-basis: 100%;
+  }
+
+  .BillingHistory-dateTime {
+    display: none;
+  }
+
+  .BillingHistory-headerRight {
+    gap: 3px;
+  }
+
+  .BillingHistory-offline {
+    padding: 0 9px;
+    font-size: 10px;
+  }
+
+  .BillingHistory-headerIcon {
+    display: none;
+  }
+
+  .BillingHistory-body {
+    height: auto;
+    min-height: calc(100vh - 88px);
+    margin: 6px;
+    display: block;
+  }
+
+  .BillingHistory-main {
+    overflow: visible;
+    padding: 0;
+  }
+
+  .BillingHistory-pageHeader {
+    padding: 9px 4px;
+    gap: 8px;
+  }
+
+  .BillingHistory-titleIcon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .BillingHistory-titleIcon svg {
+    width: 30px;
+  }
+
+  .BillingHistory-titleArea h2 {
+    font-size: 21px;
+  }
+
+  .BillingHistory-titleArea p {
+    font-size: 11px;
+  }
+
+  .BillingHistory-newBillButton {
+    min-width: auto;
+    padding: 0 12px;
+    height: 42px;
+    font-size: 12px;
+  }
+
+  .BillingHistory-filterGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .BillingHistory-filterBottom {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .BillingHistory-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 3px;
+  }
+
+  .BillingHistory-tab {
+    white-space: nowrap;
+  }
+
+  .BillingHistory-filterActions {
+    justify-content: flex-end;
+  }
+
+  .BillingHistory-statGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .BillingHistory-statCard {
+    padding: 11px;
+  }
+
+  .BillingHistory-statIcon {
+    width: 43px;
+    height: 43px;
+    flex-basis: 43px;
+  }
+
+  .BillingHistory-statCard strong {
+    font-size: 17px;
+  }
+
+  .BillingHistory-pagination {
+    flex-wrap: wrap;
+    padding: 13px;
+  }
+
+  .BillingHistory-pageNumbers {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .BillingHistory-perPage {
+    display: none;
+  }
+
+  .BillingHistory-detailsPanel {
+    position: fixed;
+    z-index: 1200;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 480px) {
+  .desktopOnly {
+    display: none !important;
+  }
+
+  .BillingHistory-logo {
+    gap: 5px;
+  }
+
+  .BillingHistory-logoIcon {
+    width: 30px;
+  }
+
+  .BillingHistory-logo h1 {
+    font-size: 16px;
+  }
+
+  .BillingHistory-logo p {
+    font-size: 9px;
+  }
+
+  .BillingHistory-profile {
+    width: 34px;
+    height: 34px;
+  }
+
+  .BillingHistory-offline {
+    height: 34px;
+  }
+
+  .BillingHistory-pageHeader {
+    align-items: flex-start;
+  }
+
+  .BillingHistory-titleArea {
+    align-items: flex-start;
+  }
+
+  .BillingHistory-titleIcon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .BillingHistory-titleArea h2 {
+    font-size: 18px;
+  }
+
+  .BillingHistory-titleArea p {
+    font-size: 10px;
+  }
+
+  .BillingHistory-newBillButton {
+    height: 38px;
+  }
+
+  .BillingHistory-newBillButton svg {
+    width: 17px;
+  }
+
+  .BillingHistory-statGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .BillingHistory-statCard {
+    min-height: 82px;
+  }
+
+  .BillingHistory-statCard strong {
+    font-size: 19px;
+  }
+
+  .BillingHistory-filterCard,
+  .BillingHistory-tableCard {
+    margin-left: 4px;
+    margin-right: 4px;
+  }
+
+  .BillingHistory-detailsActions {
+    grid-template-columns: 1fr;
+  }
+
+  .BillingHistory-detailsActions button {
+    height: 43px;
+  }
+
+  .BillingHistory-itemHeader,
+  .BillingHistory-itemRow {
+    grid-template-columns: 25px minmax(115px, 1fr) 48px 30px 50px;
+  }
+}
+
+/* =========================================================
+   PRINT
+   ========================================================= */
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .BillingHistory-detailsPanel,
+  .BillingHistory-detailsPanel * {
+    visibility: visible;
+  }
+
+  .BillingHistory-detailsPanel {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .BillingHistory-detailsActions {
+    display: none;
+  }
+
+  .BillingHistory-detailsHeader {
+    display: none;
+  }
+}

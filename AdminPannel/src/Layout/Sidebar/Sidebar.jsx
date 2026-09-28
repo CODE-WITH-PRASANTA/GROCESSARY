@@ -72,6 +72,17 @@ const menuSections = [
     ],
   },
 
+   {
+    title: null,
+    items: [
+      {
+        label: "Billing History",
+        path: "/billing-history",
+        icon: NotebookPen,
+      },
+    ],
+  },
+
   {
     title: null,
     items: [
