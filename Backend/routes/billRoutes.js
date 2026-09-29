@@ -21,5 +21,6 @@ router.get("/", billController.listBills);
 
 // Single bill
 router.get("/:id", billController.getBillById);
+router.delete("/:id", billController.deleteBill);
 
 module.exports = router;

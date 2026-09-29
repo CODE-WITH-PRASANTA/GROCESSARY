@@ -414,3 +414,21 @@ exports.getUpiConfig = (req, res) => {
     },
   });
 };
+
+
+// controllers/billController.js
+exports.deleteBill = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: "Invalid id." });
+    }
+    const bill = await Bill.findByIdAndDelete(req.params.id);
+    if (!bill) {
+      return res.status(404).json({ success: false, message: "Bill not found." });
+    }
+    return res.json({ success: true, message: "Bill deleted." });
+  } catch (err) {
+    console.error("deleteBill error:", err);
+    return res.status(500).json({ success: false, message: "Failed to delete." });
+  }
+};

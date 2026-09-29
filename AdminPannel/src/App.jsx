@@ -46,6 +46,7 @@ import TodayDiscounts from "./Components/TodayDiscounts/TodayDiscounts";
 import AdminProfile from "./Components/AdminProfile/AdminProfile";
 import AdminSettings from "./Components/AdminSettings/AdminSettings";
 import Billing from "./Components/Billing/Billing";
+import BillingHistory from "./Components/BillingHistory/BillingHistory";
 
 const App = () => {
   return (
@@ -146,6 +147,7 @@ const App = () => {
             <Route path="/admin/profile" element={<AdminProfile />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/billing" element={<Billing />} />
+            <Route path="/billing-history" element={<BillingHistory />} />
           </Route>
         </Route>
 
