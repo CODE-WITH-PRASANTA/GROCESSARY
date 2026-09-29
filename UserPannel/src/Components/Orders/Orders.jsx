@@ -1,8 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import API, { BASE_URL } from "../../api/axios"; // 👈 import BASE_URL
+import API, { BASE_URL } from "../../api/axios";
 import "./Orders.css";
 
 const ITEMS_PER_PAGE = 6;
+
+// Statuses where the user can still cancel their order
+const USER_CANCELLABLE_STATUSES = ["pending", "confirmed"];
 
 // ======================================================
 // HELPERS
@@ -33,7 +36,6 @@ const formatTime = (date) => {
   }
 };
 
-// 👇 use BASE_URL from axios config
 const getProductImage = (image) => {
   if (!image) return "";
 
@@ -49,8 +51,15 @@ const getProductImage = (image) => {
   return `${BASE_URL}${str.startsWith("/") ? str : `/${str}`}`;
 };
 
+const mapPaymentStatus = (status) => {
+  const s = String(status || "").toLowerCase();
+  if (s === "paid") return "Paid";
+  if (s === "failed") return "Failed";
+  if (s === "refunded") return "Refunded";
+  return "Pending";
+};
+
 const mapBackendOrder = (order) => {
-  // 1:1 mapping — show the real status, no collapsing
   const statusMap = {
     pending: "Pending",
     confirmed: "Confirmed",
@@ -81,14 +90,7 @@ const mapBackendOrder = (order) => {
     pointsUsed: order.pointsUsed || 0,
     pointsValue: order.pointsValue || 0,
     paymentMethod: (order.paymentMethod || "razorpay").toUpperCase(),
-    paymentStatus:
-      order.paymentStatus === "paid"
-        ? "Paid"
-        : order.paymentStatus === "failed"
-          ? "Failed"
-          : order.paymentStatus === "refunded"
-            ? "Refunded"
-            : "Pending",
+    paymentStatus: mapPaymentStatus(order.paymentStatus),
     status: uiStatus,
     orderStatus: order.orderStatus,
     statusDate: formatDate(order.updatedAt || order.createdAt),
@@ -104,7 +106,7 @@ const mapBackendOrder = (order) => {
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false); // 👈 new
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -148,7 +150,6 @@ const Orders = () => {
     } catch (err) {
       console.error("Fetch orders error:", err);
 
-      // 👇 handle 401 like OrderHistory
       if (err.response?.status === 401) {
         localStorage.removeItem("token");
         setError("Session expired. Please login again.");
@@ -196,6 +197,13 @@ const Orders = () => {
   const cancelledCount = countBy("Cancelled");
   const refundedCount = countBy("Refunded");
 
+  // Silence unused-var warnings (kept for future status cards)
+  void pendingCount;
+  void confirmedCount;
+  void shippedCount;
+  void ofdCount;
+  void refundedCount;
+
   // ======================================================
   // FILTER
   // ======================================================
@@ -226,7 +234,8 @@ const Orders = () => {
     startIndex + ITEMS_PER_PAGE,
   );
 
-  const handlePrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+  const handlePrevPage = () =>
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
   const handleNextPage = () =>
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   const handlePageClick = (pageNum) => setCurrentPage(pageNum);
@@ -237,10 +246,11 @@ const Orders = () => {
   };
 
   // ======================================================
-  // CANCEL ORDER
+  // CANCEL ORDER (user-initiated)
+  // Only allowed when status is pending or confirmed.
   // ======================================================
 
-  const handleDelete = async (order) => {
+  const handleCancelOrder = async (order) => {
     if (!order?._id) return;
 
     const confirmed = window.confirm(
@@ -251,7 +261,14 @@ const Orders = () => {
     try {
       setUpdatingId(order._id);
 
-      await API.post(`/orders/${order._id}/abandon`);
+      const { data } = await API.post(`/orders/${order._id}/cancel`);
+      const updatedOrder = data?.order;
+
+      // Reflect the server's real payment status (paid → refunded, pending → failed)
+      const nextPaymentStatus = mapPaymentStatus(
+        updatedOrder?.paymentStatus ||
+          (order.paymentStatus === "Paid" ? "refunded" : "failed"),
+      );
 
       setOrders((prev) =>
         prev.map((o) =>
@@ -260,7 +277,7 @@ const Orders = () => {
                 ...o,
                 status: "Cancelled",
                 orderStatus: "cancelled",
-                paymentStatus: "Failed",
+                paymentStatus: nextPaymentStatus,
                 statusDate: formatDate(new Date()),
               }
             : o,
@@ -268,55 +285,20 @@ const Orders = () => {
       );
 
       setOpenMenuId(null);
+      alert(data?.message || "Order cancelled successfully.");
     } catch (err) {
       console.error("Cancel order error:", err);
-      alert(err.response?.data?.message || "Failed to cancel order.");
-    } finally {
-      setUpdatingId(null);
-    }
-  };
 
-  // ======================================================
-  // STATUS CHANGE (kept for admin use)
-  // ======================================================
+      const message =
+        err.response?.data?.message || "Failed to cancel order.";
 
-  const handleStatusChange = async (order, newStatus) => {
-    if (!order?._id) return;
+      alert(message);
 
-    const backendStatusMap = {
-      Delivered: "delivered",
-      Processing: "processing",
-      Cancelled: "cancelled",
-    };
-
-    const backendStatus = backendStatusMap[newStatus];
-    if (!backendStatus) return;
-
-    try {
-      setUpdatingId(order._id);
-
-      await API.put(`/orders/${order._id}/status`, {
-        status: backendStatus,
-        note: `Status changed to ${newStatus}`,
-      });
-
-      setOrders((prev) =>
-        prev.map((o) =>
-          o._id === order._id
-            ? {
-                ...o,
-                status: newStatus,
-                orderStatus: backendStatus,
-                statusDate: formatDate(new Date()),
-              }
-            : o,
-        ),
-      );
-
-      setOpenMenuId(null);
-    } catch (err) {
-      console.error("Update status error:", err);
-      alert(err.response?.data?.message || "Failed to update status.");
+      // If the backend rejected because the status moved on,
+      // refresh so the UI matches reality.
+      if (err.response?.status === 400) {
+        await fetchOrders(false);
+      }
     } finally {
       setUpdatingId(null);
     }
@@ -542,7 +524,9 @@ const Orders = () => {
                   ].map((status) => (
                     <button
                       key={status}
-                      className={`orders-filter-item ${statusFilter === status ? "active" : ""}`}
+                      className={`orders-filter-item ${
+                        statusFilter === status ? "active" : ""
+                      }`}
                       onClick={() => {
                         setStatusFilter(status);
                         setShowFilterDropdown(false);
@@ -556,7 +540,6 @@ const Orders = () => {
               )}
             </div>
 
-            {/* 👇 Refresh disabled while loading */}
             <button
               className="orders-add-btn"
               onClick={() => fetchOrders(true)}
@@ -659,27 +642,28 @@ const Orders = () => {
 
                     <td>
                       <div className="orders-actions-cell">
-                        {order.orderStatus !== "cancelled" &&
-                          order.orderStatus !== "delivered" && (
-                            <button
-                              className="orders-action-btn delete-btn"
-                              title="Cancel Order"
-                              disabled={updatingId === order._id}
-                              onClick={() => handleDelete(order)}
+                        {USER_CANCELLABLE_STATUSES.includes(
+                          String(order.orderStatus || "").toLowerCase(),
+                        ) && (
+                          <button
+                            className="orders-action-btn delete-btn"
+                            title="Cancel Order"
+                            disabled={updatingId === order._id}
+                            onClick={() => handleCancelOrder(order)}
+                          >
+                            <svg
+                              width="15"
+                              height="15"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
                             >
-                              <svg
-                                width="15"
-                                height="15"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                              >
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                              </svg>
-                            </button>
-                          )}
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                          </button>
+                        )}
 
                         <button
                           className="orders-view-btn"

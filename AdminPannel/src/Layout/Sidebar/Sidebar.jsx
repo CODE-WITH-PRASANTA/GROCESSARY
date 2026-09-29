@@ -65,6 +65,17 @@ const menuSections = [
     title: null,
     items: [
       {
+        label: "Billing",
+        path: "/billing",
+        icon: NotebookPen,
+      },
+    ],
+  },
+
+  {
+    title: null,
+    items: [
+      {
         label: "Import ",
         path: "/import",
         icon: NotebookPen,
