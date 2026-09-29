@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import API, { BASE_URL } from '../../api/axios';
 import './Categories.css';
 
 // High quality image URLs
@@ -19,41 +21,10 @@ const IMAGES = {
   milk: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=150&q=80',
 };
 
-// Spending datasets mapped by timeframe
-const SPENDING_DATASETS = {
-  'This Month': {
-    total: '₹2,850.00',
-    change: '18% more than last month',
-    points: [
-      { date: '1 May', amount: 500 },
-      { date: '7 May', amount: 1200 },
-      { date: '14 May', amount: 1800 },
-      { date: '21 May', amount: 1600 },
-      { date: '28 May', amount: 2200 },
-      { date: '31 May', amount: 2850 },
-    ],
-  },
-  'Last Month': {
-    total: '₹2,410.00',
-    change: '5% less than March',
-    points: [
-      { date: '1 Apr', amount: 400 },
-      { date: '7 Apr', amount: 900 },
-      { date: '14 Apr', amount: 1500 },
-      { date: '21 Apr', amount: 2000 },
-      { date: '28 Apr', amount: 2100 },
-      { date: '30 Apr', amount: 2410 },
-    ],
-  },
-  'Last 3 Months': {
-    total: '₹7,820.00',
-    change: '12% increase overall',
-    points: [
-      { date: 'March', amount: 2560 },
-      { date: 'April', amount: 2410 },
-      { date: 'May', amount: 2850 },
-    ],
-  },
+const TIMEFRAME_RANGES = {
+  'This Month': 'this_month',
+  'Last Month': 'last_month',
+  'Last 3 Months': 'last_3_months',
 };
 
 const Categories = () => {
@@ -61,16 +32,69 @@ const Categories = () => {
   const [hoveredPointIndex, setHoveredPointIndex] = useState(null);
   const [cart, setCart] = useState({});
   const [activeModal, setActiveModal] = useState(null);
+  const [categoriesData, setCategoriesData] = useState([]);
+  const [recommendedItems, setRecommendedItems] = useState([]);
+  const [offers, setOffers] = useState([]);
+  const [spending, setSpending] = useState({ total: 0, points: [] });
+  const [loading, setLoading] = useState(true);
+  const [addingProductId, setAddingProductId] = useState(null);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const currentDataset = SPENDING_DATASETS[selectedTimeframe];
+  useEffect(() => {
+    let active = true;
+
+    Promise.allSettled([
+      API.get('/dashboard/categories'),
+      API.get('/dashboard/recommended'),
+      API.get('/dashboard/offers'),
+    ]).then((results) => {
+      if (!active) return;
+      const [categoryResult, recommendedResult, offersResult] = results;
+      if (categoryResult.status === 'fulfilled') {
+        setCategoriesData(categoryResult.value.data?.data || []);
+      }
+      if (recommendedResult.status === 'fulfilled') {
+        setRecommendedItems(recommendedResult.value.data?.data || []);
+      }
+      if (offersResult.status === 'fulfilled') {
+        setOffers(offersResult.value.data?.data || []);
+      }
+      if (results.some((result) => result.status === 'rejected')) {
+        const failed = results.find((result) => result.status === 'rejected');
+        setError(failed.reason.response?.data?.message || 'Some dashboard details could not be loaded.');
+      }
+      setLoading(false);
+    });
+
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    API.get('/dashboard/spending', { params: { range: TIMEFRAME_RANGES[selectedTimeframe] } })
+      .then(({ data }) => {
+        if (active && data.success) setSpending(data.data);
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.response?.data?.message || 'Unable to load spending data.');
+      });
+
+    return () => { active = false; };
+  }, [selectedTimeframe]);
+
+  const currentDataset = {
+    total: spending.total,
+    points: spending.points || [],
+  };
 
   // Helper function to map data points to SVG coordinate space
   const svgWidth = 300;
   const svgHeight = 130;
-  const maxVal = 3000;
+  const maxVal = Math.max(1000, Math.ceil(Math.max(...currentDataset.points.map((pt) => pt.amount), 0) / 1000) * 1000);
 
   const pointsCoordinates = currentDataset.points.map((pt, i, arr) => {
-    const x = 10 + (i / (arr.length - 1)) * (svgWidth - 20);
+    const x = arr.length === 1 ? svgWidth / 2 : 10 + (i / (arr.length - 1)) * (svgWidth - 20);
     const y = svgHeight - (pt.amount / maxVal) * (svgHeight - 20) - 10;
     return { x, y, ...pt };
   });
@@ -89,40 +113,51 @@ const Categories = () => {
   };
 
   const linePathD = generateSmoothPath(pointsCoordinates);
-  const areaPathD = `${linePathD} L ${pointsCoordinates[pointsCoordinates.length - 1].x},${svgHeight} L ${pointsCoordinates[0].x},${svgHeight} Z`;
+  const areaPathD = pointsCoordinates.length
+    ? `${linePathD} L ${pointsCoordinates[pointsCoordinates.length - 1].x},${svgHeight} L ${pointsCoordinates[0].x},${svgHeight} Z`
+    : '';
 
-  // Categories & Recommended static datasets
-  const categoriesData = [
-    { id: 1, name: 'Fruits & Vegetables', percentage: 45, image: IMAGES.fruits, totalSpent: '₹1,282.50' },
-    { id: 2, name: 'Dairy & Bakery', percentage: 30, image: IMAGES.dairy, totalSpent: '₹855.00' },
-    { id: 3, name: 'Staples', percentage: 15, image: IMAGES.staples, totalSpent: '₹427.50' },
-    { id: 4, name: 'Beverages', percentage: 10, image: IMAGES.beverages, totalSpent: '₹285.00' },
-    { id: 5, name: 'Snacks & Branded Foods', percentage: 8, image: IMAGES.snacks, totalSpent: '₹228.00' },
-    { id: 6, name: 'Personal Care', percentage: 5, image: IMAGES.personalCare, totalSpent: '₹142.50' },
-  ];
+  const formatCurrency = (value) => `₹${(Number(value) || 0).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
-  const recommendedItems = [
-    { id: 'rec-1', name: 'Apple Royal Gala', unit: '1kg', price: 150.0, image: IMAGES.apple },
-    { id: 'rec-2', name: 'Banana', unit: '1 Dozen', price: 60.0, image: IMAGES.banana },
-    { id: 'rec-3', name: 'Potato', unit: '1kg', price: 25.0, image: IMAGES.potato },
-    { id: 'rec-4', name: 'Tomato', unit: '1kg', price: 30.0, image: IMAGES.tomato },
-    { id: 'rec-5', name: 'Onion', unit: '1kg', price: 28.0, image: IMAGES.onion },
-    { id: 'rec-6', name: 'Fresh Orange', unit: '1kg', price: 120.0, image: IMAGES.orange },
-    { id: 'rec-7', name: 'Whole Wheat Bread', unit: '400g', price: 45.0, image: IMAGES.bread },
-    { id: 'rec-8', name: 'Toned Milk', unit: '1 Litre', price: 66.0, image: IMAGES.milk },
-  ];
+  const getImageUrl = (image) => {
+    if (!image) return '';
+    if (typeof image === 'object') image = image.url || image.path || image.secure_url || image.src || '';
+    if (!image) return '';
+    return /^https?:\/\//i.test(image) ? image : `${BASE_URL}${image.startsWith('/') ? image : `/${image}`}`;
+  };
 
-  const handleAddToCart = (id) => {
-    setCart((prev) => ({
-      ...prev,
-      [id]: (prev[id] || 0) + 1,
-    }));
+  const getCategoryImage = (category) => {
+    const name = category.name.toLowerCase();
+    const fallback = name.includes('fruit') || name.includes('vegetable') ? IMAGES.fruits
+      : name.includes('dairy') || name.includes('bakery') ? IMAGES.dairy
+        : name.includes('beverage') ? IMAGES.beverages
+          : name.includes('snack') ? IMAGES.snacks
+            : name.includes('personal') ? IMAGES.personalCare
+              : IMAGES.staples;
+    return getImageUrl(category.image) || fallback;
+  };
+
+  const handleAddToCart = async (productId) => {
+    try {
+      setAddingProductId(productId);
+      setError('');
+      await API.post('/cart/add', { productId, quantity: 1 });
+      setCart((prev) => ({ ...prev, [productId]: (prev[productId] || 0) + 1 }));
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Unable to add this product to your cart.');
+    } finally {
+      setAddingProductId(null);
+    }
   };
 
   const closeModal = () => setActiveModal(null);
 
   return (
     <div className="dashboard-container">
+      {error && <p role="alert">{error}</p>}
       {/* Top Grid Section */}
       <div className="top-grid">
         
@@ -135,10 +170,10 @@ const Categories = () => {
             </button>
           </div>
           <div className="categories-list">
-            {categoriesData.slice(0, 4).map((cat) => (
-              <div key={cat.id} className="category-item">
+            {categoriesData.length ? categoriesData.slice(0, 4).map((cat) => (
+              <div key={cat.name} className="category-item">
                 <div className="category-img-wrapper">
-                  <img src={cat.image} alt={cat.name} />
+                  <img src={getCategoryImage(cat)} alt={cat.name} />
                 </div>
                 <div className="category-details">
                   <span className="category-name">{cat.name}</span>
@@ -151,7 +186,7 @@ const Categories = () => {
                 </div>
                 <span className="category-percentage">{cat.percentage}%</span>
               </div>
-            ))}
+            )) : <p>{loading ? 'Loading categories...' : 'No purchase categories yet.'}</p>}
           </div>
         </div>
 
@@ -174,19 +209,18 @@ const Categories = () => {
           </div>
 
           <div className="spending-summary">
-            <h2 className="amount">{currentDataset.total}</h2>
+            <h2 className="amount">{formatCurrency(currentDataset.total)}</h2>
             <div className="spending-badge">
-              <span className="up-arrow">↑</span>
-              <span>{currentDataset.change}</span>
+              <span>{selectedTimeframe}</span>
             </div>
           </div>
 
           {/* Fully Interactive Live Graph Chart */}
           <div className="chart-wrapper">
             <div className="y-axis">
-              <span>₹3k</span>
-              <span>₹2k</span>
-              <span>₹1k</span>
+              <span>₹{maxVal.toLocaleString('en-IN')}</span>
+              <span>₹{Math.round(maxVal * 2 / 3).toLocaleString('en-IN')}</span>
+              <span>₹{Math.round(maxVal / 3).toLocaleString('en-IN')}</span>
               <span>₹0</span>
             </div>
             
@@ -205,18 +239,19 @@ const Categories = () => {
                 <line x1="0" y1="90" x2={svgWidth} y2="90" className="grid-line" />
                 <line x1="0" y1="120" x2={svgWidth} y2="120" className="grid-line" />
 
-                {/* Gradient Fill under Line */}
-                <path d={areaPathD} fill="url(#chartGradient)" />
+                {pointsCoordinates.length > 0 && <path d={areaPathD} fill="url(#chartGradient)" />}
 
                 {/* Main Graph Curved Line */}
-                <path
-                  d={linePathD}
-                  fill="none"
-                  stroke="#22c55e"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  className="smooth-path"
-                />
+                {pointsCoordinates.length > 0 && (
+                  <path
+                    d={linePathD}
+                    fill="none"
+                    stroke="#22c55e"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    className="smooth-path"
+                  />
+                )}
 
                 {/* Interactive Points with Hover Tooltips */}
                 {pointsCoordinates.map((pt, idx) => {
@@ -264,7 +299,7 @@ const Categories = () => {
 
               {/* Dynamic X-Axis Labels */}
               <div className="x-axis">
-                {currentDataset.points.map((pt, idx) => (
+                {currentDataset.points.length ? currentDataset.points.map((pt, idx) => (
                   <span
                     key={idx}
                     className={hoveredPointIndex === idx ? 'active-label' : ''}
@@ -273,7 +308,7 @@ const Categories = () => {
                   >
                     {pt.date}
                   </span>
-                ))}
+                )) : <span>No spending in this period.</span>}
               </div>
             </div>
           </div>
@@ -289,36 +324,16 @@ const Categories = () => {
           </div>
 
           <div className="offers-container">
-            <div className="offer-banner green-banner">
-              <div className="offer-icon">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2">
-                  <rect x="1" y="3" width="15" height="13"></rect>
-                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                  <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                  <circle cx="18.5" cy="18.5" r="2.5"></circle>
-                </svg>
+            {offers.length ? offers.slice(0, 2).map((offer) => (
+              <div className="offer-banner green-banner" key={offer.id}>
+                <div className="offer-icon yellow-icon"><span>%</span></div>
+                <div className="offer-info">
+                  <h4>{offer.code || 'Offer'}</h4>
+                  <p>{offer.description || `${offer.discountValue || 0}${offer.discountType === 'percentage' ? '% off' : ' discount'}`}</p>
+                  <button className="offer-action-btn" onClick={() => navigate('/shop')}>Shop Now</button>
+                </div>
               </div>
-              <div className="offer-info">
-                <h4>Free Delivery</h4>
-                <p>On orders above ₹499</p>
-                <button className="offer-action-btn" onClick={() => setActiveModal('shopNow')}>
-                  Shop Now
-                </button>
-              </div>
-            </div>
-
-            <div className="offer-banner yellow-banner">
-              <div className="offer-icon yellow-icon">
-                <span>%</span>
-              </div>
-              <div className="offer-info">
-                <h4>Weekend Special</h4>
-                <p>Up to 30% OFF on selected items</p>
-                <button className="offer-action-btn" onClick={() => setActiveModal('exploreDeals')}>
-                  Explore Deals
-                </button>
-              </div>
-            </div>
+            )) : <p>{loading ? 'Loading offers...' : 'No active offers right now.'}</p>}
           </div>
         </div>
 
@@ -334,27 +349,28 @@ const Categories = () => {
         </div>
 
         <div className="recommended-grid">
-          {recommendedItems.slice(0, 5).map((item) => (
+          {recommendedItems.length ? recommendedItems.slice(0, 5).map((item) => (
             <div key={item.id} className="product-card">
               <div className="product-image-container">
-                <img src={item.image} alt={item.name} />
+                {getImageUrl(item.image) && <img src={getImageUrl(item.image)} alt={item.name} />}
               </div>
               <div className="product-details">
                 <h4 className="product-title">{item.name}</h4>
                 <span className="product-unit">{item.unit}</span>
                 <div className="product-footer">
-                  <span className="product-price">₹{item.price.toFixed(2)}</span>
+                  <span className="product-price">{formatCurrency(item.price)}</span>
                   <button
                     className={`add-btn ${cart[item.id] ? 'added' : ''}`}
                     onClick={() => handleAddToCart(item.id)}
+                    disabled={addingProductId === item.id}
                     title="Add to Cart"
                   >
-                    {cart[item.id] ? `+${cart[item.id]}` : '+'}
+                    {addingProductId === item.id ? '…' : cart[item.id] ? `+${cart[item.id]}` : '+'}
                   </button>
                 </div>
               </div>
             </div>
-          ))}
+          )) : <p>{loading ? 'Loading recommendations...' : 'No recommendations available yet.'}</p>}
         </div>
       </div>
 
@@ -369,11 +385,11 @@ const Categories = () => {
                 <h2>All Purchased Categories</h2>
                 <div className="modal-list">
                   {categoriesData.map((cat) => (
-                    <div key={cat.id} className="modal-item">
-                      <img src={cat.image} alt={cat.name} className="modal-item-img" />
+                    <div key={cat.name} className="modal-item">
+                      <img src={getCategoryImage(cat)} alt={cat.name} className="modal-item-img" />
                       <div className="modal-item-info">
                         <h4>{cat.name}</h4>
-                        <p>Total Spent: {cat.totalSpent}</p>
+                        <p>Total Spent: {formatCurrency(cat.totalSpent)}</p>
                       </div>
                       <span className="modal-badge">{cat.percentage}% share</span>
                     </div>
@@ -386,43 +402,13 @@ const Categories = () => {
               <div className="modal-body">
                 <h2>Active Offers & Coupons</h2>
                 <div className="offers-modal-grid">
-                  <div className="coupon-card">
-                    <h3>FREEDEL499</h3>
-                    <p>Free Delivery on orders above ₹499</p>
-                    <button className="apply-coupon-btn" onClick={closeModal}>Apply Code</button>
-                  </div>
-                  <div className="coupon-card">
-                    <h3>WEEKEND30</h3>
-                    <p>30% OFF on Fruits and Vegetables</p>
-                    <button className="apply-coupon-btn" onClick={closeModal}>Apply Code</button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeModal === 'shopNow' && (
-              <div className="modal-body">
-                <h2>Free Delivery Activated!</h2>
-                <p>Add ₹499 or more worth of groceries to your cart to enjoy zero delivery fees.</p>
-                <button className="modal-primary-btn" onClick={closeModal}>Continue Shopping</button>
-              </div>
-            )}
-
-            {activeModal === 'exploreDeals' && (
-              <div className="modal-body">
-                <h2>Weekend Special Deals (Up to 30% OFF)</h2>
-                <div className="deals-grid">
-                  {recommendedItems.map((item) => (
-                    <div key={item.id} className="deal-card">
-                      <span className="discount-tag">30% OFF</span>
-                      <img src={item.image} alt={item.name} />
-                      <h4>{item.name}</h4>
-                      <p className="deal-price">₹{item.price.toFixed(2)}</p>
-                      <button className="offer-action-btn" onClick={() => handleAddToCart(item.id)}>
-                        Add to Cart
-                      </button>
+                  {offers.length ? offers.map((offer) => (
+                    <div className="coupon-card" key={offer.id}>
+                      <h3>{offer.code}</h3>
+                      <p>{offer.description || `${offer.discountValue || 0}${offer.discountType === 'percentage' ? '% off' : ' discount'}`}</p>
+                      <button className="apply-coupon-btn" onClick={() => navigate('/shop')}>Shop Now</button>
                     </div>
-                  ))}
+                  )) : <p>No active offers right now.</p>}
                 </div>
               </div>
             )}
@@ -434,18 +420,19 @@ const Categories = () => {
                   {recommendedItems.map((item) => (
                     <div key={item.id} className="product-card">
                       <div className="product-image-container">
-                        <img src={item.image} alt={item.name} />
+                        {getImageUrl(item.image) && <img src={getImageUrl(item.image)} alt={item.name} />}
                       </div>
                       <div className="product-details">
                         <h4 className="product-title">{item.name}</h4>
                         <span className="product-unit">{item.unit}</span>
                         <div className="product-footer">
-                          <span className="product-price">₹{item.price.toFixed(2)}</span>
+                          <span className="product-price">{formatCurrency(item.price)}</span>
                           <button
                             className={`add-btn ${cart[item.id] ? 'added' : ''}`}
                             onClick={() => handleAddToCart(item.id)}
+                            disabled={addingProductId === item.id}
                           >
-                            {cart[item.id] ? `+${cart[item.id]}` : '+'}
+                            {addingProductId === item.id ? '…' : cart[item.id] ? `+${cart[item.id]}` : '+'}
                           </button>
                         </div>
                       </div>

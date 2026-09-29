@@ -3,6 +3,8 @@ const express = require("express");
 const {
   createReview,
   getProductReviews,
+  getProductReviewSummaries,
+  getLatestPublishedReviews,
   getAllReviews,
   publishReview,
   rejectReview,
@@ -24,8 +26,18 @@ const router = express.Router();
 // ======================================================
 
 router.get(
+  "/summaries",
+  getProductReviewSummaries
+);
+
+router.get(
   "/product/:productId",
   getProductReviews
+);
+
+router.get(
+  "/latest",
+  getLatestPublishedReviews
 );
 
 
