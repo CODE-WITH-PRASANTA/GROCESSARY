@@ -1,0 +1,1325 @@
+/* =========================================================
+   GROCERY SATI - BILLING SOFTWARE
+   All classes are Billing based
+========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+.Billing-page {
+  width: 100%;
+  min-height: 100vh;
+  background: #f4f7f5;
+  color: #18212b;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  padding: 10px;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.Billing-header {
+  min-height: 70px;
+  background: #ffffff;
+  border: 1px solid #e5ebe7;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 22px;
+  box-shadow: 0 3px 15px rgba(20, 50, 30, 0.06);
+}
+
+.Billing-brand {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.Billing-logoIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e9fff0;
+  color: #07963f;
+}
+
+.Billing-brandText h1 {
+  margin: 0;
+  font-size: 23px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #101828;
+}
+
+.Billing-brandText span {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+.Billing-headerRight {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.Billing-dateTime {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #52606d;
+  font-size: 12px;
+}
+
+.Billing-offline {
+  height: 36px;
+  padding: 0 13px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #dff9e7;
+  color: #078b3b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.Billing-headerIcon {
+  width: 37px;
+  height: 37px;
+  border: 1px solid #e1e7e3;
+  background: #fff;
+  color: #475569;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.Billing-headerIcon:hover {
+  color: #078c3e;
+  border-color: #8de4ad;
+  background: #effff4;
+}
+
+.Billing-user {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.Billing-userAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2d9cff, #5ca9ff);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.Billing-userInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.Billing-userInfo strong {
+  font-size: 12px;
+  color: #1f2937;
+}
+
+.Billing-userInfo span {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.Billing-main {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: minmax(450px, 1.05fr) minmax(500px, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+/* =========================================================
+   PRODUCTS SECTION
+========================================================= */
+
+.Billing-productsSection {
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid #e4ebe7;
+  border-radius: 15px;
+  padding: 15px;
+  box-shadow: 0 3px 15px rgba(20, 50, 30, 0.04);
+}
+
+.Billing-search {
+  height: 48px;
+  border: 1px solid #dce5e0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 9px;
+  color: #718096;
+  background: #fff;
+}
+
+.Billing-search input {
+  border: none;
+  outline: none;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  font-size: 13px;
+  color: #1e293b;
+  background: transparent;
+}
+
+.Billing-search input::placeholder {
+  color: #94a3b8;
+}
+
+.Billing-scanButton {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: transparent;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+}
+
+.Billing-scanButton:hover {
+  background: #ecfdf3;
+  color: #078c3e;
+}
+
+/* =========================================================
+   CATEGORIES
+========================================================= */
+
+.Billing-categories {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 13px 0 15px;
+  scrollbar-width: none;
+}
+
+.Billing-categories::-webkit-scrollbar {
+  display: none;
+}
+
+.Billing-category {
+  flex: 0 0 auto;
+  border: 1px solid #e2e8e5;
+  background: #f8faf9;
+  color: #334155;
+  border-radius: 9px;
+  padding: 9px 15px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.Billing-category:hover {
+  border-color: #8fe0ad;
+  color: #078c3e;
+}
+
+.Billing-categoryActive {
+  background: #08a847;
+  color: #fff;
+  border-color: #08a847;
+  box-shadow: 0 5px 12px rgba(8, 168, 71, 0.2);
+}
+
+/* =========================================================
+   PRODUCT GRID
+========================================================= */
+
+.Billing-productsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.Billing-productCard {
+  border: 1px solid #e4ebe7;
+  border-radius: 10px;
+  padding: 9px;
+  background: #ffffff;
+  min-width: 0;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.Billing-productCard:hover {
+  transform: translateY(-2px);
+  border-color: #9ce3b4;
+  box-shadow: 0 7px 17px rgba(20, 60, 30, 0.08);
+}
+
+.Billing-productImage {
+  width: 100%;
+  height: 112px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.Billing-productImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.Billing-productName {
+  font-size: 12px;
+  font-weight: 700;
+  color: #18212b;
+  margin-top: 8px;
+  min-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.Billing-productQuantity {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.Billing-productPrice {
+  color: #101828;
+  font-size: 15px;
+  font-weight: 800;
+  margin: 4px 0 7px;
+}
+
+.Billing-addButton {
+  width: 100%;
+  height: 31px;
+  border: none;
+  border-radius: 6px;
+  background: #05a847;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.Billing-addButton:hover {
+  background: #078f3e;
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   CURRENT BILL
+========================================================= */
+
+.Billing-currentBill {
+  background: #ffffff;
+  border: 1px solid #e4ebe7;
+  border-radius: 15px;
+  padding: 15px;
+  box-shadow: 0 3px 15px rgba(20, 50, 30, 0.04);
+  min-width: 0;
+}
+
+.Billing-currentBillHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.Billing-currentBillTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #078c3e;
+}
+
+.Billing-currentBillTitle h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #17202a;
+}
+
+.Billing-clearButton {
+  border: none;
+  background: #fff0f0;
+  color: #ef2929;
+  height: 35px;
+  border-radius: 7px;
+  padding: 0 11px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.Billing-clearButton:hover {
+  background: #ffe1e1;
+}
+
+/* =========================================================
+   BILL TABLE
+========================================================= */
+
+.Billing-itemsTableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e5ebe7;
+  border-radius: 10px;
+}
+
+.Billing-itemsTable {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+}
+
+.Billing-itemsTable th {
+  background: #f7f9f8;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid #e5ebe7;
+}
+
+.Billing-itemsTable td {
+  padding: 8px;
+  border-bottom: 1px solid #edf1ef;
+  font-size: 11px;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.Billing-itemsTable tr:last-child td {
+  border-bottom: none;
+}
+
+.Billing-tableProduct {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.Billing-tableProduct img {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  object-fit: contain;
+  background: #f8faf9;
+}
+
+.Billing-tableProduct div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.Billing-tableProduct strong {
+  color: #1e293b;
+  font-size: 11px;
+}
+
+.Billing-tableProduct small {
+  color: #94a3b8;
+  font-size: 9px;
+}
+
+.Billing-quantityControl {
+  height: 28px;
+  border: 1px solid #dbe4df;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.Billing-quantityControl button {
+  width: 27px;
+  height: 27px;
+  border: none;
+  background: #f8faf9;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.Billing-quantityControl button:hover {
+  background: #e9fff0;
+  color: #078c3e;
+}
+
+.Billing-quantityControl span {
+  width: 27px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.Billing-deleteItem {
+  width: 29px;
+  height: 29px;
+  border-radius: 6px;
+  border: 1px solid #ffd0d0;
+  background: #fff7f7;
+  color: #ef2929;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.Billing-deleteItem:hover {
+  background: #ffe4e4;
+}
+
+/* =========================================================
+   EMPTY CART
+========================================================= */
+
+.Billing-emptyCart {
+  height: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+}
+
+.Billing-emptyCart svg {
+  color: #b9c7bf;
+  margin-bottom: 7px;
+}
+
+.Billing-emptyCart h3 {
+  color: #475569;
+  font-size: 14px;
+  margin: 0;
+}
+
+.Billing-emptyCart p {
+  font-size: 11px;
+  margin: 5px 0 0;
+}
+
+/* =========================================================
+   DISCOUNT
+========================================================= */
+
+.Billing-billFooter {
+  margin-top: 12px;
+}
+
+.Billing-discountRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.Billing-discountType {
+  display: flex;
+  border: 1px solid #dce5df;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.Billing-discountType button {
+  width: 40px;
+  height: 35px;
+  border: none;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.Billing-discountType button + button {
+  border-left: 1px solid #dce5df;
+}
+
+.Billing-discountType .Billing-discountActive {
+  background: #08a847;
+  color: #fff;
+}
+
+.Billing-discountRow > input {
+  width: 125px;
+  height: 35px;
+  border: 1px solid #dce5df;
+  border-radius: 7px;
+  padding: 0 10px;
+  outline: none;
+  text-align: right;
+  font-size: 12px;
+}
+
+.Billing-discountRow > input:focus {
+  border-color: #54c77d;
+}
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+.Billing-summary {
+  margin-top: 11px;
+}
+
+.Billing-summaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 3px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.Billing-summaryRow strong {
+  color: #1e293b;
+}
+
+.Billing-total {
+  margin-top: 7px;
+  padding: 11px;
+  border-radius: 8px;
+  background: #e6faeb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #087b38;
+}
+
+.Billing-total span {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.Billing-total strong {
+  font-size: 24px;
+}
+
+/* =========================================================
+   PAYMENT
+========================================================= */
+
+.Billing-payment {
+  margin-top: 13px;
+}
+
+.Billing-payment h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #17202a;
+}
+
+.Billing-paymentMethods {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.Billing-paymentMethods button {
+  height: 40px;
+  border-radius: 7px;
+  border: 1px solid #dce5df;
+  background: #fff;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  transition: 0.2s ease;
+}
+
+.Billing-paymentMethods button:hover {
+  border-color: #66cd8b;
+}
+
+.Billing-paymentMethods .Billing-paymentActive {
+  color: white;
+  border-color: #08a847;
+  background: #08a847;
+}
+
+/* =========================================================
+   AMOUNT
+========================================================= */
+
+.Billing-amountRow {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  align-items: center;
+  gap: 15px;
+}
+
+.Billing-amountRow label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.Billing-amountRow input {
+  width: 100%;
+  height: 38px;
+  border: 1px solid #dce5df;
+  border-radius: 7px;
+  outline: none;
+  padding: 0 11px;
+  text-align: right;
+  font-weight: 700;
+}
+
+.Billing-amountRow input:focus {
+  border-color: #51c87b;
+}
+
+/* =========================================================
+   CHANGE
+========================================================= */
+
+.Billing-change {
+  margin-top: 8px;
+  padding: 9px 11px;
+  background: #edf6ff;
+  border-radius: 7px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #1e293b;
+  font-size: 13px;
+}
+
+.Billing-change strong {
+  color: #2563eb;
+  font-size: 16px;
+}
+
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+
+.Billing-actionButtons {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.Billing-printButton,
+.Billing-completeButton {
+  min-height: 44px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.Billing-printButton {
+  border: 1px solid #2877ff;
+  color: #1769e8;
+  background: #fff;
+}
+
+.Billing-printButton:hover {
+  background: #eff6ff;
+}
+
+.Billing-completeButton {
+  border: none;
+  background: #06a947;
+  color: white;
+  box-shadow: 0 5px 13px rgba(6, 169, 71, 0.18);
+}
+
+.Billing-completeButton:hover {
+  background: #078d3e;
+}
+
+/* =========================================================
+   RECEIPT SECTION
+========================================================= */
+
+.Billing-receiptSection {
+  background: #ffffff;
+  border: 1px solid #e4ebe7;
+  border-radius: 15px;
+  padding: 15px;
+  box-shadow: 0 3px 15px rgba(20, 50, 30, 0.05);
+  position: relative;
+  grid-column: 1 / -1;
+}
+
+.Billing-receiptClose {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid #e4ebe7;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.Billing-receiptClose:hover {
+  color: #ef2929;
+  background: #fff3f3;
+}
+
+/* =========================================================
+   SUCCESS
+========================================================= */
+
+.Billing-successBox {
+  background: #e9fff0;
+  border: 1px solid #c5f1d2;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.Billing-successIcon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 8px;
+  border-radius: 50%;
+  background: #06a947;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.Billing-successBox h2 {
+  margin: 0;
+  color: #087b38;
+  font-size: 18px;
+}
+
+.Billing-successBox p {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #397052;
+}
+
+/* =========================================================
+   RECEIPT
+========================================================= */
+
+.Billing-receipt {
+  max-width: 760px;
+  margin: 14px auto 0;
+  border: 1px solid #e5ebe7;
+  border-radius: 12px;
+  padding: 20px;
+  background: #fff;
+}
+
+.Billing-receiptBrand {
+  text-align: center;
+  font-size: 25px;
+  font-weight: 900;
+  color: #101828;
+}
+
+.Billing-receiptTagline {
+  text-align: center;
+  color: #64748b;
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.Billing-receiptLine {
+  border-top: 1px dashed #cbd5e1;
+  margin: 15px 0;
+}
+
+.Billing-receiptDetails {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px 20px;
+  font-size: 11px;
+  color: #475569;
+}
+
+.Billing-receiptDetails span {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.Billing-receiptDetails strong {
+  color: #1e293b;
+}
+
+.Billing-receiptTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.Billing-receiptTable th {
+  text-align: left;
+  background: #f3f6f5;
+  padding: 9px 7px;
+  font-size: 10px;
+  color: #475569;
+}
+
+.Billing-receiptTable td {
+  padding: 9px 7px;
+  border-bottom: 1px solid #edf1ef;
+  font-size: 10px;
+  color: #334155;
+}
+
+.Billing-receiptSummary {
+  width: 300px;
+  max-width: 100%;
+  margin-left: auto;
+  margin-top: 15px;
+}
+
+.Billing-receiptSummary > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 11px;
+  color: #475569;
+}
+
+.Billing-receiptSummary strong {
+  color: #1e293b;
+}
+
+.Billing-receiptGrandTotal {
+  margin-top: 7px;
+  padding: 11px;
+  border-radius: 8px;
+  background: #e6faeb;
+  color: #087b38 !important;
+}
+
+.Billing-receiptGrandTotal span,
+.Billing-receiptGrandTotal strong {
+  color: #087b38 !important;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.Billing-thankYou {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px dashed #cbd5e1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.Billing-thankYou strong {
+  font-size: 13px;
+  color: #17202a;
+}
+
+.Billing-thankYou span {
+  color: #64748b;
+  font-size: 10px;
+}
+
+/* =========================================================
+   RECEIPT ACTIONS
+========================================================= */
+
+.Billing-receiptActions {
+  max-width: 760px;
+  margin: 12px auto 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.Billing-receiptActions button {
+  height: 43px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.Billing-printAgain {
+  border: 1px solid #2877ff;
+  background: #fff;
+  color: #1769e8;
+}
+
+.Billing-newBill {
+  border: 1px solid #dce5df;
+  background: #fff;
+  color: #334155;
+}
+
+.Billing-doneButton {
+  border: none;
+  background: #06a947;
+  color: #fff;
+}
+
+/* =========================================================
+   NO PRODUCTS
+========================================================= */
+
+.Billing-noProducts {
+  grid-column: 1 / -1;
+  min-height: 350px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: #94a3b8;
+}
+
+.Billing-noProducts h3 {
+  margin: 10px 0 2px;
+  color: #475569;
+}
+
+.Billing-noProducts p {
+  font-size: 12px;
+  margin: 0;
+}
+
+/* =========================================================
+   RESPONSIVE - LARGE
+========================================================= */
+
+@media (max-width: 1400px) {
+
+  .Billing-main {
+    grid-template-columns:
+      minmax(430px, 1fr)
+      minmax(480px, 1fr);
+  }
+
+  .Billing-productsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+}
+
+/* =========================================================
+   RESPONSIVE - LAPTOP
+========================================================= */
+
+@media (max-width: 1150px) {
+
+  .Billing-header {
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .Billing-headerRight {
+    gap: 10px;
+  }
+
+  .Billing-dateTime {
+    display: none;
+  }
+
+  .Billing-main {
+    grid-template-columns: 1fr;
+  }
+
+  .Billing-productsGrid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .Billing-receiptSection {
+    grid-column: auto;
+  }
+
+}
+
+/* =========================================================
+   RESPONSIVE - TABLET
+========================================================= */
+
+@media (max-width: 850px) {
+
+  .Billing-page {
+    padding: 7px;
+  }
+
+  .Billing-header {
+    padding: 10px 13px;
+  }
+
+  .Billing-brandText h1 {
+    font-size: 19px;
+  }
+
+  .Billing-headerRight {
+    gap: 7px;
+  }
+
+  .Billing-userInfo {
+    display: none;
+  }
+
+  .Billing-productsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .Billing-productImage {
+    height: 100px;
+  }
+
+}
+
+/* =========================================================
+   RESPONSIVE - MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+  .Billing-page {
+    padding: 5px;
+  }
+
+  .Billing-header {
+    min-height: auto;
+    padding: 11px;
+    border-radius: 12px;
+  }
+
+  .Billing-logoIcon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .Billing-brandText h1 {
+    font-size: 17px;
+  }
+
+  .Billing-brandText span {
+    font-size: 9px;
+  }
+
+  .Billing-offline {
+    height: 32px;
+    width: 32px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+  }
+
+  .Billing-offline svg {
+    width: 17px;
+  }
+
+  .Billing-headerIcon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .Billing-userAvatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .Billing-user > svg {
+    display: none;
+  }
+
+  .Billing-productsSection,
+  .Billing-currentBill,
+  .Billing-receiptSection {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .Billing-productsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 7px;
+  }
+
+  .Billing-productImage {
+    height: 125px;
+  }
+
+  .Billing-productName {
+    font-size: 11px;
+  }
+
+  .Billing-productPrice {
+    font-size: 14px;
+  }
+
+  .Billing-addButton {
+    height: 34px;
+  }
+
+  .Billing-currentBillTitle h2 {
+    font-size: 16px;
+  }
+
+  .Billing-clearButton {
+    height: 32px;
+    padding: 0 8px;
+  }
+
+  .Billing-discountRow {
+    justify-content: stretch;
+  }
+
+  .Billing-discountType {
+    flex: 0 0 82px;
+  }
+
+  .Billing-discountRow > input {
+    width: auto;
+    flex: 1;
+  }
+
+  .Billing-paymentMethods {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .Billing-paymentMethods button {
+    font-size: 10px;
+    padding: 0 3px;
+  }
+
+  .Billing-amountRow {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .Billing-amountRow input {
+    text-align: left;
+  }
+
+  .Billing-actionButtons {
+    grid-template-columns: 1fr;
+  }
+
+  .Billing-receipt {
+    padding: 12px;
+  }
+
+  .Billing-receiptBrand {
+    font-size: 21px;
+  }
+
+  .Billing-receiptDetails {
+    grid-template-columns: 1fr;
+  }
+
+  .Billing-receiptTable {
+    min-width: 560px;
+  }
+
+  .Billing-receipt {
+    overflow-x: auto;
+  }
+
+  .Billing-receiptActions {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+/* =========================================================
+   EXTRA SMALL
+========================================================= */
+
+@media (max-width: 380px) {
+
+  .Billing-productImage {
+    height: 105px;
+  }
+
+  .Billing-productsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .Billing-category {
+    padding: 8px 11px;
+  }
+
+  .Billing-total strong {
+    font-size: 20px;
+  }
+
+}
