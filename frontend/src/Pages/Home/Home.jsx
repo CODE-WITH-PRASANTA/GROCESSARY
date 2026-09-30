@@ -10,20 +10,18 @@ import Blog from '../../Components/BlogGrid/BlogGrid'
 
 import NourishSection from '../../Components/NourishSection/NourishSection'
 import MobileSection from '../../Components/MobileSection/MobileSection'
+import PopularProducts from '../../Components/PopularProducts/PopularProducts'
 
 const Home = () => {
   return (
     <div>
       <MobileSection />
-      <HeroSection/>
-      <HomeCategories/>
-      <HomeDailyDiscounts/>
+      <PopularProducts />
       <HomeTodayDiscounts/>
       
       <OurBestsellers />
       <NourishSection />
-      <FreashItem />
-      <Testimonial />
+     
       <Blog />
     </div>
   )
