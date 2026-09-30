@@ -1,22 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
-  Menu,
   ShoppingCart,
   Search,
   CalendarDays,
-  Wifi,
-  Settings,
   Minus,
-  Maximize2,
-  UserCircle,
-  LayoutDashboard,
-  FilePlus2,
-  ReceiptText,
-  Package,
-  Grid2X2,
-  Users,
   WalletCards,
-  BarChart3,
   X,
   Plus,
   RotateCcw,
@@ -34,316 +22,448 @@ import {
   Smartphone,
   Banknote,
   Clock3,
+  Users,
+  AlertCircle,
 } from "lucide-react";
 
+import Swal from "sweetalert2";
+import API, { BASE_URL } from "../../api/axios";
 import "./BillingHistory.css";
 
+// =========================================================
+// HELPERS
+// =========================================================
+const resolveImage = (path) => {
+  if (!path) return "";
+  const str = String(path).trim();
+  if (str.startsWith("http://") || str.startsWith("https://")) return str;
+  return `${BASE_URL}/${str.replace(/^\/+/, "")}`;
+};
+
+const formatDateTime = (iso) => {
+  if (!iso) return { date: "-", time: "-" };
+  try {
+    const d = new Date(iso);
+    return {
+      date: d.toLocaleDateString("en-GB"),
+      time: d.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+  } catch {
+    return { date: "-", time: "-" };
+  }
+};
+
+const formatISODate = (iso) => {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toISOString().slice(0, 10);
+  } catch {
+    return "";
+  }
+};
+
+const normalizeBills = (data) => {
+  if (Array.isArray(data?.bills)) return data.bills;
+  if (Array.isArray(data?.data?.bills)) return data.data.bills;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data)) return data;
+  return [];
+};
+
+// =========================================================
+// COMPONENT
+// =========================================================
 const BillingHistory = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(true);
 
   const [activeTab, setActiveTab] = useState("All Bills");
 
   const [search, setSearch] = useState("");
-  const [dateFrom, setDateFrom] = useState("2026-09-01");
-  const [dateTo, setDateTo] = useState("2026-09-28");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("All");
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedBill, setSelectedBill] = useState(null);
 
+  const [bills, setBills] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const billsPerPage = 8;
 
-  const [bills, setBills] = useState([
-    {
-      id: 1,
-      date: "28/09/2026",
-      time: "11:25 AM",
-      invoice: "GS20260928001",
-      items: 4,
-      total: 391,
-      payment: "Cash",
-      customer: "Walk-in",
-      contact: "-",
-      address: "-",
-      products: [
-        {
-          name: "Aashirvaad Atta",
-          variant: "(5 kg)",
-          price: 245,
-          qty: 1,
-          image:
-            "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=150",
-        },
-        {
-          name: "Tata Salt",
-          variant: "(1 kg)",
-          price: 28,
-          qty: 2,
-          image:
-            "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=150",
-        },
-        {
-          name: "Maggi Noodles",
-          variant: "(70 g)",
-          price: 14,
-          qty: 3,
-          image:
-            "https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=150",
-        },
-        {
-          name: "Dove Soap",
-          variant: "(100 g)",
-          price: 48,
-          qty: 1,
-          image:
-            "https://images.unsplash.com/photo-1607006344380-b6775a0824c7?w=150",
-        },
-      ],
-    },
-    {
-      id: 2,
-      date: "28/09/2026",
-      time: "10:47 AM",
-      invoice: "GS20260928002",
-      items: 6,
-      total: 625,
-      payment: "UPI",
-      customer: "Rajesh Kumar",
-      contact: "9876543210",
-      address: "Cuttack, Odisha",
-      products: [],
-    },
-    {
-      id: 3,
-      date: "27/09/2026",
-      time: "06:32 PM",
-      invoice: "GS20260927005",
-      items: 3,
-      total: 220,
-      payment: "Card",
-      customer: "Walk-in",
-      contact: "-",
-      address: "-",
-      products: [],
-    },
-    {
-      id: 4,
-      date: "27/09/2026",
-      time: "04:15 PM",
-      invoice: "GS20260927004",
-      items: 8,
-      total: 1245,
-      payment: "Cash",
-      customer: "Anita Sahu",
-      contact: "9123456789",
-      address: "Bhubaneswar, Odisha",
-      products: [],
-    },
-    {
-      id: 5,
-      date: "27/09/2026",
-      time: "11:08 AM",
-      invoice: "GS20260927003",
-      items: 5,
-      total: 482,
-      payment: "UPI",
-      customer: "Walk-in",
-      contact: "-",
-      address: "-",
-      products: [],
-    },
-    {
-      id: 6,
-      date: "26/09/2026",
-      time: "07:55 PM",
-      invoice: "GS20260926008",
-      items: 7,
-      total: 965,
-      payment: "Card",
-      customer: "Suresh Das",
-      contact: "9345678123",
-      address: "Cuttack, Odisha",
-      products: [],
-    },
-    {
-      id: 7,
-      date: "26/09/2026",
-      time: "01:20 PM",
-      invoice: "GS20260926007",
-      items: 2,
-      total: 145,
-      payment: "Cash",
-      customer: "Walk-in",
-      contact: "-",
-      address: "-",
-      products: [],
-    },
-    {
-      id: 8,
-      date: "26/09/2026",
-      time: "11:10 AM",
-      invoice: "GS20260926006",
-      items: 9,
-      total: 1580,
-      payment: "UPI",
-      customer: "Priya Mehta",
-      contact: "9988776655",
-      address: "Bhubaneswar, Odisha",
-      products: [],
-    },
-  ]);
+  // =========================================================
+  // FETCH BILLS
+  // =========================================================
+  const fetchBills = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-  const defaultProducts = [
-    {
-      name: "Aashirvaad Atta",
-      variant: "(5 kg)",
-      price: 245,
-      qty: 1,
-      image:
-        "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=150",
-    },
-    {
-      name: "Tata Salt",
-      variant: "(1 kg)",
-      price: 28,
-      qty: 2,
-      image:
-        "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=150",
-    },
-    {
-      name: "Maggi Noodles",
-      variant: "(70 g)",
-      price: 14,
-      qty: 3,
-      image:
-        "https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=150",
-    },
-    {
-      name: "Dove Soap",
-      variant: "(100 g)",
-      price: 48,
-      qty: 1,
-      image:
-        "https://images.unsplash.com/photo-1607006344380-b6775a0824c7?w=150",
-    },
-  ];
+      const params = { limit: 200 };
+      if (paymentMethod !== "All") params.paymentMethod = paymentMethod;
+      if (dateFrom) params.startDate = `${dateFrom}T00:00:00.000Z`;
+      if (dateTo) params.endDate = `${dateTo}T23:59:59.999Z`;
 
-  const activeBill = selectedBill || bills[0];
+      const { data } = await API.get("/bills", { params });
+      const list = normalizeBills(data);
 
+      // Normalize into UI-friendly shape
+      const formatted = list.map((b) => {
+        const { date, time } = formatDateTime(b.createdAt);
+        const firstItem = b.items?.[0] || {};
+
+        return {
+          id: b._id,
+          invoice: b.invoiceNumber,
+          date,
+          time,
+          createdAt: b.createdAt,
+          items: Array.isArray(b.items) ? b.items.length : 0,
+          total: Number(b.totalAmount || 0),
+          subtotal: Number(b.subtotal || 0),
+          discount: Number(b.discountAmount || 0),
+          totalSavings: Number(b.totalSavings || 0),
+          payment: b.paymentMethod || "Cash",
+          customer: b.customer?.name || "Walk-in",
+          contact: b.customer?.mobile || "-",
+          address: "-",
+          cashier: b.cashier?.name || b.cashier?.email || "",
+          upiTransactionId: b.upiTransactionId || "",
+          amountReceived: Number(b.amountReceived || 0),
+          changeReturned: Number(b.changeReturned || 0),
+          products: (b.items || []).map((it) => ({
+            name: it.productName || "Product",
+            variant: it.unit ? `(${it.unit})` : "",
+            price: Number(it.price || 0),
+            qty: Number(it.quantity || 1),
+            image: resolveImage(it.image),
+          })),
+        };
+      });
+
+      setBills(formatted);
+
+      // Keep selection if it still exists
+      if (selectedBill) {
+        const stillThere = formatted.find((x) => x.id === selectedBill.id);
+        setSelectedBill(stillThere || null);
+      }
+    } catch (err) {
+      console.error("Fetch bills error:", err);
+      setError(err.response?.data?.message || "Failed to load bills.");
+      setBills([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBills();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentMethod, dateFrom, dateTo]);
+
+  // =========================================================
+  // FILTER (client-side search + tabs)
+  // =========================================================
   const filteredBills = useMemo(() => {
     let result = [...bills];
+    const today = new Date();
+    const todayStr = today.toLocaleDateString("en-GB");
 
     if (search.trim()) {
-      const value = search.toLowerCase();
-
-      result = result.filter(
-        (bill) =>
-          bill.invoice.toLowerCase().includes(value) ||
-          bill.customer.toLowerCase().includes(value)
-      );
-    }
-
-    if (paymentMethod !== "All") {
-      result = result.filter((bill) => bill.payment === paymentMethod);
+      const value = search.toLowerCase().trim();
+      result = result.filter((b) => {
+        const matchInvoice = String(b.invoice || "")
+          .toLowerCase()
+          .includes(value);
+        const matchCustomer = String(b.customer || "")
+          .toLowerCase()
+          .includes(value);
+        const matchProduct = b.products?.some((p) =>
+          String(p.name || "")
+            .toLowerCase()
+            .includes(value),
+        );
+        return matchInvoice || matchCustomer || matchProduct;
+      });
     }
 
     if (activeTab === "Today") {
-      result = result.filter((bill) => bill.date === "28/09/2026");
-    }
-
-    if (activeTab === "Yesterday") {
-      result = result.filter((bill) => bill.date === "27/09/2026");
+      result = result.filter((b) => b.date === todayStr);
+    } else if (activeTab === "Yesterday") {
+      const y = new Date(today);
+      y.setDate(today.getDate() - 1);
+      result = result.filter((b) => b.date === y.toLocaleDateString("en-GB"));
+    } else if (activeTab === "This Week") {
+      const weekAgo = new Date(today);
+      weekAgo.setDate(today.getDate() - 7);
+      result = result.filter((b) => new Date(b.createdAt) >= weekAgo);
+    } else if (activeTab === "This Month") {
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      result = result.filter((b) => new Date(b.createdAt) >= monthStart);
     }
 
     return result;
-  }, [bills, search, paymentMethod, activeTab]);
+  }, [bills, search, activeTab]);
 
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredBills.length / billsPerPage)
+    Math.ceil(filteredBills.length / billsPerPage),
   );
 
   const paginatedBills = filteredBills.slice(
     (currentPage - 1) * billsPerPage,
-    currentPage * billsPerPage
+    currentPage * billsPerPage,
   );
 
+  const activeBill = selectedBill || filteredBills[0] || bills[0] || null;
+
+  // =========================================================
+  // STATS
+  // =========================================================
+  const stats = useMemo(() => {
+    const totalBills = filteredBills.length;
+    const totalSales = filteredBills.reduce(
+      (sum, b) => sum + Number(b.total || 0),
+      0,
+    );
+    const avgValue = totalBills > 0 ? totalSales / totalBills : 0;
+    const totalItems = filteredBills.reduce(
+      (sum, b) => sum + Number(b.items || 0),
+      0,
+    );
+    return { totalBills, totalSales, avgValue, totalItems };
+  }, [filteredBills]);
+
+  // =========================================================
+  // ACTIONS
+  // =========================================================
   const handleViewBill = (bill) => {
     setSelectedBill(bill);
     setDetailsOpen(true);
   };
 
-  const handleDelete = (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this bill?"
-    );
+  const handleDelete = async (id) => {
+    if (!id) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid bill",
+        text: "No id to delete.",
+        confirmButtonColor: "#0aad4b",
+      });
+      return;
+    }
 
-    if (!confirmDelete) return;
+    const confirm = await Swal.fire({
+      icon: "warning",
+      title: "Delete this bill?",
+      text: "This action cannot be undone.",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Delete",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#94a3b8",
+    });
 
-    setBills((prev) => prev.filter((bill) => bill.id !== id));
+    if (!confirm.isConfirmed) return;
 
-    if (selectedBill?.id === id) {
-      setSelectedBill(null);
+    try {
+      const { data } = await API.delete(`/bills/${id}`);
+
+      if (!data?.success) {
+        throw new Error(data?.message || "Delete failed.");
+      }
+
+      // Remove from local state
+      setBills((prev) => prev.filter((b) => b.id !== id));
+      if (selectedBill?.id === id) setSelectedBill(null);
+      fetchBills();
+      Swal.fire({
+        icon: "success",
+        title: "Bill deleted",
+        timer: 1200,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      console.error("Delete bill error:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Could not delete bill",
+        text: err.response?.data?.message || err.message || "Please try again.",
+        confirmButtonColor: "#0aad4b",
+      });
     }
   };
 
   const handleReset = () => {
     setSearch("");
-    setDateFrom("2026-09-01");
-    setDateTo("2026-09-28");
+    setDateFrom("");
+    setDateTo("");
     setPaymentMethod("All");
     setActiveTab("All Bills");
     setCurrentPage(1);
+    fetchBills();
   };
 
   const handlePrint = () => {
-    window.print();
+    if (!activeBill) return;
+
+    const itemsHtml = (activeBill.products || [])
+      .map(
+        (p, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${p.name}<br/><small>${p.variant || ""}</small></td>
+          <td>₹${p.price}</td>
+          <td>${p.qty}</td>
+          <td>₹${p.price * p.qty}</td>
+        </tr>`,
+      )
+      .join("");
+
+    const cashLines =
+      activeBill.payment === "Cash"
+        ? `
+        <div class="row"><span>Amount Received</span><strong>₹${activeBill.amountReceived}</strong></div>
+        <div class="row"><span>Change</span><strong>₹${activeBill.changeReturned}</strong></div>`
+        : "";
+
+    const upiLine =
+      activeBill.payment === "UPI" && activeBill.upiTransactionId
+        ? `<div class="details"><span>UPI Txn: ${activeBill.upiTransactionId}</span></div>`
+        : "";
+
+    const w = window.open("", "_blank", "width=450,height=750");
+    if (!w) {
+      Swal.fire({
+        icon: "error",
+        title: "Print blocked",
+        text: "Please allow popups.",
+        confirmButtonColor: "#0aad4b",
+      });
+      return;
+    }
+
+    w.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${activeBill.invoice}</title>
+        <style>
+          * { box-sizing: border-box; }
+          body { margin: 0; padding: 25px; font-family: Arial, sans-serif; }
+          .receipt { max-width: 430px; margin: auto; }
+          .logo { text-align: center; color: #078c3e; font-size: 27px; font-weight: 800; }
+          .tagline { text-align: center; font-size: 13px; color: #475569; margin-bottom: 20px; }
+          .details { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; }
+          table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 12px; }
+          th { background: #f1f5f9; text-align: left; }
+          th, td { padding: 8px 5px; border-bottom: 1px solid #e5e7eb; }
+          .grand { margin-top: 8px; padding: 12px; background: #eaffed; border-radius: 8px; color: #087b38; font-weight: 800; font-size: 18px; }
+          .row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; }
+        </style>
+      </head>
+      <body>
+        <div class="receipt">
+          <div class="logo">Grocery Sati</div>
+          <div class="tagline">Fresh Grocery, Better Living!</div>
+
+          <div class="details">
+            <span>Invoice: ${activeBill.invoice}</span>
+            <span>Date: ${activeBill.date}</span>
+          </div>
+
+          <div class="details">
+            <span>Customer: ${activeBill.customer}</span>
+            <span>Mobile: ${activeBill.contact}</span>
+          </div>
+
+          <div class="details">
+            <span>Payment: ${activeBill.payment}</span>
+          </div>
+
+          ${upiLine}
+
+          <table>
+            <thead>
+              <tr><th>#</th><th>Item</th><th>Price</th><th>Qty</th><th>Total</th></tr>
+            </thead>
+            <tbody>${itemsHtml}</tbody>
+          </table>
+
+          <div style="margin-top:18px">
+            <div class="row"><span>Subtotal</span><strong>₹${activeBill.subtotal}</strong></div>
+            <div class="row"><span>Discount</span><strong>₹${activeBill.discount}</strong></div>
+            <div class="grand">
+              <div class="row"><span>Total Amount</span><span>₹${activeBill.total}</span></div>
+            </div>
+            ${cashLines}
+          </div>
+
+          <div style="text-align:center;margin-top:25px;font-size:13px;color:#475569">
+            Thank you for shopping with us!
+          </div>
+        </div>
+        <script>
+          window.onload = function() {
+            window.print();
+            window.onafterprint = function() { window.close(); };
+          };
+        </script>
+      </body>
+      </html>
+    `);
+    w.document.close();
   };
 
   const handleDownload = () => {
-    const invoice = activeBill?.invoice || "invoice";
+    if (!activeBill) return;
+    const invoice = activeBill.invoice || "invoice";
+
+    const itemLines = (activeBill.products || [])
+      .map(
+        (p, i) =>
+          `${String(i + 1).padEnd(3)} ${p.name.padEnd(25)} ${
+            p.qty
+          }   ₹${p.price * p.qty}`,
+      )
+      .join("\n");
 
     const content = `
 GROCERY SATI
 Offline Billing Software
 
 Invoice No: ${invoice}
-Date: ${activeBill?.date}
-Time: ${activeBill?.time}
+Date: ${activeBill.date}
+Time: ${activeBill.time}
 
-Customer: ${activeBill?.customer}
+Customer: ${activeBill.customer}
+Mobile: ${activeBill.contact}
+Payment: ${activeBill.payment}
 
---------------------------------
-ITEM                 QTY    TOTAL
---------------------------------
-Aashirvaad Atta       1     ₹245
-Tata Salt             2     ₹56
-Maggi Noodles         3     ₹42
-Dove Soap             1     ₹48
---------------------------------
+----------------------------------------
+#   ITEM                    QTY    TOTAL
+----------------------------------------
+${itemLines}
+----------------------------------------
 
-Subtotal: ₹391
-Discount: ₹0
-CGST: ₹0
-SGST: ₹0
+Subtotal: ₹${activeBill.subtotal}
+Discount: ₹${activeBill.discount}
 
-TOTAL: ₹391
+TOTAL: ₹${activeBill.total}
 
 Thank you for shopping with us!
 `;
 
-    const blob = new Blob([content], {
-      type: "text/plain",
-    });
-
+    const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-
     const link = document.createElement("a");
     link.href = url;
     link.download = `${invoice}.txt`;
     link.click();
-
     URL.revokeObjectURL(url);
   };
 
@@ -353,24 +473,12 @@ Thank you for shopping with us!
     return <Banknote size={17} />;
   };
 
+  // =========================================================
+  // RENDER
+  // =========================================================
   return (
     <div className="BillingHistory">
-      {/* ================= HEADER ================= */}
-      
-
-      {/* ================= BODY ================= */}
       <div className="BillingHistory-body">
-        {/* ================= SIDEBAR ================= */}
-      
-
-        {sidebarOpen && (
-          <div
-            className="BillingHistory-sidebarOverlay"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* ================= MAIN CONTENT ================= */}
         <main className="BillingHistory-main">
           {/* PAGE HEADING */}
           <div className="BillingHistory-pageHeader">
@@ -385,47 +493,52 @@ Thank you for shopping with us!
               </div>
             </div>
 
-            <button className="BillingHistory-newBillButton">
+            <button
+              className="BillingHistory-newBillButton"
+              onClick={() => (window.location.href = "/admin/billing")}
+            >
               <Plus size={21} />
               New Bill
             </button>
           </div>
 
-          {/* ================= FILTER CARD ================= */}
+          {/* FILTER CARD */}
           <section className="BillingHistory-filterCard">
             <div className="BillingHistory-filterGrid">
               <div className="BillingHistory-filterGroup">
                 <label>Date From</label>
-
                 <div className="BillingHistory-inputBox">
                   <CalendarDays size={17} />
                   <input
                     type="date"
                     value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
+                    onChange={(e) => {
+                      setDateFrom(e.target.value);
+                      setCurrentPage(1);
+                    }}
                   />
                 </div>
               </div>
 
               <div className="BillingHistory-filterGroup">
                 <label>Date To</label>
-
                 <div className="BillingHistory-inputBox">
                   <CalendarDays size={17} />
                   <input
                     type="date"
                     value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
+                    onChange={(e) => {
+                      setDateTo(e.target.value);
+                      setCurrentPage(1);
+                    }}
                   />
                 </div>
               </div>
 
               <div className="BillingHistory-filterGroup">
                 <label>Payment Method</label>
-
                 <div className="BillingHistory-inputBox">
                   <WalletCards size={17} />
-
                   <select
                     value={paymentMethod}
                     onChange={(e) => {
@@ -436,19 +549,15 @@ Thank you for shopping with us!
                     <option>All</option>
                     <option>Cash</option>
                     <option>UPI</option>
-                    <option>Card</option>
                   </select>
-
                   <ChevronDown size={17} />
                 </div>
               </div>
 
               <div className="BillingHistory-filterGroup">
                 <label>Search</label>
-
                 <div className="BillingHistory-inputBox">
                   <Search size={17} />
-
                   <input
                     type="text"
                     placeholder="Invoice no, customer, product..."
@@ -470,7 +579,6 @@ Thank you for shopping with us!
                   "Yesterday",
                   "This Week",
                   "This Month",
-                  "Custom",
                 ].map((tab) => (
                   <button
                     key={tab}
@@ -498,7 +606,10 @@ Thank you for shopping with us!
                   Reset
                 </button>
 
-                <button className="BillingHistory-searchButton">
+                <button
+                  className="BillingHistory-searchButton"
+                  onClick={() => fetchBills()}
+                >
                   <Search size={18} />
                   Search
                 </button>
@@ -506,17 +617,16 @@ Thank you for shopping with us!
             </div>
           </section>
 
-          {/* ================= STATISTICS ================= */}
+          {/* STATISTICS */}
           <section className="BillingHistory-statGrid">
             <div className="BillingHistory-statCard">
               <div className="BillingHistory-statIcon green">
                 <FileText size={24} />
               </div>
-
               <div>
                 <span>Total Bills</span>
-                <strong>156</strong>
-                <small>↗ +12% from last month</small>
+                <strong>{stats.totalBills}</strong>
+                <small>From current filter</small>
               </div>
             </div>
 
@@ -524,11 +634,10 @@ Thank you for shopping with us!
               <div className="BillingHistory-statIcon blue">
                 <WalletCards size={24} />
               </div>
-
               <div>
                 <span>Total Sales</span>
-                <strong>₹24,658</strong>
-                <small>↗ +8% from last month</small>
+                <strong>₹{stats.totalSales.toLocaleString("en-IN")}</strong>
+                <small>From current filter</small>
               </div>
             </div>
 
@@ -536,11 +645,10 @@ Thank you for shopping with us!
               <div className="BillingHistory-statIcon orange">
                 <ShoppingBasket size={24} />
               </div>
-
               <div>
                 <span>Avg. Bill Value</span>
-                <strong>₹158</strong>
-                <small>↗ +5% from last month</small>
+                <strong>₹{stats.avgValue.toFixed(0)}</strong>
+                <small>Per bill</small>
               </div>
             </div>
 
@@ -548,123 +656,148 @@ Thank you for shopping with us!
               <div className="BillingHistory-statIcon purple">
                 <Users size={24} />
               </div>
-
               <div>
                 <span>Total Items Sold</span>
-                <strong>412</strong>
-                <small>↗ +10% from last month</small>
+                <strong>{stats.totalItems}</strong>
+                <small>From current filter</small>
               </div>
             </div>
           </section>
 
-          {/* ================= BILL TABLE ================= */}
+          {/* TABLE */}
           <section className="BillingHistory-tableCard">
-            <div className="BillingHistory-tableWrapper">
-              <table className="BillingHistory-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Date & Time</th>
-                    <th>Invoice No</th>
-                    <th>Items</th>
-                    <th>Total Amount</th>
-                    <th>Payment</th>
-                    <th>Customer</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
+            {loading ? (
+              <div
+                className="BillingHistory-emptyState"
+                style={{ padding: 60 }}
+              >
+                <Clock3 size={42} />
+                <strong>Loading bills…</strong>
+              </div>
+            ) : error ? (
+              <div
+                className="BillingHistory-emptyState"
+                style={{ padding: 60 }}
+              >
+                <AlertCircle size={42} />
+                <strong>{error}</strong>
+                <button
+                  className="BillingHistory-searchButton"
+                  onClick={fetchBills}
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : (
+              <div className="BillingHistory-tableWrapper">
+                <table className="BillingHistory-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Date & Time</th>
+                      <th>Invoice No</th>
+                      <th>Items</th>
+                      <th>Total Amount</th>
+                      <th>Payment</th>
+                      <th>Customer</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
 
-                <tbody>
-                  {paginatedBills.length > 0 ? (
-                    paginatedBills.map((bill, index) => (
-                      <tr
-                        key={bill.id}
-                        className={
-                          activeBill?.id === bill.id
-                            ? "BillingHistory-selectedRow"
-                            : ""
-                        }
-                      >
-                        <td>{index + 1}</td>
+                  <tbody>
+                    {paginatedBills.length > 0 ? (
+                      paginatedBills.map((bill, index) => (
+                        <tr
+                          key={bill.id}
+                          className={
+                            activeBill?.id === bill.id
+                              ? "BillingHistory-selectedRow"
+                              : ""
+                          }
+                        >
+                          <td>
+                            {(currentPage - 1) * billsPerPage + index + 1}
+                          </td>
 
-                        <td>
-                          <div className="BillingHistory-dateCell">
-                            <strong>{bill.date}</strong>
-                            <span>{bill.time}</span>
-                          </div>
-                        </td>
+                          <td>
+                            <div className="BillingHistory-dateCell">
+                              <strong>{bill.date}</strong>
+                              <span>{bill.time}</span>
+                            </div>
+                          </td>
 
-                        <td>
-                          <span className="BillingHistory-invoiceNumber">
-                            {bill.invoice}
-                          </span>
-                        </td>
+                          <td>
+                            <span className="BillingHistory-invoiceNumber">
+                              {bill.invoice}
+                            </span>
+                          </td>
 
-                        <td>{bill.items}</td>
+                          <td>{bill.items}</td>
 
-                        <td>
-                          <strong className="BillingHistory-totalCell">
-                            ₹ {bill.total.toLocaleString("en-IN")}
-                          </strong>
-                        </td>
+                          <td>
+                            <strong className="BillingHistory-totalCell">
+                              ₹ {bill.total.toLocaleString("en-IN")}
+                            </strong>
+                          </td>
 
-                        <td>
-                          <span
-                            className={`BillingHistory-paymentBadge ${bill.payment.toLowerCase()}`}
-                          >
-                            {getPaymentIcon(bill.payment)}
-                            {bill.payment}
-                          </span>
-                        </td>
-
-                        <td>{bill.customer}</td>
-
-                        <td>
-                          <div className="BillingHistory-actionButtons">
-                            <button
-                              title="View"
-                              onClick={() => handleViewBill(bill)}
-                              className="BillingHistory-viewAction"
+                          <td>
+                            <span
+                              className={`BillingHistory-paymentBadge ${bill.payment.toLowerCase()}`}
                             >
-                              <Eye size={17} />
-                            </button>
+                              {getPaymentIcon(bill.payment)}
+                              {bill.payment}
+                            </span>
+                          </td>
 
-                            <button
-                              title="Print"
-                              onClick={handlePrint}
-                              className="BillingHistory-printAction"
-                            >
-                              <Printer size={17} />
-                            </button>
+                          <td>{bill.customer}</td>
 
-                            <button
-                              title="Delete"
-                              onClick={() => handleDelete(bill.id)}
-                              className="BillingHistory-deleteAction"
-                            >
-                              <Trash2 size={17} />
-                            </button>
-                          </div>
+                          <td>
+                            <div className="BillingHistory-actionButtons">
+                              <button
+                                title="View"
+                                onClick={() => handleViewBill(bill)}
+                                className="BillingHistory-viewAction"
+                              >
+                                <Eye size={17} />
+                              </button>
+
+                              <button
+                                title="Print"
+                                onClick={() => {
+                                  setSelectedBill(bill);
+                                  setTimeout(handlePrint, 50);
+                                }}
+                                className="BillingHistory-printAction"
+                              >
+                                <Printer size={17} />
+                              </button>
+
+                              <button
+                                title="Delete"
+                                onClick={() => handleDelete(bill.id)}
+                                className="BillingHistory-deleteAction"
+                              >
+                                <Trash2 size={17} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="8" className="BillingHistory-emptyState">
+                          <FileText size={42} />
+                          <strong>No bills found</strong>
+                          <span>Try changing your search or filters.</span>
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan="8"
-                        className="BillingHistory-emptyState"
-                      >
-                        <FileText size={42} />
-                        <strong>No bills found</strong>
-                        <span>Try changing your search or filters.</span>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-            {/* ================= PAGINATION ================= */}
+            {/* PAGINATION */}
             <div className="BillingHistory-pagination">
               <span>
                 Showing{" "}
@@ -675,12 +808,9 @@ Thank you for shopping with us!
                 </strong>{" "}
                 to{" "}
                 <strong>
-                  {Math.min(
-                    currentPage * billsPerPage,
-                    filteredBills.length
-                  )}
+                  {Math.min(currentPage * billsPerPage, filteredBills.length)}
                 </strong>{" "}
-                of <strong>156</strong> bills
+                of <strong>{filteredBills.length}</strong> bills
               </span>
 
               <div className="BillingHistory-pageNumbers">
@@ -693,27 +823,27 @@ Thank you for shopping with us!
                   <ChevronLeft size={17} />
                 </button>
 
-                {[1, 2, 3, 4, 5].map((page) => (
-                  <button
-                    key={page}
-                    className={
-                      currentPage === page
-                        ? "BillingHistory-activePage"
-                        : ""
-                    }
-                    onClick={() => setCurrentPage(page)}
-                  >
-                    {page}
-                  </button>
-                ))}
-
-                <button>...</button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .slice(
+                    Math.max(0, currentPage - 3),
+                    Math.max(5, currentPage + 2),
+                  )
+                  .map((page) => (
+                    <button
+                      key={page}
+                      className={
+                        currentPage === page ? "BillingHistory-activePage" : ""
+                      }
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </button>
+                  ))}
 
                 <button
+                  disabled={currentPage === totalPages}
                   onClick={() =>
-                    setCurrentPage((prev) =>
-                      Math.min(totalPages, prev + 1)
-                    )
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                   }
                 >
                   <ChevronRight size={17} />
@@ -721,27 +851,20 @@ Thank you for shopping with us!
               </div>
 
               <div className="BillingHistory-perPage">
-                <select defaultValue="8">
-                  <option value="8">8 per page</option>
-                  <option value="16">16 per page</option>
-                  <option value="24">24 per page</option>
-                </select>
-
-                <ChevronDown size={15} />
+                <span>{billsPerPage} per page</span>
               </div>
             </div>
           </section>
         </main>
 
-        {/* ================= BILL DETAILS ================= */}
-        {detailsOpen && (
+        {/* DETAILS PANEL */}
+        {detailsOpen && activeBill && (
           <aside className="BillingHistory-detailsPanel">
             <div className="BillingHistory-detailsHeader">
               <div>
                 <FileText size={23} />
                 <h3>Bill Details</h3>
               </div>
-
               <button
                 onClick={() => setDetailsOpen(false)}
                 className="BillingHistory-closeDetails"
@@ -751,12 +874,10 @@ Thank you for shopping with us!
             </div>
 
             <div className="BillingHistory-detailsContent">
-              {/* Invoice banner */}
               <div className="BillingHistory-invoiceBanner">
                 <div className="BillingHistory-invoiceCart">
                   <ShoppingCart size={36} />
                 </div>
-
                 <div>
                   <strong>Invoice #{activeBill.invoice}</strong>
                   <span>
@@ -765,7 +886,6 @@ Thank you for shopping with us!
                 </div>
               </div>
 
-              {/* Customer */}
               <div className="BillingHistory-customerSection">
                 <div className="BillingHistory-sectionTitle">
                   <UserRound size={20} />
@@ -778,29 +898,23 @@ Thank you for shopping with us!
                     <b>:</b>
                     <strong>{activeBill.customer}</strong>
                   </div>
-
                   <div>
                     <span>Contact</span>
                     <b>:</b>
-                    <strong>{activeBill.contact || "-"}</strong>
+                    <strong>{activeBill.contact}</strong>
                   </div>
-
                   <div>
-                    <span>Address</span>
+                    <span>Cashier</span>
                     <b>:</b>
-                    <strong>{activeBill.address || "-"}</strong>
+                    <strong>{activeBill.cashier || "-"}</strong>
                   </div>
                 </div>
               </div>
 
-              {/* Items */}
               <div className="BillingHistory-itemsSection">
                 <div className="BillingHistory-sectionTitle">
                   <ShoppingCart size={20} />
-                  <strong>
-                    Items (
-                    {activeBill.products?.length || activeBill.items})
-                  </strong>
+                  <strong>Items ({activeBill.products?.length || 0})</strong>
                 </div>
 
                 <div className="BillingHistory-itemTable">
@@ -812,10 +926,7 @@ Thank you for shopping with us!
                     <span>Total</span>
                   </div>
 
-                  {(activeBill.products?.length
-                    ? activeBill.products
-                    : defaultProducts
-                  ).map((product, index) => (
+                  {(activeBill.products || []).map((product, index) => (
                     <div
                       className="BillingHistory-itemRow"
                       key={`${product.name}-${index}`}
@@ -823,14 +934,15 @@ Thank you for shopping with us!
                       <span>{index + 1}</span>
 
                       <div className="BillingHistory-productInfo">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                          }}
-                        />
-
+                        {product.image ? (
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ) : null}
                         <span>
                           {product.name}
                           <small>{product.variant}</small>
@@ -838,39 +950,22 @@ Thank you for shopping with us!
                       </div>
 
                       <span>₹ {product.price}</span>
-
                       <span>{product.qty}</span>
-
-                      <strong>
-                        ₹ {product.price * product.qty}
-                      </strong>
+                      <strong>₹ {product.price * product.qty}</strong>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Totals */}
               <div className="BillingHistory-totalSection">
                 <div>
                   <span>Subtotal</span>
-                  <strong>₹ 391</strong>
+                  <strong>₹ {activeBill.subtotal}</strong>
                 </div>
-
                 <div>
                   <span>Discount</span>
-                  <strong>₹ 0</strong>
+                  <strong>₹ {activeBill.discount}</strong>
                 </div>
-
-                <div>
-                  <span>CGST (0%)</span>
-                  <strong>₹ 0</strong>
-                </div>
-
-                <div>
-                  <span>SGST (0%)</span>
-                  <strong>₹ 0</strong>
-                </div>
-
                 <div className="BillingHistory-grandTotal">
                   <span>Total Amount</span>
                   <strong>₹ {activeBill.total}</strong>
@@ -878,7 +973,6 @@ Thank you for shopping with us!
               </div>
             </div>
 
-            {/* Details Actions */}
             <div className="BillingHistory-detailsActions">
               <button
                 className="BillingHistory-printBill"

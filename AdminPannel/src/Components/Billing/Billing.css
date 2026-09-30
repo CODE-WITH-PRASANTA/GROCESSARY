@@ -1323,3 +1323,286 @@
   }
 
 }
+
+
+
+.Billing-discountBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  background: #dc2626;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.35);
+  z-index: 2;
+}
+
+.Billing-productPrice {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.Billing-originalPrice {
+  font-size: 11.5px;
+  color: #94a3b8;
+  text-decoration: line-through;
+  font-weight: 500;
+}
+
+.Billing-savingsBanner {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid #a7f3d0;
+}
+
+
+
+/* Customer details row */
+.Billing-customerRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.Billing-customerField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.Billing-customerField label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.Billing-customerField input {
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid #d4dde4;
+  background: #fff;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.Billing-customerField input:focus {
+  border-color: #0aad4b;
+  box-shadow: 0 0 0 3px rgba(10, 173, 75, 0.15);
+}
+
+.Billing-customerField input::placeholder {
+  color: #94a3b8;
+}
+
+/* Stack on narrow screens */
+@media (max-width: 640px) {
+  .Billing-customerRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ===== UPI Panel ===== */
+.Billing-upiPanel {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f0f9ff, #e0f2fe);
+  border: 1px solid #bae6fd;
+  text-align: center;
+}
+
+.Billing-upiLoading {
+  padding: 30px 20px;
+  color: #075985;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.Billing-upiQrWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #bae6fd;
+}
+
+.Billing-upiQrImg {
+  width: 240px;
+  height: 240px;
+  border-radius: 8px;
+}
+
+.Billing-upiQrMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.Billing-upiAmount {
+  font-size: 24px;
+  font-weight: 800;
+  color: #075985;
+}
+
+.Billing-upiTo {
+  font-size: 13px;
+  color: #334155;
+}
+
+.Billing-upiVpa {
+  font-size: 12px;
+  color: #64748b;
+  font-family: monospace;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #e0f2fe;
+}
+
+.Billing-upiCountdown {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.Billing-upiCountdown strong {
+  font-family: monospace;
+  font-size: 14px;
+  color: #b45309;
+}
+
+.Billing-upiActions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.Billing-upiOpenBtn,
+.Billing-upiRefreshBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.Billing-upiOpenBtn {
+  background: #0284c7;
+  color: #fff;
+}
+
+.Billing-upiOpenBtn:hover {
+  background: #0369a1;
+}
+
+.Billing-upiRefreshBtn {
+  background: #fff;
+  color: #075985;
+  border: 1px solid #bae6fd;
+}
+
+.Billing-upiRefreshBtn:hover {
+  background: #e0f2fe;
+}
+
+.Billing-upiHintText {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #075985;
+  line-height: 1.5;
+}
+
+.Billing-upiTxnWrap {
+  margin-top: 16px;
+  text-align: left;
+}
+
+.Billing-upiTxnLabel {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #075985;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.Billing-upiTxnInput {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid #7dd3fc;
+  background: #fff;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.Billing-upiTxnInput:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.Billing-upiTxnHint {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+/* Disabled buttons look dimmer */
+.Billing-completeButton:disabled,
+.Billing-printButton:disabled,
+.Billing-clearButton:disabled,
+.Billing-addButton:disabled,
+.Billing-scanButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dim inputs when sale is done */
+.Billing-customerField input:disabled,
+.Billing-discountRow input:disabled,
+.Billing-amountRow input:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}

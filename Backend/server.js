@@ -31,6 +31,9 @@ const pointsRoutes = require("./routes/pointsRoutes");
 const referralRoutes = require("./routes/referralRoutes");
 const checkoutRoutes = require("./routes/checkoutRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const adminReturnRoutes = require("./routes/adminReturnRoutes");
+const billRoutes = require("./routes/billRoutes");
+
 
 // ======================================================
 // ORDERS + PAYMENTS
@@ -94,6 +97,7 @@ app.use(
   })
 );
 
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -133,7 +137,14 @@ app.use("/api/checkout", checkoutRoutes);
 // Orders + Payments
 app.use("/api/orders", orderRoutes);
 
+app.use("/api/admin/returns", adminReturnRoutes);
+
+// user dash
 app.use("/api/dashboard", dashboardRoutes);
+
+// admin billings
+app.use("/api/bills", billRoutes);
+
 
 
 
