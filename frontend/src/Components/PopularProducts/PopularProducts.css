@@ -162,15 +162,13 @@
 
   overflow: hidden;
 
-  box-shadow:
-    0 1px 2px rgba(17, 40, 60, 0.02);
+  box-shadow: 0 1px 2px rgba(17, 40, 60, 0.02);
 
   transition:
     transform 0.3s ease,
     box-shadow 0.3s ease,
     border-color 0.3s ease;
 }
-
 .popular-products__card:hover {
   transform: translateY(-4px);
 
@@ -883,6 +881,7 @@
 ========================================================= */
 
 .popular-products__modal-image {
+  position: relative;
   width: 100%;
   min-height: 520px;
 
@@ -894,7 +893,6 @@
 
   background: #f4f7f8;
 }
-
 .popular-products__modal-image img {
   display: block;
 
@@ -1627,5 +1625,100 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+
+/* Heart on product card */
+.popular-products__wishlist {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid #e5e9ef;
+  background: rgba(255, 255, 255, 0.92);
+  color: #64748b;             /* 👈 default (unfilled) color */
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.popular-products__wishlist:hover {
+  background: #ffffff;
+  border-color: #ef4444;
+  color: #ef4444;             /* 👈 hover = red */
+  transform: scale(1.05);
+}
+
+.popular-products__wishlist--active {
+  background: #fff1f2;
+  border-color: #ef4444;
+  color: #ef4444;             /* 👈 FILLED = red */
+}
+
+/* Heart inside the modal */
+.popular-products__modal-wishlist {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #e5e9ef;
+  background: rgba(255, 255, 255, 0.95);
+  color: #64748b;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.popular-products__modal-wishlist:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.popular-products__modal-wishlist--active {
+  background: #fff1f2;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* Unit label on product card */
+.popular-products__unit {
+  margin: 4px 0 0;
+  padding: 0;
+
+  color: #6b7a86;
+
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popular-products__unit strong {
+  color: #173b58;
+  font-weight: 700;
+}
+
+/* Mobile tweaks */
+@media (max-width: 600px) {
+  .popular-products__unit {
+    margin-top: 3px;
+    font-size: 10.5px;
+  }
+}
+
+@media (max-width: 400px) {
+  .popular-products__unit {
+    font-size: 10px;
   }
 }

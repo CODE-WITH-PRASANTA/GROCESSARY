@@ -17,12 +17,12 @@ const Home = () => {
     <div>
       <MobileSection />
       <PopularProducts />
-      <HomeTodayDiscounts/>
+      {/* <HomeTodayDiscounts/> */}
       
-      <OurBestsellers />
-      <NourishSection />
+      {/* <OurBestsellers /> */}
+      {/* <NourishSection /> */}
      
-      <Blog />
+      {/* <Blog /> */}
     </div>
   )
 }
