@@ -1,4 +1,5 @@
 // controllers/orderController.js
+const mongoose = require("mongoose");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const crypto = require("crypto");
@@ -13,6 +14,12 @@ const generateOrderNumber = require("../utils/generateOrderNumber");
 
 const pointsController = require("./pointsController");
 const referralController = require("./referralController");
+const upload = require("../middleware/upload"); // adjust to your multer setup
+
+const { RETURN_WINDOW_DAYS, RETURN_REASONS } = require("../config/returns");
+
+// Statuses where the user is still allowed to cancel
+const USER_CANCELLABLE_STATUSES = ["pending", "confirmed"];
 
 // ======================================================
 // DECREMENT STOCK (SAFE)
@@ -789,6 +796,7 @@ const updateOrderStatus = async (req, res) => {
 
     if (status === "delivered" && prevStatus !== "delivered") {
       // 1) Award points (5% of totalAmount)
+      order.deliveredAt = new Date();
       const earnedPoints = Math.floor(
         order.totalAmount * rewards.POINTS_EARN_RATE,
       );
@@ -916,7 +924,99 @@ const abandonOrder = async (req, res) => {
   }
 };
 
+// ======================================================
+// POST /api/orders/:id/cancel
+// User-initiated cancellation.
+// Only allowed while status is "pending" or "confirmed".
+// ======================================================
 
+const cancelOrder = async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found.",
+      });
+    }
+
+    const currentStatus = String(order.orderStatus || "").toLowerCase();
+
+    // 🔒 Enforce cancellation window
+    if (!USER_CANCELLABLE_STATUSES.includes(currentStatus)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "This order can no longer be cancelled because it is already being processed.",
+      });
+    }
+
+    // ------------------------------------------------
+    // Update status + history
+    // ------------------------------------------------
+    order.orderStatus = "cancelled";
+    order.statusHistory = order.statusHistory || [];
+    order.statusHistory.push({
+      status: "cancelled",
+      note: "Cancelled by user",
+    });
+
+    // ------------------------------------------------
+    // Refund handling — depends on payment state
+    // ------------------------------------------------
+    if (order.paymentStatus === "paid") {
+      // Refund wallet + points first
+      await refundWalletAndPoints(order, "Order cancelled by user");
+
+      // Refund Razorpay (if this was an online payment)
+      if (order.paymentMethod === "razorpay" && order.razorpayPaymentId) {
+        try {
+          await razorpay.payments.refund(order.razorpayPaymentId, {
+            amount: Math.round(order.payableAmount * 100),
+            notes: {
+              reason: "User cancelled order",
+              orderNumber: order.orderNumber,
+            },
+          });
+
+          order.paymentStatus = "refunded";
+          order.statusHistory.push({
+            status: "cancelled",
+            note: "Razorpay refund issued",
+          });
+        } catch (refundErr) {
+          console.error("Razorpay refund error:", refundErr);
+          // Leave paymentStatus as "paid" so admin can retry the refund
+        }
+      } else {
+        // COD, wallet, or points fully paid → mark refunded
+        order.paymentStatus = "refunded";
+      }
+    } else if (order.paymentStatus === "pending") {
+      // Not yet paid → just mark failed
+      order.paymentStatus = "failed";
+    }
+    // If already "failed" or "refunded", leave as-is
+
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Order cancelled successfully.",
+      order,
+    });
+  } catch (err) {
+    console.error("cancelOrder error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to cancel order.",
+    });
+  }
+};
 
 // ======================================================
 // GET /api/orders  (ADMIN ONLY)
@@ -979,6 +1079,296 @@ const getAllOrders = async (req, res) => {
   }
 };
 
+// ======================================================
+// POST /api/orders/:id/return
+// Body: { reason, note }
+// User can request a return only:
+//   - order belongs to them
+//   - orderStatus === "delivered"
+//   - within RETURN_WINDOW_DAYS after delivery
+//   - returnStatus === "none"
+// ======================================================
+
+const requestReturn = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found.",
+      });
+    }
+    const { reason = "", note = "" } = req.body || {};
+
+    if (!reason || !RETURN_REASONS.includes(reason)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a valid return reason.",
+      });
+    }
+
+    const order = await Order.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found.",
+      });
+    }
+
+    if (order.orderStatus !== "delivered") {
+      return res.status(400).json({
+        success: false,
+        message: "Only delivered orders can be returned.",
+      });
+    }
+
+    if (order.returnStatus && order.returnStatus !== "none") {
+      return res.status(400).json({
+        success: false,
+        message: "A return request already exists for this order.",
+      });
+    }
+
+    // ---- Find the delivery timestamp ----
+    // Prefer explicit deliveredAt, else fall back to the last statusHistory entry
+    let deliveredAt = order.deliveredAt || null;
+
+    if (!deliveredAt && Array.isArray(order.statusHistory)) {
+      const deliveredEntry = [...order.statusHistory]
+        .reverse()
+        .find((h) => h.status === "delivered");
+      if (deliveredEntry?.at) deliveredAt = deliveredEntry.at;
+    }
+
+    if (!deliveredAt) {
+      return res.status(400).json({
+        success: false,
+        message: "Delivery date not available for this order.",
+      });
+    }
+
+    // ---- Check the return window ----
+    const now = new Date();
+    const deadline = new Date(deliveredAt);
+    deadline.setDate(deadline.getDate() + RETURN_WINDOW_DAYS);
+
+    if (now > deadline) {
+      return res.status(400).json({
+        success: false,
+        message: `Return window of ${RETURN_WINDOW_DAYS} days has expired for this order.`,
+      });
+    }
+
+    // ---- Save the return request ----
+    order.returnStatus = "requested";
+    order.returnReason = reason;
+    order.returnNote = note;
+    order.returnRequestedAt = now;
+
+    order.statusHistory = order.statusHistory || [];
+    order.statusHistory.push({
+      status: "return_requested",
+      note: `Return requested: ${reason}${note ? ` — ${note}` : ""}`,
+    });
+
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Return request submitted successfully.",
+      order,
+    });
+  } catch (err) {
+    console.error("requestReturn error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to submit return request.",
+    });
+  }
+};
+
+// (place this near the top of the file, once)
+
+const getReturnConfig = (req, res) => {
+  return res.json({
+    success: true,
+    data: {
+      windowDays: RETURN_WINDOW_DAYS,
+      reasons: RETURN_REASONS,
+    },
+  });
+};
+
+// ======================================================
+// GET /api/orders/:id/return-pickup
+// User fetches pickup details (incl. OTP) for their own order
+// ======================================================
+const getReturnPickup = async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
+
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found." });
+    }
+
+    if (!order.returnStatus || order.returnStatus === "none") {
+      return res.status(400).json({
+        success: false,
+        message: "This order has no active return.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        returnStatus: order.returnStatus,
+        pickupDetails: order.pickupDetails || null,
+        pickupProof: order.pickupProof || null,
+        inspectionReport: order.inspectionReport || null,
+      },
+    });
+  } catch (err) {
+    console.error("getReturnPickup error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load pickup details.",
+    });
+  }
+};
+
+// ======================================================
+// POST /api/orders/:id/verify-pickup-otp
+// Body: { otp }
+// ======================================================
+const verifyPickupOtp = async (req, res) => {
+  try {
+    const { otp = "" } = req.body || {};
+
+    const order = await Order.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
+
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found." });
+    }
+
+    if (!order.pickupDetails?.otp) {
+      return res.status(400).json({
+        success: false,
+        message: "No pickup scheduled for this return.",
+      });
+    }
+
+    if (order.pickupDetails.otpVerified) {
+      return res.json({
+        success: true,
+        message: "OTP already verified.",
+      });
+    }
+
+    if (String(otp).trim() !== String(order.pickupDetails.otp).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP.",
+      });
+    }
+
+    order.pickupDetails.otpVerified = true;
+    order.pickupDetails.otpVerifiedAt = new Date();
+    order.returnStatus = "picked";
+    order.statusHistory = order.statusHistory || [];
+    order.statusHistory.push({
+      status: "return_picked",
+      note: "Pickup OTP verified",
+    });
+
+    await order.save();
+
+    return res.json({
+      success: true,
+      message: "OTP verified. Please upload product images.",
+    });
+  } catch (err) {
+    console.error("verifyPickupOtp error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to verify OTP.",
+    });
+  }
+};
+
+// ======================================================
+// POST /api/orders/:id/upload-pickup-proof
+// multipart/form-data
+//   images: up to 5 files (field name "images")
+//   condition: string
+//   note: string
+// ======================================================
+
+const uploadPickupProof = async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
+
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found." });
+    }
+
+    if (!order.pickupDetails?.otpVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Verify the pickup OTP first.",
+      });
+    }
+
+    const files = Array.isArray(req.files) ? req.files : [];
+
+    // 👇 Use f.path directly — convertToWebp already set it correctly
+    const imagePaths = files.map((f) => f.path || "").filter(Boolean);
+
+    order.pickupProof = {
+      images: imagePaths,
+      condition: String(req.body?.condition || ""),
+      note: String(req.body?.note || ""),
+      uploadedAt: new Date(),
+    };
+
+    order.statusHistory = order.statusHistory || [];
+    order.statusHistory.push({
+      status: "return_proof_uploaded",
+      note: `Condition: ${req.body?.condition || "n/a"}`,
+    });
+
+    await order.save();
+
+    return res.json({
+      success: true,
+      message: "Product images uploaded.",
+      order,
+    });
+  } catch (err) {
+    console.error("uploadPickupProof error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to upload proof.",
+    });
+  }
+};
 
 // ======================================================
 // EXPORT
@@ -993,5 +1383,11 @@ module.exports = {
   getOrderById,
   refundWalletAndPoints,
   abandonOrder,
-  getAllOrders
+  cancelOrder,
+  getAllOrders,
+  requestReturn,
+  getReturnConfig,
+  uploadPickupProof,
+  verifyPickupOtp,
+  getReturnPickup,
 };
