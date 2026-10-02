@@ -15,6 +15,7 @@ const generateOrderNumber = require("../utils/generateOrderNumber");
 const pointsController = require("./pointsController");
 const referralController = require("./referralController");
 const upload = require("../middleware/upload"); // adjust to your multer setup
+const { createNotification } = require("./notificationController");
 
 const { RETURN_WINDOW_DAYS, RETURN_REASONS } = require("../config/returns");
 
@@ -380,6 +381,15 @@ const placeOrder = async (req, res) => {
         { $set: { items: [] } },
       );
 
+      await createNotification({
+        userId: req.user._id,
+        title: "Order placed",
+        message: `Your COD order ${order.orderNumber} is confirmed.`,
+        type: "order",
+        link: `/orders/${order._id}`,
+        meta: { orderId: order._id, orderNumber: order.orderNumber },
+      });
+
       return res.status(201).json({
         success: true,
         message: "COD order placed successfully.",
@@ -410,6 +420,15 @@ const placeOrder = async (req, res) => {
           { user: req.user._id },
           { $set: { items: [] } },
         );
+
+        await createNotification({
+          userId: req.user._id,
+          title: "Order confirmed",
+          message: `Order ${order.orderNumber} is confirmed and paid.`,
+          type: "order",
+          link: `/orders/${order._id}`,
+          meta: { orderId: order._id, orderNumber: order.orderNumber },
+        });
 
         return res.status(201).json({
           success: true,
@@ -552,6 +571,15 @@ const verifyPayment = async (req, res) => {
       { $set: { items: [] } },
     );
 
+    await createNotification({
+      userId: req.user._id,
+      title: "Payment received",
+      message: `Payment for order ${order.orderNumber} was successful.`,
+      type: "payment",
+      link: `/orders/${order._id}`,
+      meta: { orderId: order._id, orderNumber: order.orderNumber },
+    });
+
     return res.status(200).json({
       success: true,
       message: "Payment verified and order confirmed.",
@@ -634,6 +662,15 @@ const razorpayWebhook = async (req, res) => {
         { user: order.user },
         { $set: { items: [] } },
       );
+
+      await createNotification({
+        userId: order.user,
+        title: "Payment received",
+        message: `Order ${order.orderNumber} is confirmed.`,
+        type: "payment",
+        link: `/orders/${order._id}`,
+        meta: { orderId: order._id, orderNumber: order.orderNumber },
+      });
     }
 
     // ==================================================
@@ -830,6 +867,37 @@ const updateOrderStatus = async (req, res) => {
       }
     }
 
+    if (status !== prevStatus) {
+      const statusTitles = {
+        confirmed: "Order confirmed",
+        processing: "Order in progress",
+        shipped: "Order shipped",
+        out_for_delivery: "Out for delivery",
+        delivered: "Order delivered",
+        cancelled: "Order cancelled",
+        refunded: "Order refunded",
+      };
+
+      const statusMessages = {
+        confirmed: "Your order has been confirmed.",
+        processing: "Your order is being prepared.",
+        shipped: "Your order has been shipped.",
+        out_for_delivery: "Your order is out for delivery today.",
+        delivered: "Your order has been delivered. Enjoy!",
+        cancelled: "Your order has been cancelled.",
+        refunded: "Your refund has been processed.",
+      };
+
+      await createNotification({
+        userId: order.user,
+        title: statusTitles[status] || `Order ${status}`,
+        message: `${statusMessages[status] || "Your order was updated."} (Order ${order.orderNumber})`,
+        type: "order",
+        link: `/orders/${order._id}`,
+        meta: { orderId: order._id, orderNumber: order.orderNumber, status },
+      });
+    }
+
     return res.status(200).json({ success: true, order });
   } catch (err) {
     console.error("updateOrderStatus error:", err);
@@ -1004,6 +1072,15 @@ const cancelOrder = async (req, res) => {
 
     await order.save();
 
+    await createNotification({
+      userId: req.user._id,
+      title: "Order cancelled",
+      message: `Order ${order.orderNumber} was cancelled.`,
+      type: "order",
+      link: `/orders/${order._id}`,
+      meta: { orderId: order._id, orderNumber: order.orderNumber },
+    });
+
     return res.status(200).json({
       success: true,
       message: "Order cancelled successfully.",
@@ -1176,6 +1253,15 @@ const requestReturn = async (req, res) => {
 
     await order.save();
 
+    await createNotification({
+      userId: req.user._id,
+      title: "Return requested",
+      message: `Your return for order ${order.orderNumber} was submitted.`,
+      type: "return",
+      link: `/orders/${order._id}`,
+      meta: { orderId: order._id, orderNumber: order.orderNumber },
+    });
+
     return res.status(200).json({
       success: true,
       message: "Return request submitted successfully.",
@@ -1294,6 +1380,15 @@ const verifyPickupOtp = async (req, res) => {
     });
 
     await order.save();
+
+    await createNotification({
+      userId: req.user._id,
+      title: "Pickup confirmed",
+      message: `Pickup for order ${order.orderNumber} is confirmed. Please upload product images.`,
+      type: "return",
+      link: `/orders/${order._id}`,
+      meta: { orderId: order._id, orderNumber: order.orderNumber },
+    });
 
     return res.json({
       success: true,

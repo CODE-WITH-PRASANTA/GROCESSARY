@@ -33,6 +33,7 @@ const checkoutRoutes = require("./routes/checkoutRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const adminReturnRoutes = require("./routes/adminReturnRoutes");
 const billRoutes = require("./routes/billRoutes");
+const notifications = require('./routes/notificationRoutes');
 
 
 // ======================================================
@@ -144,6 +145,10 @@ app.use("/api/dashboard", dashboardRoutes);
 
 // admin billings
 app.use("/api/bills", billRoutes);
+
+// user notification
+
+app.use("/api/notifications",notifications)
 
 
 
