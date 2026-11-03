@@ -459,7 +459,7 @@ const placeOrder = async (req, res) => {
         order,
         requiresPayment: true,
         razorpay: {
-          key: process.env.RAZORPAY_KEY_ID,
+          key: (process.env.RAZORPAY_KEY_ID || "rzp_test_TppGgVggUkbJv4").trim(),
           orderId: razorpayOrder.id,
           amount: razorpayOrder.amount,
           currency: razorpayOrder.currency,
@@ -503,7 +503,7 @@ const verifyPayment = async (req, res) => {
     const body = `${razorpayOrderId}|${razorpayPaymentId}`;
 
     const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .createHmac("sha256", (process.env.RAZORPAY_KEY_SECRET || "PMTMnawtXe2ZEHUUPT2JMzoN").trim())
       .update(body)
       .digest("hex");
 

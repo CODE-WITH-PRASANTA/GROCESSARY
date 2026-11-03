@@ -1,1921 +1,1246 @@
-import React, { useEffect, useState, useCallback } from "react";
-
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import {
+  ShoppingBag,
+  Trash2,
+  Heart,
+  Plus,
+  Minus,
+  ArrowLeft,
+  ArrowRight,
+  Tag,
+  ShieldCheck,
+  Truck,
+  RotateCcw,
+  CheckCircle2,
+  AlertCircle,
+  X,
+  Sparkles,
+  MapPin,
+  Home,
+  Briefcase,
+  ChevronRight,
+  Phone,
+  Check,
+} from "lucide-react";
+import API from "../../api/axios";
+import {
+  fetchCart,
+  updateCartQuantity,
+  removeFromCart,
+  clearCart as clearCartService,
+  calculateCartSummary,
+    isLoggedIn,
+} from "../../Utils/cartService";
+import { addToWishlist } from "../../Utils/wishlistService";
 import "./CartSection.css";
 
-import avocadoImg from "../../assets/avocadoCart.webp";
-import orangeImg from "../../assets/lemoncart.avif";
-import grapeImg from "../../assets/garpecart.avif";
-import mangoImg from "../../assets/mangocart.avif";
-
-import { useNavigate } from "react-router-dom";
-import API, { BASE_URL } from "../../api/axios";
-import { useRef } from "react";
-
-// ======================================================
-// CONSTANTS
-// ======================================================
-
-const GUEST_CART_KEY = "guestCart";
-const PROJECT2_URL = import.meta.env.VITE_PROJECT2_URL;
-
-// ======================================================
-// COMPONENT
-// ======================================================
-
-const CartSection = ({ isOpen: externalIsOpen, onClose, onOpen }) => {
+const CartSection = () => {
+  const isInternalUpdate = useRef(false);
   const navigate = useNavigate();
 
-  // ======================================================
-  // DRAWER STATE
-  // ======================================================
-
-  const [internalIsOpen, setInternalIsOpen] = useState(false);
-
-  // ======================================================
-  // CHECKOUT POPUP STATE
-  // ======================================================
-
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-  const mergeInProgressRef = useRef(false);
-  const mergeCompletedRef = useRef(false);
+  // =======================================================
+  // PROMO CODE STATES (REAL DYNAMIC FROM BACKEND)
+  // =======================================================
+  const [couponInput, setCouponInput] = useState("");
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  const [couponsLoading, setCouponsLoading] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState("");
+  const [couponSuccess, setCouponSuccess] = useState("");
+  const [couponValidating, setCouponValidating] = useState(false);
 
-  const isCartOpen =
-    externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  // =======================================================
+  // ADDRESS STATES (REAL SAVED ADDRESSES)
+  // =======================================================
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [isAddressSelectOpen, setIsAddressSelectOpen] = useState(false);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [addressForm, setAddressForm] = useState({
+    name: "",
+    mobile: "",
+    address: "",
+    landmark: "",
+    city: "",
+    state: "",
+    pincode: "",
+    addressType: "Home",
+    isDefault: false,
+  });
+  const [addressSaving, setAddressSaving] = useState(false);
 
-  // ======================================================
-  // CLOSE CART
-  // ======================================================
-
-  const handleCloseCart = () => {
-    setInternalIsOpen(false);
-
-    if (onClose) {
-      onClose();
-    }
-  };
-
-  const handleOpenCart = async () => {
+  // =======================================================
+  // LOAD CART ITEMS
+  // =======================================================
+  const loadCartData = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        setCheckoutLoading(false);
-        setInternalIsOpen(false);
-        if (onClose) onClose();
-        document.body.classList.remove("cart-is-open");
-        alert("Please login to continue to checkout.");
-        navigate("/login", { replace: true });
-        return;
-      }
-
-      const { data } = await API.post("/auth/create-handoff");
-
-      if (!data?.success) {
-        throw new Error(data?.message || "Unable to open cart.");
-      }
-
-      const code = data?.code;
-
-      if (!code) {
-        throw new Error("Handoff code was not returned.");
-      }
-
-      setInternalIsOpen(false);
-
-      if (onClose) {
-        onClose();
-      }
-
-      window.location.href = `${PROJECT2_URL}/sso?code=${encodeURIComponent(
-        code,
-      )}&redirect=/cart`;
+      const data = await fetchCart();
+      setItems(data.items || []);
     } catch (error) {
-      console.error("Open cart SSO error:", error);
-
-      alert(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Unable to open cart.",
-      );
-    }
-  };
-
-  // ======================================================
-  // CHECKOUT — SSO HANDOFF TO PROJECT 2 CART (POPUP AUTO-OPEN)
-  // ======================================================
-
-  const handleCheckout = async () => {
-    try {
-      setCheckoutLoading(true);
-
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        alert("Please login to continue to checkout.");
-        navigate("/login");
-        return;
-      }
-
-      const { data } = await API.post("/auth/create-handoff");
-
-      if (!data?.success) {
-        throw new Error(data?.message || "Unable to continue to checkout.");
-      }
-
-      const code = data?.code;
-
-      if (!code) {
-        throw new Error("Handoff code was not returned.");
-      }
-
-      setInternalIsOpen(false);
-
-      if (onClose) onClose();
-
-      window.location.href = `${PROJECT2_URL}/sso?code=${encodeURIComponent(
-        code,
-      )}&redirect=/cart&openCheckout=1`;
-    } catch (error) {
-      console.error("Checkout SSO error:", error);
-
-      alert(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Unable to continue to checkout.",
-      );
+      console.error("Error loading cart:", error);
     } finally {
-      setCheckoutLoading(false);
-    }
-  };
-
-  // ======================================================
-  // CART STATE
-  // ======================================================
-
-  const [cartItems, setCartItems] = useState([]);
-
-  const [cartLoading, setCartLoading] = useState(false);
-
-  const [cartError, setCartError] = useState("");
-
-  // ======================================================
-  // TODAY DISCOUNTS
-  // ======================================================
-
-  const [todayDiscounts, setTodayDiscounts] = useState([]);
-
-  // ======================================================
-  // RECOMMENDATIONS
-  // ======================================================
-
-  const recommendations = [
-    {
-      id: 101,
-      name: "Sliced Whole Orange",
-      price: 400,
-      image: orangeImg,
-    },
-    {
-      id: 102,
-      name: "Garden Grape Fruit",
-      price: 500,
-      image: grapeImg,
-    },
-    {
-      id: 103,
-      name: "Fresh Organic Mango",
-      price: 350,
-      image: mangoImg,
-    },
-  ];
-
-  const [activeRecIndex, setActiveRecIndex] = useState(0);
-
-  // ======================================================
-  // SAFE TEXT
-  // ======================================================
-
-  const getSafeText = (value, fallback = "") => {
-    if (value === null || value === undefined) {
-      return fallback;
-    }
-
-    if (typeof value === "string") {
-      const text = value.trim();
-
-      return text || fallback;
-    }
-
-    if (typeof value === "number" || typeof value === "boolean") {
-      return String(value);
-    }
-
-    if (typeof value === "object") {
-      const possibleValues = [
-        value?.name,
-        value?.label,
-        value?.title,
-        value?.unitName,
-        value?.brandName,
-        value?.categoryName,
-        value?.value,
-        value?.symbol,
-      ];
-
-      for (const possibleValue of possibleValues) {
-        if (
-          possibleValue !== null &&
-          possibleValue !== undefined &&
-          typeof possibleValue !== "object"
-        ) {
-          const text = String(possibleValue).trim();
-
-          if (text) {
-            return text;
-          }
-        }
-      }
-
-      return fallback;
-    }
-
-    return fallback;
-  };
-
-  // ======================================================
-  // SAFE NUMBER
-  // ======================================================
-
-  const getSafeNumber = (value, fallback = 0) => {
-    const number = Number(value);
-
-    return Number.isFinite(number) ? number : fallback;
-  };
-
-  // ======================================================
-  // TOKEN
-  // ======================================================
-
-  const getToken = () => {
-    try {
-      return localStorage.getItem("token");
-    } catch {
-      return null;
-    }
-  };
-
-  // ======================================================
-  // OBJECT ID
-  // ======================================================
-
-  const getObjectId = (value) => {
-    if (!value) {
-      return "";
-    }
-
-    if (typeof value === "string") {
-      return value;
-    }
-
-    if (typeof value === "object") {
-      return value?._id || value?.id || value?.productId || "";
-    }
-
-    return "";
-  };
-
-  // ======================================================
-  // PRODUCT ID
-  // ======================================================
-
-  const getProductId = (item) => {
-    if (!item) {
-      return null;
-    }
-
-    if (item?.productId) {
-      return String(getObjectId(item.productId));
-    }
-
-    if (item?.product?._id) {
-      return String(item.product._id);
-    }
-
-    if (item?._id) {
-      return String(item._id);
-    }
-
-    if (item?.id) {
-      return String(item.id);
-    }
-
-    return null;
-  };
-
-  // ======================================================
-  // PRODUCT NAME
-  // ======================================================
-
-  const getProductName = (product = {}) => {
-    const nestedProduct =
-      product?.product && typeof product.product === "object"
-        ? product.product
-        : {};
-
-    return getSafeText(
-      product?.productName ||
-        product?.name ||
-        product?.title ||
-        product?.productTitle ||
-        product?.product_name ||
-        product?.itemName ||
-        product?.displayName ||
-        nestedProduct?.productName ||
-        nestedProduct?.name ||
-        nestedProduct?.title ||
-        nestedProduct?.productTitle ||
-        nestedProduct?.product_name,
-      "Product",
-    );
-  };
-
-  // ======================================================
-  // PRODUCT UNIT
-  // ======================================================
-
-  const getUnitName = (unit) => {
-    if (!unit) {
-      return "";
-    }
-
-    return getSafeText(unit, "");
-  };
-
-  // ======================================================
-  // PRODUCT PRICE
-  // ======================================================
-
-  const getProductPrice = (product = {}) => {
-    const productDiscountPrice = getSafeNumber(product?.discountPrice, 0);
-
-    if (productDiscountPrice > 0) {
-      return productDiscountPrice;
-    }
-
-    return getSafeNumber(product?.price ?? product?.sellingPrice ?? 0, 0);
-  };
-
-  // ======================================================
-  // IMAGE URL
-  // ======================================================
-
-  const getImageUrl = (image) => {
-    // ---- 1. Unwrap objects and arrays ----
-    let value = image;
-
-    if (Array.isArray(value)) {
-      value = value[0];
-    }
-
-    if (value && typeof value === "object") {
-      value =
-        value.url ||
-        value.path ||
-        value.secure_url ||
-        value.src ||
-        value.image ||
-        value.filename ||
-        "";
-    }
-
-    if (typeof value !== "string") {
-      return avocadoImg;
-    }
-
-    const str = value.trim();
-    if (!str) return avocadoImg;
-
-    // ---- 2. Already absolute (http, https, data, blob) ----
-    if (/^(https?:|data:|blob:)/i.test(str)) {
-      return str;
-    }
-
-    // ---- 3. Protocol-relative URL (//cdn.example.com/x.jpg) ----
-    if (str.startsWith("//")) {
-      return `https:${str}`;
-    }
-
-    // ---- 4. Relative path → prefix with backend origin ----
-    const origin =
-      BASE_URL || API.defaults.baseURL?.replace(/\/api\/?$/, "") || "";
-    const path = str.startsWith("/") ? str : `/${str}`;
-    return `${origin}${path}`;
-  };
-
-  // ======================================================
-  // GUEST CART
-  // ======================================================
-
-  const getGuestCart = () => {
-    try {
-      const storedCart = localStorage.getItem(GUEST_CART_KEY);
-
-      if (!storedCart) {
-        return [];
-      }
-
-      const parsedCart = JSON.parse(storedCart);
-
-      if (!Array.isArray(parsedCart)) {
-        return [];
-      }
-
-      return parsedCart;
-    } catch (error) {
-      console.error("Guest cart parse error:", error);
-
-      localStorage.removeItem(GUEST_CART_KEY);
-
-      return [];
-    }
-  };
-
-  // ======================================================
-  // SAVE GUEST CART
-  // ======================================================
-
-  const saveGuestCart = (items) => {
-    try {
-      const safeItems = Array.isArray(items) ? items : [];
-
-      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(safeItems));
-
-      window.dispatchEvent(new Event("cartUpdated"));
-    } catch (error) {
-      console.error("Save guest cart error:", error);
-    }
-  };
-
-  // ======================================================
-  // GET TODAY DISCOUNT FOR PRODUCT
-  // ======================================================
-
-  const getTodayDiscountForProduct = (productId) => {
-    if (!productId) {
-      return null;
-    }
-
-    const targetId = String(productId);
-
-    const discount = todayDiscounts.find((item) => {
-      const discountProductId = getObjectId(item?.product);
-
-      return String(discountProductId) === targetId;
-    });
-
-    return discount || null;
-  };
-
-  // ======================================================
-  // APPLY TODAY DISCOUNT
-  // ======================================================
-
-  const applyTodayDiscountToItem = (item) => {
-    if (!item) {
-      return item;
-    }
-
-    const productId = getProductId(item);
-
-    if (!productId) {
-      return item;
-    }
-
-    const discount = getTodayDiscountForProduct(productId);
-
-    if (!discount) {
-      const fallbackOriginalPrice = getSafeNumber(item?.originalPrice, 0);
-
-      const currentPrice = getSafeNumber(item?.price, 0);
-
-      return {
-        ...item,
-
-        price: fallbackOriginalPrice > 0 ? fallbackOriginalPrice : currentPrice,
-
-        discountPrice: 0,
-
-        todayDiscountPrice: 0,
-
-        originalPrice:
-          fallbackOriginalPrice > 0 ? fallbackOriginalPrice : currentPrice,
-
-        isTodayDiscount: false,
-      };
-    }
-
-    const originalPrice = getSafeNumber(
-      item?.originalPrice,
-      getSafeNumber(item?.product?.price, getSafeNumber(item?.price, 0)),
-    );
-
-    const discountPrice = getSafeNumber(discount?.discountPrice, 0);
-
-    if (
-      discountPrice <= 0 ||
-      (originalPrice > 0 && discountPrice >= originalPrice)
-    ) {
-      return {
-        ...item,
-
-        price: originalPrice > 0 ? originalPrice : item?.price,
-
-        originalPrice,
-
-        discountPrice: 0,
-
-        todayDiscountPrice: 0,
-
-        isTodayDiscount: false,
-      };
-    }
-
-    return {
-      ...item,
-
-      price: discountPrice,
-
-      originalPrice,
-
-      discountPrice,
-
-      todayDiscountPrice: discountPrice,
-
-      todayDiscountId: discount?._id,
-
-      isTodayDiscount: true,
-    };
-  };
-
-  // ======================================================
-  // APPLY TODAY DISCOUNTS TO CART
-  // ======================================================
-
-  const applyTodayDiscountsToCart = (items) => {
-    if (!Array.isArray(items)) {
-      return [];
-    }
-
-    return items.map(applyTodayDiscountToItem);
-  };
-
-  // ======================================================
-  // FORMAT GUEST ITEMS
-  // ======================================================
-
-  const formatGuestItems = (items) => {
-    if (!Array.isArray(items)) {
-      return [];
-    }
-
-    const formatted = items
-      .filter((item) => {
-        return Boolean(getProductId(item));
-      })
-      .map((item) => {
-        const productId = getProductId(item);
-
-        const productName = getProductName(item);
-
-        const rawUnit = item?.size ?? item?.unitName ?? item?.unit ?? "";
-
-        const unitName = getUnitName(rawUnit);
-
-        const originalPrice = getSafeNumber(
-          item?.originalPrice,
-          getSafeNumber(item?.price, 0),
-        );
-
-        return {
-          ...item,
-
-          id: String(item?.id || item?._id || productId),
-
-          productId: String(productId),
-
-          name: getSafeText(productName, "Product"),
-
-          price: getSafeNumber(item?.price, originalPrice),
-
-          originalPrice,
-
-          writtenPrice: getSafeNumber(item?.writtenPrice, 0),
-
-          discountPrice: getSafeNumber(item?.discountPrice, 0),
-
-          todayDiscountPrice: getSafeNumber(item?.todayDiscountPrice, 0),
-
-          size: getSafeText(unitName, "Standard Pack"),
-
-          quantity: Math.max(1, getSafeNumber(item?.quantity, 1)),
-
-          stockQuantity: getSafeNumber(item?.stockQuantity, 0),
-
-          image: getImageUrl(item?.image),
-        };
-      });
-
-    return applyTodayDiscountsToCart(formatted);
-  };
-
-  // ======================================================
-  // FORMAT BACKEND ITEMS
-  // ======================================================
-
-  const formatBackendItems = (items) => {
-    if (!Array.isArray(items)) {
-      return [];
-    }
-
-    const formatted = items
-      .filter((item) => item?.product)
-      .map((item) => {
-        const product = item.product;
-
-        const productId =
-          product?._id || product?.id || item?.productId || item?._id;
-
-        const productImage =
-          Array.isArray(product?.images) && product.images.length > 0
-            ? product.images[0]
-            : product?.image || product?.thumbnail || product?.imageUrl || null;
-
-        const productName = getProductName(product);
-
-        const unitName = getUnitName(product?.unit);
-
-        const price = getProductPrice(product);
-
-        const originalPrice = getSafeNumber(product?.price, price);
-
-        return {
-          id: String(item?._id || productId),
-
-          productId: String(productId || ""),
-
-          name: getSafeText(productName, "Product"),
-
-          price: getSafeNumber(price, 0),
-
-          originalPrice,
-
-          writtenPrice: getSafeNumber(product?.writtenPrice, 0),
-
-          discountPrice: getSafeNumber(product?.discountPrice, 0),
-
-          todayDiscountPrice: 0,
-
-          size: getSafeText(unitName, "Standard Pack"),
-
-          quantity: Math.max(1, getSafeNumber(item?.quantity, 1)),
-
-          stockQuantity: getSafeNumber(product?.stockQuantity, 0),
-
-          image: getImageUrl(productImage),
-        };
-      });
-
-    return applyTodayDiscountsToCart(formatted);
-  };
-
-  // ======================================================
-  // GET CART ITEMS FROM RESPONSE
-  // ======================================================
-
-  const getCartItemsFromResponse = (data) => {
-    if (!data) {
-      return [];
-    }
-
-    const items =
-      data?.cart?.items ||
-      data?.data?.cart?.items ||
-      data?.data?.items ||
-      data?.items ||
-      [];
-
-    return formatBackendItems(items);
-  };
-
-  // ======================================================
-  // FETCH ACTIVE TODAY DISCOUNTS
-  // ======================================================
-
-  const fetchTodayDiscounts = useCallback(async () => {
-    try {
-      const { data } = await API.get("/today-discounts/active");
-
-      const discounts = Array.isArray(data?.data)
-        ? data.data
-        : Array.isArray(data)
-          ? data
-          : [];
-
-      setTodayDiscounts(discounts);
-
-      return discounts;
-    } catch (error) {
-      console.error("Fetch Today Discounts error:", error);
-
-      setTodayDiscounts([]);
-
-      return [];
+      setLoading(false);
     }
   }, []);
 
-  // ======================================================
-  // MERGE GUEST CART
-  // ======================================================
-
-  const mergeGuestCartToBackend = async (token) => {
-    // Already merged this session?
-    if (mergeCompletedRef.current) return true;
-
-    // Another call is already merging?
-    if (mergeInProgressRef.current) return true;
-
+  // =======================================================
+  // LOAD REAL DYNAMIC COUPONS FROM BACKEND
+  // (Backed by http://localhost:5174/products/coupons)
+  // =======================================================
+  const loadDynamicCoupons = useCallback(async () => {
     try {
-      mergeInProgressRef.current = true;
-
-      const guestCart = getGuestCart();
-
-      if (!token || guestCart.length === 0) {
-        mergeCompletedRef.current = true;
-        return true;
-      }
-
-      // 🚨 Capture and CLEAR the guest cart BEFORE making any network calls.
-      // This prevents a second concurrent fetchCart() from re-merging it.
-      localStorage.removeItem(GUEST_CART_KEY);
-
-      let success = true;
-
-      for (const item of guestCart) {
-        const productId = getProductId(item);
-        if (!productId) continue;
-
-        const quantity = Math.max(1, getSafeNumber(item?.quantity, 1));
-
-        try {
-          await API.post("/cart/add", { productId, quantity });
-        } catch (error) {
-          console.error("Guest cart merge item error:", error);
-          success = false;
-        }
-      }
-
-      if (!success) {
-        // Put it back if merge failed partially — user can retry later
-        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(guestCart));
-        mergeCompletedRef.current = false;
-      } else {
-        mergeCompletedRef.current = true;
-        window.dispatchEvent(new Event("cartUpdated"));
-      }
-
-      return success;
+      setCouponsLoading(true);
+      const { data } = await API.get("/coupons?status=Active");
+      const list = data?.coupons || data?.data || [];
+      setAvailableCoupons(Array.isArray(list) ? list : []);
     } catch (error) {
-      console.error("Merge guest cart error:", error);
-      return false;
+      console.error("Error loading dynamic coupons:", error);
+      setAvailableCoupons([]);
     } finally {
-      mergeInProgressRef.current = false;
+      setCouponsLoading(false);
     }
-  };
+  }, []);
 
-  // ======================================================
-  // FETCH CART
-  // ======================================================
-
-  const fetchCart = useCallback(async () => {
+  // =======================================================
+  // LOAD SAVED DELIVERY ADDRESSES
+  // =======================================================
+  const loadAddresses = useCallback(async () => {
+    if (!isLoggedIn()) return;
     try {
-      setCartLoading(true);
+      setAddressLoading(true);
+      const { data } = await API.get("/delivery-address");
+      const list = data?.data || data?.addresses || [];
+      const validList = Array.isArray(list) ? list : [];
+      setAddresses(validList);
 
-      setCartError("");
-
-      const activeDiscounts = await fetchTodayDiscounts();
-
-      const discountList = Array.isArray(activeDiscounts)
-        ? activeDiscounts
-        : [];
-
-      const applyCurrentDiscounts = (items) => {
-        if (!Array.isArray(items)) {
-          return [];
-        }
-
-        return items.map((item) => {
-          const productId = getProductId(item);
-
-          const discount = discountList.find(
-            (discountItem) =>
-              String(getObjectId(discountItem?.product)) === String(productId),
-          );
-
-          if (!discount) {
-            const originalPrice = getSafeNumber(
-              item?.originalPrice,
-              getSafeNumber(item?.price, 0),
-            );
-
-            return {
-              ...item,
-
-              price: originalPrice,
-
-              originalPrice,
-
-              discountPrice: 0,
-
-              todayDiscountPrice: 0,
-
-              isTodayDiscount: false,
-            };
-          }
-
-          const originalPrice = getSafeNumber(
-            item?.originalPrice,
-            getSafeNumber(item?.price, 0),
-          );
-
-          const discountPrice = getSafeNumber(discount?.discountPrice, 0);
-
-          if (
-            discountPrice <= 0 ||
-            (originalPrice > 0 && discountPrice >= originalPrice)
-          ) {
-            return {
-              ...item,
-
-              price: originalPrice,
-
-              originalPrice,
-
-              discountPrice: 0,
-
-              todayDiscountPrice: 0,
-
-              isTodayDiscount: false,
-            };
-          }
-
-          return {
-            ...item,
-
-            price: discountPrice,
-
-            originalPrice,
-
-            discountPrice,
-
-            todayDiscountPrice: discountPrice,
-
-            todayDiscountId: discount?._id,
-
-            isTodayDiscount: true,
-          };
-        });
-      };
-
-      const token = getToken();
-
-      // ==================================================
-      // GUEST CART
-      // ==================================================
-
-      if (!token) {
-        const guestCart = getGuestCart();
-
-        const formattedItems = formatGuestItems(guestCart);
-
-        const discountedItems = applyCurrentDiscounts(formattedItems);
-
-        setCartItems(discountedItems);
-
-        return;
+      // Auto-select default or first address
+      if (validList.length > 0) {
+        const defaultAddr =
+          validList.find((a) => a.isDefault) || validList[0];
+        setSelectedAddress(defaultAddr);
       }
-
-      // ==================================================
-      // MERGE GUEST CART
-      // ==================================================
-
-      await mergeGuestCartToBackend(token);
-
-      // ==================================================
-      // BACKEND CART
-      // ==================================================
-
-      const { data } = await API.get("/cart");
-
-      const formattedItems = getCartItemsFromResponse(data);
-
-      const discountedItems = applyCurrentDiscounts(formattedItems);
-
-      setCartItems(discountedItems);
     } catch (error) {
-      console.error("Fetch cart error:", error);
-
-      setCartError(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Unable to load cart.",
-      );
-
-      setCartItems([]);
+      console.error("Error loading delivery addresses:", error);
     } finally {
-      setCartLoading(false);
+      setAddressLoading(false);
     }
-  }, [fetchTodayDiscounts]);
-
-  // ======================================================
-  // INITIAL LOAD
-  // ======================================================
+  }, []);
 
   useEffect(() => {
-    fetchCart();
-  }, [fetchCart]);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    loadCartData();
+    loadDynamicCoupons();
+    loadAddresses();
 
-  // ======================================================
-  // REFRESH WHEN CART OPENS
-  // ======================================================
-
-  useEffect(() => {
-    if (isCartOpen) {
-      fetchCart();
-    }
-  }, [isCartOpen, fetchCart]);
-
-  // ======================================================
-  // CART UPDATED EVENT
-  // ======================================================
-
-  useEffect(() => {
     const handleCartUpdated = () => {
-      fetchCart();
+      if (isInternalUpdate.current) return;
+      loadCartData();
     };
 
     window.addEventListener("cartUpdated", handleCartUpdated);
-
     return () => {
       window.removeEventListener("cartUpdated", handleCartUpdated);
     };
-  }, [fetchCart]);
+  }, [loadCartData, loadDynamicCoupons, loadAddresses]);
 
-  // ======================================================
-  // BODY LOCK
-  // ======================================================
+  // =======================================================
+  // SUMMARY CALCULATIONS (NO FREE DELIVERY THRESHOLD)
+  // =======================================================
+  const summary = calculateCartSummary(items, appliedCoupon);
 
-  useEffect(() => {
-    if (isCartOpen) {
-      document.body.classList.add("cart-is-open");
-    } else {
-      document.body.classList.remove("cart-is-open");
+  // =======================================================
+  // HANDLERS: QUANTITY
+  // =======================================================
+  const handleQuantityChange = async (item, newQuantity) => {
+    if (newQuantity < 1) {
+      handleRemoveItem(item);
+      return;
     }
 
-    return () => {
-      document.body.classList.remove("cart-is-open");
-    };
-  }, [isCartOpen]);
+    if (item.stockQuantity && newQuantity > item.stockQuantity) {
+      Swal.fire({
+        icon: "warning",
+        title: "Stock Limit Reached",
+        text: `Sorry, only ${item.stockQuantity} units are available.`,
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      return;
+    }
 
-  // ======================================================
-  // UPDATE CART QUANTITY
-  // ======================================================
+    // Immediate instant optimistic update
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === item.id ? { ...i, quantity: newQuantity } : i
+      )
+    );
 
-  const updateCartQuantity = async (item, quantity) => {
+    // Prevent race condition from overwriting state
+    isInternalUpdate.current = true;
     try {
-      const safeQuantity = getSafeNumber(quantity, 0);
+      await updateCartQuantity(item.id, newQuantity);
+    } finally {
+      setTimeout(() => {
+        isInternalUpdate.current = false;
+      }, 500);
+    }
+  };
 
-      const productId = getProductId(item);
+  // =======================================================
+  // HANDLERS: REMOVE ITEM
+  // =======================================================
+  const handleRemoveItem = async (item) => {
+    const result = await Swal.fire({
+      title: "Remove from cart?",
+      text: `Are you sure you want to remove "${item.name}"?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Yes, remove",
+      cancelButtonText: "Keep it",
+    });
 
-      if (!productId) {
-        throw new Error("Product ID is missing.");
-      }
+    if (!result.isConfirmed) return;
 
-      if (safeQuantity <= 0) {
-        await handleRemove(item.id);
+    setActionLoading(item.id);
+    setItems((prev) => prev.filter((i) => i.id !== item.id));
+    await removeFromCart(item.id);
+    setActionLoading(null);
 
-        return;
-      }
+    Swal.fire({
+      icon: "success",
+      title: "Item removed",
+      timer: 1400,
+      showConfirmButton: false,
+    });
+  };
 
-      if (item.stockQuantity > 0 && safeQuantity > item.stockQuantity) {
-        alert(`Only ${item.stockQuantity} item(s) available in stock.`);
+  // =======================================================
+  // HANDLERS: MOVE TO WISHLIST
+  // =======================================================
+  const handleMoveToWishlist = async (item) => {
+    setActionLoading(item.id);
 
-        return;
-      }
+    await addToWishlist({
+      id: item.id,
+      _id: item.id,
+      productName: item.name,
+      name: item.name,
+      price: item.price,
+      writtenPrice: item.originalPrice,
+      images: [item.image],
+      image: item.image,
+      category: item.category,
+      unit: item.unit,
+    });
 
-      const token = getToken();
+    setItems((prev) => prev.filter((i) => i.id !== item.id));
+    await removeFromCart(item.id);
+    setActionLoading(null);
 
-      // ==================================================
-      // GUEST
-      // ==================================================
+    Swal.fire({
+      icon: "success",
+      title: "Moved to Wishlist!",
+      text: `"${item.name}" moved to your saved wishlist.`,
+      timer: 1600,
+      showConfirmButton: false,
+    });
+  };
 
-      if (!token) {
-        const guestCart = getGuestCart();
+  // =======================================================
+  // HANDLERS: CLEAR CART
+  // =======================================================
+  const handleClearCart = async () => {
+    const result = await Swal.fire({
+      title: "Clear your shopping cart?",
+      text: "All items will be removed from your cart.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Yes, empty cart",
+      cancelButtonText: "Cancel",
+    });
 
-        const updatedCart = guestCart.map((cartItem) => {
-          const cartProductId = getProductId(cartItem);
+    if (!result.isConfirmed) return;
 
-          if (String(cartProductId) === String(productId)) {
-            return {
-              ...cartItem,
+    setItems([]);
+    setAppliedCoupon(null);
+    await clearCartService();
 
-              quantity: safeQuantity,
-            };
-          }
+    Swal.fire({
+      icon: "success",
+      title: "Cart cleared",
+      timer: 1500,
+      showConfirmButton: false,
+    });
+  };
 
-          return cartItem;
-        });
+  // =======================================================
+  // REAL DYNAMIC COUPON VALIDATION (API)
+  // =======================================================
+  const handleApplyCoupon = async (codeToApply) => {
+    const code = (codeToApply || couponInput).trim().toUpperCase();
+    setCouponError("");
+    setCouponSuccess("");
 
-        saveGuestCart(updatedCart);
+    if (!code) {
+      setCouponError("Please enter a valid coupon code");
+      return;
+    }
 
-        setCartItems(formatGuestItems(updatedCart));
-
-        return;
-      }
-
-      // ==================================================
-      // LOGGED-IN
-      // ==================================================
-
-      const { data } = await API.put(`/cart/update/${productId}`, {
-        quantity: safeQuantity,
+    try {
+      setCouponValidating(true);
+      const { data } = await API.post("/coupons/validate", {
+        code,
+        orderAmount: summary.itemsTotal,
       });
 
-      const returnedItems = getCartItemsFromResponse(data);
-
-      if (returnedItems.length > 0 || data?.cart?.items) {
-        setCartItems(applyTodayDiscountsToCart(returnedItems));
-      } else {
-        await fetchCart();
-      }
-
-      window.dispatchEvent(new Event("cartUpdated"));
-    } catch (error) {
-      console.error("Update cart error:", error);
-
-      alert(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Unable to update cart.",
-      );
-    }
-  };
-
-  // ======================================================
-  // INCREASE
-  // ======================================================
-
-  const handleIncrease = (id) => {
-    const item = cartItems.find(
-      (cartItem) => String(cartItem.id) === String(id),
-    );
-
-    if (!item) {
-      return;
-    }
-
-    const nextQuantity = getSafeNumber(item.quantity, 0) + 1;
-
-    if (item.stockQuantity > 0 && nextQuantity > item.stockQuantity) {
-      alert(`Only ${item.stockQuantity} item(s) available in stock.`);
-
-      return;
-    }
-
-    updateCartQuantity(item, nextQuantity);
-  };
-
-  // ======================================================
-  // DECREASE
-  // ======================================================
-
-  const handleDecrease = (id) => {
-    const item = cartItems.find(
-      (cartItem) => String(cartItem.id) === String(id),
-    );
-
-    if (!item) {
-      return;
-    }
-
-    const nextQuantity = getSafeNumber(item.quantity, 0) - 1;
-
-    updateCartQuantity(item, nextQuantity);
-  };
-
-  // ======================================================
-  // REMOVE
-  // ======================================================
-
-  const handleRemove = async (id) => {
-    try {
-      const item = cartItems.find(
-        (cartItem) => String(cartItem.id) === String(id),
-      );
-
-      if (!item) {
-        return;
-      }
-
-      const token = getToken();
-
-      // ==================================================
-      // GUEST
-      // ==================================================
-
-      if (!token) {
-        const guestCart = getGuestCart();
-
-        const productId = getProductId(item);
-
-        const updatedGuestCart = guestCart.filter((cartItem) => {
-          const cartProductId = getProductId(cartItem);
-
-          return String(cartProductId) !== String(productId);
+      if (data?.success && data?.data) {
+        setAppliedCoupon({
+          code: data.data.code,
+          title: data.data.title || data.data.code,
+          discountType: data.data.discountType,
+          discountValue: data.data.discountValue,
+          discountAmount: data.data.discountAmount,
+          minPurchase: data.data.minPurchase,
         });
-
-        saveGuestCart(updatedGuestCart);
-
-        setCartItems(formatGuestItems(updatedGuestCart));
-
-        return;
-      }
-
-      // ==================================================
-      // LOGGED-IN
-      // ==================================================
-
-      const productId = getProductId(item);
-
-      if (!productId) {
-        throw new Error("Product ID is missing.");
-      }
-
-      const { data } = await API.delete(`/cart/remove/${productId}`);
-
-      const returnedItems = getCartItemsFromResponse(data);
-
-      if (returnedItems.length > 0 || data?.cart?.items) {
-        setCartItems(applyTodayDiscountsToCart(returnedItems));
-      } else {
-        await fetchCart();
-      }
-
-      window.dispatchEvent(new Event("cartUpdated"));
-    } catch (error) {
-      console.error("Remove cart error:", error);
-
-      alert(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Unable to remove product.",
-      );
-    }
-  };
-
-  // ======================================================
-  // ADD RECOMMENDATION
-  // ======================================================
-
-  const handleAddToCart = async (recItem) => {
-    try {
-      if (!recItem) {
-        return;
-      }
-
-      const productId = recItem?.productId || recItem?._id;
-
-      if (!productId) {
-        alert("This recommendation is currently a demo product.");
-
-        return;
-      }
-
-      const token = getToken();
-
-      // ==================================================
-      // GUEST
-      // ==================================================
-
-      if (!token) {
-        const guestCart = getGuestCart();
-
-        const existingIndex = guestCart.findIndex(
-          (item) => String(getProductId(item)) === String(productId),
+        setCouponSuccess(
+          data.message || `Coupon "${data.data.code}" applied successfully!`
         );
-
-        if (existingIndex !== -1) {
-          const currentQuantity = getSafeNumber(
-            guestCart[existingIndex]?.quantity,
-            1,
-          );
-
-          guestCart[existingIndex] = {
-            ...guestCart[existingIndex],
-
-            quantity: currentQuantity + 1,
-          };
-        } else {
-          guestCart.push({
-            id: String(productId),
-
-            productId: String(productId),
-
-            name: getSafeText(recItem?.name, "Product"),
-
-            price: getSafeNumber(recItem?.price, 0),
-
-            originalPrice: getSafeNumber(recItem?.price, 0),
-
-            writtenPrice: getSafeNumber(recItem?.writtenPrice, 0),
-
-            quantity: 1,
-
-            stockQuantity: getSafeNumber(recItem?.stockQuantity, 0),
-
-            image: getImageUrl(recItem?.image),
-          });
-        }
-
-        saveGuestCart(guestCart);
-
-        setCartItems(formatGuestItems(guestCart));
-
-        alert("Product added to cart successfully.");
-
-        return;
-      }
-
-      // ==================================================
-      // LOGGED-IN
-      // ==================================================
-
-      const { data } = await API.post("/cart/add", {
-        productId,
-        quantity: 1,
-      });
-
-      const returnedItems = getCartItemsFromResponse(data);
-
-      if (returnedItems.length > 0 || data?.cart?.items) {
-        setCartItems(applyTodayDiscountsToCart(returnedItems));
+        setCouponInput("");
       } else {
-        await fetchCart();
+        setCouponError(data?.message || "Invalid coupon code");
       }
-
-      window.dispatchEvent(new Event("cartUpdated"));
-
-      alert(data?.message || "Product added to cart successfully.");
     } catch (error) {
-      console.error("Recommendation cart error:", error);
-
-      alert(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Unable to add product to cart.",
+      console.error("Coupon validation error:", error);
+      setCouponError(
+        error.response?.data?.message || "Could not apply this coupon."
       );
+    } finally {
+      setCouponValidating(false);
     }
   };
 
-  // ======================================================
-  // CALCULATIONS
-  // ======================================================
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponSuccess("");
+    setCouponError("");
+  };
 
-  const totalItemsCount = cartItems.reduce(
-    (total, item) => total + getSafeNumber(item?.quantity, 0),
-    0,
-  );
+  // =======================================================
+  // HANDLERS: ADD NEW ADDRESS
+  // =======================================================
+  const handleOpenAddAddress = () => {
+    setAddressForm({
+      name: "",
+      mobile: "",
+      address: "",
+      landmark: "",
+      city: "",
+      state: "",
+      pincode: "",
+      addressType: "Home",
+      isDefault: addresses.length === 0,
+    });
+    setIsAddressModalOpen(true);
+  };
 
-  const subtotalAmount = cartItems.reduce((total, item) => {
-    const price = getSafeNumber(item?.price, 0);
+  const handleSaveAddress = async (e) => {
+    e.preventDefault();
 
-    const quantity = getSafeNumber(item?.quantity, 0);
-
-    return total + price * quantity;
-  }, 0);
-
-  const totalDiscountAmount = cartItems.reduce((total, item) => {
-    if (!item?.isTodayDiscount) {
-      return total;
+    if (
+      !addressForm.name.trim() ||
+      !addressForm.mobile.trim() ||
+      !addressForm.address.trim() ||
+      !addressForm.city.trim() ||
+      !addressForm.state.trim() ||
+      !addressForm.pincode.trim()
+    ) {
+      Swal.fire({
+        icon: "warning",
+        title: "Required Fields",
+        text: "Please fill in all mandatory address fields.",
+      });
+      return;
     }
 
-    const originalPrice = getSafeNumber(item?.originalPrice, 0);
+    try {
+      setAddressSaving(true);
+      const { data } = await API.post("/delivery-address", addressForm);
+      const newAddress = data?.data || data?.address || addressForm;
 
-    const discountPrice = getSafeNumber(item?.price, 0);
+      await loadAddresses();
+      setSelectedAddress(newAddress);
+      setIsAddressModalOpen(false);
 
-    const quantity = getSafeNumber(item?.quantity, 0);
+      Swal.fire({
+        icon: "success",
+        title: "Delivery Address Saved!",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error("Error saving address in cart:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Could not save address",
+        text: error.response?.data?.message || "Please check details.",
+      });
+    } finally {
+      setAddressSaving(false);
+    }
+  };
 
-    const saving = Math.max(0, originalPrice - discountPrice);
+  // =======================================================
+  // HELPER: LOAD RAZORPAY SDK DYNAMICALLY
+  // =======================================================
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
 
-    return total + saving * quantity;
-  }, 0);
+  // =======================================================
+  // HANDLER: FRESH RAZORPAY CHECKOUT INTEGRATION
+  // =======================================================
+  const handleProceedToCheckout = async () => {
+    if (items.length === 0 || checkoutLoading) return;
 
-  const freeShippingThreshold = 1000;
+    // 1. Check Authentication
+    if (!isLoggedIn()) {
+      Swal.fire({
+        icon: "info",
+        title: "Please Sign In",
+        text: "Please sign in or create an account to proceed with your order.",
+        showCancelButton: true,
+        confirmButtonColor: "#059669",
+        confirmButtonText: "Sign In",
+        cancelButtonText: "Continue Shopping",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate("/login");
+        }
+      });
+      return;
+    }
 
-  const progressPercent = Math.min(
-    (subtotalAmount / freeShippingThreshold) * 100,
-    100,
-  );
+    // 2. Check Delivery Address
+    if (!selectedAddress) {
+      Swal.fire({
+        icon: "warning",
+        title: "Delivery Address Required",
+        text: "Please add or select a delivery address to complete your checkout.",
+        showCancelButton: true,
+        confirmButtonColor: "#059669",
+        confirmButtonText: "Add Address",
+        cancelButtonText: "Cancel",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate("/profile?tab=addresses");
+        }
+      });
+      return;
+    }
 
-  const activeRecommendation =
-    recommendations[activeRecIndex] || recommendations[0];
+    try {
+      setCheckoutLoading(true);
 
-  // ======================================================
-  // RENDER
-  // ======================================================
+      // 3. Ensure Razorpay SDK is ready
+      const isSdkReady = await loadRazorpayScript();
+      if (!isSdkReady || !window.Razorpay) {
+        setCheckoutLoading(false);
+        Swal.fire({
+          icon: "error",
+          title: "Payment SDK Error",
+          text: "Unable to load Razorpay payment gateway. Please check your network connection.",
+          confirmButtonColor: "#059669",
+        });
+        return;
+      }
 
-  return (
-    <>
-      <script type="application/ld+json">
-        {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "WebPage",
-          name: "Grocery Sathi Shopping Cart",
-          description:
-            "Review your selected fresh organic grocery items, check shipping progress, and proceed to secure checkout on Grocery Sathi.",
-          publisher: {
-            "@type": "Organization",
-            name: "Grocery Sathi",
+      // 4. Place order on backend to create Razorpay Order
+      const orderPayload = {
+        addressId: selectedAddress._id || selectedAddress.id,
+        items: items.map((i) => ({
+          productId: i.productId || i.id,
+          quantity: Number(i.quantity),
+        })),
+        paymentMethod: "razorpay",
+        useWallet: false,
+        usePoints: false,
+      };
+
+      const { data } = await API.post("/orders/place", orderPayload);
+
+      if (!data?.success) {
+        setCheckoutLoading(false);
+        Swal.fire({
+          icon: "error",
+          title: "Order Failed",
+          text: data?.message || "Could not initialize order. Please try again.",
+          confirmButtonColor: "#059669",
+        });
+        return;
+      }
+
+      // If fully covered by zero payable
+      if (!data.requiresPayment) {
+        setCheckoutLoading(false);
+        await clearCartService();
+        Swal.fire({
+          icon: "success",
+          title: "Order Placed Successfully!",
+          text: `Your order #${data.order?.orderNumber || ""} has been confirmed.`,
+          confirmButtonColor: "#059669",
+          confirmButtonText: "View My Orders",
+        }).then(() => {
+          navigate("/profile?tab=orders");
+        });
+        return;
+      }
+
+      // 5. Trigger Razorpay Checkout directly
+      const rzpInfo = data.razorpay || {};
+      let userEmail = "";
+      try {
+        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        userEmail = storedUser?.email || "";
+      } catch {}
+
+      const options = {
+        key: rzpInfo.key || import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_TppGgVggUkbJv4",
+        amount: rzpInfo.amount,
+        currency: rzpInfo.currency || "INR",
+        name: "Grocery Sathi",
+        description: rzpInfo.description || `Order #${data.order?.orderNumber || ""}`,
+        order_id: rzpInfo.orderId,
+        prefill: {
+          name: selectedAddress.name || "",
+          contact: selectedAddress.mobile || "",
+          email: rzpInfo.prefill?.email || userEmail,
+        },
+        theme: {
+          color: "#059669",
+        },
+        handler: async function (paymentResponse) {
+          try {
+            Swal.fire({
+              title: "Verifying Payment...",
+              text: "Please wait while we confirm your payment.",
+              allowOutsideClick: false,
+              didOpen: () => {
+                Swal.showLoading();
+              },
+            });
+
+            const verifyRes = await API.post("/orders/verify", {
+              razorpayOrderId: paymentResponse.razorpay_order_id,
+              razorpayPaymentId: paymentResponse.razorpay_payment_id,
+              razorpaySignature: paymentResponse.razorpay_signature,
+            });
+
+            if (verifyRes.data?.success) {
+              await clearCartService();
+              Swal.fire({
+                icon: "success",
+                title: "Payment Successful!",
+                text: `Order #${data.order?.orderNumber || ""} is placed and confirmed!`,
+                confirmButtonColor: "#059669",
+                confirmButtonText: "View Orders",
+              }).then(() => {
+                navigate("/profile?tab=orders");
+              });
+            } else {
+              Swal.fire({
+                icon: "error",
+                title: "Payment Verification Failed",
+                text: verifyRes.data?.message || "Verification failed. Please contact support.",
+                confirmButtonColor: "#059669",
+              });
+            }
+          } catch (verErr) {
+            console.error("Verification error:", verErr);
+            Swal.fire({
+              icon: "error",
+              title: "Verification Error",
+              text: verErr.response?.data?.message || "Failed to verify transaction.",
+              confirmButtonColor: "#059669",
+            });
+          } finally {
+            setCheckoutLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setCheckoutLoading(false);
           },
-        })}
-      </script>
+        },
+      };
 
-      {/* REOPEN CART */}
-      {!isCartOpen && (
-        <button
-          type="button"
-          className="reopen-cart-btn"
-          onClick={handleOpenCart}
-          aria-label="Open Grocery Sathi Shopping Cart"
-        >
-          🛒 Open Cart
-        </button>
-      )}
+      const rzpInstance = new window.Razorpay(options);
+      rzpInstance.on("payment.failed", function (resp) {
+        setCheckoutLoading(false);
+        Swal.fire({
+          icon: "error",
+          title: "Payment Failed",
+          text: resp.error?.description || "Payment was declined or cancelled.",
+          confirmButtonColor: "#059669",
+        });
+      });
 
-      {/* CART OVERLAY */}
-      <div
-        className={`cart-drawer-overlay ${isCartOpen ? "open" : ""}`}
-        onClick={handleCloseCart}
-        role="presentation"
-      >
-        <div
-          className={`cart-drawer-container ${isCartOpen ? "slide-in" : ""}`}
-          onClick={(e) => e.stopPropagation()}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Shopping Cart Drawer"
-        >
-          <header className="cart-header">
-            <div className="cart-header-left">
-              <div className="cart-header-icon" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="20"
-                  height="20"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="9" cy="20" r="1.6" />
-                  <circle cx="17" cy="20" r="1.6" />
-                  <path d="M3 3h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 7H6" />
-                </svg>
+      rzpInstance.open();
+    } catch (err) {
+      console.error("Proceed to checkout error:", err);
+      setCheckoutLoading(false);
+      Swal.fire({
+        icon: "error",
+        title: "Checkout Error",
+        text: err.response?.data?.message || "Failed to start checkout process.",
+        confirmButtonColor: "#059669",
+      });
+    }
+  };
+
+  // =======================================================
+  // RENDER: LOADING STATE
+  // =======================================================
+  if (loading) {
+    return (
+      <div className="cart-page-wrapper">
+        <div className="cart-page-container">
+          <div className="cart-loading-skeleton">
+            <div className="skeleton-bar skeleton-title"></div>
+            <div className="cart-layout-grid">
+              <div className="skeleton-items-column">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="skeleton-card"></div>
+                ))}
               </div>
-              <div className="cart-header-title-wrap">
-                <h2 className="cart-header-title">Your Cart</h2>
-                <span className="cart-total-item-count">
-                  {totalItemsCount} item{totalItemsCount !== 1 ? "s" : ""}
+              <div className="skeleton-summary-column">
+                <div className="skeleton-summary-box"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =======================================================
+  // RENDER: EMPTY CART
+  // =======================================================
+  if (items.length === 0) {
+    return (
+      <div className="cart-page-wrapper">
+        <div className="cart-page-container">
+          <nav className="cart-breadcrumb" aria-label="Breadcrumb">
+            <Link to="/" className="breadcrumb-link">
+              Home
+            </Link>
+            <span className="breadcrumb-separator">/</span>
+            <span className="breadcrumb-current">Shopping Cart</span>
+          </nav>
+
+          <div className="cart-empty-card">
+            <div className="cart-empty-icon-wrap">
+              <ShoppingBag size={54} className="cart-empty-icon" />
+              <span className="cart-empty-badge">0</span>
+            </div>
+            <h1 className="cart-empty-title">Your Shopping Cart is Empty</h1>
+            <p className="cart-empty-desc">
+              Looks like you haven't added anything to your cart yet. Explore
+              our fresh farm-picked vegetables, fruits, and groceries!
+            </p>
+            <div className="cart-empty-actions">
+              <Link to="/" className="cart-btn-primary">
+                <ShoppingBag size={18} />
+                <span>Start Shopping</span>
+              </Link>
+              <Link to="/wishlist" className="cart-btn-secondary">
+                <Heart size={18} />
+                <span>View Wishlist</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =======================================================
+  // RENDER: ACTIVE CART
+  // =======================================================
+  return (
+    <div className="cart-page-wrapper">
+      <div className="cart-page-container">
+        {/* BREADCRUMB */}
+        <nav className="cart-breadcrumb" aria-label="Breadcrumb">
+          <Link to="/" className="breadcrumb-link">
+            Home
+          </Link>
+          <span className="breadcrumb-separator">/</span>
+          <span className="breadcrumb-current">Shopping Cart</span>
+        </nav>
+
+        {/* PAGE HEADER */}
+        <div className="cart-header-row">
+          <div className="cart-header-left">
+            <h1 className="cart-page-title">Shopping Cart</h1>
+            <span className="cart-items-counter-badge">
+              {summary.itemCount} {summary.itemCount === 1 ? "Item" : "Items"}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className="cart-clear-btn"
+            onClick={handleClearCart}
+            aria-label="Empty Cart"
+          >
+            <Trash2 size={16} />
+            <span>Empty Cart</span>
+          </button>
+        </div>
+
+        
+
+        {/* MAIN 2-COLUMN LAYOUT */}
+        <div className="cart-layout-grid">
+          {/* ==============================================
+              LEFT COLUMN: CART ITEMS LIST
+          =============================================== */}
+          <section className="cart-items-column" aria-label="Cart Items">
+          {/* ===================================================
+            DELIVERY ADDRESS SECTION (IN CART INTEGRATION)
+        ==================================================== */}
+        <div className="cart-delivery-address-card">
+          <div className="cart-address-icon-box">
+            <MapPin size={22} className="cart-address-pin" />
+          </div>
+
+          <div className="cart-address-content">
+            <div className="cart-address-label-row">
+              <span className="cart-deliver-to-text">Deliver to:</span>
+              {selectedAddress && (
+                <span className="cart-address-type-tag">
+                  {selectedAddress.addressType === "Work" ? (
+                    <Briefcase size={12} />
+                  ) : (
+                    <Home size={12} />
+                  )}
+                  <span>{selectedAddress.addressType || "Home"}</span>
+                </span>
+              )}
+            </div>
+
+            {selectedAddress ? (
+              <div className="cart-selected-address-info">
+                <span className="address-recipient-info">
+                  <strong>{selectedAddress.name}</strong> •{" "}
+                  {selectedAddress.mobile}
+                </span>
+                <span className="address-full-string">
+                  {selectedAddress.address}
+                  {selectedAddress.landmark
+                    ? `, Near ${selectedAddress.landmark}`
+                    : ""}
+                  , {selectedAddress.city}, {selectedAddress.state} -{" "}
+                  {selectedAddress.pincode}
                 </span>
               </div>
-            </div>
+            ) : isLoggedIn() ? (
+              <div className="cart-no-address-info">
+                <span>No delivery address selected. Please add or choose an address.</span>
+              </div>
+            ) : (
+              <div className="cart-no-address-info">
+                <span>
+                  Log in or add a delivery address for fast doorstep grocery delivery.
+                </span>
+              </div>
+            )}
+          </div>
 
-            <button
-              type="button"
-              className="cart-close-btn"
-              onClick={handleCloseCart}
-              aria-label="Close shopping cart"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="18"
-                height="18"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-              >
-                <line x1="6" y1="6" x2="18" y2="18" />
-                <line x1="18" y1="6" x2="6" y2="18" />
-              </svg>
-            </button>
-          </header>
-
-          {cartLoading ? (
-            <div className="empty-cart-container">
-              <div className="empty-cart-icon-wrap">🛒</div>
-
-              <h3 className="empty-cart-title">Loading cart...</h3>
-            </div>
-          ) : cartError ? (
-            <div className="empty-cart-container">
-              <div className="empty-cart-icon-wrap">⚠️</div>
-
-              <h3 className="empty-cart-title">
-                {getSafeText(cartError, "Unable to load cart.")}
-              </h3>
-
-              <button
-                type="button"
-                className="btn-continue-shopping"
-                onClick={fetchCart}
-              >
-                Try Again
-              </button>
-            </div>
-          ) : cartItems.length === 0 ? (
-            <div className="empty-cart-container">
-              <div className="empty-cart-icon-wrap">
-                <svg
-                  width="48"
-                  height="48"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
+          <div className="cart-address-action-col">
+            {isLoggedIn() ? (
+              addresses.length > 0 ? (
+                <button
+                  type="button"
+                  className="cart-change-address-btn"
+                  onClick={() => setIsAddressSelectOpen(true)}
                 >
-                  <path d="M6 8h12l1 13H5L6 8Z" />
-                  <path d="M9 8a3 3 0 0 1 6 0" />
-                </svg>
+                  <span>Change</span>
+                  <ChevronRight size={15} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="cart-add-address-btn"
+                  onClick={() => navigate("/profile?tab=addresses")}
+                >
+                  <Plus size={15} />
+                  <span>Add Address</span>
+                </button>
+              )
+            ) : (
+              <Link to="/login" className="cart-login-address-btn">
+                <span>Login to deliver</span>
+              </Link>
+            )}
+          </div>
+        </div>
+            <div className="cart-items-card">
+              <div className="cart-items-table-header">
+                <span className="col-header-product">Product</span>
+                <span className="col-header-price">Price</span>
+                <span className="col-header-qty">Quantity</span>
+                <span className="col-header-subtotal">Subtotal</span>
               </div>
 
-              <h3 className="empty-cart-title">Your cart is empty</h3>
+              <div className="cart-items-list">
+                {items.map((item) => {
+                  const lineTotal = item.price * item.quantity;
+                  const isModifying = actionLoading === item.id;
 
-              <button
-                type="button"
-                className="btn-continue-shopping"
-                onClick={() => {
-                  handleCloseCart();
-
-                  navigate("/");
-                }}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <line x1="19" y1="12" x2="5" y2="12" />
-                  <polyline points="12 19 5 12 12 5" />
-                </svg>
-                Continue shopping
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="cart-body">
-                {/* <div className="shipping-bar-container">
-                  <p className="shipping-msg">
-                    {subtotalAmount >= freeShippingThreshold ? (
-                      <>
-                        🎉 <strong>Yay!</strong> You've unlocked{" "}
-                        <strong>FREE Shipping</strong>
-                      </>
-                    ) : (
-                      <>
-                        Add{" "}
-                        <strong>
-                          ₹{(freeShippingThreshold - subtotalAmount).toFixed(2)}
-                        </strong>{" "}
-                        more for <strong>FREE Shipping</strong>
-                      </>
-                    )}
-                  </p>
-
-                  <div
-                    className="shipping-progress-track"
-                    aria-label="Free shipping progress bar"
-                  >
-                    <div
-                      className="shipping-progress-fill animated-stripes"
-                      style={{
-                        width: `${progressPercent}%`,
-                      }}
-                    />
-
-                    <div
-                      className="shipping-truck-icon-wrap bouncing-truck"
-                      style={{
-                        left: `calc(${progressPercent}% - 18px)`,
-                      }}
-                      aria-hidden="true"
+                  return (
+                    <article
+                      key={item.id}
+                      className={`cart-item-row ${
+                        isModifying ? "item-modifying" : ""
+                      }`}
                     >
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#102a27"
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect x="1" y="3" width="15" height="13" rx="2" />
-                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
-                        <circle cx="5.5" cy="18.5" r="2.5" />
-                        <circle cx="18.5" cy="18.5" r="2.5" />
-                      </svg>
-                    </div>
-                  </div>
-                </div> */}
+                      {/* PRODUCT INFO */}
+                      <div className="cart-item-product-info">
+                        <Link
+                          to={`/productdetails/${item.id}`}
+                          className="cart-item-img-link"
+                        >
+                          <img
+                            src={item.image || "/placeholder-grocery.png"}
+                            alt={item.name}
+                            className="cart-item-img"
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=300&q=80";
+                            }}
+                          />
+                        </Link>
 
-                {totalDiscountAmount > 0 && (
-                  <div
-                    style={{
-                      margin: "10px 0",
-                      padding: "10px 12px",
-                      borderRadius: "10px",
-                      background: "#ecfdf5",
-                      color: "#047857",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                    }}
-                  >
-                    🎉 You are saving ₹{totalDiscountAmount.toFixed(2)} with
-                    Today Discounts
+                        <div className="cart-item-details">
+                          <span className="cart-item-category">
+                            {item.category}
+                          </span>
+                          <Link
+                            to={`/productdetails/${item.id}`}
+                            className="cart-item-name"
+                          >
+                            {item.name}
+                          </Link>
+                          <span className="cart-item-unit">
+                            Pack: {item.unit}
+                          </span>
+
+                          <div className="cart-item-stock-tag">
+                            <span className="stock-dot"></span>
+                            <span>In Stock</span>
+                          </div>
+
+                          <div className="cart-item-mobile-price">
+                            <span className="mobile-price-current">
+                              ₹{item.price}
+                            </span>
+                            {item.originalPrice > item.price && (
+                              <span className="mobile-price-original">
+                                ₹{item.originalPrice}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* UNIT PRICE */}
+                      <div className="cart-item-price-col">
+                        <span className="item-price-current">
+                          ₹{item.price}
+                        </span>
+                        {item.originalPrice > item.price && (
+                          <div className="item-price-savings-wrap">
+                            <span className="item-price-original">
+                              ₹{item.originalPrice}
+                            </span>
+                            <span className="item-price-discount-badge">
+                              {item.discount}% OFF
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* QUANTITY CONTROLS */}
+                      <div className="cart-item-qty-col">
+                        <div className="cart-qty-stepper">
+                          <button
+                            type="button"
+                            className="qty-btn qty-btn-minus"
+                            onClick={() =>
+                              handleQuantityChange(item, item.quantity - 1)
+                            }
+                            aria-label={`Decrease quantity of ${item.name}`}
+                            
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="qty-value" aria-live="polite">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            className="qty-btn qty-btn-plus"
+                            onClick={() =>
+                              handleQuantityChange(item, item.quantity + 1)
+                            }
+                            aria-label={`Increase quantity of ${item.name}`}
+                            
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+
+                        <div className="cart-item-actions-row">
+                          <button
+                            type="button"
+                            className="item-action-btn action-wishlist"
+                            onClick={() => handleMoveToWishlist(item)}
+                            title="Move to Wishlist"
+                          >
+                            <Heart size={14} />
+                            <span>Save</span>
+                          </button>
+                          <span className="action-divider">•</span>
+                          <button
+                            type="button"
+                            className="item-action-btn action-remove"
+                            onClick={() => handleRemoveItem(item)}
+                            title="Remove item"
+                          >
+                            <Trash2 size={14} />
+                            <span>Remove</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* SUBTOTAL */}
+                      <div className="cart-item-subtotal-col">
+                        <span className="item-subtotal-amount">
+                          ₹{lineTotal.toFixed(2)}
+                        </span>
+                        <button
+                          type="button"
+                          className="item-desktop-delete-btn"
+                          onClick={() => handleRemoveItem(item)}
+                          aria-label={`Remove ${item.name}`}
+                          title="Remove item"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          {/* ==============================================
+              RIGHT COLUMN: ORDER SUMMARY (STICKY)
+          =============================================== */}
+          <aside className="cart-summary-column" aria-label="Order Summary">
+            <div className="cart-summary-card">
+              <h2 className="summary-title">Order Summary</h2>
+
+              {/* SUMMARY ROWS */}
+              <div className="summary-rows-wrap">
+                <div className="summary-row">
+                  <span className="summary-label">Items Subtotal (MRP)</span>
+                  <span className="summary-val">
+                    ₹{summary.subtotal.toFixed(2)}
+                  </span>
+                </div>
+
+                {summary.productSavings > 0 && (
+                  <div className="summary-row savings-row">
+                    <span className="summary-label">Product Savings</span>
+                    <span className="summary-val text-green">
+                      - ₹{summary.productSavings.toFixed(2)}
+                    </span>
                   </div>
                 )}
 
-                <section className="cart-items-list" aria-label="Cart Items">
-                  {cartItems.map((item) => {
-                    const itemName = getSafeText(item?.name, "Product");
-                    const itemSize = getSafeText(item?.size, "Standard Pack");
-                    const itemPrice = getSafeNumber(item?.price, 0);
-                    const originalPrice = getSafeNumber(item?.originalPrice, 0);
-                    const itemQuantity = getSafeNumber(item?.quantity, 1);
-                    const isTodayDiscount = Boolean(item?.isTodayDiscount);
-
-                    return (
-                      <article
-                        key={item.id || item.productId}
-                        className="cart-item-card"
-                      >
-                        <div className="cart-item-img-wrap">
-                          <img
-                            src={item.image || avocadoImg}
-                            alt={itemName}
-                            loading="lazy"
-                            onError={(e) => {
-                              e.currentTarget.src = avocadoImg;
-                            }}
-                          />
-                        </div>
-
-                        <div className="cart-item-details">
-                          <div className="cart-item-header-row">
-                            <h4 className="cart-item-title">{itemName}</h4>
-
-                            <button
-                              type="button"
-                              className="cart-item-delete-btn"
-                              onClick={() => handleRemove(item.id)}
-                              aria-label={`Remove ${itemName} from cart`}
-                            >
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="#f43f5e"
-                                strokeWidth="2.2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                aria-hidden="true"
-                              >
-                                <polyline points="3 6 5 6 21 6" />
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                              </svg>
-                            </button>
-                          </div>
-
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              flexWrap: "wrap",
-                              gap: "8px",
-                              marginTop: "4px",
-                            }}
-                          >
-                            <p
-                              className="cart-item-price"
-                              style={{ margin: 0 }}
-                            >
-                              ₹{itemPrice.toFixed(2)}
-                            </p>
-
-                            {isTodayDiscount && originalPrice > itemPrice && (
-                              <>
-                                <span
-                                  style={{
-                                    fontSize: "12px",
-                                    color: "#888",
-                                    textDecoration: "line-through",
-                                  }}
-                                >
-                                  ₹{originalPrice.toFixed(2)}
-                                </span>
-
-                                <span
-                                  style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    padding: "3px 7px",
-                                    borderRadius: "999px",
-                                    background: "#dcfce7",
-                                    color: "#15803d",
-                                    fontSize: "10px",
-                                    fontWeight: 700,
-                                    lineHeight: 1,
-                                  }}
-                                >
-                                  TODAY DISCOUNT
-                                </span>
-                              </>
-                            )}
-                          </div>
-
-                          {isTodayDiscount && originalPrice > itemPrice && (
-                            <p
-                              style={{
-                                margin: "4px 0 0",
-                                color: "#16a34a",
-                                fontSize: "11px",
-                                fontWeight: 600,
-                              }}
-                            >
-                              You save ₹{(originalPrice - itemPrice).toFixed(2)}
-                            </p>
-                          )}
-
-                          <p className="cart-item-size">Size: {itemSize}</p>
-
-                          <div className="cart-item-qty-control">
-                            <button
-                              type="button"
-                              onClick={() => handleDecrease(item.id)}
-                              aria-label="Decrease quantity"
-                            >
-                              -
-                            </button>
-
-                            <span aria-label={`Quantity: ${itemQuantity}`}>
-                              {itemQuantity}
-                            </span>
-
-                            <button
-                              type="button"
-                              onClick={() => handleIncrease(item.id)}
-                              aria-label="Increase quantity"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </section>
-
-                {/* <section
-                  className="cart-recommendations-section"
-                  aria-label="Recommended Products"
-                >
-                  <h3 className="recommendations-title">You may also like</h3>
-
-                  <div className="recommendation-card">
-                    <div className="rec-img-wrap">
-                      <img
-                        src={activeRecommendation?.image}
-                        alt={getSafeText(
-                          activeRecommendation?.name,
-                          "Recommended Product",
-                        )}
-                        loading="lazy"
-                      />
-                    </div>
-
-                    <div className="rec-details">
-                      <h4 className="rec-title">
-                        {getSafeText(activeRecommendation?.name, "Product")}
-                      </h4>
-
-                      <p className="rec-price">
-                        ₹
-                        {getSafeNumber(activeRecommendation?.price, 0).toFixed(
-                          2,
-                        )}
-                      </p>
-
-                      <button
-                        type="button"
-                        className="rec-add-btn"
-                        onClick={() => handleAddToCart(activeRecommendation)}
-                      >
-                        + Add to Cart
-                      </button>
-                    </div>
-                  </div>
-
-                  <div
-                    className="carousel-dots"
-                    role="tablist"
-                    aria-label="Recommendation carousel controls"
-                  >
-                    {recommendations.map((recommendation, idx) => (
-                      <button
-                        type="button"
-                        key={recommendation.id}
-                        role="tab"
-                        aria-selected={activeRecIndex === idx}
-                        aria-label={`Slide recommendation ${idx + 1}`}
-                        className={`dot ${
-                          activeRecIndex === idx ? "active" : ""
-                        }`}
-                        onClick={() => setActiveRecIndex(idx)}
-                      />
-                    ))}
-                  </div>
-                </section> */}
-              </div>
-
-              <footer className="cart-footer">
-                <div className="cart-badges-row">
-                  {/* <div
-                    className="cart-badge-card"
-                    aria-label="Coupon available badge"
-                  >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z" />
-                      <line x1="9" y1="9" x2="9.01" y2="9" />
-                      <line x1="15" y1="15" x2="15.01" y2="15" />
-                      <line x1="15" y1="9" x2="9" y2="15" />
-                    </svg>
-
-                    <span>Save More</span>
-                  </div> */}
-
-                  {/* <div
-                    className="cart-badge-card"
-                    aria-label="Secure package delivery badge"
-                  >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <polyline points="20 12 20 22 4 22 4 12" />
-                      <rect x="2" y="7" width="20" height="5" />
-                      <line x1="12" y1="22" x2="12" y2="7" />
-                    </svg>
-
-                    <span>Express Delivery</span>
-                  </div> */}
-                </div>
-
-                <div className="cart-totals-row">
-                  <div className="total-col">
-                    <span className="total-label">Total Items</span>
-                    <span className="total-value">{totalItemsCount}</span>
-                  </div>
-
-                  <div className="total-col right">
-                    <span className="total-label">Subtotal</span>
-                    <span className="total-value">
-                      ₹{subtotalAmount.toFixed(2)}
+                {summary.couponDiscount > 0 && (
+                  <div className="summary-row coupon-savings-row">
+                    <span className="summary-label">
+                      Promo ({appliedCoupon?.code})
+                    </span>
+                    <span className="summary-val text-green">
+                      - ₹{summary.couponDiscount.toFixed(2)}
                     </span>
                   </div>
+                )}
+
+                
+
+                <div className="summary-divider"></div>
+
+                <div className="summary-row grand-total-row">
+                  <span className="grand-total-label">Total Payable</span>
+                  <span className="grand-total-val">
+                    ₹{summary.grandTotal.toFixed(2)}
+                  </span>
                 </div>
+              </div>
 
-                <div className="cart-item-price-details">
-                  <h4 className="price-details-title">Price Details</h4>
+              {/* SAVINGS CALLOUT */}
+              {summary.totalSavings > 0 && (
+                <div className="summary-savings-banner">
+                  <Sparkles size={16} className="sparkle-icon" />
+                  <span>
+                    You will save{" "}
+                    <strong>₹{summary.totalSavings.toFixed(2)}</strong> on this
+                    grocery order!
+                  </span>
+                </div>
+              )}
 
-                  {cartItems.map((item) => {
-                    const itemTotal =
-                      getSafeNumber(item?.price, 0) *
-                      getSafeNumber(item?.quantity, 0);
+              {/* ===================================================
+                  REAL DYNAMIC PROMO CODE SECTION
+                  (From http://localhost:5174/products/coupons API)
+              ==================================================== */}
+              <div className="coupon-box-section">
+                <label htmlFor="cart-coupon-input" className="coupon-label">
+                  <Tag size={15} />
+                  <span>Have a Promo Code?</span>
+                </label>
 
-                    const itemName = getSafeText(item?.name, "Product");
+                {appliedCoupon ? (
+                  <div className="applied-coupon-pill">
+                    <div className="applied-coupon-meta">
+                      <span className="applied-code">{appliedCoupon.code}</span>
+                      <span className="applied-desc">
+                        {appliedCoupon.title || "Coupon Applied"}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="remove-coupon-btn"
+                      onClick={handleRemoveCoupon}
+                      aria-label="Remove applied coupon"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="coupon-input-group">
+                    <input
+                      id="cart-coupon-input"
+                      type="text"
+                      className="coupon-input"
+                      placeholder="Enter Promo Code"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleApplyCoupon();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="coupon-apply-btn"
+                      onClick={() => handleApplyCoupon()}
+                      disabled={couponValidating}
+                    >
+                      {couponValidating ? "Checking..." : "Apply"}
+                    </button>
+                  </div>
+                )}
 
-                    const itemOriginalPrice = getSafeNumber(
-                      item?.originalPrice,
-                      0,
-                    );
+                {couponError && (
+                  <div className="coupon-alert error">
+                    <AlertCircle size={14} />
+                    <span>{couponError}</span>
+                  </div>
+                )}
 
-                    const itemCurrentPrice = getSafeNumber(item?.price, 0);
+                {couponSuccess && (
+                  <div className="coupon-alert success">
+                    <CheckCircle2 size={14} />
+                    <span>{couponSuccess}</span>
+                  </div>
+                )}
 
-                    const isDiscounted =
-                      Boolean(item?.isTodayDiscount) &&
-                      itemOriginalPrice > itemCurrentPrice;
-
-                    return (
-                      <div
-                        className="cart-price-detail-item"
-                        key={item.id || item.productId}
-                      >
-                        <div className="cart-price-detail-info">
-                          <span className="cart-price-detail-name">
-                            {itemName}
+                {/* AVAILABLE REAL PROMO CODE CHIPS */}
+                {!appliedCoupon && availableCoupons.length > 0 && (
+                  <div className="available-coupons-wrap">
+                    <span className="coupon-chips-title">Available Offers:</span>
+                    <div className="coupon-chips-list">
+                      {availableCoupons.map((coupon) => (
+                        <button
+                          key={coupon._id || coupon.code}
+                          type="button"
+                          className="coupon-chip"
+                          onClick={() => handleApplyCoupon(coupon.code)}
+                          title={coupon.description || coupon.title}
+                        >
+                          <span className="coupon-chip-code">
+                            {coupon.code}
                           </span>
-
-                          <span className="cart-price-detail-quantity">
-                            {getSafeNumber(item?.quantity, 0)} × ₹
-                            {itemCurrentPrice.toFixed(2)}
+                          <span className="coupon-chip-badge">
+                            {coupon.discountType === "percentage"
+                              ? `${coupon.discountValue}% OFF`
+                              : `₹${coupon.discountValue} OFF`}
                           </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
-                          {isDiscounted && (
-                            <span
-                              style={{
-                                display: "block",
-                                marginTop: "2px",
-                                color: "#16a34a",
-                                fontSize: "10px",
-                                fontWeight: 600,
-                              }}
-                            >
-                              Today Discount
-                            </span>
-                          )}
-                        </div>
+              {/* CHECKOUT BUTTON */}
+              <button
+                type="button"
+                className="checkout-cta-btn"
+                onClick={handleProceedToCheckout}
+                disabled={checkoutLoading || items.length === 0}
+              >
+                {checkoutLoading ? (
+                  <span>Processing Payment...</span>
+                ) : (
+                  <>
+                    <span>Proceed to Checkout</span>
+                    <ArrowRight size={18} />
+                  </>
+                )}
+              </button>
 
-                        <span className="cart-price-detail-total">
-                          ₹{itemTotal.toFixed(2)}
-                        </span>
-                      </div>
-                    );
-                  })}
+              {/* TRUST BADGES */}
+              <div className="summary-trust-badges">
+                <div className="trust-item">
+                  <ShieldCheck size={18} className="trust-icon" />
+                  <span>100% Secure Checkout</span>
                 </div>
-
-                <div className="cart-action-buttons">
-                  <button
-                    type="button"
-                    className="btn-view-cart"
-                    onClick={handleOpenCart}
-                  >
-                    View Cart
-                  </button>
-
-                  <button
-                    type="button"
-                    className="btn-checkout"
-                    onClick={handleCheckout}
-                    disabled={checkoutLoading}
-                  >
-                    {checkoutLoading ? "Redirecting..." : "Checkout"}
-                  </button>
+                <div className="trust-item">
+                  <Truck size={18} className="trust-icon" />
+                  <span>Doorstep Grocery Delivery</span>
                 </div>
-              </footer>
-            </>
-          )}
+                <div className="trust-item">
+                  <RotateCcw size={18} className="trust-icon" />
+                  <span>Easy Return & Refund Guarantee</span>
+                </div>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
-    </>
+
+      {/* =======================================================
+          MODAL 1: SELECT FROM SAVED ADDRESSES
+      ======================================================== */}
+      {isAddressSelectOpen && (
+        <div className="cart-modal-overlay">
+          <div className="cart-modal-box address-select-box">
+            <div className="cart-modal-header">
+              <div className="modal-title-with-icon">
+                <MapPin size={20} className="modal-title-icon" />
+                <h3>Select Delivery Address</h3>
+              </div>
+              <button
+                type="button"
+                className="modal-close-icon"
+                onClick={() => setIsAddressSelectOpen(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="address-select-list">
+              {addresses.map((addr) => {
+                const id = addr._id || addr.id;
+                const isSelected =
+                  selectedAddress && (selectedAddress._id || selectedAddress.id) === id;
+
+                return (
+                  <div
+                    key={id}
+                    className={`address-select-card ${isSelected ? "selected" : ""}`}
+                    onClick={() => {
+                      setSelectedAddress(addr);
+                      setIsAddressSelectOpen(false);
+                    }}
+                  >
+                    <div className="address-select-radio">
+                      <div className={`radio-dot ${isSelected ? "active" : ""}`} />
+                    </div>
+
+                    <div className="address-select-meta">
+                      <div className="address-card-top-row">
+                        <span className="address-chip">
+                          {addr.addressType || "Home"}
+                        </span>
+                        {addr.isDefault && (
+                          <span className="address-default-pill">Default</span>
+                        )}
+                        <span className="address-user-name">
+                          <strong>{addr.name}</strong> • {addr.mobile}
+                        </span>
+                      </div>
+                      <p className="address-line-text">
+                        {addr.address}
+                        {addr.landmark ? `, Near ${addr.landmark}` : ""},{" "}
+                        {addr.city}, {addr.state} - {addr.pincode}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="address-select-modal-footer">
+              <button
+                type="button"
+                className="btn-modal-add-new-address"
+                onClick={() => {
+                  setIsAddressSelectOpen(false);
+                  navigate("/profile?tab=addresses");
+                }}
+              >
+                <Plus size={16} />
+                <span>Add New Address</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

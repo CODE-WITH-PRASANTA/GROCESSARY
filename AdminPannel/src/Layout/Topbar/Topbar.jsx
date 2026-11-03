@@ -68,9 +68,7 @@ const Topbar = ({ toggleSidebar }) => {
       console.error("Failed to fetch admin profile:", error);
 
       // If token is invalid or expired
-      if (error.response?.status === 401) {
-        navigate("/login");
-      }
+      // no redirect
     }
   };
 
@@ -119,12 +117,12 @@ const Topbar = ({ toggleSidebar }) => {
       setAdmin(null);
       setProfileOpen(false);
 
-      navigate("/login", { replace: true });
+      // no redirect
     } catch (error) {
       console.error("Logout error:", error);
 
       // Redirect anyway because the frontend session should be cleared
-      navigate("/login", { replace: true });
+      // no redirect
     } finally {
       setLoggingOut(false);
     }

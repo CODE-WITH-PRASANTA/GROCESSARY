@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { User, Gift, Copy, Check, LogOut } from "lucide-react";
+import { User, MapPin, Package, Gift, Copy, Check, LogOut } from "lucide-react";
 import API from "../../api/axios";
 import "./UserAuth.css";
 
@@ -303,7 +303,15 @@ const UserAuth = ({ onNavigate }) => {
             <div className="navbar-account-dropdown">
               <div className="navbar-account-header">
                 <div className="navbar-account-avatar">
-                  {getUserName(currentUser).charAt(0).toUpperCase()}
+                  {currentUser?.profileImage ? (
+                    <img
+                      src={currentUser.profileImage}
+                      alt={getUserName(currentUser)}
+                      className="navbar-avatar-img"
+                    />
+                  ) : (
+                    getUserName(currentUser).charAt(0).toUpperCase()
+                  )}
                 </div>
 
                 <div className="navbar-account-info">
@@ -320,12 +328,38 @@ const UserAuth = ({ onNavigate }) => {
 
               <button
                 type="button"
-                onClick={handleUserPanel}
-                disabled={accountLoading}
+                onClick={() => {
+                  setIsAccountOpen(false);
+                  handleNavigate("/profile?tab=profile");
+                }}
                 className="navbar-account-item"
               >
                 <User size={16} />
-                <span>{accountLoading ? "Opening..." : "My Account"}</span>
+                <span>My Profile</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAccountOpen(false);
+                  handleNavigate("/profile?tab=addresses");
+                }}
+                className="navbar-account-item"
+              >
+                <MapPin size={16} />
+                <span>Saved Address</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAccountOpen(false);
+                  handleNavigate("/profile?tab=orders");
+                }}
+                className="navbar-account-item"
+              >
+                <Package size={16} />
+                <span>My Order</span>
               </button>
 
               {/* <button

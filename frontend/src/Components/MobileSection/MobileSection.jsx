@@ -15,14 +15,12 @@ import {
 
 import bgImage from '../../assets/grocory-bg.png';
 import './MobileSection.css';
-import DeliveryTime from "../DeliveryTime/DeliveryTime";
 import ListUpload from "../ListUpload/ListUpload";
 import MyOrders from '../MyOrders/MyOrders';
 
 const MobileSection = () => {
   const navigate = useNavigate();
-  const [isDeliveryTimeOpen, setIsDeliveryTimeOpen] = useState(false);
-  const [isListUploadOpen, setIsListUploadOpen] = useState(false);
+    const [isListUploadOpen, setIsListUploadOpen] = useState(false);
   const [isMyOrdersOpen, setIsMyOrdersOpen] = useState(false); // Added state for My Orders popup
 
   // Mouse Parallax Motion Values
@@ -289,36 +287,8 @@ const MobileSection = () => {
                 </motion.button>
               </motion.div>
 
-              {/* Delivery Time Button */}
-              <motion.div
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
-              >
-                <motion.button 
-                  className="MobileSection-btn-3d btn-delivery"
-                  onClick={() => setIsDeliveryTimeOpen(true)}
-                  whileHover={{ y: -12, rotateX: 15, scale: 1.05 }}
-                  whileTap={{ y: 8, scale: 0.96 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                  aria-label="Check estimated delivery time"
-                >
-                  <div className="MobileSection-btn-bottom" aria-hidden="true" />
-                  <div className="MobileSection-btn-middle" aria-hidden="true" />
-                  <div className="MobileSection-btn-top">
-                    <motion.div 
-                      className="MobileSection-btn-icon"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                    >
-                      <FaClock />
-                    </motion.div>
-                    <span>DELIVERY TIME</span>
                     <div className="MobileSection-shine" aria-hidden="true" />
-                  </div>
-                </motion.button>
-              </motion.div>
-
-            </nav>
+                  </nav>
 
             <div className="MobileSection-helpline">
               <span>HELP LINE NO.</span>
@@ -366,13 +336,7 @@ const MobileSection = () => {
               <div className="MobileSection-phone-mini-btn phone-btn-3" onClick={() => setIsMyOrdersOpen(true)} style={{ cursor: "pointer" }}>
                 <FaReceipt /> My Orders
               </div>
-              <div
-                className="MobileSection-phone-mini-btn phone-btn-4"
-                onClick={() => setIsDeliveryTimeOpen(true)}
-                style={{ cursor: "pointer" }}
-              >
-                <FaClock /> Delivery Time
-              </div>
+              
             </div>
           </motion.div>
 
@@ -405,11 +369,6 @@ const MobileSection = () => {
       </div>
 
       {/* Modals */}
-      {isDeliveryTimeOpen && (
-        <DeliveryTime
-          onClose={() => setIsDeliveryTimeOpen(false)}
-        />
-      )}
 
       {isListUploadOpen && (
         <ListUpload

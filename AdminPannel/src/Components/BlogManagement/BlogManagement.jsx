@@ -13,6 +13,20 @@ import {
 import API from "../../api/axios"; // 👈 adjust path to your axios.js
 import "./BlogManagement.css";
 
+export const getBlogImageUrl = (url) => {
+  if (!url) return "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop";
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("blob:") ||
+    url.startsWith("data:")
+  ) {
+    return url;
+  }
+  const clean = url.startsWith("/") ? url : "/" + url;
+  return "http://localhost:5000" + clean;
+};
+
 const BlogManagement = () => {
   const navigate = useNavigate();
   const [blogs, setBlogs] = useState([]);
@@ -248,7 +262,7 @@ const BlogManagement = () => {
                   {/* Image & Category Tag */}
                   <div className="BlogManagement-card-image-wrapper">
                     <img
-                      src={item.image}
+                      src={getBlogImageUrl(item.image)}
                       alt={item.title}
                       className="BlogManagement-card-image"
                       loading="lazy"

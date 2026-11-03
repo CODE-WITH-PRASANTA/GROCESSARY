@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // Layout Components
 import Navbar from "./Components/Navbar/Navbar";
@@ -24,10 +24,12 @@ import BlogReadmoreOne from "./Components/BlogReadmoreOne/BlogReadmoreOne";
 // User & E-commerce Components
 import LoginPage from "./Components/LoginPage/LoginPage";
 import CartSection from "./Components/CartSection/CartSection";
-import DeliveryTime from "./Components/DeliveryTime/DeliveryTime";
+import Wishlist from "./Components/Wishlist/Wishlist";
 import MyOrders from "./Components/MyOrders/MyOrders";
+import UserProfile from "./Components/UserProfile/UserProfile";
 import ListUpload from "./Components/ListUpload/ListUpload";
 import ProductDetails from "./Pages/ProductDetails/ProductDetails";
+import OrderDetails from "./Components/OrderDetails/OrderDetails";
 import { useDispatch } from "react-redux";
 import { fetchCart } from "./Utils/cartSlice";
 
@@ -72,10 +74,16 @@ const App = () => {
 
         {/* User & Store Routes */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/cart" element={<CartSection />} />
-        <Route path="/deliverytime" element={<DeliveryTime />} />
-        <Route path="/myorders" element={<MyOrders />} />
+        <Route path="/deliverytime" element={<Navigate to="/cart" replace />} />
+        <Route path="/profile" element={<UserProfile />} />
+        <Route path="/account" element={<UserProfile />} />
+        <Route path="/saved-address" element={<UserProfile defaultTab="addresses" />} />
+        <Route path="/myorders" element={<UserProfile defaultTab="orders" />} />
         <Route path="/listupload" element={<ListUpload />} />
+        <Route path="/orders/:id" element={<OrderDetails />} />
+        <Route path="/order-details/:id" element={<OrderDetails />} />
       </Routes>
 
       <FloatingForm />

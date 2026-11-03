@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
-
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft,
   FileText,
   Tag,
   Image as ImageIcon,
@@ -10,13 +8,18 @@ import {
   RotateCcw,
   Save,
   X,
-  CheckCircle,
+  CheckCircle2,
   XCircle,
   Loader,
+  DollarSign,
+  Package,
+  Layers,
+  Calendar,
+  AlertCircle,
+  Sparkles,
 } from "lucide-react";
 
 import "./AddProducts.css";
-
 import API, { BASE_URL } from "../../../api/axios";
 
 const AddProducts = () => {
@@ -24,27 +27,38 @@ const AddProducts = () => {
   const { id } = useParams();
 
   const [editingProduct, setEditingProduct] = useState(null);
-
   const [loadingProduct, setLoadingProduct] = useState(false);
 
-  // =====================================================
-  // HELPER
-  // GET ID FROM STRING OR POPULATED OBJECT
-  // =====================================================
-
+  // Helper: get ID from string or populated object
   const getId = (value) => {
     if (!value) return "";
-
     if (typeof value === "object") {
       return value._id || value.id || "";
     }
-
     return value;
   };
 
-  // =====================================================
-  // INITIAL FORM
-  // =====================================================
+  // Format Date for HTML input[type="date"] (YYYY-MM-DD)
+  const formatDateForInput = (val) => {
+    if (!val) return "";
+    try {
+      if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}$/.test(val.trim())) {
+        return val.trim();
+      }
+      if (typeof val === "string" && val.includes("T")) {
+        const parts = val.split("T")[0];
+        if (/^\d{4}-\d{2}-\d{2}$/.test(parts)) return parts;
+      }
+      const d = new Date(val);
+      if (isNaN(d.getTime())) return "";
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    } catch {
+      return "";
+    }
+  };
 
   const initialFormState = {
     productName: "",
@@ -68,496 +82,338 @@ const AddProducts = () => {
     manufactureDate: "",
     expiryDate: "",
     stockQuantity: "",
-    lowStockAlert: "",
+    lowStockAlert: 5,
     tax: "",
     isOutOfStock: false,
     status: "active",
   };
 
-  // =====================================================
-  // FORM STATE
-  // =====================================================
-
   const [formData, setFormData] = useState(initialFormState);
-
-  // =====================================================
-  // DROPDOWN DATA
-  // =====================================================
-
   const [categories, setCategories] = useState([]);
-
   const [brands, setBrands] = useState([]);
-
   const [units, setUnits] = useState([]);
-
-  // =====================================================
-  // IMAGE STATE
-  // =====================================================
-
   const [productImages, setProductImages] = useState([]);
-
   const [existingImages, setExistingImages] = useState([]);
-
-  // =====================================================
-  // UI STATE
-  // =====================================================
-
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [errorMsg, setErrorMsg] = useState("");
-
+  const [successMsg, setSuccessMsg] = useState("");
   const [loadingMasterData, setLoadingMasterData] = useState(false);
 
-  // =====================================================
-  // FETCH MASTER DATA
-  // =====================================================
-
+  // Fetch Master Data (Categories, Brands, Units)
   useEffect(() => {
+    const fetchMasterData = async () => {
+      try {
+        setLoadingMasterData(true);
+        setErrorMsg("");
+
+        const [catRes, brandRes, unitRes] = await Promise.allSettled([
+          API.get("/categories"),
+          API.get("/brands"),
+          API.get("/units"),
+        ]);
+
+        if (catRes.status === "fulfilled") {
+          const catData =
+            catRes.value.data?.data ||
+            catRes.value.data?.categories ||
+            catRes.value.data ||
+            [];
+          setCategories(Array.isArray(catData) ? catData : []);
+        }
+
+        if (brandRes.status === "fulfilled") {
+          const brandData =
+            brandRes.value.data?.data ||
+            brandRes.value.data?.brands ||
+            brandRes.value.data ||
+            [];
+          const dynamicBrands = Array.isArray(brandData)
+            ? brandData.filter(
+                (b) =>
+                  b &&
+                  b.name &&
+                  !["dummy", "fallback", "default", "generic"].includes(
+                    String(b.name).toLowerCase().trim()
+                  )
+              )
+            : [];
+          setBrands(dynamicBrands);
+        }
+
+        if (unitRes.status === "fulfilled") {
+          const unitData =
+            unitRes.value.data?.data ||
+            unitRes.value.data?.units ||
+            unitRes.value.data ||
+            [];
+          setUnits(Array.isArray(unitData) ? unitData : []);
+        }
+      } catch (error) {
+        console.error("Master data load error:", error);
+      } finally {
+        setLoadingMasterData(false);
+      }
+    };
+
     fetchMasterData();
   }, []);
 
-  // =====================================================
-  // FETCH CATEGORY / BRAND / UNIT
-  // =====================================================
-
-  const fetchMasterData = async () => {
-    try {
-      setLoadingMasterData(true);
-      setErrorMsg("");
-
-      const [categoryResponse, brandResponse, unitResponse] = await Promise.all(
-        [API.get("/categories"), API.get("/brands"), API.get("/units")],
-      );
-
-      setCategories(categoryResponse.data?.data || []);
-      setBrands(brandResponse.data?.data || []);
-      setUnits(unitResponse.data?.data || []);
-    } catch (error) {
-      console.error("Master data error:", error);
-
-      setErrorMsg(
-        error.response?.data?.message ||
-          "Failed to load category, brand or unit data.",
-      );
-    } finally {
-      setLoadingMasterData(false);
-    }
-  };
-
-  // =====================================================
-  // FETCH PRODUCT BY ID FOR EDIT
-  // =====================================================
-
+  // Fetch product when in edit mode
   useEffect(() => {
     if (!id) {
       setEditingProduct(null);
       return;
     }
 
+    const fetchProductById = async (productId) => {
+      try {
+        setLoadingProduct(true);
+        setErrorMsg("");
+
+        const response = await API.get(`/products/${productId}`);
+        const product =
+          response.data?.product || response.data?.data || response.data;
+
+        if (!product?._id) {
+          throw new Error("Product details not found.");
+        }
+
+        setEditingProduct(product);
+
+        setFormData({
+          productName: product.productName || product.name || "",
+          slug: product.slug || "",
+          category: getId(product.category),
+          brand: getId(product.brand),
+          sku: product.sku || "",
+          barcode: product.barcode || "",
+          unit: getId(product.unit),
+          unitNo: product.unitNo ?? 1,
+          tags: Array.isArray(product.tags)
+            ? product.tags.join(", ")
+            : product.tags || "",
+          shortDescription: product.shortDescription || "",
+          fullDescription: product.fullDescription || "",
+          metaTitle: product.metaTitle || "",
+          metaDescription: product.metaDescription || "",
+          metaKeywords: Array.isArray(product.metaKeywords)
+            ? product.metaKeywords
+            : product.metaKeywords
+            ? product.metaKeywords
+                .split(",")
+                .map((k) => k.trim())
+                .filter(Boolean)
+            : [],
+          price: product.price ?? product.sellingPrice ?? "",
+          writtenPrice: product.writtenPrice ?? "",
+          discountPrice: product.discountPrice ?? "",
+          costPrice: product.costPrice ?? product.purchasePrice ?? "",
+          manufactureDate: formatDateForInput(product.manufactureDate),
+          expiryDate: formatDateForInput(product.expiryDate),
+          stockQuantity: product.stockQuantity ?? product.stock ?? "",
+          lowStockAlert: product.lowStockAlert ?? 5,
+          tax: product.tax ?? "",
+          isOutOfStock: product.isOutOfStock || false,
+          status: product.status || "active",
+        });
+
+        setExistingImages(Array.isArray(product.images) ? product.images : []);
+
+        // Dynamically ensure the product's brand is included in the brands list
+        if (product.brand && typeof product.brand === "object" && product.brand._id) {
+          setBrands((prev) => {
+            const exists = prev.some(
+              (b) => String(b._id || b.id) === String(product.brand._id)
+            );
+            if (!exists) {
+              return [...prev, product.brand];
+            }
+            return prev;
+          });
+        }
+      } catch (error) {
+        console.error("Fetch product error:", error);
+        setErrorMsg(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to load product."
+        );
+      } finally {
+        setLoadingProduct(false);
+      }
+    };
+
     fetchProductById(id);
   }, [id]);
 
-  // =====================================================
-  // GET PRODUCT BY ID
-  // =====================================================
-
-  const fetchProductById = async (productId) => {
-    try {
-      setLoadingProduct(true);
-      setErrorMsg("");
-
-      const response = await API.get(`/products/${productId}`);
-
-      const product =
-        response.data?.product || response.data?.data || response.data;
-
-      if (!product?._id) {
-        throw new Error("Product not found.");
-      }
-
-      setEditingProduct(product);
-
-      setFormData({
-        productName: product.productName || product.name || "",
-        slug: product.slug || "",
-        category: getId(product.category),
-        brand: getId(product.brand),
-        sku: product.sku || "",
-        barcode: product.barcode || "",
-        unit: getId(product.unit),
-        unitNo: product.unitNo ?? 1,
-
-        tags: Array.isArray(product.tags)
-          ? product.tags.join(", ")
-          : product.tags || "",
-
-        shortDescription: product.shortDescription || "",
-        fullDescription: product.fullDescription || "",
-        metaTitle: product.metaTitle || "",
-        metaDescription: product.metaDescription || "",
-
-        metaKeywords: Array.isArray(product.metaKeywords)
-          ? product.metaKeywords
-          : product.metaKeywords
-            ? product.metaKeywords
-                .split(",")
-                .map((keyword) => keyword.trim())
-                .filter(Boolean)
-            : [],
-
-        price: product.price ?? product.sellingPrice ?? "",
-        writtenPrice: product.writtenPrice ?? "",
-        discountPrice: product.discountPrice ?? "",
-        costPrice: product.costPrice ?? product.purchasePrice ?? "",
-
-        manufactureDate: product.manufactureDate
-          ? String(product.manufactureDate).slice(0, 10)
-          : "",
-
-        expiryDate: product.expiryDate
-          ? String(product.expiryDate).slice(0, 10)
-          : "",
-
-        stockQuantity: product.stockQuantity ?? product.stock ?? "",
-        lowStockAlert: product.lowStockAlert ?? "",
-        tax: product.tax ?? "",
-        isOutOfStock: product.isOutOfStock || false,
-        status: product.status || "active",
-      });
-
-      setExistingImages(Array.isArray(product.images) ? product.images : []);
-    } catch (error) {
-      console.error("Fetch product by ID error:", error);
-
-      setErrorMsg(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to load product.",
-      );
-    } finally {
-      setLoadingProduct(false);
-    }
-  };
-  // =====================================================
-  // REVOKE OBJECT URL
-  // =====================================================
-
+  // Clean up object URLs on unmount
   useEffect(() => {
     return () => {
       productImages.forEach((img) => {
-        if (img.url) {
-          URL.revokeObjectURL(img.url);
-        }
+        if (img.url) URL.revokeObjectURL(img.url);
       });
     };
   }, [productImages]);
 
-  // =====================================================
-  // HANDLE FORM CHANGE
-  // =====================================================
-
+  // Form field changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
-    setFormData((prev) => ({
-      ...prev,
+    setFormData((prev) => {
+      const next = { ...prev, [name]: type === "checkbox" ? checked : value };
 
-      [name]: type === "checkbox" ? checked : value,
-    }));
-
-    // ===================================================
-    // PRODUCT NAME -> AUTO SLUG
-    // ONLY WHEN CREATING
-    // ===================================================
-
-    if (name === "productName" && !editingProduct) {
-      const generatedSlug = value
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
-
-      setFormData((prev) => ({
-        ...prev,
-        productName: value,
-        slug: generatedSlug,
-      }));
-    }
+      // Auto-generate slug if product name changes while adding new product
+      if (name === "productName" && !editingProduct) {
+        next.slug = value
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+      }
+      return next;
+    });
   };
 
-  // =====================================================
-  // IMAGE UPLOAD
-  // =====================================================
-
+  // Image Upload Handling
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files || []);
-
-    if (!files.length) {
-      return;
-    }
-
-    // ===================================================
-    // CHECK TOTAL IMAGE COUNT
-    // ===================================================
+    if (!files.length) return;
 
     if (files.length + productImages.length + existingImages.length > 5) {
-      alert("You can upload up to 5 images only.");
-
+      alert("You can upload a maximum of 5 images per product.");
       e.target.value = "";
-
       return;
     }
 
-    // ===================================================
-    // CHECK FILE SIZE
-    // ===================================================
-
-    const invalidFile = files.find((file) => file.size > 5 * 1024 * 1024);
-
-    if (invalidFile) {
-      alert("Each image must be less than 5MB.");
-
+    const invalidSize = files.find((file) => file.size > 5 * 1024 * 1024);
+    if (invalidSize) {
+      alert("Each image must be smaller than 5MB.");
       e.target.value = "";
-
       return;
     }
 
-    // ===================================================
-    // CHECK FILE TYPE
-    // ===================================================
-
-    const validTypes = ["image/jpeg", "image/png", "image/webp"];
-
+    const validTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
     const invalidType = files.find((file) => !validTypes.includes(file.type));
-
     if (invalidType) {
-      alert("Only JPG, PNG and WEBP images are allowed.");
-
+      alert("Allowed image formats: JPG, PNG, WEBP.");
       e.target.value = "";
-
       return;
     }
-
-    // ===================================================
-    // CREATE PREVIEWS
-    // ===================================================
 
     const newImages = files.map((file) => ({
       file,
-
       url: URL.createObjectURL(file),
     }));
 
     setProductImages((prev) => [...prev, ...newImages]);
-
-    // Allow selecting same file again
     e.target.value = "";
   };
 
-  // =====================================================
-  // REMOVE NEW IMAGE
-  // =====================================================
+  const handleRemoveNewImage = (idxToRemove) => {
+    const img = productImages[idxToRemove];
+    if (img?.url) URL.revokeObjectURL(img.url);
+    setProductImages((prev) => prev.filter((_, idx) => idx !== idxToRemove));
+  };
 
-  const handleRemoveNewImage = (indexToRemove) => {
-    const image = productImages[indexToRemove];
+  const handleRemoveExistingImage = (idxToRemove) => {
+    setExistingImages((prev) => prev.filter((_, idx) => idx !== idxToRemove));
+  };
 
-    if (image?.url) {
-      URL.revokeObjectURL(image.url);
+  // Meta keywords
+  const handleMetaKeywordKeyDown = (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const keyword = e.target.value.trim();
+    if (!keyword) return;
+
+    const exists = formData.metaKeywords.some(
+      (k) => k.toLowerCase() === keyword.toLowerCase()
+    );
+    if (exists) {
+      e.target.value = "";
+      return;
     }
 
-    setProductImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    setFormData((prev) => ({
+      ...prev,
+      metaKeywords: [...prev.metaKeywords, keyword],
+    }));
+    e.target.value = "";
   };
 
-  // =====================================================
-  // REMOVE EXISTING IMAGE
-  // =====================================================
-
-  const handleRemoveExistingImage = (indexToRemove) => {
-    setExistingImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  const removeMetaKeyword = (keywordToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      metaKeywords: prev.metaKeywords.filter((k) => k !== keywordToRemove),
+    }));
   };
 
-  // =====================================================
-  // RESET
-  // =====================================================
+  // Price calculations
+  const priceCalculations = useMemo(() => {
+    const regular = parseFloat(formData.price) || 0;
+    const discount = parseFloat(formData.discountPrice) || 0;
+    const cost = parseFloat(formData.costPrice) || 0;
 
+    let discountPercent = 0;
+    if (regular > 0 && discount > 0 && discount < regular) {
+      discountPercent = Math.round(((regular - discount) / regular) * 100);
+    }
+
+    let profitMargin = 0;
+    const effectivePrice = discount > 0 ? discount : regular;
+    if (effectivePrice > 0 && cost > 0) {
+      profitMargin = Math.round(((effectivePrice - cost) / effectivePrice) * 100);
+    }
+
+    return { discountPercent, profitMargin, effectivePrice };
+  }, [formData.price, formData.discountPrice, formData.costPrice]);
+
+  // Validation
+  const validateForm = () => {
+    if (!formData.productName.trim()) return "Product Name is required.";
+    if (!formData.category) return "Please select a Category.";
+    if (!formData.sku.trim()) return "Product SKU code is required.";
+    if (!formData.unit) return "Please select a Unit type.";
+    if (!formData.unitNo || Number(formData.unitNo) < 1)
+      return "Unit value must be at least 1.";
+    if (formData.price === "" || Number(formData.price) < 0)
+      return "Valid regular price is required.";
+    if (formData.discountPrice !== "" && Number(formData.discountPrice) < 0)
+      return "Discount price cannot be negative.";
+    if (formData.stockQuantity !== "" && Number(formData.stockQuantity) < 0)
+      return "Stock quantity cannot be negative.";
+    return "";
+  };
+
+  // Reset form
   const handleReset = () => {
-    productImages.forEach((img) => {
-      if (img.url) {
-        URL.revokeObjectURL(img.url);
-      }
-    });
+    if (!window.confirm("Discard all unsaved changes in this form?")) return;
 
+    productImages.forEach((img) => {
+      if (img.url) URL.revokeObjectURL(img.url);
+    });
     setProductImages([]);
     setErrorMsg("");
+    setSuccessMsg("");
 
     if (editingProduct) {
-      setFormData({
-        productName: editingProduct.productName || editingProduct.name || "",
-
-        slug: editingProduct.slug || "",
-
-        category: getId(editingProduct.category),
-
-        brand: getId(editingProduct.brand),
-
-        sku: editingProduct.sku || "",
-        barcode: editingProduct.barcode || "",
-        unit: getId(editingProduct.unit),
-        unitNo: editingProduct.unitNo ?? 1,
-
-        tags: Array.isArray(editingProduct.tags)
-          ? editingProduct.tags.join(", ")
-          : editingProduct.tags || "",
-
-        shortDescription: editingProduct.shortDescription || "",
-
-        fullDescription: editingProduct.fullDescription || "",
-
-        metaTitle: editingProduct.metaTitle || "",
-
-        metaDescription: editingProduct.metaDescription || "",
-
-        metaKeywords: Array.isArray(editingProduct.metaKeywords)
-          ? editingProduct.metaKeywords
-          : editingProduct.metaKeywords
-            ? editingProduct.metaKeywords
-                .split(",")
-                .map((keyword) => keyword.trim())
-                .filter(Boolean)
-            : [],
-
-        // ==========================================
-        // PRICING
-        // ==========================================
-
-        price: editingProduct.price ?? editingProduct.sellingPrice ?? "",
-
-        writtenPrice: editingProduct.writtenPrice ?? "",
-
-        discountPrice: editingProduct.discountPrice ?? "",
-
-        costPrice:
-          editingProduct.costPrice ?? editingProduct.purchasePrice ?? "",
-
-        // ==========================================
-        // DATES
-        // ==========================================
-
-        manufactureDate: editingProduct.manufactureDate
-          ? String(editingProduct.manufactureDate).slice(0, 10)
-          : "",
-
-        expiryDate: editingProduct.expiryDate
-          ? String(editingProduct.expiryDate).slice(0, 10)
-          : "",
-
-        // ==========================================
-        // STOCK
-        // ==========================================
-
-        stockQuantity:
-          editingProduct.stockQuantity ?? editingProduct.stock ?? "",
-
-        lowStockAlert: editingProduct.lowStockAlert ?? "",
-
-        tax: editingProduct.tax ?? "",
-
-        isOutOfStock: editingProduct.isOutOfStock || false,
-
-        status: editingProduct.status || "active",
-      });
-
-      setExistingImages(
-        Array.isArray(editingProduct.images) ? editingProduct.images : [],
-      );
+      navigate(`/products/add-product/${editingProduct._id}`, { replace: true });
     } else {
       setFormData(initialFormState);
-
       setExistingImages([]);
     }
   };
 
-  // =====================================================
-  // VALIDATE FORM
-  // =====================================================
-
-  const validateForm = () => {
-    if (!formData.productName.trim()) {
-      return "Product name is required.";
-    }
-
-    if (!formData.category) {
-      return "Please select a category.";
-    }
-
-    if (!formData.sku.trim()) {
-      return "SKU is required.";
-    }
-
-    if (!formData.unit) {
-      return "Please select a unit.";
-    }
-
-    if (
-      formData.unitNo === "" ||
-      formData.unitNo === null ||
-      formData.unitNo === undefined
-    ) {
-      return "Unit No is required.";
-    }
-
-    if (Number(formData.unitNo) < 1) {
-      return "Unit No must be greater than 0.";
-    }
-
-    if (
-      formData.price === "" ||
-      formData.price === null ||
-      formData.price === undefined
-    ) {
-      return "Price is required.";
-    }
-
-    if (Number(formData.price) < 0) {
-      return "Price cannot be negative.";
-    }
-
-    if (formData.discountPrice !== "" && Number(formData.discountPrice) < 0) {
-      return "Discount price cannot be negative.";
-    }
-
-    if (formData.costPrice !== "" && Number(formData.costPrice) < 0) {
-      return "Cost price cannot be negative.";
-    }
-
-    if (formData.stockQuantity !== "" && Number(formData.stockQuantity) < 0) {
-      return "Stock quantity cannot be negative.";
-    }
-
-    if (formData.tax !== "" && Number(formData.tax) < 0) {
-      return "Tax cannot be negative.";
-    }
-
-    if (existingImages.length + productImages.length > 5) {
-      return "Maximum 5 images are allowed.";
-    }
-
-    return "";
-  };
-
-  // =====================================================
-  // SUBMIT
-  // =====================================================
-
+  // Submit Handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setErrorMsg("");
+    setSuccessMsg("");
 
     const validationError = validateForm();
-
     if (validationError) {
       setErrorMsg(validationError);
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
@@ -566,7 +422,6 @@ const AddProducts = () => {
     try {
       const data = new FormData();
 
-      // Normal form fields
       Object.keys(formData).forEach((key) => {
         if (key === "metaKeywords") {
           data.append(key, JSON.stringify(formData.metaKeywords || []));
@@ -575,917 +430,764 @@ const AddProducts = () => {
         }
       });
 
-      // New images
       productImages.forEach((imgObj) => {
         data.append("images", imgObj.file);
       });
 
-      // Existing images
       data.append("existingImages", JSON.stringify(existingImages));
 
       const isEditMode = Boolean(editingProduct?._id);
-
-      let response;
-
       if (isEditMode) {
-        response = await API.put(`/products/${editingProduct._id}`, data);
+        await API.put(`/products/${editingProduct._id}`, data);
       } else {
-        response = await API.post("/products", data);
+        await API.post("/products", data);
       }
 
-      const result = response.data;
-
-      console.log("Save product response:", result);
-
-      alert(`Product ${isEditMode ? "Updated" : "Created"} Successfully!`);
+      setSuccessMsg(
+        `Product successfully ${isEditMode ? "updated" : "created"}!`
+      );
 
       productImages.forEach((img) => {
-        if (img.url) {
-          URL.revokeObjectURL(img.url);
-        }
+        if (img.url) URL.revokeObjectURL(img.url);
       });
-
       setProductImages([]);
 
-      navigate("/products/all-products", {
-        replace: true,
-      });
+      setTimeout(() => {
+        navigate("/products/all-products", { replace: true });
+      }, 700);
     } catch (error) {
       console.error("Save product error:", error);
-
       setErrorMsg(
         error.response?.data?.message ||
           error.message ||
-          "Something went wrong while saving.",
+          "Failed to save product. Please try again."
       );
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // =====================================================
-  // BACK
-  // =====================================================
-
-  const handleBack = () => {
-    navigate("/products/all-products", {
-      replace: true,
-    });
-  };
-
-  // =====================================================
-  // IMAGE URL
-  // =====================================================
-
   const getImageUrl = (img) => {
-    if (!img) {
-      return "";
-    }
-
+    if (!img) return "";
     if (typeof img === "object") {
       img = img.url || img.path || img.fileName || "";
     }
-
-    if (!img) {
-      return "";
-    }
-
-    if (/^https?:\/\//i.test(img)) {
-      return img;
-    }
-
+    if (!img) return "";
+    if (/^https?:\/\//i.test(img)) return img;
     return `${BASE_URL}${img.startsWith("/") ? "" : "/"}${img}`;
   };
 
-  const handleMetaKeywordKeyDown = (e) => {
-    if (e.key !== "Enter") return;
-
-    e.preventDefault();
-
-    const keyword = e.target.value.trim();
-
-    if (!keyword) return;
-
-    // Prevent duplicate keywords
-    const exists = formData.metaKeywords.some(
-      (item) => item.toLowerCase() === keyword.toLowerCase(),
-    );
-
-    if (exists) {
-      e.target.value = "";
-      return;
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      metaKeywords: [
-        ...(Array.isArray(prev.metaKeywords) ? prev.metaKeywords : []),
-        keyword,
-      ],
-    }));
-
-    e.target.value = "";
-  };
-
-  const removeMetaKeyword = (keywordToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      metaKeywords: (Array.isArray(prev.metaKeywords)
-        ? prev.metaKeywords
-        : []
-      ).filter((keyword) => keyword !== keywordToRemove),
-    }));
-  };
-
-  // =====================================================
-  // RENDER
-  // =====================================================
-
   return (
-    <div className="gs-add-product-container">
-      {/* =================================================
-          HEADER
-      ================================================= */}
-
-      <div className="gs-header-bar">
-        <div className="gs-header-title-group">
-          <h1>{editingProduct ? "Edit Product" : "Add New Product"}</h1>
-
-          <div className="gs-breadcrumb">
-            <span>Dashboard</span>
-
-            {" > "}
-
-            <span>Products</span>
-
-            {" > "}
-
-            <span className="active">
+    <div className="addp-wrapper">
+      {/* TOP HEADER */}
+      <div className="addp-header">
+        <div className="addp-header-left">
+          <div className="addp-title-wrap">
+            <h1 className="addp-title">
               {editingProduct ? "Edit Product" : "Add New Product"}
+            </h1>
+            <span className="addp-subtitle">
+              {editingProduct
+                ? `Updating: ${editingProduct.productName || "Product"}`
+                : "Fill in the details below to publish a new product to your store catalog."}
             </span>
           </div>
         </div>
 
-        <button type="button" className="gs-btn-back" onClick={handleBack}>
-          <ArrowLeft size={16} />
-          Back to Products
-        </button>
+        <div className="addp-header-actions">
+          <button
+            type="button"
+            className="addp-btn-secondary"
+            onClick={handleReset}
+            disabled={isSubmitting}
+          >
+            <RotateCcw size={15} />
+            <span>Discard</span>
+          </button>
+
+          <button
+            type="button"
+            className="addp-btn-primary"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader size={16} className="addp-spin" />
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <Save size={16} />
+                <span>{editingProduct ? "Update Product" : "Save Product"}</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* =================================================
-          ERROR
-      ================================================= */}
-
+      {/* FEEDBACK ALERTS */}
       {errorMsg && (
-        <div
-          className="gs-error-alert"
-          style={{
-            color: "red",
-            marginBottom: "1rem",
-            fontWeight: "bold",
-          }}
-        >
-          {errorMsg}
+        <div className="addp-alert error">
+          <AlertCircle size={18} />
+          <span>{errorMsg}</span>
+          <button
+            type="button"
+            className="addp-alert-close"
+            onClick={() => setErrorMsg("")}
+          >
+            <X size={14} />
+          </button>
         </div>
       )}
 
-      {/* =================================================
-          FORM
-      ================================================= */}
+      {successMsg && (
+        <div className="addp-alert success">
+          <CheckCircle2 size={18} />
+          <span>{successMsg}</span>
+        </div>
+      )}
 
-      <form
-        onSubmit={handleSubmit}
-        className="gs-main-layout-grid gs-grid-50-50"
-      >
-        {/* =================================================
-            LEFT COLUMN
-        ================================================= */}
-
-        <div className="gs-column">
-          <div className="gs-card">
-            <div className="gs-card-header">
-              <div className="gs-card-icon-wrap">
+      {/* MAIN ASYMMETRICAL 2-COLUMN FORM */}
+      <form onSubmit={handleSubmit} className="addp-form-layout">
+        {/* LEFT COLUMN: MAIN CONTENT (68%) */}
+        <div className="addp-main-col">
+          {/* CARD 1: GENERAL INFORMATION */}
+          <div className="addp-card">
+            <div className="addp-card-header">
+              <div className="addp-card-icon emerald">
                 <FileText size={18} />
               </div>
-
-              <h2>Product Information</h2>
+              <div className="addp-card-heading">
+                <h2>Product Information</h2>
+                <p>Provide the essential customer-facing name and descriptions.</p>
+              </div>
             </div>
 
-            {/* ===========================================
-                PRODUCT NAME
-            =========================================== */}
-
-            <div className="gs-form-group">
-              <label>
-                Product Name <span className="gs-required">*</span>
-              </label>
-
-              <input
-                type="text"
-                name="productName"
-                placeholder="Enter product name"
-                value={formData.productName}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            {/* ===========================================
-                SLUG
-            =========================================== */}
-
-            <div className="gs-form-group">
-              <label>
-                Slug <span className="gs-required">*</span>
-              </label>
-
-              <input
-                type="text"
-                name="slug"
-                placeholder="product-slug"
-                value={formData.slug}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            {/* ===========================================
-                CATEGORY
-            =========================================== */}
-
-            <div className="gs-form-row col-2">
-              <div className="gs-form-group">
+            <div className="addp-card-body">
+              {/* Product Name */}
+              <div className="addp-field">
                 <label>
-                  Category <span className="gs-required">*</span>
+                  Product Name <span className="req">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="productName"
+                  placeholder="e.g. Fresh Farm Organic Tomatoes"
+                  value={formData.productName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              {/* Slug */}
+              <div className="addp-field">
+                <label>
+                  Product Slug / URL handle <span className="req">*</span>
+                </label>
+                <div className="addp-input-prefix-wrap">
+                  <span className="addp-input-prefix">store.com/product/</span>
+                  <input
+                    type="text"
+                    name="slug"
+                    placeholder="fresh-farm-organic-tomatoes"
+                    value={formData.slug}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Short Description */}
+              <div className="addp-field">
+                <div className="addp-label-row">
+                  <label>Short Summary</label>
+                  <span className="addp-counter">
+                    {formData.shortDescription.length}/200
+                  </span>
+                </div>
+                <textarea
+                  name="shortDescription"
+                  rows={2}
+                  maxLength={200}
+                  placeholder="Brief 1-2 sentence highlight shown in quick views and cart previews..."
+                  value={formData.shortDescription}
+                  onChange={handleChange}
+                />
+              </div>
+
+              {/* Full Description */}
+              <div className="addp-field">
+                <div className="addp-label-row">
+                  <label>Detailed Description</label>
+                  <span className="addp-counter">
+                    {formData.fullDescription.length}/1000
+                  </span>
+                </div>
+                <textarea
+                  name="fullDescription"
+                  rows={5}
+                  maxLength={1000}
+                  placeholder="Complete product details, nutritional information, origin, storage instructions, etc..."
+                  value={formData.fullDescription}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* CARD 2: MEDIA & GALLERY */}
+          <div className="addp-card">
+            <div className="addp-card-header">
+              <div className="addp-card-icon blue">
+                <ImageIcon size={18} />
+              </div>
+              <div className="addp-card-heading">
+                <h2>Product Images</h2>
+                <p>Upload clear photos. The first image will be set as primary.</p>
+              </div>
+            </div>
+
+            <div className="addp-card-body">
+              {/* Upload Dropzone */}
+              <label htmlFor="addp-file-input" className="addp-dropzone">
+                <div className="addp-dropzone-icon">
+                  <UploadCloud size={28} />
+                </div>
+                <div className="addp-dropzone-text">
+                  <span className="addp-dropzone-title">
+                    Click to browse or drop images here
+                  </span>
+                  <span className="addp-dropzone-hint">
+                    PNG, JPG, or WEBP up to 5MB each (Up to 5 images)
+                  </span>
+                </div>
+                <input
+                  id="addp-file-input"
+                  type="file"
+                  accept="image/png, image/jpeg, image/webp, image/jpg"
+                  multiple
+                  onChange={handleImageUpload}
+                  style={{ display: "none" }}
+                />
+              </label>
+
+              {/* Images Preview Grid */}
+              {(existingImages.length > 0 || productImages.length > 0) && (
+                <div className="addp-preview-grid">
+                  {/* Existing Images */}
+                  {existingImages.map((imgPath, idx) => (
+                    <div key={`exist-${idx}`} className="addp-preview-card">
+                      <img
+                        src={getImageUrl(imgPath)}
+                        alt={`Product ${idx}`}
+                        className="addp-preview-img"
+                      />
+                      {idx === 0 && (
+                        <span className="addp-primary-badge">Primary</span>
+                      )}
+                      <button
+                        type="button"
+                        className="addp-remove-img-btn"
+                        onClick={() => handleRemoveExistingImage(idx)}
+                        title="Remove image"
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* New Images */}
+                  {productImages.map((imgObj, idx) => {
+                    const isFirstOverall =
+                      existingImages.length === 0 && idx === 0;
+                    return (
+                      <div key={`new-${idx}`} className="addp-preview-card">
+                        <img
+                          src={imgObj.url}
+                          alt={`Upload ${idx}`}
+                          className="addp-preview-img"
+                        />
+                        {isFirstOverall && (
+                          <span className="addp-primary-badge">Primary</span>
+                        )}
+                        <button
+                          type="button"
+                          className="addp-remove-img-btn"
+                          onClick={() => handleRemoveNewImage(idx)}
+                          title="Remove image"
+                        >
+                          <X size={13} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* CARD 3: PRICING & INVENTORY */}
+          <div className="addp-card">
+            <div className="addp-card-header">
+              <div className="addp-card-icon emerald">
+                <DollarSign size={18} />
+              </div>
+              <div className="addp-card-heading">
+                <h2>Pricing & Margins</h2>
+                <p>Configure pricing, discounts, and monitor estimated profit margins.</p>
+              </div>
+            </div>
+
+            <div className="addp-card-body">
+              <div className="addp-grid-3">
+                {/* Regular Price */}
+                <div className="addp-field">
+                  <label>
+                    Regular Price (₹) <span className="req">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="price"
+                    placeholder="0.00"
+                    value={formData.price}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                {/* Discounted / Selling Price */}
+                <div className="addp-field">
+                  <label>Sale / Discount Price (₹)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="discountPrice"
+                    placeholder="0.00"
+                    value={formData.discountPrice}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                {/* Cost Price */}
+                <div className="addp-field">
+                  <label>Purchase Cost (₹)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="costPrice"
+                    placeholder="0.00"
+                    value={formData.costPrice}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              {/* Dynamic Calculation Insights */}
+              {(priceCalculations.discountPercent > 0 ||
+                priceCalculations.profitMargin > 0) && (
+                <div className="addp-pricing-insights">
+                  <Sparkles size={16} className="addp-sparkle" />
+                  <div className="addp-insight-chips">
+                    {priceCalculations.discountPercent > 0 && (
+                      <span className="addp-insight-chip discount">
+                        Customer Discount: {priceCalculations.discountPercent}% OFF
+                      </span>
+                    )}
+                    {priceCalculations.profitMargin > 0 && (
+                      <span className="addp-insight-chip margin">
+                        Gross Margin: {priceCalculations.profitMargin}%
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="addp-grid-2">
+                {/* Written / MRP Price */}
+                <div className="addp-field">
+                  <label>Written / MRP Label (₹)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="writtenPrice"
+                    placeholder="Printed packaging MRP"
+                    value={formData.writtenPrice}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                {/* Tax */}
+                <div className="addp-field">
+                  <label>Tax / GST Rate (%)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="tax"
+                    placeholder="e.g. 5 or 18"
+                    value={formData.tax}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CARD 4: SEO & METADATA */}
+          <div className="addp-card">
+            <div className="addp-card-header">
+              <div className="addp-card-icon purple">
+                <Tag size={18} />
+              </div>
+              <div className="addp-card-heading">
+                <h2>Search Engine Optimization (SEO)</h2>
+                <p>Enhance visibility in Google and organic search results.</p>
+              </div>
+            </div>
+
+            <div className="addp-card-body">
+              <div className="addp-field">
+                <label>Meta Title</label>
+                <input
+                  type="text"
+                  name="metaTitle"
+                  placeholder="e.g. Buy Fresh Organic Tomatoes Online at Best Price"
+                  value={formData.metaTitle}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="addp-field">
+                <div className="addp-label-row">
+                  <label>Meta Description</label>
+                  <span className="addp-counter">
+                    {formData.metaDescription.length}/300
+                  </span>
+                </div>
+                <textarea
+                  name="metaDescription"
+                  rows={3}
+                  maxLength={300}
+                  placeholder="Summary snippet displayed beneath your page title in search engine results..."
+                  value={formData.metaDescription}
+                  onChange={handleChange}
+                />
+              </div>
+
+              {/* Meta Keywords Pill Input */}
+              <div className="addp-field">
+                <label>Meta Keywords</label>
+                <div className="addp-keyword-box">
+                  {formData.metaKeywords.map((keyword) => (
+                    <span key={keyword} className="addp-keyword-pill">
+                      {keyword}
+                      <button
+                        type="button"
+                        onClick={() => removeMetaKeyword(keyword)}
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    type="text"
+                    placeholder="Type keyword and press Enter..."
+                    onKeyDown={handleMetaKeywordKeyDown}
+                  />
+                </div>
+                <span className="addp-field-hint">
+                  Press Enter after each keyword to add it as a tag.
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: SIDEBAR CONTROLS (32%) */}
+        <div className="addp-side-col">
+          {/* SIDE CARD 1: PRODUCT STATUS */}
+          <div className="addp-card">
+            <div className="addp-card-header">
+              <div className="addp-card-heading">
+                <h2>Product Status</h2>
+                <p>Control whether this item is published to shoppers.</p>
+              </div>
+            </div>
+
+            <div className="addp-card-body">
+              <div className="addp-status-toggle-grid">
+                <label
+                  className={`addp-status-option ${
+                    formData.status === "active" ? "active" : ""
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="status"
+                    value="active"
+                    checked={formData.status === "active"}
+                    onChange={handleChange}
+                  />
+                  <div className="addp-status-opt-left">
+                    <CheckCircle2 size={18} className="addp-status-check" />
+                    <div>
+                      <span className="addp-status-opt-title">Active</span>
+                      <span className="addp-status-opt-desc">
+                        Visible and live in store
+                      </span>
+                    </div>
+                  </div>
                 </label>
 
+                <label
+                  className={`addp-status-option ${
+                    formData.status === "inactive" ? "inactive" : ""
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="status"
+                    value="inactive"
+                    checked={formData.status === "inactive"}
+                    onChange={handleChange}
+                  />
+                  <div className="addp-status-opt-left">
+                    <XCircle size={18} className="addp-status-x" />
+                    <div>
+                      <span className="addp-status-opt-title">Inactive</span>
+                      <span className="addp-status-opt-desc">
+                        Hidden draft / archived
+                      </span>
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              <div className="addp-checkbox-row">
+                <input
+                  type="checkbox"
+                  id="isOutOfStock"
+                  name="isOutOfStock"
+                  checked={formData.isOutOfStock}
+                  onChange={handleChange}
+                />
+                <label htmlFor="isOutOfStock">
+                  Mark as forcefully Out of Stock
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* SIDE CARD 2: CATEGORY & CLASSIFICATION */}
+          <div className="addp-card">
+            <div className="addp-card-header">
+              <div className="addp-card-heading">
+                <h2>Organization</h2>
+                <p>Categorize for easy customer discovery.</p>
+              </div>
+            </div>
+
+            <div className="addp-card-body">
+              {/* Category */}
+              <div className="addp-field">
+                <label>
+                  Category <span className="req">*</span>
+                </label>
                 <select
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
                   required
                 >
-                  <option value="">
-                    {loadingMasterData ? "Loading..." : "Select Category"}
-                  </option>
-
-                  {categories.map((category) => (
-                    <option key={category._id} value={category._id}>
-                      {category.name}
+                  <option value="">Select Category</option>
+                  {categories.map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
                     </option>
                   ))}
                 </select>
               </div>
-            </div>
 
-            {/* ===========================================
-                BRAND
-            =========================================== */}
-
-            <div className="gs-form-group">
-              <label>Brand</label>
-
-              <select
-                name="brand"
-                value={formData.brand}
-                onChange={handleChange}
-              >
-                <option value="">
-                  {loadingMasterData ? "Loading..." : "Select Brand"}
-                </option>
-
-                {brands.map((brand) => (
-                  <option key={brand._id} value={brand._id}>
-                    {brand.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* ===========================================
-                SKU
-            =========================================== */}
-
-            <div className="gs-form-group">
-              <label>
-                SKU (Stock Keeping Unit) <span className="gs-required">*</span>
-              </label>
-
-              <input
-                type="text"
-                name="sku"
-                placeholder="Enter SKU code"
-                value={formData.sku}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            {/* ===================================================== */}
-            {/* BARCODE */}
-            {/* ===================================================== */}
-
-            <div className="gs-form-group">
-              <label>Barcode</label>
-
-              <input
-                type="text"
-                name="barcode"
-                placeholder="Enter or scan barcode"
-                value={formData.barcode}
-                onChange={handleChange}
-                autoComplete="off"
-              />
-            </div>
-            {/* ===========================================
-    UNIT / UNIT NO / TAGS
-=========================================== */}
-
-            <div className="gs-form-row col-2">
-              <div className="gs-form-group">
-                <label>
-                  Unit <span className="gs-required">*</span>
-                </label>
-
+              {/* Brand */}
+              <div className="addp-field">
+                <label>Brand</label>
                 <select
-                  name="unit"
-                  value={formData.unit}
+                  name="brand"
+                  value={formData.brand}
                   onChange={handleChange}
-                  required
                 >
-                  <option value="">
-                    {loadingMasterData ? "Loading..." : "Select Unit"}
-                  </option>
-
-                  {units.map((unit) => (
-                    <option key={unit._id} value={unit._id}>
-                      {unit.name}
-                      {unit.shortName ? ` (${unit.shortName})` : ""}
+                  <option value="">Select Brand</option>
+                  {brands.map((brand) => (
+                    <option key={brand._id || brand.id} value={brand._id || brand.id}>
+                      {brand.name}
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div className="gs-form-group">
-                <label>
-                  Unit No <span className="gs-required">*</span>
-                </label>
+              {/* Unit & Unit No */}
+              <div className="addp-grid-2">
+                <div className="addp-field">
+                  <label>
+                    Unit <span className="req">*</span>
+                  </label>
+                  <select
+                    name="unit"
+                    value={formData.unit}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">
+                      {loadingMasterData ? "Loading..." : "Unit"}
+                    </option>
+                    {units.map((unit) => (
+                      <option key={unit._id} value={unit._id}>
+                        {unit.name} ({unit.shortName || unit.name})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                <input
-                  type="number"
-                  name="unitNo"
-                  min="1"
-                  step="1"
-                  placeholder="Enter unit number"
-                  value={formData.unitNo}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="gs-form-group">
-              <label>Tags</label>
-
-              <input
-                type="text"
-                name="tags"
-                placeholder="Enter tags (e.g. organic, fresh)"
-                value={formData.tags}
-                onChange={handleChange}
-              />
-            </div>
-
-            {/* ===========================================
-                SHORT DESCRIPTION
-            =========================================== */}
-
-            <div className="gs-form-group">
-              <label>Short Description</label>
-
-              <div className="gs-textarea-wrapper">
-                <textarea
-                  name="shortDescription"
-                  rows="3"
-                  maxLength="200"
-                  placeholder="Enter short description..."
-                  value={formData.shortDescription}
-                  onChange={handleChange}
-                />
-
-                <span className="gs-char-counter">
-                  {formData.shortDescription.length}
-                  /200
-                </span>
-              </div>
-            </div>
-
-            {/* ===========================================
-                FULL DESCRIPTION
-            =========================================== */}
-
-            <div className="gs-form-group">
-              <label>Full Description</label>
-
-              <div className="gs-textarea-wrapper">
-                <textarea
-                  name="fullDescription"
-                  rows="5"
-                  maxLength="1000"
-                  placeholder="Enter full description..."
-                  value={formData.fullDescription}
-                  onChange={handleChange}
-                />
-
-                <span className="gs-char-counter">
-                  {formData.fullDescription.length}
-                  /1000
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* =================================================
-              SEO CARD
-          ================================================= */}
-
-          <div className="gs-card">
-            <div className="gs-card-header">
-              <div className="gs-card-icon-wrap">
-                <Tag size={18} />
+                <div className="addp-field">
+                  <label>
+                    Unit Qty <span className="req">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="unitNo"
+                    min="1"
+                    placeholder="1"
+                    value={formData.unitNo}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
               </div>
 
-              <h2>SEO Information</h2>
-            </div>
-
-            {/* ===========================================
-                META TITLE
-            =========================================== */}
-
-            <div className="gs-form-group">
-              <label>Meta Title</label>
-
-              <input
-                type="text"
-                name="metaTitle"
-                placeholder="Enter SEO meta title"
-                value={formData.metaTitle}
-                onChange={handleChange}
-              />
-            </div>
-
-            {/* ===========================================
-                META DESCRIPTION
-            =========================================== */}
-
-            <div className="gs-form-group">
-              <label>Meta Description</label>
-
-              <div className="gs-textarea-wrapper">
-                <textarea
-                  name="metaDescription"
-                  rows="4"
-                  maxLength="300"
-                  placeholder="Enter SEO meta description..."
-                  value={formData.metaDescription}
-                  onChange={handleChange}
-                />
-
-                <span className="gs-char-counter">
-                  {formData.metaDescription.length}
-                  /300
-                </span>
-              </div>
-            </div>
-
-            {/* ===========================================
-                META KEYWORDS
-            =========================================== */}
-
-            <div className="gs-form-group">
-              <label>Meta Keywords</label>
-
-              <div className="gs-keyword-input-wrapper">
-                {/* KEYWORD TAGS */}
-
-                {Array.isArray(formData.metaKeywords) &&
-                  formData.metaKeywords.map((keyword) => (
-                    <span key={keyword} className="gs-keyword-tag">
-                      {keyword}
-
-                      <button
-                        type="button"
-                        className="gs-keyword-remove"
-                        onClick={() => removeMetaKeyword(keyword)}
-                        aria-label={`Remove ${keyword}`}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-
-                {/* INPUT */}
-
+              {/* Tags */}
+              <div className="addp-field">
+                <label>Product Tags</label>
                 <input
                   type="text"
-                  placeholder={
-                    formData.metaKeywords?.length
-                      ? "Add another keyword..."
-                      : "Type keyword and press Enter"
-                  }
-                  onKeyDown={handleMetaKeywordKeyDown}
-                  autoComplete="off"
+                  name="tags"
+                  placeholder="e.g. organic, fresh, summer"
+                  value={formData.tags}
+                  onChange={handleChange}
                 />
               </div>
-
-              <small className="gs-field-help">
-                Type a keyword and press Enter to add it.
-              </small>
             </div>
           </div>
-        </div>
 
-        {/* =================================================
-            RIGHT COLUMN
-        ================================================= */}
-
-        <div className="gs-column">
-          {/* =================================================
-              PRICING & STOCK
-          ================================================= */}
-
-          <div className="gs-card">
-            <div className="gs-card-header">
-              <div className="gs-card-icon-wrap">
-                <Tag size={18} />
+          {/* SIDE CARD 3: INVENTORY & TRACKING */}
+          <div className="addp-card">
+            <div className="addp-card-header">
+              <div className="addp-card-heading">
+                <h2>Inventory & Barcode</h2>
+                <p>Stock levels and warehouse identifiers.</p>
               </div>
-
-              <h2>Pricing & Stock</h2>
             </div>
 
-            {/* ===========================================
-                PRICE
-            =========================================== */}
-
-            <div className="gs-form-row col-2">
-              <div className="gs-form-group">
+            <div className="addp-card-body">
+              {/* SKU */}
+              <div className="addp-field">
                 <label>
-                  Price (₹) <span className="gs-required">*</span>
+                  SKU (Stock Keeping Unit) <span className="req">*</span>
                 </label>
-
                 <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  name="price"
-                  placeholder="0.00"
-                  value={formData.price}
+                  type="text"
+                  name="sku"
+                  placeholder="e.g. GRO-TOM-01"
+                  value={formData.sku}
                   onChange={handleChange}
                   required
                 />
               </div>
 
-              <div className="gs-form-group">
-                <label>Discount Price (₹)</label>
-
+              {/* Barcode */}
+              <div className="addp-field">
+                <label>Barcode / UPC</label>
                 <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  name="discountPrice"
-                  placeholder="0.00"
-                  value={formData.discountPrice}
+                  type="text"
+                  name="barcode"
+                  placeholder="Scan or enter barcode"
+                  value={formData.barcode}
                   onChange={handleChange}
                 />
+              </div>
+
+              {/* Stock Quantity */}
+              <div className="addp-grid-2">
+                <div className="addp-field">
+                  <label>
+                    Stock Qty <span className="req">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    name="stockQuantity"
+                    placeholder="0"
+                    value={formData.stockQuantity}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <div className="addp-field">
+                  <label>Low Stock Alert</label>
+                  <input
+                    type="number"
+                    min="0"
+                    name="lowStockAlert"
+                    placeholder="5"
+                    value={formData.lowStockAlert}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SIDE CARD 4: DATES & LIFECYCLE */}
+          <div className="addp-card">
+            <div className="addp-card-header">
+              <div className="addp-card-icon purple">
+                <Calendar size={18} />
+              </div>
+              <div className="addp-card-heading">
+                <h2>Dates & Lifecycle</h2>
+                <p>Manufacturing and expiration dates.</p>
               </div>
             </div>
 
-            {/* ===========================================
-                COST / STOCK
-            =========================================== */}
-
-            {/* ===========================================
-    WRITTEN PRICE / COST PRICE
-=========================================== */}
-
-            <div className="gs-form-row col-2">
-              <div className="gs-form-group">
-                <label>Written Price (₹)</label>
-
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  name="writtenPrice"
-                  placeholder="0.00"
-                  value={formData.writtenPrice}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div className="gs-form-group">
-                <label>Cost Price (₹)</label>
-
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  name="costPrice"
-                  placeholder="0.00"
-                  value={formData.costPrice}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
-            {/* ===========================================
-    MANUFACTURE DATE / EXPIRY DATE
-=========================================== */}
-
-            <div className="gs-form-row col-2">
-              <div className="gs-form-group">
+            <div className="addp-card-body">
+              <div className="addp-field">
                 <label>Manufacture Date</label>
-
                 <input
                   type="date"
                   name="manufactureDate"
-                  value={formData.manufactureDate}
+                  value={formData.manufactureDate || ""}
                   onChange={handleChange}
                 />
               </div>
 
-              <div className="gs-form-group">
+              <div className="addp-field">
                 <label>Expiry Date</label>
-
                 <input
                   type="date"
                   name="expiryDate"
-                  value={formData.expiryDate}
+                  value={formData.expiryDate || ""}
                   onChange={handleChange}
                 />
               </div>
-            </div>
-
-            {/* ===========================================
-                LOW STOCK / TAX
-            =========================================== */}
-
-            <div className="gs-form-row col-2">
-              <div className="gs-form-group">
-                <label>
-                  Stock Quantity <span className="gs-required">*</span>
-                </label>
-
-                <input
-                  type="number"
-                  min="0"
-                  name="stockQuantity"
-                  placeholder="0"
-                  value={formData.stockQuantity}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="gs-form-group">
-                <label>Low Stock Alert</label>
-
-                <input
-                  type="number"
-                  min="0"
-                  name="lowStockAlert"
-                  placeholder="Minimum stock level"
-                  value={formData.lowStockAlert}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
-            <div className="gs-form-row col-2">
-              <div className="gs-form-group">
-                <label>Tax (%)</label>
-
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  name="tax"
-                  placeholder="0"
-                  value={formData.tax}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
-            {/* ===========================================
-                OUT OF STOCK
-            =========================================== */}
-
-            <div className="gs-checkbox-group">
-              <label className="gs-checkbox-label">
-                <input
-                  type="checkbox"
-                  name="isOutOfStock"
-                  checked={formData.isOutOfStock}
-                  onChange={handleChange}
-                />
-
-                <span>This product is out of stock</span>
-              </label>
             </div>
           </div>
-
-          {/* =================================================
-              PRODUCT IMAGES
-          ================================================= */}
-
-          <div className="gs-card">
-            <div className="gs-card-header">
-              <div className="gs-card-icon-wrap">
-                <ImageIcon size={18} />
-              </div>
-
-              <h2>Product Images</h2>
-            </div>
-
-            <div className="gs-upload-zone-container">
-              <label htmlFor="gs-file-input" className="gs-dropzone">
-                <div className="gs-upload-circle-icon">
-                  <UploadCloud size={24} />
-                </div>
-
-                <h3 className="gs-upload-title">Upload Product Images</h3>
-
-                <p className="gs-upload-desc">
-                  Drag & drop images here or click to browse
-                  <br />
-                  JPG, PNG or WEBP (Max 5MB each)
-                </p>
-              </label>
-
-              <input
-                id="gs-file-input"
-                type="file"
-                accept="image/png, image/jpeg, image/webp"
-                multiple
-                onChange={handleImageUpload}
-                style={{
-                  display: "none",
-                }}
-              />
-            </div>
-
-            {/* ===========================================
-                EXISTING + NEW IMAGE PREVIEWS
-            =========================================== */}
-
-            {(existingImages.length > 0 || productImages.length > 0) && (
-              <div className="gs-image-preview-grid">
-                {/* ========================================
-                    EXISTING IMAGES
-                ======================================== */}
-
-                {existingImages.map((imgPath, idx) => (
-                  <div key={`existing-${idx}`} className="gs-preview-item">
-                    <img src={getImageUrl(imgPath)} alt={`Existing ${idx}`} />
-
-                    <button
-                      type="button"
-                      className="gs-remove-img-btn"
-                      onClick={() => handleRemoveExistingImage(idx)}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-
-                {/* ========================================
-                    NEW IMAGES
-                ======================================== */}
-
-                {productImages.map((imgObj, idx) => (
-                  <div key={`new-${idx}`} className="gs-preview-item">
-                    <img src={imgObj.url} alt={`New upload ${idx}`} />
-
-                    <button
-                      type="button"
-                      className="gs-remove-img-btn"
-                      onClick={() => handleRemoveNewImage(idx)}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* =================================================
-              PRODUCT STATUS
-          ================================================= */}
-
-          <div className="gs-card">
-            <div className="gs-card-header">
-              <div className="gs-card-icon-wrap">
-                <Tag size={18} />
-              </div>
-
-              <h2>Product Status</h2>
-            </div>
-
-            <div className="gs-status-options-grid">
-              {/* =========================================
-                  ACTIVE
-              ========================================= */}
-
-              <label
-                className={`gs-status-card ${
-                  formData.status === "active" ? "selected-active" : ""
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="status"
-                  value="active"
-                  checked={formData.status === "active"}
-                  onChange={handleChange}
-                />
-
-                <div className="gs-status-radio-icon">
-                  <CheckCircle size={20} />
-                </div>
-
-                <div className="gs-status-info">
-                  <div className="gs-status-title">Active</div>
-
-                  <div className="gs-status-sub">
-                    Product is visible in shop
-                  </div>
-                </div>
-              </label>
-
-              {/* =========================================
-                  INACTIVE
-              ========================================= */}
-
-              <label
-                className={`gs-status-card ${
-                  formData.status === "inactive" ? "selected-inactive" : ""
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="status"
-                  value="inactive"
-                  checked={formData.status === "inactive"}
-                  onChange={handleChange}
-                />
-
-                <div className="gs-status-radio-icon">
-                  <XCircle size={20} />
-                </div>
-
-                <div className="gs-status-info">
-                  <div className="gs-status-title">Inactive</div>
-
-                  <div className="gs-status-sub">
-                    Product is hidden from shop
-                  </div>
-                </div>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        {/* =================================================
-            FOOTER ACTIONS
-        ================================================= */}
-
-        <div className="gs-footer-actions-row">
-          <button
-            type="button"
-            className="gs-btn-reset"
-            onClick={handleReset}
-            disabled={isSubmitting}
-          >
-            <RotateCcw size={16} />
-            Reset
-          </button>
-
-          <button type="submit" className="gs-btn-save" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader size={16} className="spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save size={16} />
-
-                {editingProduct ? "Update Product" : "Save Product"}
-              </>
-            )}
-          </button>
         </div>
       </form>
     </div>

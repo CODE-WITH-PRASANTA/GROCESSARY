@@ -6,6 +6,7 @@ import {
   Search,
   User,
   ShoppingBag,
+  Heart,
   Grid,
   ChevronRight,
   ChevronDown,
@@ -15,7 +16,7 @@ import {
 
 import logo from "../../assets/Grocessary Sathi Png.png";
 import "./Navbar.css";
-import CartSection from "../CartSection/CartSection";
+import { fetchWishlistItems } from "../../Utils/wishlistService";
 import UserAuth from "../UserAuth/UserAuth";
 import API, { BASE_URL } from "../../api/axios";
 
@@ -26,6 +27,7 @@ import API, { BASE_URL } from "../../api/axios";
 const NAV_PATHS = {
   HOME: "/",
   ACCOUNT: "/login",
+  WISHLIST: "/wishlist",
   CART: "/cart",
   FAQ: "/faq",
   BLOG: "/blogs",
@@ -43,8 +45,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [isCartOpen, setIsCartOpen] = useState(false);
-
+  
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -57,6 +58,28 @@ const Navbar = () => {
 
   const [cartItemCount, setCartItemCount] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
+
+  // Sync Wishlist Count
+  const refreshWishlistCount = useCallback(async () => {
+    try {
+      const items = await fetchWishlistItems();
+      setWishlistCount(items.length);
+    } catch {
+      setWishlistCount(0);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshWishlistCount();
+
+    const handleWishlistUpdate = () => {
+      refreshWishlistCount();
+    };
+
+    window.addEventListener("wishlistUpdated", handleWishlistUpdate);
+    return () => window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
+  }, [refreshWishlistCount]);
 
   // ======================================================
   // GET TOKEN
@@ -1071,42 +1094,64 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* USER ACTIONS */}
+            {/* USER ACTIONS: 1. WISHLIST, 2. CART, 3. PROFILE */}
             <div className="navbar-user-actions">
-              {/* USER */}
-              <UserAuth onNavigate={closeMobileMenu} />
-
-              {/* CART */}
-              <button
-                type="button"
-                className="navbar-cart-container"
-                onClick={() => setIsCartOpen(true)}
-                aria-label={`Open Shopping Cart. ${cartItemCount} items. Total ₹${cartTotal.toFixed(
-                  2,
-                )}`}
+              {/* 1. WISHLIST BUTTON */}
+              <Link
+                to={NAV_PATHS.WISHLIST}
+                className="navbar-wishlist-container"
+                onClick={closeMobileMenu}
+                aria-label={`Wishlist with ${wishlistCount} saved items`}
+                title="My Wishlist"
               >
-                <div className="navbar-cart-text">
-                  <span className="navbar-cart-label">My Cart:</span>
-                  <span className="navbar-cart-price">
-                    ₹{cartTotal.toFixed(2)}
-                  </span>
-                </div>
+                <div className="navbar-wishlist-icon-wrapper">
+                  <Heart
+                    size={21}
+                    className="navbar-wishlist-icon"
+                    aria-hidden="true"
+                    fill={wishlistCount > 0 ? "#ef4444" : "none"}
+                    color={wishlistCount > 0 ? "#ef4444" : "currentColor"}
+                  />
 
+                  {wishlistCount > 0 && (
+                    <span
+                      className="navbar-wishlist-badge"
+                      aria-label={`${wishlistCount} items in wishlist`}
+                    >
+                      {wishlistCount}
+                    </span>
+                  )}
+                </div>
+              </Link>
+
+              {/* 2. CART BUTTON (ICON ONLY) */}
+              <Link
+                to="/cart"
+                className="navbar-cart-container"
+                onClick={closeMobileMenu}
+                aria-label={`Shopping Cart with ${cartItemCount} items`}
+                title="My Cart"
+              >
                 <div className="navbar-cart-icon-wrapper">
                   <ShoppingBag
-                    size={22}
+                    size={21}
                     className="navbar-cart-icon"
                     aria-hidden="true"
                   />
 
-                  <span
-                    className="navbar-cart-badge"
-                    aria-label={`${cartItemCount} items in cart`}
-                  >
-                    {cartItemCount}
-                  </span>
+                  {cartItemCount > 0 && (
+                    <span
+                      className="navbar-cart-badge"
+                      aria-label={`${cartItemCount} items in cart`}
+                    >
+                      {cartItemCount}
+                    </span>
+                  )}
                 </div>
-              </button>
+              </Link>
+
+              {/* 3. USER PROFILE */}
+              <UserAuth onNavigate={closeMobileMenu} />
 
               {/* MOBILE */}
               <button
@@ -1369,12 +1414,7 @@ const Navbar = () => {
         </nav>
       </header>
 
-      {/* CART POPUP */}
-      <CartSection
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        onOpen={() => setIsCartOpen(true)}
-      />
+      
     </>
   );
 };

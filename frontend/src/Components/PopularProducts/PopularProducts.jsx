@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import {
   ShoppingCart,
   Plus,
@@ -72,15 +72,11 @@ const getCategoryId = (cat) => {
 const getUnitSymbol = (unitValue, unitList) => {
   if (!unitValue) return "";
 
-  // If the backend already populated it as an object
   if (typeof unitValue === "object") {
     return unitValue.symbol || unitValue.name || "";
   }
 
-  // Otherwise it's an ObjectId — look it up
-  const found = unitList.find(
-    (u) => String(u._id) === String(unitValue)
-  );
+  const found = unitList.find((u) => String(u._id) === String(unitValue));
   return found?.symbol || found?.name || "";
 };
 
@@ -102,6 +98,50 @@ const PopularProducts = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [cartCount, setCartCount] = useState(0);
+
+  const categoriesRef = useRef(null);
+
+  const allCategoryNames = useMemo(() => {
+    return ["All", ...categories.map((c) => c.name)];
+  }, [categories]);
+
+  const currentCategoryIndex = useMemo(() => {
+    const idx = allCategoryNames.indexOf(activeCategory);
+    return idx >= 0 ? idx : 0;
+  }, [allCategoryNames, activeCategory]);
+
+  const scrollToCategoryButton = (index) => {
+    if (categoriesRef.current) {
+      const buttons = categoriesRef.current.querySelectorAll(
+        ".popular-products__category"
+      );
+      if (buttons && buttons[index]) {
+        buttons[index].scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
+      }
+    }
+  };
+
+  const handlePrevCategory = () => {
+    if (currentCategoryIndex > 0) {
+      const prevCategory = allCategoryNames[currentCategoryIndex - 1];
+      setActiveCategory(prevCategory);
+      setCurrentPage(1);
+      scrollToCategoryButton(currentCategoryIndex - 1);
+    }
+  };
+
+  const handleNextCategory = () => {
+    if (currentCategoryIndex < allCategoryNames.length - 1) {
+      const nextCategory = allCategoryNames[currentCategoryIndex + 1];
+      setActiveCategory(nextCategory);
+      setCurrentPage(1);
+      scrollToCategoryButton(currentCategoryIndex + 1);
+    }
+  };
 
   const isLoggedIn = () => {
     try {
@@ -173,6 +213,21 @@ const PopularProducts = () => {
     window.addEventListener("cartUpdated", handler);
     return () => window.removeEventListener("cartUpdated", handler);
   }, [refreshCartCount]);
+
+  // Lock body scroll and handle ESC key when modal is open
+  useEffect(() => {
+    if (selectedProduct) {
+      document.body.style.overflow = "hidden";
+      const handleKeyDown = (e) => {
+        if (e.key === "Escape") closeProductDetails();
+      };
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.body.style.overflow = "";
+        window.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [selectedProduct]);
 
   // =========================================================
   // FETCH EVERYTHING
@@ -258,7 +313,6 @@ const PopularProducts = () => {
             rawImage = p.image || p.thumbnail || "";
           }
 
-          // 👇 unit resolution: handles ObjectId, populated object, or string
           const unitSymbol = getUnitSymbol(p.unit, rawUnits);
 
           const unitLabel = p.unitNo
@@ -277,33 +331,78 @@ const PopularProducts = () => {
             price,
             oldPrice,
             discount,
-            unit: unitLabel,           // "250 g"
-            unitNo: p.unitNo || "",    // 250
-            unitSymbol,                // g
+            unit: unitLabel,
+            unitNo: p.unitNo || "",
+            unitSymbol,
             image: resolveImage(rawImage),
             description:
-              p.shortDescription || p.fullDescription || "Fresh product.",
+              p.shortDescription || p.fullDescription || "Fresh quality product.",
             stockQuantity: Number(p.stockQuantity || 0),
           };
         });
 
       setProducts(merged);
 
-      // ---- categories ----
+      // ---- Calculate product count per category (ONLY show categories with at least 1 item) ----
+      const categoryCountMap = new Map();
+      merged.forEach((p) => {
+        if (p.category) {
+          const catKey = p.category.trim().toLowerCase();
+          categoryCountMap.set(catKey, (categoryCountMap.get(catKey) || 0) + 1);
+        }
+        if (p.categoryId) {
+          const idKey = String(p.categoryId).trim();
+          categoryCountMap.set(idKey, (categoryCountMap.get(idKey) || 0) + 1);
+        }
+      });
+
+      // Filter rawCategories: ONLY include categories that have at least 1 product
       let cats = rawCategories
         .filter((c) => {
           const s = String(c?.status ?? "active").toLowerCase();
-          return s === "active" || s === "true" || s === "1";
+          const isActive = s === "active" || s === "true" || s === "1";
+          if (!isActive) return false;
+
+          const catName = getCategoryName(c);
+          const catId = getCategoryId(c);
+
+          const countByName = categoryCountMap.get(catName.toLowerCase()) || 0;
+          const countById = catId ? categoryCountMap.get(catId) || 0 : 0;
+          const totalCount = countByName || countById || 0;
+
+          return totalCount > 0;
         })
-        .map((c) => ({
-          id: getCategoryId(c),
-          name: getCategoryName(c),
-        }))
+        .map((c) => {
+          const catName = getCategoryName(c);
+          const catId = getCategoryId(c);
+          const count =
+            categoryCountMap.get(catName.toLowerCase()) ||
+            (catId ? categoryCountMap.get(catId) || 0 : 0);
+
+          return {
+            id: catId || catName,
+            name: catName,
+            count,
+          };
+        })
         .filter((c) => c.name);
 
+      // If categories from API didn't match, derive directly from active products
       if (cats.length === 0) {
-        const set = new Set(merged.map((p) => p.category).filter(Boolean));
-        cats = Array.from(set).map((name) => ({ id: name, name }));
+        const productCatMap = new Map();
+        merged.forEach((p) => {
+          if (p.category && p.category !== "Other") {
+            productCatMap.set(
+              p.category,
+              (productCatMap.get(p.category) || 0) + 1
+            );
+          }
+        });
+        cats = Array.from(productCatMap.entries()).map(([name, count]) => ({
+          id: name,
+          name,
+          count,
+        }));
       }
 
       setCategories(cats);
@@ -352,7 +451,6 @@ const PopularProducts = () => {
 
   useEffect(() => {
     fetchAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // =========================================================
@@ -360,7 +458,14 @@ const PopularProducts = () => {
   // =========================================================
   const filteredProducts = useMemo(() => {
     if (activeCategory === "All") return products;
-    return products.filter((p) => p.category === activeCategory);
+    return products.filter((p) => {
+      const matchName =
+        p.category &&
+        p.category.trim().toLowerCase() === activeCategory.trim().toLowerCase();
+      const matchId =
+        p.categoryId && String(p.categoryId) === String(activeCategory);
+      return matchName || matchId;
+    });
   }, [products, activeCategory]);
 
   const totalPages = Math.max(
@@ -457,53 +562,59 @@ const PopularProducts = () => {
   };
 
   // =========================================================
-  // WISHLIST
+  // WISHLIST TOGGLE
   // =========================================================
   const toggleWishlist = async (product) => {
     const productId = getProductId(product);
     if (!productId) return;
 
-    const isWishlisted = wishlistIds.has(productId);
+    const isCurrentlyWishlisted = wishlistIds.has(productId);
 
     try {
       setAddingId(productId);
 
       if (isLoggedIn()) {
-        if (isWishlisted) {
-          await API.delete(`/wishlist/${productId}`);
+        if (isCurrentlyWishlisted) {
+          await API.delete(`/wishlist/remove/${productId}`);
         } else {
-          await API.post(`/wishlist/${productId}`);
+          await API.post("/wishlist/add", { productId });
         }
+        window.dispatchEvent(new Event("wishlistUpdated"));
+      } else {
+        let guestWishlist = getGuestWishlist();
+        if (isCurrentlyWishlisted) {
+          guestWishlist = guestWishlist.filter(
+            (i) => String(i.productId || i.id) !== productId
+          );
+        } else {
+          guestWishlist.push({
+            id: productId,
+            productId,
+            name: product.name,
+            price: product.price,
+            oldPrice: product.oldPrice,
+            image: product.image,
+            unit: product.unit,
+          });
+        }
+        saveGuestWishlist(guestWishlist);
       }
 
       setWishlistIds((prev) => {
         const next = new Set(prev);
-        if (isWishlisted) next.delete(productId);
-        else next.add(productId);
+        if (isCurrentlyWishlisted) {
+          next.delete(productId);
+        } else {
+          next.add(productId);
+        }
         return next;
       });
 
-      if (!isLoggedIn()) {
-        const guest = getGuestWishlist();
-        const next = isWishlisted
-          ? guest.filter((i) => String(i.id) !== productId)
-          : [
-              ...guest,
-              {
-                id: productId,
-                name: product.name,
-                price: product.price,
-                oldPrice: product.oldPrice,
-                image: product.image,
-                unit: product.unit,
-              },
-            ];
-        saveGuestWishlist(next);
-      }
-
       Swal.fire({
-        icon: "success",
-        title: isWishlisted ? "Removed from wishlist" : "Added to wishlist",
+        icon: isCurrentlyWishlisted ? "info" : "success",
+        title: isCurrentlyWishlisted
+          ? "Removed from Wishlist"
+          : "Added to Wishlist",
         text: product.name,
         toast: true,
         position: "top-end",
@@ -524,7 +635,7 @@ const PopularProducts = () => {
   };
 
   // =========================================================
-  // MODAL
+  // MODAL HANDLERS
   // =========================================================
   const openProductDetails = (product) => {
     setSelectedProduct(product);
@@ -555,43 +666,90 @@ const PopularProducts = () => {
   return (
     <section className="popular-products">
       <div className="popular-products__container">
-        {/* HEADER */}
+        {/* HEADER WITH ATTRACTIVE DYNAMIC CATEGORIES */}
         <div className="popular-products__header">
-          <h2 className="popular-products__title">Popular Products</h2>
+          <div className="popular-products__header-info">
+            <div className="popular-products__header-title-row">
+              <h2 className="popular-products__title">Popular Products</h2>
+            </div>
+            <p className="popular-products__subtitle">
+              Fresh quality groceries and pantry essentials handpicked for you
+            </p>
+          </div>
 
-          <div className="popular-products__categories">
+          <div className="popular-products__categories-wrapper">
             <button
               type="button"
-              className={`popular-products__category ${
-                activeCategory === "All"
-                  ? "popular-products__category--active"
-                  : ""
-              }`}
-              onClick={() => handleCategoryChange("All")}
+              className="popular-products__category-nav popular-products__category-nav--left"
+              onClick={handlePrevCategory}
+              disabled={currentCategoryIndex <= 0}
+              aria-label="Previous category"
+              title="Previous category"
             >
-              All
+              <ChevronLeft size={18} />
             </button>
 
-            {categories.map((cat) => (
+            <div
+              className="popular-products__categories"
+              ref={categoriesRef}
+              role="tablist"
+              aria-label="Filter products by category"
+            >
               <button
-                key={cat.id || cat.name}
                 type="button"
+                role="tab"
+                aria-selected={activeCategory === "All"}
                 className={`popular-products__category ${
-                  activeCategory === cat.name
+                  activeCategory === "All"
                     ? "popular-products__category--active"
                     : ""
                 }`}
-                onClick={() => handleCategoryChange(cat.name)}
+                onClick={() => handleCategoryChange("All")}
               >
-                {cat.name}
+                <span>All</span>
+                <span className="popular-products__category-count">
+                  {products.length}
+                </span>
               </button>
-            ))}
+
+              {categories.map((cat) => (
+                <button
+                  key={cat.id || cat.name}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeCategory === cat.name}
+                  className={`popular-products__category ${
+                    activeCategory === cat.name
+                      ? "popular-products__category--active"
+                      : ""
+                  }`}
+                  onClick={() => handleCategoryChange(cat.name)}
+                >
+                  <span>{cat.name}</span>
+                  <span className="popular-products__category-count">
+                    {cat.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              className="popular-products__category-nav popular-products__category-nav--right"
+              onClick={handleNextCategory}
+              disabled={currentCategoryIndex >= allCategoryNames.length - 1}
+              aria-label="Next category"
+              title="Next category"
+            >
+              <ChevronRight size={18} />
+            </button>
           </div>
         </div>
 
         {/* LOADING / ERROR */}
         {loading ? (
           <div className="popular-products__empty">
+            <div className="popular-products__loading-spinner"></div>
             <h3>Loading products…</h3>
           </div>
         ) : error ? (
@@ -616,7 +774,20 @@ const PopularProducts = () => {
                 const isAdding = addingId === productId;
 
                 return (
-                  <article className="popular-products__card" key={productId}>
+                  <article
+                    className="popular-products__card"
+                    key={productId}
+                    onClick={() => openProductDetails(product)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`View details for ${product.name}`}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openProductDetails(product);
+                      }
+                    }}
+                  >
                     {product.discount > 0 && (
                       <div className="popular-products__discount">
                         -{product.discount}%
@@ -629,7 +800,10 @@ const PopularProducts = () => {
                       className={`popular-products__wishlist ${
                         isWishlisted ? "popular-products__wishlist--active" : ""
                       }`}
-                      onClick={() => toggleWishlist(product)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleWishlist(product);
+                      }}
                       disabled={isAdding}
                       aria-label={
                         isWishlisted
@@ -644,25 +818,18 @@ const PopularProducts = () => {
                     </button>
 
                     {/* IMAGE */}
-                    <button
-                      type="button"
-                      className="popular-products__image-button"
-                      onClick={() => openProductDetails(product)}
-                      aria-label={`View ${product.name}`}
-                    >
-                      <div className="popular-products__image-wrapper">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="popular-products__image"
-                          loading="lazy"
-                          onError={(e) => {
-                            e.currentTarget.src =
-                              "https://via.placeholder.com/300?text=Product";
-                          }}
-                        />
-                      </div>
-                    </button>
+                    <div className="popular-products__image-wrapper">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="popular-products__image"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.src =
+                            "https://via.placeholder.com/300?text=Product";
+                        }}
+                      />
+                    </div>
 
                     {/* BODY */}
                     <div className="popular-products__body">
@@ -671,23 +838,23 @@ const PopularProducts = () => {
                       )}
 
                       <p className="popular-products__stock">
+                        <span
+                          className={`popular-products__stock-dot ${
+                            product.stockQuantity > 0 ? "in-stock" : "out-of-stock"
+                          }`}
+                        ></span>
                         {product.stockQuantity > 0
                           ? "In stock"
                           : "Out of stock"}
                       </p>
 
-                      <button
-                        type="button"
-                        className="popular-products__name"
-                        onClick={() => openProductDetails(product)}
-                      >
+                      <h3 className="popular-products__name">
                         {product.name}
-                      </button>
+                      </h3>
 
-                      {/* 👇 unit line */}
                       {product.unit && (
                         <p className="popular-products__unit">
-                         <strong>{product.unit}</strong>
+                          <strong>{product.unit}</strong>
                         </p>
                       )}
 
@@ -707,8 +874,12 @@ const PopularProducts = () => {
                         <button
                           type="button"
                           className="popular-products__cart-button"
-                          onClick={() => addToCart(product, 1)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(product, 1);
+                          }}
                           disabled={isAdding || product.stockQuantity === 0}
+                          aria-label={`Add ${product.name} to cart`}
                         >
                           <ShoppingCart size={16} />
                           <span>{isAdding ? "Adding…" : "Add To Cart"}</span>
@@ -736,6 +907,7 @@ const PopularProducts = () => {
                   className="popular-products__pagination-button"
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  aria-label="Previous Page"
                 >
                   <ChevronLeft size={18} />
                   <span>Previous</span>
@@ -753,6 +925,7 @@ const PopularProducts = () => {
                             : ""
                         }`}
                         onClick={() => setCurrentPage(page)}
+                        aria-label={`Page ${page}`}
                       >
                         {page}
                       </button>
@@ -767,6 +940,7 @@ const PopularProducts = () => {
                   onClick={() =>
                     setCurrentPage((p) => Math.min(totalPages, p + 1))
                   }
+                  aria-label="Next Page"
                 >
                   <span>Next</span>
                   <ChevronRight size={18} />
@@ -800,11 +974,13 @@ const PopularProducts = () => {
         <ArrowUp size={20} />
       </button>
 
-      {/* MODAL */}
+      {/* RESPONSIVE PRODUCT DETAILS MODAL */}
       {selectedProduct && (
         <div
           className="popular-products__modal-overlay"
           onClick={closeProductDetails}
+          role="dialog"
+          aria-modal="true"
         >
           <div
             className="popular-products__modal"
@@ -814,8 +990,9 @@ const PopularProducts = () => {
               type="button"
               className="popular-products__modal-close"
               onClick={closeProductDetails}
+              aria-label="Close dialog"
             >
-              <X size={21} />
+              <X size={20} />
             </button>
 
             <div className="popular-products__modal-image">
@@ -840,31 +1017,41 @@ const PopularProducts = () => {
                   }
                 />
               </button>
+
+              {selectedProduct.discount > 0 && (
+                <div className="popular-products__modal-discount-tag">
+                  {selectedProduct.discount}% OFF
+                </div>
+              )}
             </div>
 
             <div className="popular-products__modal-content">
-              <span className="popular-products__modal-category">
-                {selectedProduct.category}
-              </span>
+              <div className="popular-products__modal-header-meta">
+                <span className="popular-products__modal-category">
+                  {selectedProduct.category}
+                </span>
+
+                <span
+                  className={`popular-products__modal-stock ${
+                    selectedProduct.stockQuantity > 0 ? "in-stock" : "out-of-stock"
+                  }`}
+                >
+                  <span className="popular-products__modal-stock-dot"></span>
+                  {selectedProduct.stockQuantity > 0
+                    ? "In stock"
+                    : "Out of stock"}
+                </span>
+              </div>
 
               <h3 className="popular-products__modal-title">
                 {selectedProduct.name}
               </h3>
 
-              <p className="popular-products__modal-stock">
-                ●{" "}
-                {selectedProduct.stockQuantity > 0
-                  ? "In stock"
-                  : "Out of stock"}
-              </p>
-
-              <p className="popular-products__modal-description">
-                {selectedProduct.description}
-              </p>
-
-              <div className="popular-products__modal-unit">
-                Pack Size: <strong>{selectedProduct.unit}</strong>
-              </div>
+              {selectedProduct.unit && (
+                <div className="popular-products__modal-unit">
+                  Pack Size: <strong>{selectedProduct.unit}</strong>
+                </div>
+              )}
 
               <div className="popular-products__modal-price-row">
                 <span className="popular-products__modal-price">
@@ -875,30 +1062,19 @@ const PopularProducts = () => {
                     <span className="popular-products__modal-old-price">
                       {formatPrice(selectedProduct.oldPrice)}
                     </span>
-                    <span className="popular-products__modal-discount">
-                      {selectedProduct.discount}% OFF
+                    <span className="popular-products__modal-savings">
+                      Save {formatPrice(selectedProduct.oldPrice - selectedProduct.price)}
                     </span>
                   </>
                 )}
               </div>
 
-              <div className="popular-products__modal-actions">
-                <div className="popular-products__quantity">
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((v) => Math.max(1, v - 1))}
-                  >
-                    <Minus size={16} />
-                  </button>
-                  <span>{quantity}</span>
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((v) => v + 1)}
-                  >
-                    <Plus size={16} />
-                  </button>
-                </div>
+              <p className="popular-products__modal-description">
+                {selectedProduct.description}
+              </p>
 
+              <div className="popular-products__modal-actions">
+                {/* ADD TO CART ON LEFT */}
                 <button
                   type="button"
                   className="popular-products__modal-cart"
@@ -908,11 +1084,35 @@ const PopularProducts = () => {
                     selectedProduct.stockQuantity === 0
                   }
                 >
-                  <ShoppingCart size={18} />
-                  {addingId === getProductId(selectedProduct)
-                    ? "Adding…"
-                    : "Add To Cart"}
+                  <ShoppingCart size={19} className="popular-products__modal-cart-icon" />
+                  <span className="popular-products__modal-cart-label">
+                    {selectedProduct.stockQuantity === 0
+                      ? "Out of Stock"
+                      : addingId === getProductId(selectedProduct)
+                      ? "Adding…"
+                      : "Add To Cart"}
+                  </span>
                 </button>
+
+                {/* COUNTER ON RIGHT */}
+                <div className="popular-products__quantity">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((v) => Math.max(1, v - 1))}
+                    aria-label="Decrease quantity"
+                    disabled={quantity <= 1}
+                  >
+                    <Minus size={15} />
+                  </button>
+                  <span className="popular-products__quantity-val">{quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((v) => v + 1)}
+                    aria-label="Increase quantity"
+                  >
+                    <Plus size={15} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

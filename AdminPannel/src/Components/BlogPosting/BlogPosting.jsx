@@ -10,12 +10,27 @@ import {
 import './BlogPosting.css';
 import API from "../../api/axios";
 
+const getBlogImageUrl = (url) => {
+  if (!url) return "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&auto=format&fit=crop&q=80";
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("blob:") ||
+    url.startsWith("data:")
+  ) {
+    return url;
+  }
+  const clean = url.startsWith("/") ? url : "/" + url;
+  return "http://localhost:5000" + clean;
+};
+
 const BlogPosting = () => {
   const { id: urlId } = useParams();
   const navigate = useNavigate();
 
   const [blogs, setBlogs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
 
   // Filters & Pagination
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All Categories');
@@ -42,6 +57,30 @@ const BlogPosting = () => {
   const [isEditorFullscreen, setIsEditorFullscreen] = useState(false);
   const fileInputRef = useRef(null);
   const contentTextareaRef = useRef(null);
+
+  // Real fetch categories from http://localhost:5174/products/categories (via /api/categories)
+  const loadCategories = async () => {
+    try {
+      const res = await API.get('/categories');
+      const list = res.data?.data || (Array.isArray(res.data) ? res.data : []);
+      const activeList = list.filter(cat => !cat.status || cat.status.toLowerCase() === 'active');
+      const finalList = activeList.length > 0 ? activeList : list;
+      setCategories(finalList);
+
+      if (finalList.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          category: prev.category && prev.category !== 'Nutrition' ? prev.category : finalList[0].name
+        }));
+      }
+    } catch (err) {
+      console.error('Error fetching categories from database:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
   // Load all blogs for table using centralized Axios instance
   const loadBlogs = async () => {
@@ -326,15 +365,29 @@ const BlogPosting = () => {
 
             <div className="BlogPosting__input-group">
               <label>Category *</label>
-              <select name="category" value={formData.category} onChange={handleInputChange}>
-                <option value="Nutrition">Nutrition</option>
-                <option value="news">News</option>
-                <option value="health">Health</option>
-                <option value="recipes">Recipes</option>
-                <option value="Health Tips">Health Tips</option>
-                <option value="Organic Food">Organic Food</option>
-                <option value="Superfoods">Superfoods</option>
-                <option value="Organic Living">Organic Living</option>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleInputChange}
+                required
+              >
+                {(() => {
+                  const opts = [...categories];
+                  if (
+                    formData.category &&
+                    !opts.some(c => c.name.toLowerCase() === formData.category.toLowerCase())
+                  ) {
+                    opts.unshift({ _id: 'current-cat', name: formData.category });
+                  }
+                  if (opts.length === 0) {
+                    return <option value="">Loading categories...</option>;
+                  }
+                  return opts.map(cat => (
+                    <option key={cat._id || cat.id || cat.name} value={cat.name}>
+                      {cat.name}
+                    </option>
+                  ));
+                })()}
               </select>
             </div>
 
@@ -350,7 +403,7 @@ const BlogPosting = () => {
               <div className="BlogPosting__dropzone" onClick={() => fileInputRef.current && fileInputRef.current.click()}>
                 {formData.imagePreview ? (
                   <div className="BlogPosting__preview-container">
-                    <img src={formData.imagePreview} alt="Preview" className="BlogPosting__uploaded-preview" />
+                    <img src={getBlogImageUrl(formData.imagePreview)} alt="Preview" className="BlogPosting__uploaded-preview" />
                     <span>Click to change image</span>
                   </div>
                 ) : (
@@ -513,12 +566,19 @@ const BlogPosting = () => {
                 onChange={(e) => setSelectedCategoryFilter(e.target.value)}
               >
                 <option value="All Categories">All Categories</option>
-                <option value="Nutrition">Nutrition</option>
-                <option value="news">News</option>
-                <option value="health">Health</option>
-                <option value="recipes">Recipes</option>
-                <option value="Organic Food">Organic Food</option>
-                <option value="Organic Living">Organic Living</option>
+                {(() => {
+                  const filterCats = [
+                    ...new Set([
+                      ...categories.map(c => c.name),
+                      ...blogs.map(b => b.category).filter(Boolean)
+                    ])
+                  ];
+                  return filterCats.map(name => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ));
+                })()}
               </select>
               <button type="button" className="BlogPosting__control-btn" onClick={handleApplyFilter}><FiFilter /> Filter</button>
               <button type="button" className="BlogPosting__control-btn" onClick={handleResetFilter} title="Reset Filter"><FiRefreshCw /></button>
@@ -545,7 +605,7 @@ const BlogPosting = () => {
                       <td>{indexOfFirstItem + index + 1}</td>
                       <td className="BlogPosting__title-cell">
                         <img 
-                          src={blog.image || "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&auto=format&fit=crop&q=80"} 
+                          src={getBlogImageUrl(blog.image)} 
                           alt="" 
                           className="BlogPosting__row-thumb" 
                           onError={(e) => {

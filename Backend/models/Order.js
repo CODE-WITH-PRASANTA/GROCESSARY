@@ -167,6 +167,17 @@ const orderSchema = new mongoose.Schema(
       inspectedAt: { type: Date, default: null },
     },
 
+    // Shipping & Tracking details (for Shipped & Out for Delivery)
+    shippingDetails: {
+      courierName: { type: String, default: "" },
+      currentHub: { type: String, default: "" },
+      deliveryDate: { type: Date, default: null },
+      trackingId: { type: String, default: "" },
+      trackingUrl: { type: String, default: "" },
+      agentName: { type: String, default: "" },
+      agentPhone: { type: String, default: "" },
+    },
+
     // Idempotency — prevents double-processing a webhook
     processedPaymentIds: { type: [String], default: [] },
   },

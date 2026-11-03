@@ -97,8 +97,7 @@ const productSchema = new mongoose.Schema(
       type: String,
       enum: ["manual", "import"],
       default: "manual",
-      index: true,
-    },
+      },
 
     // ====================================================
     // TAGS
