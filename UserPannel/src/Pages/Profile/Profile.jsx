@@ -255,7 +255,6 @@ const Profile = () => {
 
       const response = await API.put("/auth/me", payload);
 
-      console.log("Profile update response:", response.data);
 
       // ==================================================
       // UPDATE SUCCESS

@@ -158,7 +158,7 @@ const Topbar = ({ toggleSidebar }) => {
 
       <div className="Topbar-right">
         {/* Notification Container */}
-        <div className="Notification" ref={notificationRef}>
+        {/* <div className="Notification" ref={notificationRef}>
           <button
             className="Notification-btn"
             onClick={() => {
@@ -242,7 +242,7 @@ const Topbar = ({ toggleSidebar }) => {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </div> */}
 
         {/* Profile Dropdown */}
         <div className="ProfileMenu" ref={profileRef}>
