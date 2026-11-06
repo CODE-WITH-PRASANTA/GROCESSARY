@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../../api/axios"; // 👈 adjust path to your axios.js
+import { ArrowLeft, Home, ChevronRight } from "lucide-react";
+import API from "../../api/axios";
 import "./BlogGrid.css";
+import breadcrumbBg from "../../assets/breadcrumb.webp";
 
 const getBlogImageUrl = (url) => {
-  if (!url) return "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop";
+  if (!url) {
+    return "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop";
+  }
   if (
     url.startsWith("http://") ||
     url.startsWith("https://") ||
@@ -29,13 +33,11 @@ const BlogGrid = () => {
   // ======================================================
   // FETCH PUBLISHED BLOGS
   // ======================================================
-
   const loadBlogs = async () => {
     try {
       setIsLoading(true);
       setError("");
 
-      // 👈 axios `params` handles URL encoding automatically
       const { data } = await API.get("/blogs", {
         params: { status: "Published" },
       });
@@ -43,7 +45,6 @@ const BlogGrid = () => {
       if (data?.success) {
         setBlogs(data.data || []);
       } else {
-        // tolerate a bare-array response from the backend
         setBlogs(Array.isArray(data) ? data : []);
       }
     } catch (err) {
@@ -64,7 +65,6 @@ const BlogGrid = () => {
   // ======================================================
   // PAGINATION
   // ======================================================
-
   const totalPages = Math.ceil(blogs.length / itemsPerPage) || 1;
   const currentBlogs = blogs.slice(
     (currentPage - 1) * itemsPerPage,
@@ -74,7 +74,6 @@ const BlogGrid = () => {
   // ======================================================
   // NAVIGATION
   // ======================================================
-
   const handleReadMore = (id) => {
     navigate(`/news/${id}`);
   };
@@ -82,7 +81,6 @@ const BlogGrid = () => {
   // ======================================================
   // DATE
   // ======================================================
-
   const formatDate = (dateStr) => {
     if (!dateStr) return "Recently";
     return new Date(dateStr).toLocaleDateString("en-US", {
@@ -92,46 +90,51 @@ const BlogGrid = () => {
     });
   };
 
-  // ======================================================
-  // RENDER
-  // ======================================================
-
   return (
     <div className="blog-grid-page">
-      {/* Hero Banner */}
+      {/* Attractive Hero Breadcrumb Banner */}
       <section
         className="blog-grid-breadcrumb"
-        aria-label="News Breadcrumb Banner"
+        style={{ backgroundImage: `url(${breadcrumbBg})` }}
+        aria-label="Blog Breadcrumb Banner"
       >
-        <div className="blog-grid-breadcrumb-container">
-          <nav aria-label="Breadcrumb Navigation">
-            <a
-              href="/"
-              className="blog-grid-back-link"
-              title="Return to Home"
-            >
-              <span className="blog-grid-arrow-circle" aria-hidden="true">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
-                  <line x1="19" y1="12" x2="5" y2="12"></line>
-                  <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-              </span>
-              <span className="blog-grid-back-text">Back to Home</span>
-            </a>
-          </nav>
+        <div className="blog-grid-breadcrumb-overlay">
+          <div className="blog-grid-breadcrumb-container">
+            {/* Top Navigation Row: Back to Home Button & Breadcrumbs */}
+            <div className="blog-grid-nav-row">
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="blog-grid-back-btn"
+                title="Return to Home"
+              >
+                <span className="blog-grid-btn-icon">
+                  <ArrowLeft size={16} />
+                </span>
+                <span>Back to Home</span>
+              </button>
 
-          <h1 className="blog-grid-banner-title">News &amp; Blog</h1>
-          <p className="blog-grid-banner-desc">
-            Explore expert grocery guides, nutrition tips, and farm-fresh
-            recipes from Grocery Sathi.
-          </p>
+              <nav className="blog-grid-trail" aria-label="Breadcrumb Trail">
+                <a href="/" className="blog-trail-item">
+                  <Home size={14} />
+                  <span>Home</span>
+                </a>
+                <span className="blog-trail-separator">
+                  <ChevronRight size={14} />
+                </span>
+                <span className="blog-trail-current">Blog</span>
+              </nav>
+            </div>
+
+            {/* Hero Text */}
+            <div className="blog-grid-hero-text">
+              <h1 className="blog-grid-banner-title">Blog</h1>
+              <p className="blog-grid-banner-desc">
+                Explore expert grocery guides, nutrition tips, and farm-fresh
+                recipes curated by Grocery Sathi to inspire healthy living.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 

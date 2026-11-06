@@ -8,8 +8,11 @@ import {
   Minus,
   Percent,
   CreditCard,
-  Printer,
+  Download,
+  Tag,
   Check,
+  CheckCircle2,
+  RotateCcw,
   FileText,
   X,
   CalendarDays,
@@ -18,6 +21,7 @@ import {
   Smartphone,
   AlertCircle,
 } from "lucide-react";
+import { jsPDF } from "jspdf";
 
 import Swal from "sweetalert2";
 import API, { BASE_URL } from "../../api/axios";
@@ -82,7 +86,13 @@ const Billing = () => {
   const [upiTransactionId, setUpiTransactionId] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // 👇 snapshot of the completed sale — used by receipt + print
+  // ---- Coupon state ----
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+
+  // 👇 snapshot of the completed sale — used by receipt + download
   const [completedBill, setCompletedBill] = useState(null);
 
   // ---- UPI state ----
@@ -205,8 +215,20 @@ const Billing = () => {
     }
   };
 
+  const fetchCoupons = async () => {
+    try {
+      const res = await API.get("/coupons?status=Active");
+      if (res?.data?.success && Array.isArray(res.data.data)) {
+        setAvailableCoupons(res.data.data);
+      }
+    } catch (err) {
+      console.warn("Could not fetch active coupons:", err);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
+    fetchCoupons();
   }, []);
 
   // =========================================================
@@ -262,15 +284,117 @@ const Billing = () => {
     return total + savedPerUnit * item.quantity;
   }, 0);
 
-  const discountAmount =
-    discountType === "percentage"
-      ? (subtotal * Number(discount || 0)) / 100
-      : Number(discount || 0);
+  // Coupon discount calculation
+  const couponDiscountAmount = useMemo(() => {
+    if (!appliedCoupon) return 0;
+    let amt = 0;
+    if (appliedCoupon.discountType === "percentage") {
+      amt = (subtotal * Number(appliedCoupon.discountValue || 0)) / 100;
+      if (appliedCoupon.maxDiscount && amt > Number(appliedCoupon.maxDiscount)) {
+        amt = Number(appliedCoupon.maxDiscount);
+      }
+    } else {
+      amt = Number(appliedCoupon.discountValue || 0);
+    }
+    return Math.min(amt, subtotal);
+  }, [appliedCoupon, subtotal]);
 
-  const safeDiscount = Math.min(discountAmount, subtotal);
+  const manualDiscountAmount = useMemo(() => {
+    if (appliedCoupon) return 0;
+    const val = Number(discount || 0);
+    if (discountType === "percentage") {
+      return (subtotal * val) / 100;
+    }
+    return val;
+  }, [appliedCoupon, discount, discountType, subtotal]);
+
+  const safeDiscount = Math.min(
+    appliedCoupon ? couponDiscountAmount : manualDiscountAmount,
+    subtotal,
+  );
   const totalAmount = Math.max(0, subtotal - safeDiscount);
   const received = Number(amountReceived || 0);
   const change = Math.max(0, received - totalAmount);
+
+  // If subtotal drops below coupon minimum purchase, auto-remove coupon
+  useEffect(() => {
+    if (
+      appliedCoupon &&
+      subtotal > 0 &&
+      subtotal < (appliedCoupon.minPurchase || 0)
+    ) {
+      Swal.fire({
+        icon: "warning",
+        title: "Coupon Removed",
+        text: `Coupon '${appliedCoupon.code}' requires a min purchase of ₹${appliedCoupon.minPurchase}. Current subtotal is ₹${subtotal.toFixed(0)}.`,
+        confirmButtonColor: "#0aad4b",
+      });
+      setAppliedCoupon(null);
+    }
+  }, [subtotal, appliedCoupon]);
+
+  const handleApplyCoupon = async (codeToApply) => {
+    const code = (codeToApply || couponInput || "").trim().toUpperCase();
+    if (!code) {
+      Swal.fire({
+        icon: "warning",
+        title: "Coupon Code Required",
+        text: "Please enter or select a coupon code.",
+        confirmButtonColor: "#0aad4b",
+      });
+      return;
+    }
+    if (cart.length === 0 || subtotal <= 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "Cart is Empty",
+        text: "Add items to your cart before applying a coupon.",
+        confirmButtonColor: "#0aad4b",
+      });
+      return;
+    }
+
+    try {
+      setCouponLoading(true);
+      const { data } = await API.post("/coupons/validate", {
+        code,
+        orderAmount: subtotal,
+      });
+
+      if (data?.success && data?.data) {
+        setAppliedCoupon(data.data);
+        setCouponInput("");
+        setDiscount(0);
+        Swal.fire({
+          icon: "success",
+          title: "Coupon Applied!",
+          text: data.message || `Saved ₹${data.data.discountAmount}`,
+          timer: 1800,
+          showConfirmButton: false,
+        });
+      } else {
+        throw new Error(data?.message || "Invalid coupon");
+      }
+    } catch (err) {
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to validate coupon.";
+      Swal.fire({
+        icon: "error",
+        title: "Coupon Invalid",
+        text: msg,
+        confirmButtonColor: "#0aad4b",
+      });
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+  };
 
   // =========================================================
   // UPI QR — AUTO-GENERATE WHEN UPI SELECTED
@@ -301,6 +425,7 @@ const Billing = () => {
 
         if (!cancelled && data?.success && data?.data) {
           setUpiQr(data.data);
+          setAmountReceived(String(totalAmount.toFixed(0)));
 
           const expiresAt = Date.now() + 5 * 60 * 1000;
           setUpiCountdown(Math.floor((expiresAt - Date.now()) / 1000));
@@ -412,6 +537,8 @@ const Billing = () => {
   const resetBillState = () => {
     setCart([]);
     setDiscount(0);
+    setAppliedCoupon(null);
+    setCouponInput("");
     setAmountReceived("");
     setCustomerName("");
     setCustomerMobile("");
@@ -457,6 +584,192 @@ const Billing = () => {
   };
 
   // =========================================================
+  // DOWNLOAD PDF BILL
+  // =========================================================
+  const downloadBillPDF = (bill) => {
+    const targetBill = bill || completedBill;
+    if (!targetBill) {
+      Swal.fire({
+        icon: "info",
+        title: "No Completed Bill",
+        text: "Please complete a sale first to download the bill.",
+        confirmButtonColor: "#0aad4b",
+      });
+      return;
+    }
+
+    try {
+      const doc = new jsPDF({
+        unit: "mm",
+        format: "a4",
+      });
+
+      const invNo = targetBill.invoiceNumber || invoiceNumber || "INVOICE";
+
+      // Top Brand Header Banner
+      doc.setFillColor(10, 173, 75); // #0aad4b
+      doc.rect(0, 0, 210, 24, "F");
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.text("GROCERY SATHI", 105, 12, { align: "center" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text("Fresh Grocery, Better Living | Retail Invoice and Receipt", 105, 18, { align: "center" });
+
+      // Invoice Metadata
+      doc.setTextColor(30, 41, 59);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Invoice No: ${invNo}`, 14, 34);
+      doc.text(`Date: ${targetBill.date || formattedDate}`, 140, 34);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(`Payment Mode: ${targetBill.paymentMethod || "Cash"}`, 14, 40);
+      doc.text(`Time: ${targetBill.time || formattedTime}`, 140, 40);
+
+      let currentY = 46;
+      if (targetBill.customerName || targetBill.customerMobile) {
+        const parts = [
+          targetBill.customerName ? `Customer: ${targetBill.customerName}` : "",
+          targetBill.customerMobile ? `Mobile: ${targetBill.customerMobile}` : "",
+        ].filter(Boolean).join("   |   ");
+        doc.text(parts, 14, currentY);
+        currentY += 6;
+      }
+
+      if (targetBill.paymentMethod === "UPI" && targetBill.upiVpa) {
+        doc.text(`UPI Paid To: ${targetBill.upiVpa}`, 14, currentY);
+        currentY += 6;
+      }
+
+      currentY += 2;
+
+      // Table Header
+      doc.setFillColor(241, 245, 249);
+      doc.rect(14, currentY, 182, 8, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(51, 65, 85);
+
+      doc.text("#", 18, currentY + 5.5);
+      doc.text("Item Name", 30, currentY + 5.5);
+      doc.text("Unit", 105, currentY + 5.5);
+      doc.text("Qty", 130, currentY + 5.5);
+      doc.text("Price (Rs.)", 152, currentY + 5.5);
+      doc.text("Total (Rs.)", 176, currentY + 5.5);
+
+      currentY += 8;
+
+      // Table Rows
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(15, 23, 42);
+
+      const items = targetBill.items || [];
+      items.forEach((item, idx) => {
+        if (currentY > 265) {
+          doc.addPage();
+          currentY = 20;
+        }
+
+        const isEven = idx % 2 === 0;
+        doc.setFillColor(isEven ? 255 : 248, isEven ? 255 : 250, isEven ? 255 : 252);
+        doc.rect(14, currentY, 182, 8, "F");
+
+        doc.text(String(idx + 1), 18, currentY + 5.5);
+        const nameText = item.name ? (item.name.length > 36 ? item.name.slice(0, 33) + "..." : item.name) : "Item";
+        doc.text(nameText, 30, currentY + 5.5);
+        doc.text(item.quantityLabel || item.unit || "-", 105, currentY + 5.5);
+        doc.text(String(item.quantity), 130, currentY + 5.5);
+        doc.text(Number(item.price).toFixed(2), 152, currentY + 5.5);
+        doc.text((Number(item.price) * Number(item.quantity)).toFixed(2), 176, currentY + 5.5);
+
+        currentY += 8;
+      });
+
+      // Divider
+      doc.setDrawColor(203, 213, 225);
+      doc.setLineWidth(0.3);
+      doc.line(14, currentY + 2, 196, currentY + 2);
+      currentY += 6;
+
+      if (currentY > 235) {
+        doc.addPage();
+        currentY = 20;
+      }
+
+      // Summary
+      const subtotalVal = Number(targetBill.subtotal || 0).toFixed(2);
+      const discountVal = Number(targetBill.discountAmount || 0).toFixed(2);
+      const totalVal = Number(targetBill.totalAmount || 0).toFixed(2);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(71, 85, 105);
+      doc.text("Subtotal:", 135, currentY + 5);
+      doc.text(`Rs. ${subtotalVal}`, 176, currentY + 5);
+      currentY += 6;
+
+      if (Number(targetBill.discountAmount) > 0) {
+        doc.setTextColor(22, 163, 74);
+        const discLabel = targetBill.couponCode ? `Coupon (${targetBill.couponCode}):` : "Discount:";
+        doc.text(discLabel, 135, currentY + 5);
+        doc.text(`-Rs. ${discountVal}`, 176, currentY + 5);
+        currentY += 6;
+      }
+
+      // Grand Total Box
+      doc.setFillColor(240, 253, 244);
+      doc.rect(133, currentY + 1, 63, 9, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(15, 23, 42);
+      doc.text("Grand Total:", 135, currentY + 7);
+      doc.text(`Rs. ${totalVal}`, 176, currentY + 7);
+      currentY += 13;
+
+      if (targetBill.paymentMethod === "Cash") {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(71, 85, 105);
+        doc.text(`Cash Received: Rs. ${Number(targetBill.received || 0).toFixed(2)}`, 135, currentY);
+        doc.text(`Change Returned: Rs. ${Number(targetBill.change || 0).toFixed(2)}`, 135, currentY + 5);
+        currentY += 9;
+      }
+
+      // Footer
+      doc.setDrawColor(226, 232, 240);
+      doc.line(14, currentY + 6, 196, currentY + 6);
+      currentY += 12;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(71, 85, 105);
+      doc.text("Thank you for shopping at Grocery Sathi!", 105, currentY, { align: "center" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184);
+      doc.text("Visit Again  |  Fresh Products  |  Everyday Low Prices", 105, currentY + 5, { align: "center" });
+      doc.text("Support: +91 98878 68746  |  support@grocerysathi.com", 105, currentY + 9, { align: "center" });
+
+      doc.save(`${invNo}.pdf`);
+    } catch (err) {
+      console.error("PDF generation error:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Download Error",
+        text: "Could not generate PDF bill. Please try again.",
+        confirmButtonColor: "#0aad4b",
+      });
+    }
+  };
+
+  // =========================================================
   // COMPLETE SALE
   // =========================================================
   const completeSale = async () => {
@@ -465,7 +778,18 @@ const Billing = () => {
     if (cart.length === 0) {
       Swal.fire({
         icon: "warning",
-        title: "No products added",
+        title: "Cart is Empty",
+        text: "Please add products before completing the sale.",
+        confirmButtonColor: "#0aad4b",
+      });
+      return;
+    }
+
+    if (totalAmount <= 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "Total Amount is Rs. 0",
+        text: "Bill total must be greater than zero. Please adjust items or discounts.",
         confirmButtonColor: "#0aad4b",
       });
       return;
@@ -483,11 +807,20 @@ const Billing = () => {
     }
 
     if (paymentMethod === "Cash") {
+      if (!amountReceived || Number(amountReceived) <= 0) {
+        Swal.fire({
+          icon: "error",
+          title: "Amount Received Required",
+          text: `Please enter the cash received (Total: Rs. ${totalAmount.toFixed(0)}).`,
+          confirmButtonColor: "#0aad4b",
+        });
+        return;
+      }
       if (received < totalAmount) {
         Swal.fire({
           icon: "error",
           title: "Insufficient Cash",
-          text: `Customer needs to pay ₹${totalAmount.toFixed(0)}.`,
+          text: `Customer owes Rs. ${totalAmount.toFixed(0)}, but only Rs. ${received.toFixed(0)} was entered. Shortfall: Rs. ${(totalAmount - received).toFixed(0)}.`,
           confirmButtonColor: "#0aad4b",
         });
         return;
@@ -496,8 +829,8 @@ const Billing = () => {
       if (!upiQr) {
         Swal.fire({
           icon: "error",
-          title: "QR not ready",
-          text: "Please wait for the UPI QR to generate.",
+          title: "QR Not Ready",
+          text: "Please wait for the UPI QR to generate or click Refresh QR.",
           confirmButtonColor: "#0aad4b",
         });
         return;
@@ -505,22 +838,16 @@ const Billing = () => {
       if (upiCountdown <= 0) {
         Swal.fire({
           icon: "warning",
-          title: "QR Expired",
-          text: "Please refresh the QR code before completing the sale.",
-          confirmButtonColor: "#0aad4b",
-        });
-        return;
-      }
-      if (!upiTransactionId.trim() || upiTransactionId.trim().length < 4) {
-        Swal.fire({
-          icon: "error",
-          title: "UPI Transaction ID Required",
-          text: "Please enter the UPI reference number from the customer.",
+          title: "QR Code Expired",
+          text: "The payment session expired. Please click 'Refresh QR' to generate a fresh QR.",
           confirmButtonColor: "#0aad4b",
         });
         return;
       }
     }
+
+    const actualReceived = paymentMethod === "UPI" ? totalAmount : received;
+    const actualChange = paymentMethod === "UPI" ? 0 : change;
 
     // Snapshot everything BEFORE clearing state
     const snapshot = {
@@ -528,13 +855,16 @@ const Billing = () => {
       customerName: customerName.trim(),
       customerMobile: trimmedMobile,
       paymentMethod,
-      discountType,
-      discountValue: Number(discount || 0),
+      couponCode: appliedCoupon ? appliedCoupon.code : "",
+      discountType: appliedCoupon ? appliedCoupon.discountType : discountType,
+      discountValue: appliedCoupon
+        ? appliedCoupon.discountValue
+        : Number(discount || 0),
       discountAmount: safeDiscount,
       subtotal,
       totalAmount,
-      received,
-      change,
+      received: actualReceived,
+      change: actualChange,
       upiTransactionId: paymentMethod === "UPI" ? upiTransactionId.trim() : "",
       upiVpa: paymentMethod === "UPI" ? upiQr?.vpa || "" : "",
       date: formattedDate,
@@ -552,13 +882,19 @@ const Billing = () => {
         name: customerName.trim(),
         mobile: trimmedMobile,
       },
-      discountType,
-      discountValue: Number(discount || 0),
+      couponCode: appliedCoupon ? appliedCoupon.code : "",
+      discountType: appliedCoupon ? appliedCoupon.discountType : discountType,
+      discountValue: appliedCoupon
+        ? appliedCoupon.discountValue
+        : Number(discount || 0),
       discountAmount: safeDiscount,
       paymentMethod,
-      amountReceived:
-        paymentMethod === "Cash" ? Number(amountReceived || 0) : totalAmount,
-      upiTransactionId: paymentMethod === "UPI" ? upiTransactionId.trim() : "",
+      amountReceived: actualReceived,
+      upiTransactionId:
+        paymentMethod === "UPI"
+          ? upiTransactionId.trim() || `UPI-${Date.now().toString().slice(-6)}`
+          : "",
+      upiStatus: paymentMethod === "UPI" ? "received" : "none",
     };
 
     try {
@@ -570,12 +906,24 @@ const Billing = () => {
       }
 
       const savedBill = data.bill;
+      const billSnapshot = {
+        ...snapshot,
+        invoiceNumber: savedBill.invoiceNumber,
+        couponCode: savedBill.couponCode || snapshot.couponCode || "",
+      };
 
       // Save snapshot + invoice number
-      setCompletedBill({ ...snapshot, invoiceNumber: savedBill.invoiceNumber });
+      setCompletedBill(billSnapshot);
       setInvoiceNumber(savedBill.invoiceNumber);
 
-      // 👇 Clear cart + QR, mark sale complete
+      // Auto-download bill PDF immediately!
+      try {
+        downloadBillPDF(billSnapshot);
+      } catch (pdfErr) {
+        console.error("Auto PDF download error:", pdfErr);
+      }
+
+      // Clear cart + inputs, mark sale complete
       setCart([]);
       setUpiQr(null);
       setUpiCountdown(0);
@@ -583,17 +931,19 @@ const Billing = () => {
       setCustomerName("");
       setCustomerMobile("");
       setDiscount(0);
+      setAppliedCoupon(null);
       setAmountReceived("");
       setSaleCompleted(true);
 
       Swal.fire({
         icon: "success",
-        title: "Bill Generated Successfully!",
-        text: `Invoice #${savedBill.invoiceNumber}`,
+        title: "Bill Generated & Downloaded!",
+        text: `Invoice #${savedBill.invoiceNumber} has been generated and PDF downloaded.`,
         confirmButtonColor: "#0aad4b",
       });
 
       fetchProducts();
+      fetchCoupons();
     } catch (err) {
       console.error("Save bill error:", err);
       Swal.fire({
@@ -622,147 +972,7 @@ const Billing = () => {
 
     resetBillState();
     fetchProducts();
-  };
-
-  // =========================================================
-  // PRINT — uses completedBill snapshot
-  // =========================================================
-  const printBill = () => {
-    const bill = completedBill;
-
-    if (!bill || !invoiceNumber) {
-      Swal.fire({
-        icon: "info",
-        title: "Complete the sale first",
-        confirmButtonColor: "#0aad4b",
-      });
-      return;
-    }
-
-    const printWindow = window.open("", "_blank", "width=450,height=750");
-    if (!printWindow) {
-      Swal.fire({
-        icon: "error",
-        title: "Print blocked",
-        text: "Please allow popups.",
-        confirmButtonColor: "#0aad4b",
-      });
-      return;
-    }
-
-    const receiptItems = bill.items
-      .map(
-        (item, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${item.name}<br/><small>${item.quantityLabel}</small></td>
-          <td>₹${item.price}</td>
-          <td>${item.quantity}</td>
-          <td>₹${(item.price * item.quantity).toFixed(0)}</td>
-        </tr>`,
-      )
-      .join("");
-
-    const upiLine = bill.upiTransactionId
-      ? `<div class="details"><span>UPI Txn: ${bill.upiTransactionId}</span></div>`
-      : "";
-
-    const upiVpaLine = bill.upiVpa
-      ? `<div class="details"><span>Paid To: ${bill.upiVpa}</span></div>`
-      : "";
-
-    const cashLines =
-      bill.paymentMethod === "Cash"
-        ? `
-        <div class="row"><span>Amount Received</span><strong>₹${Number(
-          bill.received || 0,
-        ).toFixed(0)}</strong></div>
-        <div class="row"><span>Change</span><strong>₹${Number(
-          bill.change || 0,
-        ).toFixed(0)}</strong></div>`
-        : "";
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${invoiceNumber}</title>
-        <style>
-          * { box-sizing: border-box; }
-          body { margin: 0; padding: 25px; font-family: Arial, sans-serif; }
-          .receipt { max-width: 430px; margin: auto; }
-          .logo { text-align: center; color: #078c3e; font-size: 27px; font-weight: 800; }
-          .tagline { text-align: center; font-size: 13px; color: #475569; margin-bottom: 20px; }
-          .success { text-align: center; border: 1px solid #bbf7d0; background: #ecfdf5; padding: 12px; border-radius: 10px; color: #087b38; font-weight: 700; margin-bottom: 18px; }
-          .details { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; }
-          table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 12px; }
-          th { background: #f1f5f9; text-align: left; }
-          th, td { padding: 8px 5px; border-bottom: 1px solid #e5e7eb; }
-          .grand { margin-top: 8px; padding: 12px; background: #eaffed; border-radius: 8px; color: #087b38; font-weight: 800; font-size: 18px; }
-          .row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; }
-        </style>
-      </head>
-      <body>
-        <div class="receipt">
-          <div class="success">BILL GENERATED SUCCESSFULLY</div>
-          <div class="logo">Grocery Sati</div>
-          <div class="tagline">Fresh Grocery, Better Living!</div>
-
-          <div class="details">
-            <span>Invoice: ${invoiceNumber}</span>
-            <span>Date: ${bill.date}</span>
-          </div>
-
-          <div class="details">
-            <span>Customer: ${bill.customerName || "Walk-in Customer"}</span>
-            <span>Mobile: ${bill.customerMobile || "—"}</span>
-          </div>
-
-          <div class="details">
-            <span>Payment: ${bill.paymentMethod}</span>
-          </div>
-
-          ${upiLine}
-          ${upiVpaLine}
-
-          <table>
-            <thead>
-              <tr><th>#</th><th>Item</th><th>Price</th><th>Qty</th><th>Total</th></tr>
-            </thead>
-            <tbody>${receiptItems}</tbody>
-          </table>
-
-          <div style="margin-top:18px">
-            <div class="row"><span>Subtotal</span><strong>₹${Number(
-              bill.subtotal || 0,
-            ).toFixed(0)}</strong></div>
-            <div class="row"><span>Discount</span><strong>₹${Number(
-              bill.discountAmount || 0,
-            ).toFixed(0)}</strong></div>
-            <div class="grand">
-              <div class="row"><span>Total Amount</span><span>₹${Number(
-                bill.totalAmount || 0,
-              ).toFixed(0)}</span></div>
-            </div>
-            ${cashLines}
-          </div>
-
-          <div style="text-align:center;margin-top:25px;font-size:13px;color:#475569">
-            Thank you for shopping with us!<br/>
-            Visit Again • Fresh Products • Everyday Low Prices
-          </div>
-        </div>
-        <script>
-          window.onload = function() {
-            window.print();
-            window.onafterprint = function() { window.close(); };
-          };
-        </script>
-      </body>
-      </html>
-    `);
-
-    printWindow.document.close();
+    fetchCoupons();
   };
 
   const PaymentIcon = ({ method }) => {
@@ -1054,42 +1264,179 @@ const Billing = () => {
                   placeholder="10-digit mobile"
                   maxLength={10}
                   disabled={saleCompleted}
+                  className={
+                    customerMobile && customerMobile.length < 10
+                      ? "Billing-input-warn"
+                      : customerMobile && customerMobile.length === 10
+                      ? "Billing-input-valid"
+                      : ""
+                  }
                 />
+                {customerMobile && customerMobile.length < 10 ? (
+                  <span className="Billing-inline-err">
+                    ⚠️ Enter 10 digits ({customerMobile.length}/10)
+                  </span>
+                ) : customerMobile && customerMobile.length === 10 ? (
+                  <span className="Billing-inline-success">
+                    ✓ Valid 10-digit mobile
+                  </span>
+                ) : null}
               </div>
             </div>
 
-            {/* Discount */}
-            <div className="Billing-discountRow">
-              <div className="Billing-discountType">
-                <button
-                  className={
-                    discountType === "percentage"
-                      ? "Billing-discountActive"
-                      : ""
-                  }
-                  onClick={() => setDiscountType("percentage")}
-                  disabled={saleCompleted}
-                >
-                  <Percent size={15} />
-                </button>
-                <button
-                  className={
-                    discountType === "amount" ? "Billing-discountActive" : ""
-                  }
-                  onClick={() => setDiscountType("amount")}
-                  disabled={saleCompleted}
-                >
-                  ₹
-                </button>
+            {/* COUPON & OFFERS SECTION */}
+            <div className="Billing-couponSection">
+              <div className="Billing-couponHeader">
+                <div className="Billing-couponTitle">
+                  <Tag size={15} className="text-emerald" />
+                  <span>Store Coupons & Offers</span>
+                </div>
+                {appliedCoupon && (
+                  <span className="Billing-couponBadgeApplied">Active</span>
+                )}
               </div>
-              <input
-                type="number"
-                min="0"
-                value={discount}
-                onChange={(e) => setDiscount(e.target.value)}
-                placeholder="0"
-                disabled={saleCompleted}
-              />
+
+              {appliedCoupon ? (
+                <div className="Billing-couponAppliedCard">
+                  <div className="Billing-couponAppliedInfo">
+                    <CheckCircle2 size={18} className="text-emerald" />
+                    <div>
+                      <strong className="Billing-couponAppliedCode">
+                        {appliedCoupon.code}
+                      </strong>
+                      <span className="Billing-couponAppliedDesc">
+                        {appliedCoupon.discountType === "percentage"
+                          ? `${appliedCoupon.discountValue}% OFF`
+                          : `₹${appliedCoupon.discountValue} OFF`}
+                        {" "}(Saved ₹{couponDiscountAmount.toFixed(0)})
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="Billing-couponRemoveBtn"
+                    onClick={handleRemoveCoupon}
+                    disabled={saleCompleted}
+                    title="Remove coupon"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              ) : (
+                <div className="Billing-couponInputWrap">
+                  <div className="Billing-couponInputRow">
+                    <input
+                      type="text"
+                      placeholder="Enter coupon code (e.g. DEMO)"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      disabled={saleCompleted}
+                      className="Billing-couponInput"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleApplyCoupon(couponInput);
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleApplyCoupon(couponInput)}
+                      disabled={saleCompleted || !couponInput.trim() || couponLoading}
+                      className="Billing-couponApplyBtn"
+                    >
+                      {couponLoading ? "Checking…" : "Apply"}
+                    </button>
+                  </div>
+
+                  {availableCoupons.length > 0 && (
+                    <div className="Billing-couponList">
+                      <span className="Billing-couponListLabel">Available Coupons:</span>
+                      <div className="Billing-couponChips">
+                        {availableCoupons.map((c) => {
+                          const isEligible = subtotal >= (c.minPurchase || 0);
+                          return (
+                            <button
+                              key={c._id || c.code}
+                              type="button"
+                              className={`Billing-couponChip ${isEligible ? "eligible" : "ineligible"}`}
+                              onClick={() => handleApplyCoupon(c.code)}
+                              disabled={saleCompleted}
+                              title={
+                                isEligible
+                                  ? `Click to apply ${c.code}`
+                                  : `Min cart ₹${c.minPurchase} needed`
+                              }
+                            >
+                              <span className="chip-code">{c.code}</span>
+                              <span className="chip-disc">
+                                {c.discountType === "percentage"
+                                  ? `${c.discountValue}% OFF`
+                                  : `₹${c.discountValue} OFF`}
+                              </span>
+                              {c.minPurchase > 0 && (
+                                <span className="chip-min">Min ₹{c.minPurchase}</span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Manual Discount (Fallback if no coupon) */}
+              {!appliedCoupon && (
+                <div className="Billing-manualDiscountWrap">
+                  <div className="Billing-manualDiscountHeader">
+                    <span>Or Custom Discount</span>
+                  </div>
+                  <div className="Billing-discountRow">
+                    <div className="Billing-discountType">
+                      <button
+                        type="button"
+                        className={
+                          discountType === "percentage"
+                            ? "Billing-discountActive"
+                            : ""
+                        }
+                        onClick={() => setDiscountType("percentage")}
+                        disabled={saleCompleted}
+                      >
+                        <Percent size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        className={
+                          discountType === "amount"
+                            ? "Billing-discountActive"
+                            : ""
+                        }
+                        onClick={() => setDiscountType("amount")}
+                        disabled={saleCompleted}
+                      >
+                        ₹
+                      </button>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      max={discountType === "percentage" ? 100 : subtotal}
+                      value={discount || ""}
+                      onChange={(e) => {
+                        let val = Number(e.target.value);
+                        if (val < 0) val = 0;
+                        if (discountType === "percentage" && val > 100) val = 100;
+                        if (discountType === "amount" && val > subtotal) val = subtotal;
+                        setDiscount(val);
+                      }}
+                      placeholder="0"
+                      disabled={saleCompleted}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Summary */}
@@ -1098,12 +1445,31 @@ const Billing = () => {
                 <span>Subtotal</span>
                 <strong>₹{subtotal.toFixed(0)}</strong>
               </div>
-              <div className="Billing-summaryRow">
-                <span>Discount</span>
-                <strong>₹{safeDiscount.toFixed(0)}</strong>
-              </div>
+              {appliedCoupon ? (
+                <div className="Billing-summaryRow Billing-summaryCouponRow">
+                  <span>
+                    Coupon Discount ({appliedCoupon.code})
+                  </span>
+                  <strong className="text-emerald">
+                    -₹{safeDiscount.toFixed(0)}
+                  </strong>
+                </div>
+              ) : safeDiscount > 0 ? (
+                <div className="Billing-summaryRow">
+                  <span>Discount</span>
+                  <strong>-₹{safeDiscount.toFixed(0)}</strong>
+                </div>
+              ) : null}
+              {totalSavings > 0 && (
+                <div className="Billing-summaryRow Billing-summarySavingsRow">
+                  <span>Product Savings</span>
+                  <strong style={{ color: "#059669" }}>
+                    -₹{totalSavings.toFixed(0)}
+                  </strong>
+                </div>
+              )}
               <div className="Billing-total">
-                <span>Total Amount</span>
+                <span>Total Amount to Pay</span>
                 <strong>₹{totalAmount.toFixed(0)}</strong>
               </div>
             </div>
@@ -1118,7 +1484,13 @@ const Billing = () => {
                     className={
                       paymentMethod === method ? "Billing-paymentActive" : ""
                     }
-                    onClick={() => setPaymentMethod(method)}
+                    onClick={() => {
+                      setPaymentMethod(method);
+                      if (method === "UPI") {
+                        setAmountReceived(String(totalAmount.toFixed(0)));
+                        setUpiRefreshKey((k) => k + 1);
+                      }
+                    }}
                     disabled={saleCompleted}
                   >
                     <PaymentIcon method={method} />
@@ -1138,13 +1510,43 @@ const Billing = () => {
                     min="0"
                     value={amountReceived}
                     onChange={(e) => setAmountReceived(e.target.value)}
-                    placeholder="0"
+                    placeholder={`e.g. ${totalAmount.toFixed(0)}`}
                   />
                 </div>
 
+                {/* Quick Cash Suggestions */}
+                <div className="Billing-quick-cash-row">
+                  <button
+                    type="button"
+                    className="quick-cash-chip exact"
+                    onClick={() => setAmountReceived(String(totalAmount.toFixed(0)))}
+                  >
+                    Exact: ₹{totalAmount.toFixed(0)}
+                  </button>
+                  {[50, 100, 200, 500, 2000].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className="quick-cash-chip"
+                      onClick={() => setAmountReceived(String(c))}
+                    >
+                      ₹{c}
+                    </button>
+                  ))}
+                </div>
+
+                {amountReceived !== "" && received < totalAmount ? (
+                  <div className="Billing-cash-shortfall">
+                    <AlertCircle size={13} />
+                    <span>Shortfall: ₹{(totalAmount - received).toFixed(0)} remaining to collect</span>
+                  </div>
+                ) : null}
+
                 <div className="Billing-change">
-                  <span>Change</span>
-                  <strong>₹{change.toFixed(0)}</strong>
+                  <span>Change to Return</span>
+                  <strong style={{ color: received >= totalAmount ? "#059669" : "#1f2937" }}>
+                    ₹{change.toFixed(0)}
+                  </strong>
                 </div>
               </>
             )}
@@ -1152,25 +1554,47 @@ const Billing = () => {
             {/* UPI — only when NOT completed */}
             {paymentMethod === "UPI" && !saleCompleted && (
               <div className="Billing-upiPanel">
-                {upiLoading ? (
+                {cart.length === 0 || totalAmount <= 0 ? (
+                  <div className="Billing-upiLoading">
+                    <AlertCircle size={32} color="#f59e0b" />
+                    <p style={{ margin: "4px 0 2px", fontWeight: 700, color: "#0f172a" }}>
+                      Cart is Empty
+                    </p>
+                    <span style={{ fontSize: "12px", color: "#64748b" }}>
+                      Add items to cart to generate a dynamic UPI QR code.
+                    </span>
+                  </div>
+                ) : upiLoading ? (
                   <div className="Billing-upiLoading">
                     <Package size={32} />
-                    <p>Generating UPI QR…</p>
+                    <p>Generating dynamic UPI QR code…</p>
                   </div>
                 ) : upiQr ? (
                   <>
-                    <div className="Billing-upiQrWrap">
+                    <div className="Billing-upi-amount-banner">
+                      <span className="upi-banner-caption">Total Amount to Pay</span>
+                      <strong className="upi-banner-val">
+                        ₹{Number(upiQr.amount).toFixed(2)}
+                      </strong>
+                    </div>
+
+                    <div
+                      className="Billing-upiQrWrap"
+                      title="Click QR to refresh or scan with GPay, PhonePe, Paytm, BHIM"
+                    >
                       <img
                         src={upiQr.qrUrl}
                         alt="UPI QR"
                         className="Billing-upiQrImg"
+                        onClick={() => {
+                          setUpiQr(null);
+                          setUpiRefreshKey((k) => k + 1);
+                        }}
+                        style={{ cursor: "pointer" }}
                       />
                       <div className="Billing-upiQrMeta">
-                        <span className="Billing-upiAmount">
-                          ₹{Number(upiQr.amount).toFixed(2)}
-                        </span>
                         <span className="Billing-upiTo">
-                          To: <strong>{upiQr.merchantName}</strong>
+                          Merchant: <strong>{upiQr.merchantName}</strong>
                         </span>
                         <span className="Billing-upiVpa">{upiQr.vpa}</span>
                       </div>
@@ -1199,39 +1623,47 @@ const Billing = () => {
                           setUpiRefreshKey((k) => k + 1);
                         }}
                       >
+                        <RotateCcw size={14} />
                         Refresh QR
                       </button>
                     </div>
 
-                    <p className="Billing-upiHintText">
-                      Ask the customer to scan with any UPI app (GPay, PhonePe,
-                      Paytm, BHIM). Money goes directly to{" "}
-                      <strong>{upiQr.merchantName}</strong>.
-                    </p>
-
-                    <div className="Billing-upiTxnWrap">
-                      <label className="Billing-upiTxnLabel">
-                        UPI Transaction ID *
-                      </label>
-                      <input
-                        type="text"
-                        value={upiTransactionId}
-                        onChange={(e) =>
-                          setUpiTransactionId(e.target.value.trim())
-                        }
-                        placeholder="Enter the UPI reference number"
-                        maxLength={40}
-                        className="Billing-upiTxnInput"
-                      />
-                      <p className="Billing-upiTxnHint">
-                        Shown in the customer's UPI app after payment.
+                    {/* RECEIVE AMOUNT CARD */}
+                    <div className="Billing-upi-receive-card">
+                      <div className="receive-amount-header">
+                        <CheckCircle2 size={16} className="text-emerald" />
+                        <span>Amount to Receive:</span>
+                        <strong className="text-emerald">
+                          ₹{Number(upiQr.amount).toFixed(2)}
+                        </strong>
+                      </div>
+                      <p className="receive-amount-hint">
+                        Exact amount will be received directly in{" "}
+                        <strong>{upiQr.merchantName}</strong> ({upiQr.vpa}) account.
                       </p>
+                    </div>
+
+                    <div className="Billing-upiInstructionCard">
+                      <CheckCircle2 size={16} className="text-emerald" />
+                      <span>Customer can scan and pay with any UPI app. Once paid, click <strong>Complete Sale & Download Bill</strong> below.</span>
                     </div>
                   </>
                 ) : (
                   <div className="Billing-upiLoading">
                     <AlertCircle size={32} />
-                    <p>Could not generate QR. Try refreshing.</p>
+                    <p>Could not generate QR code.</p>
+                    <button
+                      type="button"
+                      className="Billing-upiRefreshBtn"
+                      style={{ marginTop: "8px" }}
+                      onClick={() => {
+                        setUpiQr(null);
+                        setUpiRefreshKey((k) => k + 1);
+                      }}
+                    >
+                      <RotateCcw size={14} />
+                      Retry Generate QR
+                    </button>
                   </div>
                 )}
               </div>
@@ -1239,26 +1671,38 @@ const Billing = () => {
 
             {/* Actions */}
             <div className="Billing-actionButtons">
-              <button
-                className="Billing-printButton"
-                onClick={printBill}
-                disabled={!saleCompleted}
-              >
-                <Printer size={19} />
-                Print Bill
-              </button>
-              <button
-                className="Billing-completeButton"
-                onClick={completeSale}
-                disabled={saleCompleted || submitting || cart.length === 0}
-              >
-                <Check size={19} />
-                {submitting
-                  ? "Saving…"
-                  : saleCompleted
-                    ? "Sale Completed"
-                    : "Complete Sale"}
-              </button>
+              {saleCompleted ? (
+                <>
+                  <button
+                    type="button"
+                    className="Billing-downloadBillBtn"
+                    onClick={() => downloadBillPDF(completedBill)}
+                  >
+                    <Download size={19} />
+                    Download Bill (PDF)
+                  </button>
+                  <button
+                    type="button"
+                    className="Billing-newBillBtn"
+                    onClick={newBill}
+                  >
+                    <FileText size={19} />
+                    New Bill
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="Billing-completeButton full-width"
+                  onClick={completeSale}
+                  disabled={submitting || cart.length === 0}
+                >
+                  <Check size={19} />
+                  {submitting
+                    ? "Saving Bill & Downloading PDF…"
+                    : "Complete Sale & Download Bill"}
+                </button>
+              )}
             </div>
           </div>
         </section>
@@ -1354,7 +1798,11 @@ const Billing = () => {
                   <strong>₹{Number(completedBill.subtotal).toFixed(0)}</strong>
                 </div>
                 <div>
-                  <span>Discount</span>
+                  <span>
+                    {completedBill.couponCode
+                      ? `Coupon Discount (${completedBill.couponCode})`
+                      : "Discount"}
+                  </span>
                   <strong>
                     ₹{Number(completedBill.discountAmount).toFixed(0)}
                   </strong>
@@ -1377,9 +1825,13 @@ const Billing = () => {
             </div>
 
             <div className="Billing-receiptActions">
-              <button onClick={printBill} className="Billing-printAgain">
-                <Printer size={18} />
-                Print Again
+              <button
+                type="button"
+                onClick={() => downloadBillPDF(completedBill)}
+                className="Billing-downloadBillBtn"
+              >
+                <Download size={18} />
+                Download Bill (PDF)
               </button>
               <button onClick={newBill} className="Billing-newBill">
                 <FileText size={18} />

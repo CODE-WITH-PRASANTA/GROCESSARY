@@ -21,6 +21,7 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const todayDiscountRoutes = require("./routes/todayDiscountRoutes");
 const couponRoutes = require("./routes/couponRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const userRoutes = require("./routes/userRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const deliveryAddressRoutes = require("./routes/deliveryAddressRoutes");
 
@@ -118,6 +119,8 @@ app.use("/api/products", productRoutes);
 app.use("/api/banners", bannerRoutes);
 app.use("/api/brands", brandRoutes);
 app.use("/api/cold-leads", coldLeadRoutes);
+app.use("/api/coldlead", coldLeadRoutes);
+app.use("/api/contact", coldLeadRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/import", importRoutes);
 app.use("/api/reviews", reviewRoutes);
@@ -125,6 +128,9 @@ app.use("/api/today-discounts", todayDiscountRoutes);
 app.use("/api/coupons", couponRoutes);
 
 app.use("/api/admin", adminRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/admin/users", userRoutes);
+app.use("/api/customers", userRoutes);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/cart", cartRoutes);

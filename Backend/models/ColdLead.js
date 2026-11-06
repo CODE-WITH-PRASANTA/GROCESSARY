@@ -23,19 +23,19 @@ const coldLeadSchema = new mongoose.Schema(
 
     lookingFor: {
       type: String,
-      required: true,
+      default: "Contact Us Inquiry",
       trim: true,
     },
 
     source: {
       type: String,
-      required: true,
+      default: "Website - Contact Us",
       trim: true,
     },
 
     date: {
       type: String,
-      required: true,
+      default: () => new Date().toISOString().split("T")[0],
     },
 
     status: {
@@ -50,6 +50,12 @@ const coldLeadSchema = new mongoose.Schema(
     },
 
     notes: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    message: {
       type: String,
       default: "",
       trim: true,

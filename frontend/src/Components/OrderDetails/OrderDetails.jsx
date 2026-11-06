@@ -22,7 +22,6 @@ import {
   ShieldCheck,
   ChevronRight,
   ShoppingBag,
-  ExternalLink,
 } from "lucide-react";
 import API, { BASE_URL } from "../../api/axios";
 import { downloadInvoicePdf } from "../../Utils/generateInvoicePdf";
@@ -36,6 +35,7 @@ const OrderDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [copiedTracking, setCopiedTracking] = useState(false);
   const [cancelling, setCancelling] = useState(false);
 
   // Helper: Resolve product image url
@@ -82,6 +82,14 @@ const OrderDetails = () => {
     navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Copy Tracking ID
+  const handleCopyTracking = (code) => {
+    if (!code) return;
+    navigator.clipboard.writeText(code);
+    setCopiedTracking(true);
+    setTimeout(() => setCopiedTracking(false), 2000);
   };
 
   // Cancel Order Handler
@@ -392,30 +400,43 @@ const OrderDetails = () => {
         )}
 
                 {/* LIVE TRACKING & COURIER / AGENT INFORMATION */}
-        {order.shippingDetails && (order.shippingDetails.currentHub || order.shippingDetails.trackingId || order.shippingDetails.agentPhone) && (
+        {((order.orderStatus === "shipped" || order.orderStatus === "out_for_delivery") ||
+          (order.shippingDetails && (
+            order.shippingDetails.courierName ||
+            order.shippingDetails.currentHub ||
+            order.shippingDetails.trackingId ||
+            order.shippingDetails.deliveryDate ||
+            order.shippingDetails.trackingUrl ||
+            order.shippingDetails.agentPhone ||
+            order.shippingDetails.agentName
+          ))
+        ) && (
           <div className="order-live-tracking-card no-print">
             <div className="live-tracking-header">
               <Truck size={18} className="tracking-truck-icon" />
               <h3>Live Shipment & Delivery Details</h3>
-              <span className="live-pill">Live Tracking</span>
+              <span className="live-pill">
+                {order.orderStatus === "out_for_delivery" ? "Out for Delivery" : "In Transit"}
+              </span>
             </div>
 
             <div className="live-tracking-grid">
-              {order.shippingDetails.courierName && (
-                <div className="live-field">
-                  <span className="label">Courier Service:</span>
-                  <strong>{order.shippingDetails.courierName}</strong>
-                </div>
-              )}
+              <div className="live-field">
+                <span className="label">Courier Service:</span>
+                <strong>{order.shippingDetails?.courierName || "Standard Express"}</strong>
+              </div>
 
-              {order.shippingDetails.currentHub && (
-                <div className="live-field">
-                  <span className="label">Current Hub / Location:</span>
-                  <strong>{order.shippingDetails.currentHub}</strong>
-                </div>
-              )}
+              <div className="live-field">
+                <span className="label">Current Hub / Location:</span>
+                <strong>
+                  {order.shippingDetails?.currentHub ||
+                    (order.orderStatus === "out_for_delivery"
+                      ? "Out for Delivery"
+                      : "In Transit to Destination Hub")}
+                </strong>
+              </div>
 
-              {order.shippingDetails.deliveryDate && (
+              {order.shippingDetails?.deliveryDate ? (
                 <div className="live-field">
                   <span className="label">Estimated Delivery Date:</span>
                   <strong className="text-emerald">
@@ -426,16 +447,43 @@ const OrderDetails = () => {
                     })}
                   </strong>
                 </div>
-              )}
-
-              {order.shippingDetails.trackingId && (
+              ) : (
                 <div className="live-field">
-                  <span className="label">Tracking Number / AWB:</span>
-                  <span className="tracking-code">{order.shippingDetails.trackingId}</span>
+                  <span className="label">Estimated Delivery:</span>
+                  <strong className="text-emerald">2 - 3 Business Days</strong>
                 </div>
               )}
 
-              {order.shippingDetails.agentPhone && (
+              {order.shippingDetails?.trackingId && (
+                <div className="live-field">
+                  <span className="label">Tracking Number / AWB:</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span className="tracking-code">{order.shippingDetails.trackingId}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyTracking(order.shippingDetails.trackingId)}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        padding: "3px 8px",
+                        fontSize: "11px",
+                        fontWeight: "600",
+                        color: "#065f46",
+                        background: "#dcfce7",
+                        border: "1px solid #86efac",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {copiedTracking ? <Check size={12} /> : <Copy size={12} />}
+                      <span>{copiedTracking ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {order.shippingDetails?.agentPhone && (
                 <div className="live-field">
                   <span className="label">Delivery Agent Phone:</span>
                   <a href={`tel:${order.shippingDetails.agentPhone}`} className="agent-link">
@@ -445,25 +493,10 @@ const OrderDetails = () => {
                 </div>
               )}
 
-              {order.shippingDetails.agentName && (
+              {order.shippingDetails?.agentName && (
                 <div className="live-field">
                   <span className="label">Assigned Delivery Agent:</span>
                   <strong>{order.shippingDetails.agentName}</strong>
-                </div>
-              )}
-
-              {order.shippingDetails.trackingUrl && (
-                <div className="live-field full-row">
-                  <span className="label">Live Courier Tracking:</span>
-                  <a
-                    href={order.shippingDetails.trackingUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="external-tracking-btn"
-                  >
-                    <span>Track on Courier Partner Site</span>
-                    <ExternalLink size={13} />
-                  </a>
                 </div>
               )}
             </div>

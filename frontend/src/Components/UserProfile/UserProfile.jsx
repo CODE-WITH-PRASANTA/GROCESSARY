@@ -629,7 +629,6 @@ const UserProfile = ({ defaultTab = "profile" }) => {
               >
                 <MapPin size={18} />
                 <span>Saved Address</span>
-                <span className="tab-count-badge">{addresses.length}</span>
                 <ChevronRight size={16} className="tab-arrow" />
               </button>
 
@@ -642,7 +641,6 @@ const UserProfile = ({ defaultTab = "profile" }) => {
               >
                 <Package size={18} />
                 <span>My Order</span>
-                <span className="tab-count-badge">{orders.length}</span>
                 <ChevronRight size={16} className="tab-arrow" />
               </button>
 

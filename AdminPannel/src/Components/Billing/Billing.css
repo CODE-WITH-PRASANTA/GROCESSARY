@@ -1588,6 +1588,186 @@
   color: #64748b;
 }
 
+/* =========================================================
+   UPI & CASH ENHANCED VALIDATION & RECEIVE STYLES
+   ========================================================= */
+
+.Billing-input-warn {
+  border-color: #f43f5e !important;
+  background-color: #fff1f2 !important;
+}
+
+.Billing-input-valid {
+  border-color: #10b981 !important;
+  background-color: #f0fdf4 !important;
+}
+
+.Billing-inline-err {
+  display: block;
+  font-size: 11px;
+  color: #e11d48;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.Billing-inline-success {
+  display: block;
+  font-size: 11px;
+  color: #059669;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Quick Cash Suggestions */
+.Billing-quick-cash-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.quick-cash-chip {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.quick-cash-chip:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.quick-cash-chip.exact {
+  background: #ecfdf5;
+  border-color: #86efac;
+  color: #065f46;
+}
+
+.quick-cash-chip.exact:hover {
+  background: #dcfce7;
+}
+
+/* Cash Shortfall Warning */
+.Billing-cash-shortfall {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  color: #e11d48;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+/* UPI Top Amount Banner */
+.Billing-upi-amount-banner {
+  background: #ffffff;
+  border: 1px solid #bae6fd;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  box-shadow: 0 1px 2px rgba(2, 132, 199, 0.08);
+}
+
+.upi-banner-caption {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0284c7;
+}
+
+.upi-banner-val {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0369a1;
+  line-height: 1.1;
+}
+
+/* UPI Receive Amount Card */
+.Billing-upi-receive-card {
+  margin-top: 12px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.receive-amount-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #065f46;
+}
+
+.receive-amount-header strong {
+  font-size: 16px;
+  font-weight: 800;
+  margin-left: auto;
+}
+
+.receive-amount-hint {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #047857;
+  line-height: 1.35;
+}
+
+.text-emerald {
+  color: #059669 !important;
+}
+
+/* UPI Transaction ID Header & Autofill */
+.Billing-upiTxnHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.Billing-upi-autofill-btn {
+  background: #f0fdf4;
+  color: #059669;
+  border: 1px solid #86efac;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.Billing-upi-autofill-btn:hover {
+  background: #059669;
+  color: #ffffff;
+}
+
+.Billing-upiTxnSuccess {
+  margin: 5px 0 0;
+  font-size: 11.5px;
+  color: #059669;
+  font-weight: 600;
+}
+
 /* Disabled buttons look dimmer */
 .Billing-completeButton:disabled,
 .Billing-printButton:disabled,
@@ -1605,4 +1785,302 @@
   background: #f8fafc;
   color: #94a3b8;
   cursor: not-allowed;
+}
+
+/* =========================================================
+   COUPONS & OFFERS STYLING
+========================================================= */
+
+.Billing-couponSection {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 11px 12px;
+  margin-bottom: 12px;
+}
+
+.Billing-couponHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.Billing-couponTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.Billing-couponBadgeApplied {
+  background: #dcfce7;
+  color: #166534;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.Billing-couponAppliedCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.Billing-couponAppliedInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.Billing-couponAppliedCode {
+  font-size: 13px;
+  color: #065f46;
+  font-weight: 800;
+  margin-right: 6px;
+}
+
+.Billing-couponAppliedDesc {
+  font-size: 11.5px;
+  color: #047857;
+  font-weight: 600;
+}
+
+.Billing-couponRemoveBtn {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: none;
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.Billing-couponRemoveBtn:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.Billing-couponInputRow {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.Billing-couponInput {
+  flex: 1;
+  height: 34px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  text-transform: uppercase;
+  background: #ffffff;
+  transition: all 0.15s ease;
+}
+
+.Billing-couponInput:focus {
+  outline: none;
+  border-color: #0aad4b;
+  box-shadow: 0 0 0 3px rgba(10, 173, 75, 0.12);
+}
+
+.Billing-couponApplyBtn {
+  height: 34px;
+  padding: 0 14px;
+  background: #0aad4b;
+  color: #ffffff;
+  border: none;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.Billing-couponApplyBtn:hover:not(:disabled) {
+  background: #088c3c;
+}
+
+.Billing-couponApplyBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.Billing-couponList {
+  margin-top: 6px;
+}
+
+.Billing-couponListLabel {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 5px;
+}
+
+.Billing-couponChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.Billing-couponChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ffffff;
+  border: 1px dashed #0aad4b;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  text-align: left;
+}
+
+.Billing-couponChip:hover:not(:disabled) {
+  background: #f0fdf4;
+  border-style: solid;
+  transform: translateY(-1px);
+}
+
+.Billing-couponChip.ineligible {
+  border-color: #cbd5e1;
+  opacity: 0.7;
+  background: #f8fafc;
+}
+
+.Billing-couponChip .chip-code {
+  font-size: 11px;
+  font-weight: 800;
+  color: #0aad4b;
+}
+
+.Billing-couponChip .chip-disc {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.Billing-couponChip .chip-min {
+  font-size: 9.5px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.Billing-manualDiscountWrap {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.Billing-manualDiscountHeader {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 5px;
+}
+
+.Billing-summaryCouponRow {
+  color: #059669;
+}
+
+.Billing-summarySavingsRow {
+  background: #f0fdf4;
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin: 4px 0;
+}
+
+/* =========================================================
+   UPI INSTRUCTION CARD
+========================================================= */
+
+.Billing-upiInstructionCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 11.5px;
+  color: #065f46;
+  line-height: 1.45;
+  margin-top: 10px;
+}
+
+/* =========================================================
+   DOWNLOAD BILL & ACTION BUTTONS
+========================================================= */
+
+.Billing-completeButton.full-width {
+  grid-column: 1 / -1;
+  width: 100%;
+  font-size: 13.5px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 14px rgba(10, 173, 75, 0.28);
+}
+
+.Billing-downloadBillBtn {
+  min-height: 44px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  background: #0284c7;
+  color: #ffffff;
+  padding: 0 16px;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.22);
+}
+
+.Billing-downloadBillBtn:hover {
+  background: #0369a1;
+  transform: translateY(-1px);
+}
+
+.Billing-newBillBtn {
+  min-height: 44px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  padding: 0 14px;
+  transition: all 0.15s ease;
+}
+
+.Billing-newBillBtn:hover {
+  background: #f1f5f9;
 }

@@ -418,6 +418,7 @@ const ColdLeadManagement = () => {
               <th>Email Address</th>
               <th>Looking For</th>
               <th>Lead Source</th>
+              <th>Message / Notes</th>
               <th>Date</th>
               <th>Status</th>
               <th>Actions</th>
@@ -426,13 +427,13 @@ const ColdLeadManagement = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="10" style={{ textAlign: 'center', padding: '30px' }}>
+                <td colSpan="11" style={{ textAlign: 'center', padding: '30px' }}>
                   Loading leads...
                 </td>
               </tr>
             ) : currentLeads.length === 0 ? (
               <tr>
-                <td colSpan="10" style={{ textAlign: 'center', padding: '30px' }}>
+                <td colSpan="11" style={{ textAlign: 'center', padding: '30px' }}>
                   No leads found.
                 </td>
               </tr>
@@ -452,6 +453,9 @@ const ColdLeadManagement = () => {
                 <td>{lead.email}</td>
                 <td>{lead.lookingFor}</td>
                 <td>{lead.source}</td>
+                <td style={{ maxWidth: '220px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={lead.notes || lead.message || ''}>
+                  {lead.notes || lead.message || <span style={{ color: '#bbb' }}>—</span>}
+                </td>
                 <td>{lead.date}</td>
                 <td>
                   <span className={`ColdLeadManagement-status-badge status-${lead.status.toLowerCase().replace(/\s+/g, '')}`}>
@@ -596,6 +600,8 @@ const ColdLeadManagement = () => {
                     name="lookingFor" value={formData.lookingFor} 
                     onChange={e => setFormData(previous => ({...previous, lookingFor: e.target.value}))}
                   >
+                    <option value="Contact Us Inquiry">Contact Us Inquiry</option>
+                    <option value="General Inquiry">General Inquiry</option>
                     <option value="Fresh Vegetables">Fresh Vegetables</option>
                     <option value="Fruits & Vegetables">Fruits & Vegetables</option>
                     <option value="Organic Items">Organic Items</option>
@@ -610,6 +616,7 @@ const ColdLeadManagement = () => {
                     name="source" value={formData.source} 
                     onChange={e => setFormData(previous => ({...previous, source: e.target.value}))}
                   >
+                    <option value="Website - Contact Us">Website - Contact Us</option>
                     <option value="Website">Website</option>
                     <option value="WhatsApp">WhatsApp</option>
                     <option value="Referral">Referral</option>
