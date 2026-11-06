@@ -5,7 +5,7 @@ const Product = require("../models/Product");
 const addWishlist = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { productId } = req.params;
+    const productId = req.params.productId || req.body.productId;
 
     if (!productId) {
       return res.status(400).json({
@@ -61,7 +61,7 @@ const addWishlist = async (req, res) => {
 const removeWishlist = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { productId } = req.params;
+    const productId = req.params.productId || req.body.productId;
 
     const wishlist = await Wishlist.findOneAndDelete({
       user: userId,
@@ -147,9 +147,28 @@ const checkWishlist = async (req, res) => {
   }
 };
 
+// Clear entire wishlist
+const clearWishlist = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    await Wishlist.deleteMany({ user: userId });
+    return res.status(200).json({
+      success: true,
+      message: "Wishlist cleared successfully",
+    });
+  } catch (error) {
+    console.error("Clear wishlist error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to clear wishlist",
+    });
+  }
+};
+
 module.exports = {
   addWishlist,
   removeWishlist,
   getWishlist,
   checkWishlist,
+  clearWishlist,
 };

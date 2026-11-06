@@ -1,11 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
-
-import {
-  NavLink,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
-
+import React from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 import {
@@ -19,23 +13,16 @@ import {
   RotateCcw,
   Users,
   Star,
-  Image as ImageIcon,
-  Percent,
-  Ticket,
   Sliders,
   ShieldCheck,
-  ChevronDown,
-  LogOut,
-  User,
-  Settings,
   ShoppingBasket,
-  Notebook,
   Book,
   NotebookPen,
   BadgePercent,
+  FileText,
+  Ticket,
 } from "lucide-react";
 
-import API from "../../api/axios";
 import "./Sidebar.css";
 
 const menuSections = [
@@ -72,7 +59,7 @@ const menuSections = [
     ],
   },
 
-   {
+  {
     title: null,
     items: [
       {
@@ -83,27 +70,6 @@ const menuSections = [
     ],
   },
 
-  {
-    title: null,
-    items: [
-      {
-        label: "Import ",
-        path: "/import",
-        icon: NotebookPen,
-      },
-    ],
-  },
-
-  {
-    title: null,
-    items: [
-      {
-        label: "Catagory",
-        path: "/catagory",
-        icon: NotebookPen,
-      },
-    ],
-  },
 
   {
     title: "PRODUCTS",
@@ -122,6 +88,11 @@ const menuSections = [
         label: "Today Discount",
         path: "/today-discounts",
         icon: BadgePercent,
+      },
+      {
+        label: "Coupon",
+        path: "/products/coupons",
+        icon: Ticket,
       },
       {
         label: "Categories",
@@ -150,7 +121,7 @@ const menuSections = [
     title: "ORDERS",
     items: [
       {
-        label: "Orders",
+        label: "All Orders",
         path: "/orders/all-orders",
         icon: ShoppingBag,
       },
@@ -158,27 +129,6 @@ const menuSections = [
         label: "Returns",
         path: "/orders/returns",
         icon: RotateCcw,
-      },
-    ],
-  },
-
-  {
-    title: "Blog",
-    items: [
-      {
-        label: "Blog management",
-        path: "/blogmanagement",
-        icon: Notebook,
-      },
-      {
-        label: "Blog posting",
-        path: "/blog",
-        icon: Book,
-      },
-      {
-        label: "Testimonial",
-        path: "/testimonialmanagement",
-        icon: Book,
       },
     ],
   },
@@ -200,22 +150,17 @@ const menuSections = [
   },
 
   {
-    title: "MARKETING",
+    title: "BLOG",
     items: [
       {
-        label: "Banners",
-        path: "/marketing/banners",
-        icon: ImageIcon,
+        label: "Create Blog",
+        path: "/blog",
+        icon: FileText,
       },
       {
-        label: "Discounts",
-        path: "/marketing/discounts",
-        icon: Percent,
-      },
-      {
-        label: "Coupons",
-        path: "/marketing/coupons",
-        icon: Ticket,
+        label: "Blog Management",
+        path: "/blogmanagement",
+        icon: Book,
       },
     ],
   },
@@ -242,107 +187,11 @@ const Sidebar = ({
   mobileSidebar,
   setMobileSidebar,
 }) => {
-  const [footerDropdownOpen, setFooterDropdownOpen] =
-    useState(false);
-
-  const [admin, setAdmin] = useState(null);
-  const [loggingOut, setLoggingOut] = useState(false);
-
-  const dropdownRef = useRef(null);
-
   const location = useLocation();
-  const navigate = useNavigate();
 
-  // Fetch logged-in admin details
-  useEffect(() => {
-    const fetchAdminProfile = async () => {
-      try {
-        const response = await API.get("/admin/profile");
-
-        setAdmin(response.data.admin);
-      } catch (error) {
-        console.error(
-          "Fetch admin profile error:",
-          error
-        );
-
-        if (error.response?.status === 401) {
-          navigate("/login", {
-            replace: true,
-          });
-        }
-      }
-    };
-
-    fetchAdminProfile();
-  }, [navigate]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target)
-      ) {
-        setFooterDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
-
-    return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
-    };
-  }, []);
-
-  // Close dropdown and mobile sidebar
   const closeMenus = () => {
-    setFooterDropdownOpen(false);
     setMobileSidebar(false);
   };
-
-  // Navigate to profile or settings
-  const handleNavigation = (path) => {
-    closeMenus();
-    navigate(path);
-  };
-
-  // Logout admin
-  const handleLogout = async () => {
-    try {
-      setLoggingOut(true);
-
-      await API.post("/admin/logout");
-
-      setAdmin(null);
-      closeMenus();
-
-      navigate("/login", {
-        replace: true,
-      });
-    } catch (error) {
-      console.error("Logout error:", error);
-
-      // Redirect even if the backend logout request fails
-      navigate("/login", {
-        replace: true,
-      });
-    } finally {
-      setLoggingOut(false);
-    }
-  };
-
-  const adminName = admin?.name || "Admin";
-  const adminRole = admin?.role || "Super Admin";
-  const adminAvatar = adminName
-    .charAt(0)
-    .toUpperCase();
 
   return (
     <>
@@ -419,9 +268,7 @@ const Sidebar = ({
               <ul className="Sidebar-menu">
                 {section.items.map((item) => {
                   const Icon = item.icon;
-
-                  const isActive =
-                    location.pathname === item.path;
+                  const isActive = location.pathname === item.path;
 
                   return (
                     <li
@@ -433,11 +280,7 @@ const Sidebar = ({
                         className={`SidebarItem-link ${
                           isActive ? "active" : ""
                         }`}
-                        title={
-                          !sidebarOpen
-                            ? item.label
-                            : ""
-                        }
+                        title={!sidebarOpen ? item.label : ""}
                         onClick={closeMenus}
                       >
                         <Icon
@@ -445,8 +288,7 @@ const Sidebar = ({
                           size={20}
                         />
 
-                        {(sidebarOpen ||
-                          mobileSidebar) && (
+                        {(sidebarOpen || mobileSidebar) && (
                           <span className="SidebarItem-text">
                             {item.label}
                           </span>
@@ -459,110 +301,6 @@ const Sidebar = ({
             </div>
           ))}
         </nav>
-
-        {/* Footer */}
-        <div
-          className="SidebarFooter"
-          ref={dropdownRef}
-        >
-          <AnimatePresence>
-            {footerDropdownOpen && (
-              <motion.div
-                className="SidebarFooter-dropdown"
-                initial={{
-                  opacity: 0,
-                  y: 10,
-                  scale: 0.95,
-                }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                  scale: 1,
-                }}
-                exit={{
-                  opacity: 0,
-                  y: 10,
-                  scale: 0.95,
-                }}
-                transition={{
-                  duration: 0.2,
-                }}
-              >
-                <button
-                  type="button"
-                  className="SidebarFooter-dropdownItem"
-                  onClick={() =>
-                    handleNavigation("/admin/profile")
-                  }
-                >
-                  <User size={16} />
-                  My Profile
-                </button>
-
-                <button
-                  type="button"
-                  className="SidebarFooter-dropdownItem"
-                  onClick={() =>
-                    handleNavigation("/admin/settings")
-                  }
-                >
-                  <Settings size={16} />
-                  Settings
-                </button>
-
-                <div className="SidebarFooter-divider" />
-
-                <button
-                  type="button"
-                  className="SidebarFooter-dropdownItem danger"
-                  onClick={handleLogout}
-                  disabled={loggingOut}
-                >
-                  <LogOut size={16} />
-
-                  {loggingOut
-                    ? "Logging out..."
-                    : "Logout"}
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <button
-            type="button"
-            className="SidebarFooter-user"
-            onClick={() =>
-              setFooterDropdownOpen(
-                (previous) => !previous
-              )
-            }
-          >
-            <div className="SidebarFooter-avatar">
-              {adminAvatar}
-            </div>
-
-            {(sidebarOpen || mobileSidebar) && (
-              <div className="SidebarFooter-info">
-                <span className="SidebarFooter-name">
-                  {adminName}
-                </span>
-
-                <span className="SidebarFooter-role">
-                  {adminRole}
-                </span>
-              </div>
-            )}
-
-            {(sidebarOpen || mobileSidebar) && (
-              <ChevronDown
-                size={16}
-                className={`SidebarFooter-chevron ${
-                  footerDropdownOpen ? "open" : ""
-                }`}
-              />
-            )}
-          </button>
-        </div>
       </aside>
     </>
   );

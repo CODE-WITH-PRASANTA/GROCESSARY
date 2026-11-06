@@ -455,16 +455,16 @@
 .navbar-cart-container {
   position: relative;
 
-  min-width: 116px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
   min-height: 48px;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  gap: 9px;
-
-  padding: 5px 9px;
+  padding: 0;
 
   border: 1px solid
     rgba(255, 255, 255, 0.1);
@@ -1568,14 +1568,11 @@
 
   /* Keep cart visible on mobile */
   .navbar-cart-container {
-    min-width: 96px;
-    min-height: 42px;
-
-    gap: 7px;
-
-    padding: 4px 7px;
-
-    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
   }
 
   .navbar-cart-text {
@@ -1814,13 +1811,11 @@
   }
 
   .navbar-cart-container {
-    min-width: 90px;
-
-    min-height: 39px;
-
-    gap: 5px;
-
-    padding: 3px 6px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
   }
 
   .navbar-cart-text {
@@ -1963,11 +1958,11 @@
   }
 
   .navbar-cart-container {
-    min-width: 78px;
-
-    min-height: 36px;
-
-    padding: 3px 5px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
   }
 
   .navbar-cart-text {
@@ -2993,5 +2988,136 @@
 
   .navbar-account-email {
     font-size: 11px;
+  }
+}
+/* =========================================================
+   WISHLIST BUTTON (BEFORE CART ICON)
+========================================================= */
+
+.navbar-wishlist-container {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.07),
+    rgba(255, 255, 255, 0.025)
+  );
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navbar-wishlist-container:hover {
+  transform: translateY(-2px);
+  border-color: rgba(239, 68, 68, 0.4);
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.14),
+    rgba(255, 255, 255, 0.04)
+  );
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(239, 68, 68, 0.12);
+}
+
+.navbar-wishlist-container:active {
+  transform: scale(0.95);
+}
+
+.navbar-wishlist-icon-wrapper {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.navbar-wishlist-container:hover .navbar-wishlist-icon-wrapper {
+  background: rgba(239, 68, 68, 0.2);
+  transform: scale(1.06);
+}
+
+.navbar-wishlist-icon {
+  transition: transform 0.2s ease;
+}
+
+.navbar-wishlist-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: #ef4444;
+  color: #ffffff;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #0d2638;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5);
+}
+
+@media (max-width: 820px) {
+  .navbar-wishlist-container {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    border-radius: 10px;
+  }
+
+  .navbar-wishlist-icon-wrapper {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+
+  .navbar-wishlist-icon {
+    width: 17px;
+    height: 17px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-wishlist-container {
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    border-radius: 9px;
+  }
+
+  .navbar-wishlist-icon-wrapper {
+    width: 26px;
+    height: 26px;
+  }
+
+  .navbar-wishlist-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .navbar-wishlist-badge {
+    min-width: 16px;
+    height: 16px;
+    font-size: 9.5px;
+    top: -4px;
+    right: -4px;
   }
 }

@@ -19,6 +19,7 @@ const authRoutes = require("./routes/authRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const todayDiscountRoutes = require("./routes/todayDiscountRoutes");
+const couponRoutes = require("./routes/couponRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const deliveryAddressRoutes = require("./routes/deliveryAddressRoutes");
@@ -121,6 +122,7 @@ app.use("/api/blogs", blogRoutes);
 app.use("/api/import", importRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/today-discounts", todayDiscountRoutes);
+app.use("/api/coupons", couponRoutes);
 
 app.use("/api/admin", adminRoutes);
 

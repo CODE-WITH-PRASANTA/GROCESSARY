@@ -1,5 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Package,
+  Plus,
+  Search,
+  Eye,
+  Edit2,
+  Trash2,
+  AlertTriangle,
+  CheckCircle2,
+  Layers,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  RefreshCw,
+} from "lucide-react";
 import "./AllProduct.css";
 import API, { BASE_URL } from "../../../api/axios";
 
@@ -9,44 +25,33 @@ const Allproduct = () => {
   // ======================================================
   // API DATA
   // ======================================================
-
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
   // ======================================================
-  // TAB & CATEGORY FILTER
+  // FILTERS & SEARCH
   // ======================================================
-
-  const [activeTab, setActiveTab] = useState("All Products");
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
-
-  // ======================================================
-  // SEARCH & FILTER
-  // ======================================================
-
-  const [showFilterBar, setShowFilterBar] = useState(false);
+  const [activeTab, setActiveTab] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
 
   // ======================================================
   // PAGINATION
   // ======================================================
-
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 1000;
+  const [pageSize, setPageSize] = useState(15);
 
   // ======================================================
   // VIEW MODAL
   // ======================================================
-
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   // ======================================================
   // GET ALL PRODUCTS
-  // GET /api/products
   // ======================================================
-
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
@@ -55,12 +60,7 @@ const Allproduct = () => {
       const response = await API.get("/products?limit=1000");
       const result = response.data;
 
-      // =====================================================
-      // SUPPORT BOTH API RESPONSE FORMATS
-      // =====================================================
-
       let productList = [];
-
       if (Array.isArray(result?.products)) {
         productList = result.products;
       } else if (Array.isArray(result?.data)) {
@@ -72,275 +72,174 @@ const Allproduct = () => {
       }
 
       setProducts(productList);
-
-      if (productList.length === 0) {
-        console.warn("No products received from /api/products");
-      }
     } catch (error) {
       console.error("Fetch Products Error:", error);
       setProducts([]);
-      setErrorMessage(error.response?.data?.message || error.message || "Error connecting to server.");
+      setErrorMessage(
+        error.response?.data?.message || error.message || "Error connecting to server."
+      );
     } finally {
       setIsLoading(false);
     }
   };
-
-  // ======================================================
-  // INITIAL LOAD
-  // ======================================================
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
   // ======================================================
-  // ADD PRODUCT ROUTE
+  // HELPERS
   // ======================================================
-
-  const handleAddProduct = () => {
-    navigate("/products/add-product");
-  };
-
-  // ======================================================
-  // EDIT PRODUCT ROUTE
-  // ======================================================
-
-  const handleEditProduct = (product) => {
-    if (!product?._id) {
-      console.error("Product ID is missing:", product);
-      alert("Product ID is missing.");
-      return;
-    }
-
-    navigate(`/products/add-product/${product._id}`);
-  };
-
-  // ======================================================
-  // VIEW PRODUCT
-  // ======================================================
-
-  const openViewModal = (product) => {
-    setSelectedProduct(product);
-    setShowViewModal(true);
-  };
-
-  // ======================================================
-  // CLOSE VIEW MODAL
-  // ======================================================
-
-  const closeViewModal = () => {
-    setShowViewModal(false);
-    setSelectedProduct(null);
-  };
-
-  // ======================================================
-  // IMAGE URL
-  // ======================================================
-
   const getImageUrl = (imageArray) => {
     if (Array.isArray(imageArray) && imageArray.length > 0) {
       const imgPath = imageArray[0];
-
-      if (!imgPath) {
-        return "https://via.placeholder.com/80";
-      }
-
-      if (imgPath.startsWith("http://") || imgPath.startsWith("https://") || imgPath.startsWith("blob:")) {
+      if (!imgPath) return "https://via.placeholder.com/80?text=No+Image";
+      if (
+        imgPath.startsWith("http://") ||
+        imgPath.startsWith("https://") ||
+        imgPath.startsWith("blob:")
+      ) {
         return imgPath;
       }
-
       return `${BASE_URL}${imgPath.startsWith("/") ? "" : "/"}${imgPath}`;
     }
-
-    return "https://via.placeholder.com/80";
+    return "https://via.placeholder.com/80?text=No+Image";
   };
-
-  // ======================================================
-  // CATEGORY NAME
-  // ======================================================
 
   const getCategoryName = (product) => {
     if (!product) return "";
-
     if (product.category && typeof product.category === "object") {
       return product.category.name || "";
     }
-
     if (typeof product.category === "string") {
       return product.category;
     }
-
     return "";
   };
-
-  // ======================================================
-  // BRAND NAME
-  // ======================================================
 
   const getBrandName = (product) => {
     if (!product) return "";
-
     if (product.brand && typeof product.brand === "object") {
       return product.brand.name || "";
     }
-
     if (typeof product.brand === "string") {
       return product.brand;
     }
-
     return "";
   };
-
-  // ======================================================
-  // UNIT NAME
-  // ======================================================
 
   const getUnitName = (product) => {
     if (!product) return "";
-
     if (product.unit && typeof product.unit === "object") {
       return product.unit.shortName || product.unit.name || "";
     }
-
     if (typeof product.unit === "string") {
       return product.unit;
     }
-
     return "";
   };
 
   // ======================================================
-  // DELETE PRODUCT
-  // DELETE /api/products/:id
+  // CATEGORIES LIST
   // ======================================================
-
-  const handleDeleteProduct = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) {
-      return;
-    }
-
-    try {
-      await API.delete(`/products/${id}`);
-      alert("Product deleted successfully!");
-      await fetchProducts();
-    } catch (error) {
-      console.error("Delete Product Error:", error);
-      alert(error.response?.data?.message || error.message || "Failed to delete product");
-    }
-  };
-
-  // ======================================================
-  // EXPORT CSV
-  // ======================================================
-
-  const handleExportCSV = () => {
-    if (filteredProducts.length === 0) {
-      alert("No products available to export.");
-      return;
-    }
-
-    const headers =
-      "ID,Name,SKU,Category,Brand,Unit,Price,DiscountPrice,Stock,Status\n";
-
-    const csvRows = filteredProducts
-      .map((p) => {
-        const category = getCategoryName(p);
-        const brand = getBrandName(p);
-        const unit = getUnitName(p);
-
-        return (
-          `"${p._id || ""}",` +
-          `"${p.productName || ""}",` +
-          `"${p.sku || ""}",` +
-          `"${category}",` +
-          `"${brand}",` +
-          `"${unit}",` +
-          `${p.price || 0},` +
-          `${p.discountPrice || 0},` +
-          `${p.stockQuantity || 0},` +
-          `"${p.status || ""}"`
-        );
-      })
-      .join("\n");
-
-    const blob = new Blob([headers, csvRows], {
-      type: "text/csv",
+  const categoriesList = useMemo(() => {
+    const set = new Set();
+    products.forEach((p) => {
+      const name = getCategoryName(p);
+      if (name) set.add(name);
     });
-
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "products_export.csv";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-  };
+    return Array.from(set).sort();
+  }, [products]);
 
   // ======================================================
-  // FILTER PRODUCTS
+  // METRICS COMPUTATION
   // ======================================================
+  const metrics = useMemo(() => {
+    const total = products.length;
+    const active = products.filter(
+      (p) => (p.status || "").toLowerCase() === "active"
+    ).length;
+    const outOfStock = products.filter(
+      (p) =>
+        Number(p.stockQuantity || 0) <= 0 ||
+        p.isOutOfStock === true ||
+        Number(p.stockQuantity || 0) <= Number(p.lowStockAlert || 5)
+    ).length;
+    const totalCategories = categoriesList.length;
 
-  const filteredProducts = products.filter((p) => {
-    const pStatus = (p.status || "").toLowerCase();
-    const pName = (p.productName || "").toLowerCase();
-    const pSku = (p.sku || "").toLowerCase();
-    const pCat = getCategoryName(p).toLowerCase();
-    const pBrand = getBrandName(p).toLowerCase();
-    const search = searchTerm.toLowerCase().trim();
-
-    // ================================================
-    // TAB
-    // ================================================
-
-    let matchesTab = true;
-
-    if (activeTab === "Active") {
-      matchesTab = pStatus === "active";
-    }
-
-    if (activeTab === "Inactive") {
-      matchesTab = pStatus === "inactive";
-    }
-
-    if (activeTab === "Out of Stock") {
-      matchesTab =
-        Number(p.stockQuantity || 0) === 0 || p.isOutOfStock === true;
-    }
-
-    if (activeTab === "Low Stock") {
-      const stock = Number(p.stockQuantity || 0);
-      const alertLevel = Number(p.lowStockAlert || 5);
-      matchesTab = stock > 0 && stock <= alertLevel;
-    }
-
-    // ================================================
-    // CATEGORY
-    // ================================================
-
-    const matchesCategory =
-      selectedCategory === "All Categories" ||
-      pCat === selectedCategory.toLowerCase();
-
-    // ================================================
-    // SEARCH
-    // ================================================
-
-    const matchesSearch =
-      !search ||
-      pName.includes(search) ||
-      pSku.includes(search) ||
-      pCat.includes(search) ||
-      pBrand.includes(search);
-
-    return matchesTab && matchesCategory && matchesSearch;
-  });
+    return { total, active, outOfStock, totalCategories };
+  }, [products, categoriesList]);
 
   // ======================================================
-  // PAGINATION
+  // FILTER & SORT PRODUCTS
   // ======================================================
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter((p) => {
+        const pStatus = (p.status || "").toLowerCase();
+        const pName = (p.productName || "").toLowerCase();
+        const pSku = (p.sku || "").toLowerCase();
+        const pCat = getCategoryName(p).toLowerCase();
+        const pBrand = getBrandName(p).toLowerCase();
+        const search = searchTerm.toLowerCase().trim();
+        const stock = Number(p.stockQuantity || 0);
+        const lowAlert = Number(p.lowStockAlert || 5);
 
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
+        // Status Tab Filter
+        let matchesTab = true;
+        if (activeTab === "Active") {
+          matchesTab = pStatus === "active";
+        } else if (activeTab === "Inactive") {
+          matchesTab = pStatus === "inactive";
+        } else if (activeTab === "In Stock") {
+          matchesTab = stock > lowAlert && !p.isOutOfStock;
+        } else if (activeTab === "Low Stock") {
+          matchesTab = stock > 0 && stock <= lowAlert;
+        } else if (activeTab === "Out of Stock") {
+          matchesTab = stock <= 0 || p.isOutOfStock === true;
+        }
+
+        // Category Filter
+        const matchesCategory =
+          selectedCategory === "All" ||
+          pCat === selectedCategory.toLowerCase();
+
+        // Search Filter
+        const matchesSearch =
+          !search ||
+          pName.includes(search) ||
+          pSku.includes(search) ||
+          pCat.includes(search) ||
+          pBrand.includes(search);
+
+        return matchesTab && matchesCategory && matchesSearch;
+      })
+      .sort((a, b) => {
+        if (sortBy === "price-low") {
+          const priceA = Number(a.discountPrice || a.price || 0);
+          const priceB = Number(b.discountPrice || b.price || 0);
+          return priceA - priceB;
+        }
+        if (sortBy === "price-high") {
+          const priceA = Number(a.discountPrice || a.price || 0);
+          const priceB = Number(b.discountPrice || b.price || 0);
+          return priceB - priceA;
+        }
+        if (sortBy === "stock-low") {
+          return Number(a.stockQuantity || 0) - Number(b.stockQuantity || 0);
+        }
+        if (sortBy === "name-asc") {
+          return (a.productName || "").localeCompare(b.productName || "");
+        }
+        // Default newest
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      });
+  }, [products, activeTab, selectedCategory, searchTerm, sortBy]);
+
+  // ======================================================
+  // PAGINATION CALCULATIONS
+  // ======================================================
+  const totalPages = Math.ceil(filteredProducts.length / pageSize) || 1;
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -348,506 +247,649 @@ const Allproduct = () => {
     }
   }, [currentPage, totalPages]);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const startIndex = (currentPage - 1) * pageSize;
   const currentProducts = filteredProducts.slice(
-    indexOfFirstItem,
-    indexOfLastItem,
+    startIndex,
+    startIndex + pageSize
   );
 
   // ======================================================
-  // CATEGORY COUNTS
+  // ACTION HANDLERS
   // ======================================================
-
-  const getCategoryCount = (categoryName) => {
-    if (categoryName === "All Categories") {
-      return products.length;
-    }
-
-    return products.filter(
-      (product) =>
-        getCategoryName(product).toLowerCase() === categoryName.toLowerCase(),
-    ).length;
+  const handleAddProduct = () => {
+    navigate("/products/add-product");
   };
 
-  // ======================================================
-  // CREATE CATEGORY LIST FROM PRODUCTS
-  // ======================================================
+  const handleEditProduct = (product) => {
+    if (!product?._id) return;
+    navigate(`/products/add-product/${product._id}`);
+  };
 
-  const uniqueCategoryMap = new Map();
-
-  products.forEach((product) => {
-    const categoryName = getCategoryName(product);
-
-    if (categoryName && !uniqueCategoryMap.has(categoryName.toLowerCase())) {
-      uniqueCategoryMap.set(categoryName.toLowerCase(), {
-        name: categoryName,
-        icon: "📁",
-      });
+  const handleDeleteProduct = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete "${name || "this product"}"?`)) {
+      return;
     }
-  });
 
-  const displayCategories = [
-    {
-      name: "All Categories",
-      icon: "📁",
-    },
-    ...Array.from(uniqueCategoryMap.values()),
-  ];
-
-  // ======================================================
-  // RENDER
-  // ======================================================
+    try {
+      await API.delete(`/products/${id}`);
+      setProducts((prev) => prev.filter((p) => p._id !== id));
+    } catch (error) {
+      console.error("Delete Product Error:", error);
+      alert(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to delete product."
+      );
+    }
+  };
 
   return (
-    <div className="ap-container">
-      {/* HEADER */}
-
+    <div className="ap-wrapper">
+      {/* TOP HEADER */}
       <div className="ap-header">
-        <div>
-          <h1 className="ap-title">Products</h1>
-          <p className="ap-breadcrumb">
-            Dashboard &gt; Products &gt; <span>All Products</span>
+        <div className="ap-header-left">
+          <h1 className="ap-title">Products Inventory</h1>
+          <p className="ap-subtitle">
+            Manage your store catalog, real-time inventory, pricing and visibility.
           </p>
         </div>
 
-        <button className="ap-btn-primary" onClick={handleAddProduct}>
-          + Add New Product
-        </button>
+        <div className="ap-header-actions">
+          <button className="ap-btn-primary" onClick={handleAddProduct}>
+            <Plus size={18} />
+            <span>Add New Product</span>
+          </button>
+        </div>
       </div>
 
-      {/* METRICS */}
-
+      {/* KPI METRICS CARDS */}
       <div className="ap-metrics-grid">
         <div className="ap-metric-card">
-          <div className="ap-metric-icon ap-icon-bg-1">🛒</div>
+          <div className="ap-metric-icon bg-emerald">
+            <Package size={22} />
+          </div>
           <div className="ap-metric-info">
             <span className="ap-metric-label">Total Products</span>
-            <h2 className="ap-metric-value">{products.length}</h2>
-            <span className="ap-metric-trend ap-trend-up">↑ Updated live</span>
+            <div className="ap-metric-value">{metrics.total}</div>
+            <span className="ap-metric-sub">Full catalog count</span>
           </div>
         </div>
 
         <div className="ap-metric-card">
-          <div className="ap-metric-icon ap-icon-bg-2">📁</div>
+          <div className="ap-metric-icon bg-blue">
+            <CheckCircle2 size={22} />
+          </div>
           <div className="ap-metric-info">
-            <span className="ap-metric-label">Categories</span>
-            <h2 className="ap-metric-value">
-              {
-                new Set(products.map((p) => getCategoryName(p)).filter(Boolean))
-                  .size
-              }
-            </h2>
-            <span className="ap-metric-trend ap-trend-up">
-              ↑ Active categories
-            </span>
+            <span className="ap-metric-label">Active Storefront</span>
+            <div className="ap-metric-value">{metrics.active}</div>
+            <span className="ap-metric-sub">Published & live to buy</span>
           </div>
         </div>
 
         <div className="ap-metric-card">
-          <div className="ap-metric-icon ap-icon-bg-3">👁️</div>
+          <div className="ap-metric-icon bg-amber">
+            <AlertTriangle size={22} />
+          </div>
           <div className="ap-metric-info">
-            <span className="ap-metric-label">Active Products</span>
-            <h2 className="ap-metric-value">
-              {
-                products.filter(
-                  (p) => (p.status || "").toLowerCase() === "active",
-                ).length
-              }
-            </h2>
-            <span className="ap-metric-trend ap-trend-up">↑ Live in store</span>
+            <span className="ap-metric-label">Low / Out of Stock</span>
+            <div className="ap-metric-value">{metrics.outOfStock}</div>
+            <span className="ap-metric-sub">Requires restocking</span>
           </div>
         </div>
 
         <div className="ap-metric-card">
-          <div className="ap-metric-icon ap-icon-bg-4">🚫</div>
+          <div className="ap-metric-icon bg-purple">
+            <Layers size={22} />
+          </div>
           <div className="ap-metric-info">
-            <span className="ap-metric-label">Inactive Products</span>
-            <h2 className="ap-metric-value">
-              {
-                products.filter(
-                  (p) => (p.status || "").toLowerCase() === "inactive",
-                ).length
-              }
-            </h2>
-            <span className="ap-metric-trend ap-trend-down">
-              ↓ Drafts/Hidden
-            </span>
+            <span className="ap-metric-label">Active Categories</span>
+            <div className="ap-metric-value">{metrics.totalCategories}</div>
+            <span className="ap-metric-sub">Organized product groups</span>
           </div>
         </div>
       </div>
 
-      {/* MAIN CONTENT */}
-
-      <div className="ap-main-content">
-        {/* CATEGORY PANEL */}
-
-        <div className="ap-categories-panel">
-          <div className="ap-panel-header">
-            <h3>Categories</h3>
-            <button className="ap-btn-plus" onClick={handleAddProduct}>
-              +
+      {/* CONTROLS BAR: STATUS TABS, SEARCH, CATEGORY FILTER, SORT */}
+      <div className="ap-controls-card">
+        {/* Status Tabs */}
+        <div className="ap-status-tabs">
+          {[
+            { id: "All", label: "All Products" },
+            { id: "Active", label: "Active" },
+            { id: "Inactive", label: "Inactive" },
+            { id: "In Stock", label: "In Stock" },
+            { id: "Low Stock", label: "Low Stock" },
+            { id: "Out of Stock", label: "Out of Stock" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              className={`ap-tab-btn ${activeTab === tab.id ? "active" : ""}`}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setCurrentPage(1);
+              }}
+            >
+              {tab.label}
             </button>
-          </div>
-
-          <ul className="ap-category-list">
-            {displayCategories.map((cat, index) => {
-              const catCount = getCategoryCount(cat.name);
-
-              return (
-                <li
-                  key={`${cat.name}-${index}`}
-                  className={`ap-category-item ${
-                    selectedCategory === cat.name ? "active" : ""
-                  }`}
-                  onClick={() => {
-                    setSelectedCategory(cat.name);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <span className="ap-cat-name">
-                    <span className="ap-cat-icon">{cat.icon}</span> {cat.name}
-                  </span>
-                  <span className="ap-cat-count">{catCount}</span>
-                </li>
-              );
-            })}
-          </ul>
+          ))}
         </div>
 
-        {/* PRODUCTS PANEL */}
-
-        <div className="ap-products-panel">
-          {/* FILTER BAR */}
-
-          <div className="ap-filter-bar">
-            <div className="ap-tabs">
-              {[
-                "All Products",
-                "Active",
-                "Inactive",
-                "Out of Stock",
-                "Low Stock",
-              ].map((tab) => (
-                <button
-                  key={tab}
-                  className={`ap-tab ${activeTab === tab ? "active" : ""}`}
-                  onClick={() => {
-                    setActiveTab(tab);
-                    setCurrentPage(1);
-                  }}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-
-            <div className="ap-action-btns">
+        {/* Filter and Search Inputs */}
+        <div className="ap-filters-row">
+          <div className="ap-search-box">
+            <Search size={17} className="ap-search-icon" />
+            <input
+              type="text"
+              placeholder="Search by product name, SKU, category, brand..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+            {searchTerm && (
               <button
-                className={`ap-btn-outline ${showFilterBar ? "active" : ""}`}
-                onClick={() => setShowFilterBar(!showFilterBar)}
+                className="ap-search-clear"
+                onClick={() => setSearchTerm("")}
               >
-                ⚙️ Filters
+                <X size={14} />
               </button>
-
-              <button className="ap-btn-outline" onClick={handleExportCSV}>
-                📥 Export
-              </button>
-            </div>
-          </div>
-
-          {/* SEARCH */}
-
-          {showFilterBar && (
-            <div className="ap-search-container">
-              <input
-                type="text"
-                placeholder="Search product by name or SKU..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="ap-search-input"
-              />
-            </div>
-          )}
-
-          {/* TABLE */}
-
-          <div className="ap-table-wrapper">
-            {isLoading ? (
-              <div
-                style={{
-                  padding: "2rem",
-                  textAlign: "center",
-                }}
-              >
-                Loading products...
-              </div>
-            ) : errorMessage ? (
-              <div
-                style={{
-                  padding: "2rem",
-                  textAlign: "center",
-                  color: "red",
-                }}
-              >
-                {errorMessage}
-                <br />
-                <button
-                  className="ap-btn-outline"
-                  style={{
-                    marginTop: "1rem",
-                  }}
-                  onClick={fetchProducts}
-                >
-                  Retry
-                </button>
-              </div>
-            ) : (
-              <table className="ap-table">
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Category</th>
-                    <th>Price</th>
-                    <th>Discount Price</th>
-                    <th>Stock</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {currentProducts.length > 0 ? (
-                    currentProducts.map((prod) => (
-                      <tr key={prod._id}>
-                        <td>
-                          <div className="ap-product-cell">
-                            <img
-                              src={getImageUrl(prod.images)}
-                              alt={prod.productName}
-                              className="ap-product-img"
-                              onError={(e) => {
-                                e.currentTarget.src =
-                                  "https://via.placeholder.com/80";
-                              }}
-                            />
-                            <div>
-                              <div className="ap-product-title">
-                                {prod.productName}
-                              </div>
-                              <div className="ap-product-sku">
-                                SKU: {prod.sku}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td>
-                          <span className="ap-badge-category">
-                            {getCategoryName(prod) || "N/A"}
-                          </span>
-                        </td>
-
-                        <td>₹{parseFloat(prod.price || 0).toFixed(2)}</td>
-
-                        <td className="ap-text-success">
-                          ₹{parseFloat(prod.discountPrice || 0).toFixed(2)}
-                        </td>
-
-                        <td>
-                          {prod.stockQuantity || 0} {getUnitName(prod)}
-                        </td>
-
-                        <td>
-                          <span
-                            className={`ap-status-badge ${(
-                              prod.status || "active"
-                            )
-                              .toLowerCase()
-                              .replace(/\s+/g, "-")}`}
-                          >
-                            {prod.status || "active"}
-                          </span>
-                        </td>
-
-                        <td>
-                          <div className="ap-action-icons">
-                            <button
-                              className="ap-icon-btn edit"
-                              title="Edit"
-                              onClick={() => handleEditProduct(prod)}
-                            >
-                              ✏️
-                            </button>
-
-                            <button
-                              className="ap-icon-btn view"
-                              title="View"
-                              onClick={() => openViewModal(prod)}
-                            >
-                              👁️
-                            </button>
-
-                            <button
-                              className="ap-icon-btn delete"
-                              title="Delete"
-                              onClick={() => handleDeleteProduct(prod._id)}
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="7" className="ap-no-data">
-                        No products found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
             )}
           </div>
 
-          {/* PAGINATION */}
+          <div className="ap-filter-dropdowns">
+            {/* Category Selector */}
+            <div className="ap-select-wrap">
+              <label>Category:</label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value);
+                  setCurrentPage(1);
+                }}
+              >
+                <option value="All">All Categories ({products.length})</option>
+                {categoriesList.map((cat) => {
+                  const count = products.filter(
+                    (p) =>
+                      getCategoryName(p).toLowerCase() === cat.toLowerCase()
+                  ).length;
+                  return (
+                    <option key={cat} value={cat}>
+                      {cat} ({count})
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
 
-          <div className="ap-pagination">
+            {/* Sort Selector */}
+            <div className="ap-select-wrap">
+              <label>Sort:</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="newest">Newest First</option>
+                <option value="name-asc">Name (A-Z)</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="stock-low">Stock: Low to High</option>
+              </select>
+            </div>
+
             <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-              className="ap-page-btn"
+              className="ap-btn-refresh"
+              onClick={fetchProducts}
+              title="Refresh Products"
             >
-              Previous
-            </button>
-
-            <span className="ap-page-info">
-              Page {currentPage} of {totalPages}
-            </span>
-
-            <button
-              disabled={currentPage === totalPages || totalPages === 0}
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="ap-page-btn"
-            >
-              Next
+              <RefreshCw size={15} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* VIEW MODAL */}
+      {/* FULL-WIDTH TABLE CONTAINER */}
+      <div className="ap-table-card">
+        {isLoading ? (
+          <div className="ap-state-container">
+            <div className="ap-spinner"></div>
+            <p>Loading products inventory...</p>
+          </div>
+        ) : errorMessage ? (
+          <div className="ap-state-container">
+            <AlertTriangle size={36} color="#ef4444" />
+            <p className="ap-error-text">{errorMessage}</p>
+            <button className="ap-btn-primary" onClick={fetchProducts}>
+              Try Again
+            </button>
+          </div>
+        ) : currentProducts.length === 0 ? (
+          <div className="ap-state-container">
+            <Package size={40} color="#94a3b8" />
+            <h3>No products found</h3>
+            <p>
+              {searchTerm || selectedCategory !== "All" || activeTab !== "All"
+                ? "Try adjusting your search criteria or filters."
+                : "Your store catalog is currently empty. Add your first product to get started!"}
+            </p>
+            {(searchTerm || selectedCategory !== "All" || activeTab !== "All") && (
+              <button
+                className="ap-btn-outline"
+                onClick={() => {
+                  setSearchTerm("");
+                  setSelectedCategory("All");
+                  setActiveTab("All");
+                }}
+              >
+                Reset Filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="ap-table-responsive">
+            <table className="ap-table">
+              <thead>
+                <tr>
+                  <th style={{ width: "32%" }}>Product Information</th>
+                  <th style={{ width: "16%" }}>Category & Brand</th>
+                  <th style={{ width: "14%" }}>Pricing</th>
+                  <th style={{ width: "14%" }}>Stock Level</th>
+                  <th style={{ width: "12%" }}>Status</th>
+                  <th style={{ width: "12%", textAlign: "right" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentProducts.map((prod) => {
+                  const regularPrice = Number(prod.price || 0);
+                  const discountPrice = Number(prod.discountPrice || 0);
+                  const hasDiscount = discountPrice > 0 && discountPrice < regularPrice;
+                  const stock = Number(prod.stockQuantity || 0);
+                  const lowAlert = Number(prod.lowStockAlert || 5);
+                  const isOutOfStock = stock <= 0 || prod.isOutOfStock;
+                  const isLowStock = !isOutOfStock && stock <= lowAlert;
+                  const isActive = (prod.status || "").toLowerCase() === "active";
 
+                  return (
+                    <tr key={prod._id} className="ap-table-row">
+                      {/* Product Thumbnail & Name */}
+                      <td>
+                        <div className="ap-product-flex">
+                          <img
+                            src={getImageUrl(prod.images)}
+                            alt={prod.productName || "Product"}
+                            className="ap-product-thumb"
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                "https://via.placeholder.com/80?text=No+Img";
+                            }}
+                          />
+                          <div className="ap-product-meta">
+                            <span
+                              className="ap-product-title"
+                              onClick={() => {
+                                setSelectedProduct(prod);
+                                setShowViewModal(true);
+                              }}
+                              title={prod.productName}
+                            >
+                              {prod.productName}
+                            </span>
+                            <div className="ap-product-submeta">
+                              {prod.sku && (
+                                <span className="ap-sku-pill">
+                                  SKU: {prod.sku}
+                                </span>
+                              )}
+                              {prod.barcode && (
+                                <span className="ap-barcode-pill">
+                                  #{prod.barcode}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Category & Brand */}
+                      <td>
+                        <div className="ap-cat-brand-cell">
+                          <span className="ap-category-badge">
+                            {getCategoryName(prod) || "General"}
+                          </span>
+                          {getBrandName(prod) && (
+                            <span className="ap-brand-sub">
+                              {getBrandName(prod)}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Pricing */}
+                      <td>
+                        <div className="ap-pricing-cell">
+                          {hasDiscount ? (
+                            <>
+                              <div className="ap-price-current">
+                                ₹{discountPrice.toFixed(2)}
+                              </div>
+                              <div className="ap-price-old">
+                                ₹{regularPrice.toFixed(2)}
+                              </div>
+                            </>
+                          ) : (
+                            <div className="ap-price-current">
+                              ₹{regularPrice.toFixed(2)}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Stock Level */}
+                      <td>
+                        <div className="ap-stock-cell">
+                          {isOutOfStock ? (
+                            <span className="ap-stock-badge out-of-stock">
+                              Out of Stock
+                            </span>
+                          ) : isLowStock ? (
+                            <span className="ap-stock-badge low-stock">
+                              Low: {stock} {getUnitName(prod)}
+                            </span>
+                          ) : (
+                            <span className="ap-stock-badge in-stock">
+                              {stock} {getUnitName(prod) || "in stock"}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Status */}
+                      <td>
+                        <span
+                          className={`ap-status-pill ${
+                            isActive ? "status-active" : "status-inactive"
+                          }`}
+                        >
+                          <span className="ap-status-dot"></span>
+                          {isActive ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td>
+                        <div className="ap-action-btns-wrap">
+                          <button
+                            className="ap-action-btn view"
+                            title="Quick View"
+                            onClick={() => {
+                              setSelectedProduct(prod);
+                              setShowViewModal(true);
+                            }}
+                          >
+                            <Eye size={15} />
+                          </button>
+                          <button
+                            className="ap-action-btn edit"
+                            title="Edit Product"
+                            onClick={() => handleEditProduct(prod)}
+                          >
+                            <Edit2 size={15} />
+                          </button>
+                          <button
+                            className="ap-action-btn delete"
+                            title="Delete Product"
+                            onClick={() =>
+                              handleDeleteProduct(prod._id, prod.productName)
+                            }
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* PAGINATION FOOTER */}
+        {!isLoading && filteredProducts.length > 0 && (
+          <div className="ap-pagination-bar">
+            <div className="ap-pagination-summary">
+              Showing{" "}
+              <strong>
+                {startIndex + 1} -{" "}
+                {Math.min(startIndex + pageSize, filteredProducts.length)}
+              </strong>{" "}
+              of <strong>{filteredProducts.length}</strong> products
+            </div>
+
+            <div className="ap-pagination-controls">
+              <div className="ap-page-size-selector">
+                <span>Rows:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+
+              <div className="ap-page-nav-btns">
+                <button
+                  className="ap-nav-btn"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  title="Previous Page"
+                >
+                  <ChevronLeft size={16} />
+                  <span>Prev</span>
+                </button>
+
+                <span className="ap-page-indicator">
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <button
+                  className="ap-nav-btn"
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(p + 1, totalPages))
+                  }
+                  title="Next Page"
+                >
+                  <span>Next</span>
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* QUICK VIEW DETAILS MODAL */}
       {showViewModal && selectedProduct && (
-        <div className="ap-modal-overlay">
-          <div className="ap-modal ap-view-modal">
+        <div
+          className="ap-modal-overlay"
+          onClick={() => {
+            setShowViewModal(false);
+            setSelectedProduct(null);
+          }}
+        >
+          <div
+            className="ap-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="ap-modal-header">
-              <h3>Product Details</h3>
-              <button className="ap-close-btn" onClick={closeViewModal}>
-                ✕
+              <div className="ap-modal-header-info">
+                <h3>Product Details</h3>
+                <span className="ap-modal-sku">
+                  SKU: {selectedProduct.sku || "N/A"}
+                </span>
+              </div>
+              <button
+                className="ap-modal-close-btn"
+                onClick={() => {
+                  setShowViewModal(false);
+                  setSelectedProduct(null);
+                }}
+              >
+                <X size={18} />
               </button>
             </div>
 
-            <div className="ap-view-card">
-              <div className="ap-view-header">
+            <div className="ap-modal-body">
+              {/* Product Header Hero */}
+              <div className="ap-modal-product-hero">
                 <img
                   src={getImageUrl(selectedProduct.images)}
                   alt={selectedProduct.productName}
-                  className="ap-view-img"
+                  className="ap-modal-product-img"
                   onError={(e) => {
-                    e.currentTarget.src = "https://via.placeholder.com/100";
+                    e.currentTarget.src =
+                      "https://via.placeholder.com/120?text=No+Img";
                   }}
                 />
-                <div>
-                  <h4 className="ap-view-title">
+                <div className="ap-modal-hero-details">
+                  <h4 className="ap-modal-product-title">
                     {selectedProduct.productName}
                   </h4>
-                  <span className="ap-view-sku">
-                    SKU: {selectedProduct.sku}
-                  </span>
+                  <div className="ap-modal-badges">
+                    <span className="ap-category-badge">
+                      {getCategoryName(selectedProduct) || "General"}
+                    </span>
+                    {getBrandName(selectedProduct) && (
+                      <span className="ap-brand-sub">
+                        Brand: {getBrandName(selectedProduct)}
+                      </span>
+                    )}
+                    <span
+                      className={`ap-status-pill ${
+                        (selectedProduct.status || "").toLowerCase() ===
+                        "active"
+                          ? "status-active"
+                          : "status-inactive"
+                      }`}
+                    >
+                      <span className="ap-status-dot"></span>
+                      {selectedProduct.status || "active"}
+                    </span>
+                  </div>
+
+                  <div className="ap-modal-price-display">
+                    {Number(selectedProduct.discountPrice || 0) > 0 ? (
+                      <>
+                        <span className="ap-modal-sale-price">
+                          ₹
+                          {Number(
+                            selectedProduct.discountPrice || 0
+                          ).toFixed(2)}
+                        </span>
+                        <span className="ap-modal-old-price">
+                          ₹{Number(selectedProduct.price || 0).toFixed(2)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="ap-modal-sale-price">
+                        ₹{Number(selectedProduct.price || 0).toFixed(2)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="ap-view-grid">
-                <div className="ap-view-box">
-                  <span className="ap-view-label">Category</span>
-                  <span className="ap-view-val cat-badge">
-                    {getCategoryName(selectedProduct) || "N/A"}
+              {/* Specs Grid */}
+              <div className="ap-modal-specs-grid">
+                <div className="ap-spec-item">
+                  <span className="ap-spec-label">Unit</span>
+                  <span className="ap-spec-value">
+                    {getUnitName(selectedProduct) || "1 Piece"} (
+                    {selectedProduct.unitNo || 1})
                   </span>
                 </div>
 
-                <div className="ap-view-box">
-                  <span className="ap-view-label">Brand</span>
-                  <span className="ap-view-val">
-                    {getBrandName(selectedProduct) || "N/A"}
-                  </span>
-                </div>
-
-                <div className="ap-view-box">
-                  <span className="ap-view-label">Unit</span>
-                  <span className="ap-view-val">
-                    {getUnitName(selectedProduct) || "N/A"}
-                  </span>
-                </div>
-
-                <div className="ap-view-box">
-                  <span className="ap-view-label">Status</span>
-                  <span
-                    className={`ap-status-badge ${(
-                      selectedProduct.status || "active"
-                    )
-                      .toLowerCase()
-                      .replace(/\s+/g, "-")}`}
-                  >
-                    {selectedProduct.status || "active"}
-                  </span>
-                </div>
-
-                <div className="ap-view-box">
-                  <span className="ap-view-label">Regular Price</span>
-                  <span className="ap-view-val price-regular">
-                    ₹{parseFloat(selectedProduct.price || 0).toFixed(2)}
-                  </span>
-                </div>
-
-                <div className="ap-view-box">
-                  <span className="ap-view-label">Discount Price</span>
-                  <span className="ap-view-val price-discount">
-                    ₹{parseFloat(selectedProduct.discountPrice || 0).toFixed(2)}
-                  </span>
-                </div>
-
-                <div className="ap-view-box full-width">
-                  <span className="ap-view-label">Available Stock</span>
-                  <span className="ap-view-val stock-val">
+                <div className="ap-spec-item">
+                  <span className="ap-spec-label">Available Stock</span>
+                  <span className="ap-spec-value highlight">
                     {selectedProduct.stockQuantity || 0}{" "}
-                    {getUnitName(selectedProduct) || "Items"} in Stock
+                    {getUnitName(selectedProduct) || "Units"}
                   </span>
                 </div>
 
-                <div className="ap-view-box full-width">
-                  <span className="ap-view-label">Slug</span>
-                  <span className="ap-view-val">
-                    {selectedProduct.slug || "N/A"}
+                <div className="ap-spec-item">
+                  <span className="ap-spec-label">Low Stock Threshold</span>
+                  <span className="ap-spec-value">
+                    {selectedProduct.lowStockAlert || 5} units
                   </span>
                 </div>
 
-                <div className="ap-view-box full-width">
-                  <span className="ap-view-label">Short Description</span>
-                  <span className="ap-view-val">
-                    {selectedProduct.shortDescription || "N/A"}
+                <div className="ap-spec-item">
+                  <span className="ap-spec-label">Cost / Purchase Price</span>
+                  <span className="ap-spec-value">
+                    ₹{Number(selectedProduct.costPrice || 0).toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="ap-spec-item">
+                  <span className="ap-spec-label">Barcode</span>
+                  <span className="ap-spec-value">
+                    {selectedProduct.barcode || "Not configured"}
+                  </span>
+                </div>
+
+                <div className="ap-spec-item">
+                  <span className="ap-spec-label">Slug / URL</span>
+                  <span className="ap-spec-value code-font">
+                    /{selectedProduct.slug || "n-a"}
                   </span>
                 </div>
               </div>
+
+              {/* Short & Full Description */}
+              {selectedProduct.shortDescription && (
+                <div className="ap-modal-desc-box">
+                  <span className="ap-spec-label">Short Summary</span>
+                  <p>{selectedProduct.shortDescription}</p>
+                </div>
+              )}
+
+              {selectedProduct.fullDescription && (
+                <div className="ap-modal-desc-box">
+                  <span className="ap-spec-label">Full Description</span>
+                  <p>{selectedProduct.fullDescription}</p>
+                </div>
+              )}
             </div>
 
-            <div className="ap-modal-actions">
-              <button className="ap-btn-primary" onClick={closeViewModal}>
+            <div className="ap-modal-footer">
+              <button
+                className="ap-btn-outline"
+                onClick={() => {
+                  setShowViewModal(false);
+                  setSelectedProduct(null);
+                }}
+              >
                 Close
+              </button>
+              <button
+                className="ap-btn-primary"
+                onClick={() => {
+                  setShowViewModal(false);
+                  handleEditProduct(selectedProduct);
+                }}
+              >
+                <Edit2 size={15} />
+                <span>Edit Product</span>
               </button>
             </div>
           </div>

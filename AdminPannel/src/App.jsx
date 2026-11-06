@@ -1,17 +1,12 @@
 import React from "react";
-
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // Layout & Security
 import MainLayout from "./Layout/MainLayout/MainLayout";
 import ProtectedRoute from "./Components/ProtectedRoute/ProtectedRoute";
 
-import Login from "./Components/Login/Login";
-import AdminRegister from "./Components/AdminRegister/AdminRegister";
-
 // Component / Page Imports
 import TestimonialManagement from "./Components/TestimonialManagement/TestimonialManagement";
-
 import Allproduct from "./Components/Blog/AllProduct/Allproduct";
 import Addnew from "./Components/Blog/AddProducts/AddProducts";
 
@@ -35,6 +30,7 @@ import BlogManagement from "./Components/BlogManagement/BlogManagement";
 import Categories from "./Components/Categories/Categories";
 import Brands from "./Components/Brands/Brands";
 import Discounts from "./Components/Discounts/Discounts";
+import Coupons from "./Components/Coupons/Coupons";
 
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import Order from "./Pages/Order/Order";
@@ -52,53 +48,38 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Login Route */}
-        <Route path="/login" element={<Login />} />
+        {/* Direct Root Access to Dashboard */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/login" element={<Navigate to="/dashboard" replace />} />
 
-        {/* Public Admin Registration Route */}
-        <Route path="/register" element={<AdminRegister />} />
-
-        {/* Root Redirect */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-
-        {/* Protected Admin Routes Wrapper */}
+        {/* Admin Routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             {/* Dashboard */}
             <Route path="dashboard" element={<Dashboard />} />
-
             <Route path="coldlead" element={<ColdLeadManagement />} />
 
-            {/* Blog & Testimonials */}
+            {/* Blog System Routes */}
             <Route path="blog" element={<BlogPosting />} />
-
+            <Route path="blog/:id" element={<BlogPosting />} />
+            <Route path="blog/edit/:id" element={<BlogPosting />} />
             <Route path="blogmanagement" element={<BlogManagement />} />
-
-            <Route
-              path="testimonialmanagement"
-              element={<TestimonialManagement />}
-            />
+            <Route path="blog/management" element={<BlogManagement />} />
+            <Route path="testimonialmanagement" element={<TestimonialManagement />} />
 
             {/* Products */}
             <Route path="products/all-products" element={<Allproduct />} />
-
             <Route path="products/add-product" element={<Addnew />} />
-
             <Route path="products/add-product/:id" element={<Addnew />} />
-
             <Route path="products/categories" element={<Categories />} />
-
             <Route path="products/brands" element={<Brands />} />
-
             <Route path="products/units" element={<EditUnit />} />
-
             <Route path="products/list-uploads" element={<ListUploads />} />
-
+            <Route path="products/coupons" element={<Coupons />} />
             <Route path="today-discounts" element={<TodayDiscounts />} />
 
             {/* Orders */}
             <Route path="orders/all-orders" element={<Order />} />
-
             <Route path="orders/returns" element={<ReturnManagement />} />
 
             {/* Customers */}
@@ -106,44 +87,24 @@ const App = () => {
 
             {/* Returns */}
             <Route path="returns/details" element={<ReturnDetails />} />
-
             <Route path="returns/inspection" element={<QualityInspection />} />
-
             <Route path="returns/refund" element={<RefundDetails />} />
-
-            <Route
-              path="returns/product-info"
-              element={<ProductInformation />}
-            />
-
-            <Route
-              path="returns/replacement-details"
-              element={<ReplacementDetails />}
-            />
-
+            <Route path="returns/product-info" element={<ProductInformation />} />
+            <Route path="returns/replacement-details" element={<ReplacementDetails />} />
             <Route path="returns/approval" element={<ReturnApproval />} />
-
-            <Route
-              path="returns/pickup-management"
-              element={<PickupManagement />}
-            />
-
-            <Route
-              path="returns/inventory-adjustment"
-              element={<InventoryAdjustment />}
-            />
-
+            <Route path="returns/pickup-management" element={<PickupManagement />} />
+            <Route path="returns/inventory-adjustment" element={<InventoryAdjustment />} />
             <Route path="returns/activity-log" element={<ActivityLog />} />
 
-            {/* Import & Category */}
+            {/* Import */}
             <Route path="import" element={<Import />} />
-
             <Route path="catagory" element={<Catagory />} />
 
             {/* Marketing */}
             <Route path="marketing/banners" element={<Banners />} />
-
             <Route path="marketing/discounts" element={<Discounts />} />
+
+            {/* Settings & Billing */}
             <Route path="/admin/profile" element={<AdminProfile />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/billing" element={<Billing />} />
@@ -152,7 +113,7 @@ const App = () => {
         </Route>
 
         {/* Global Fallback */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   );

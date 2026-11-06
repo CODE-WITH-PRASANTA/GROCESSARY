@@ -1,329 +1,121 @@
-import React, {
-  useState,
-  useRef,
-  useMemo,
-  useEffect,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   ShoppingBag,
-  Clock,
-  RefreshCw,
-  CheckCircle2,
-  XCircle,
   Search,
-  Calendar,
   Filter,
   Download,
   Eye,
-  Edit2,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Plus,
-  Upload,
-  X,
+  RefreshCw,
   Truck,
-  ArrowUp,
-  ArrowDown,
-  MoreVertical,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  Package,
+  Calendar,
+  Phone,
+  MapPin,
+  ExternalLink,
+  ChevronRight,
+  ChevronLeft,
+  X,
+  User,
+  CreditCard,
+  AlertCircle,
+  Copy,
+  Check,
+  Send,
+  Building2,
+  ShieldCheck,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import API, { BASE_URL } from "../../api/axios";
 import "./Order.css";
 
-// ======================================================
-// HELPERS
-// ======================================================
-
-const AVATAR_COLORS = [
-  "#e0e7ff",
-  "#dcfce7",
-  "#fef3c7",
-  "#fee2e2",
-  "#e0f2fe",
-  "#f3e8ff",
-];
-const AVATAR_TEXT = [
-  "#4338ca",
-  "#15803d",
-  "#b45309",
-  "#b91c1c",
-  "#0369a1",
-  "#7e22ce",
-];
-
-const formatINR = (n) =>
-  `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
-
-const formatDate = (date) => {
-  if (!date) return "-";
-  try {
-    return new Date(date).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return "-";
-  }
-};
-
-const formatTime = (date) => {
-  if (!date) return "-";
-  try {
-    return new Date(date).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return "-";
-  }
-};
-
-const formatISODate = (date) => {
-  if (!date) return "";
-  try {
-    return new Date(date).toISOString().slice(0, 10);
-  } catch {
-    return "";
-  }
-};
-
-const getProductImage = (image) => {
-  if (!image) return "";
-  if (typeof image === "object") {
-    image = image?.url || image?.path || image?.secure_url || image?.src || "";
-  }
-  if (!image) return "";
-  const str = String(image).trim();
-  if (str.startsWith("http://") || str.startsWith("https://")) return str;
-  return `${BASE_URL}${str.startsWith("/") ? str : `/${str}`}`;
-};
-
-// Map backend status → UI label (keep all 8 distinct)
-const mapStatus = (orderStatus) => {
-  const s = String(orderStatus || "").toLowerCase();
-  switch (s) {
-    case "pending":
-      return "Pending";
-    case "confirmed":
-      return "Confirmed";
-    case "processing":
-      return "Processing";
-    case "shipped":
-      return "Shipped";
-    case "out_for_delivery":
-      return "Out for Delivery";
-    case "delivered":
-      return "Delivered";
-    case "cancelled":
-      return "Cancelled";
-    case "refunded":
-      return "Refunded";
-    default:
-      return "Pending";
-  }
-};
-
-// Map UI label → backend status
-const reverseMapStatus = {
-  Pending: "pending",
-  Confirmed: "confirmed",
-  Processing: "processing",
-  Shipped: "shipped",
-  "Out for Delivery": "out_for_delivery",
-  Delivered: "delivered",
-  Cancelled: "cancelled",
-  Refunded: "refunded",
-};
-
-// Map backend payment method
-const mapPaymentMethod = (method) => {
-  const m = String(method || "").toLowerCase();
-  if (m === "cod") return "Cash on Delivery";
-  if (m === "razorpay") return "Online";
-  if (m === "wallet") return "Wallet";
-  return method || "Online";
-};
-
-// Map backend payment status
-const mapPaymentStatus = (status) => {
-  const s = String(status || "").toLowerCase();
-  if (s === "paid") return "Paid";
-  if (s === "failed") return "Failed";
-  if (s === "refunded") return "Failed";
-  if (s === "pending") return "COD";
-  return "COD";
-};
-
-// Map backend order → UI shape
-const mapBackendOrder = (order) => {
-  const user = order.user || {};
-  const address = order.deliveryAddress || {};
-
-  const customerName =
-    address.name ||
-    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
-    "Customer";
-
-  return {
-    id: order.orderNumber || order._id,
-    _id: order._id,
-    refCode: order.orderNumber || "",
-    customer: customerName,
-    email: user.email || "",
-    mobile: address.mobile || user.mobile || "",
-    items:
-      Array.isArray(order.items) &&
-      order.items.reduce((sum, it) => sum + Number(it.quantity || 0), 0),
-    itemList: (order.items || []).map((it) => ({
-      name: it.productName || "Product",
-      price: Number(it.price || 0),
-      quantity: Number(it.quantity || 0),
-      image: getProductImage(it.image),
-      unit: it.unit || "",
-    })),
-    amount: Number(order.totalAmount || 0),
-    payableAmount: Number(order.payableAmount || 0),
-    walletUsed: Number(order.walletUsed || 0),
-    pointsUsed: Number(order.pointsUsed || 0),
-    pointsValue: Number(order.pointsValue || 0),
-    paymentMethod: mapPaymentMethod(order.paymentMethod),
-    paymentStatus: mapPaymentStatus(order.paymentStatus),
-    status: mapStatus(order.orderStatus),
-    orderStatus: order.orderStatus,
-    date: formatISODate(order.createdAt),
-    time: formatTime(order.createdAt),
-    createdAt: order.createdAt,
-    updatedAt: order.updatedAt,
-    deliveryAddress: address,
-    statusHistory: order.statusHistory || [],
-  };
-};
-
-// ======================================================
-// STATIC DATA
-// ======================================================
-
-const statusMeta = {
-  Delivered: { color: "#16a34a", bg: "#dcfce7", icon: CheckCircle2 },
-  "Out for Delivery": { color: "#0891b2", bg: "#cffafe", icon: Truck },
-  Shipped: { color: "#2563eb", bg: "#dbeafe", icon: Truck },
-  Processing: { color: "#d97706", bg: "#fef3c7", icon: RefreshCw },
-  Confirmed: { color: "#7c3aed", bg: "#ede9fe", icon: CheckCircle2 },
-  Pending: { color: "#d97706", bg: "#fef3c7", icon: Clock },
-  Cancelled: { color: "#dc2626", bg: "#fee2e2", icon: XCircle },
-  Refunded: { color: "#9333ea", bg: "#f3e8ff", icon: RefreshCw },
-};
-
-const paymentBadgeMeta = {
-  Paid: { color: "#16a34a", bg: "#dcfce7" },
-  COD: { color: "#475569", bg: "#f1f5f9" },
-  Failed: { color: "#dc2626", bg: "#fee2e2" },
-};
-
-const topProducts = [
-  { name: "Basmati Rice 5kg", orders: 240, emoji: "🍚", bg: "#f1f5f9" },
-  { name: "Fortune Sunflower Oil 1L", orders: 210, emoji: "🛢️", bg: "#fef3c7" },
-  { name: "Tata Salt 1kg", orders: 185, emoji: "🧂", bg: "#fee2e2" },
-  { name: "Toor Dal 1kg", orders: 150, emoji: "🫘", bg: "#fef9c3" },
-  { name: "Aashirvaad Atta 5kg", orders: 130, emoji: "🌾", bg: "#fee2e2" },
-];
-
-// ======================================================
-// COMPONENT
-// ======================================================
-
 const Order = () => {
+  // =======================================================
+  // STATES
+  // =======================================================
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [updatingId, setUpdatingId] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All Status");
-  const [paymentFilter, setPaymentFilter] = useState("All Payment Status");
-  const [dateStart, setDateStart] = useState("");
-  const [dateEnd, setDateEnd] = useState("");
-  const [quickChip, setQuickChip] = useState("All Time");
-  const [showFilterPanel, setShowFilterPanel] = useState(false);
-  const [selectedIds, setSelectedIds] = useState(new Set());
+  // Filters & Search
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
+  const [paymentFilter, setPaymentFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
 
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(8);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
 
-  const [activeMenuId, setActiveMenuId] = useState(null);
-  const [viewOrder, setViewOrder] = useState(null);
-  const [editOrder, setEditOrder] = useState(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [form, setForm] = useState({
-    customer: "",
-    email: "",
-    items: 1,
-    amount: "",
-    paymentMethod: "Online",
-    paymentStatus: "Paid",
-    status: "Pending",
+  // Status Update Modal State
+  const [statusModalOrder, setStatusModalOrder] = useState(null);
+  const [statusFormData, setStatusFormData] = useState({
+    status: "",
+    note: "",
+    courierName: "",
+    currentHub: "",
+    deliveryDate: "",
+    trackingId: "",
+    trackingUrl: "",
+    agentName: "",
+    agentPhone: "",
   });
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [toast, setToast] = useState(null);
-  const fileInputRef = useRef(null);
+  const [savingStatus, setSavingStatus] = useState(false);
 
-  const showToast = (message) => {
-    setToast(message);
-    window.clearTimeout(showToast._t);
-    showToast._t = window.setTimeout(() => setToast(null), 2600);
-  };
+  // View Details Modal State
+  const [detailsModalOrder, setDetailsModalOrder] = useState(null);
+  const [copiedId, setCopiedId] = useState(false);
 
-  // ======================================================
-  // TOKEN
-  // ======================================================
+  // =======================================================
+  // HELPER: ONLY SHOW SUCCESSFUL PAYMENTS (EXCLUDE FAILED)
+  // =======================================================
+  const isPaymentSuccessful = (order) => {
+    if (!order) return false;
+    const pStatus = String(order.paymentStatus || "").toLowerCase();
+    const pMethod = String(order.paymentMethod || "").toLowerCase();
+    const oStatus = String(order.orderStatus || "").toLowerCase();
 
-  const getToken = () => {
-    try {
-      return (
-        localStorage.getItem("token") ||
-        localStorage.getItem("adminToken") ||
-        null
-      );
-    } catch {
-      return null;
+    // Never show failed or refunded failed payments
+    if (pStatus === "failed") return false;
+
+    // Online orders (Razorpay, Cards, UPI, Netbanking) must have successful payment
+    if (pMethod === "razorpay" || pMethod === "online") {
+      return pStatus === "paid";
     }
+
+    // COD orders: confirmed and active (not cancelled without payment)
+    if (pMethod === "cod") {
+      return oStatus !== "cancelled";
+    }
+
+    return pStatus === "paid";
   };
 
-  // ======================================================
-  // FETCH ALL ORDERS (ADMIN)
-  // ======================================================
-
-  const fetchOrders = useCallback(async (isRefresh = false) => {
+  // =======================================================
+  // LOAD ORDERS FROM BACKEND
+  // =======================================================
+  const fetchOrders = useCallback(async (isSilent = false) => {
     try {
-      if (isRefresh) setIsRefreshing(true);
-      else setLoading(true);
+      if (!isSilent) setLoading(true);
+      else setRefreshing(true);
 
-      setError("");
-
-      // 👇 no localStorage check — cookie is sent automatically
-      const { data } = await API.get("/orders", {
-        params: { limit: 500 },
-      });
-
-      const list = Array.isArray(data?.orders) ? data.orders : [];
-      setOrders(list.map(mapBackendOrder));
+      const res = await API.get("/orders");
+      const list = res.data?.orders || res.data?.data || [];
+      const paidOnly = Array.isArray(list) ? list.filter(isPaymentSuccessful) : [];
+      setOrders(paidOnly);
     } catch (err) {
-      console.error("Fetch admin orders error:", err);
-
-      if (err.response?.status === 401) {
-        setError("Session expired. Please login again.");
-      } else if (err.response?.status === 403) {
-        setError("You don't have permission to view orders.");
-      } else {
-        setError(err.response?.data?.message || "Failed to load orders.");
-      }
-      setOrders([]);
+      console.error("Fetch orders error:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Failed to Load Orders",
+        text: err.response?.data?.message || "Could not retrieve orders from server.",
+        confirmButtonColor: "#059669",
+      });
     } finally {
       setLoading(false);
-      setIsRefreshing(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -331,1292 +123,1408 @@ const Order = () => {
     fetchOrders();
   }, [fetchOrders]);
 
-  // Close actions menu on outside click
-  useEffect(() => {
-    const handleOutsideClick = (e) => {
-      if (!e.target.closest(".Order-actions-dropdown-wrap")) {
-        setActiveMenuId(null);
-      }
-    };
-    document.addEventListener("click", handleOutsideClick);
-    return () => document.removeEventListener("click", handleOutsideClick);
-  }, []);
-
-  // ======================================================
-  // STATS
-  // ======================================================
-
-  const stats = useMemo(() => {
-    const by = (label) => orders.filter((o) => o.status === label).length;
-    return {
-      total: orders.length,
-      pending: by("Pending"),
-      confirmed: by("Confirmed"),
-      processing: by("Processing"),
-      shipped: by("Shipped"),
-      ofd: by("Out for Delivery"),
-      delivered: by("Delivered"),
-      cancelled: by("Cancelled"),
-      refunded: by("Refunded"),
-    };
-  }, [orders]);
-
-  const donutData = useMemo(() => {
-    const total = orders.length || 1;
-    const counts = {
-      Delivered: orders.filter((o) => o.status === "Delivered").length,
-      "Out for Delivery": orders.filter((o) => o.status === "Out for Delivery")
-        .length,
-      Shipped: orders.filter((o) => o.status === "Shipped").length,
-      Processing: orders.filter((o) => o.status === "Processing").length,
-      Confirmed: orders.filter((o) => o.status === "Confirmed").length,
-      Pending: orders.filter((o) => o.status === "Pending").length,
-      Cancelled: orders.filter((o) => o.status === "Cancelled").length,
-      Refunded: orders.filter((o) => o.status === "Refunded").length,
-    };
-    const colors = {
-      Delivered: "#22c55e",
-      "Out for Delivery": "#06b6d4",
-      Shipped: "#3b82f6",
-      Processing: "#f59e0b",
-      Confirmed: "#8b5cf6",
-      Pending: "#fb923c",
-      Cancelled: "#ef4444",
-      Refunded: "#a855f7",
-    };
-    let cursor = 0;
-    const segments = Object.entries(counts).map(([label, count]) => {
-      const pct = (count / total) * 100;
-      const seg = { label, count, pct, color: colors[label], start: cursor };
-      cursor += pct;
-      return seg;
-    });
-    return { segments, total: orders.length };
-  }, [orders]);
-
-  // ======================================================
-  // FILTERING
-  // ======================================================
-
-  const matchesQuickChip = (order) => {
-    if (quickChip === "All Time") return true;
-
-    const d = new Date(order.createdAt || order.date);
-    const today = new Date();
-
-    if (quickChip === "Today") {
-      return d.toDateString() === today.toDateString();
-    }
-    if (quickChip === "This Week") {
-      const weekAgo = new Date(today);
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      return d >= weekAgo && d <= today;
-    }
-    if (quickChip === "This Month") {
-      return (
-        d.getMonth() === today.getMonth() &&
-        d.getFullYear() === today.getFullYear()
-      );
-    }
-    return true;
+  // =======================================================
+  // COPY HELPER
+  // =======================================================
+  const handleCopyText = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2000);
   };
 
-  const filteredOrders = useMemo(() => {
-    return orders.filter((o) => {
-      const term = searchTerm.trim().toLowerCase();
-      const matchesSearch =
-        !term ||
-        o.id.toLowerCase().includes(term) ||
-        o.customer.toLowerCase().includes(term) ||
-        o.email.toLowerCase().includes(term) ||
-        o.mobile.includes(term);
+  // =======================================================
+  // HELPER: RESOLVE PRODUCT IMAGE
+  // =======================================================
+  const getProductImage = (image) => {
+    if (!image) return "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=150&q=80";
+    if (typeof image === "object") {
+      image = image?.url || image?.path || image?.secure_url || "";
+    }
+    const str = String(image).trim();
+    if (!str) return "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=150&q=80";
+    if (str.startsWith("http://") || str.startsWith("https://")) return str;
+    return `${BASE_URL}/${str.replace(/^\/+/, "")}`;
+  };
 
-      const matchesStatus =
-        statusFilter === "All Status" || o.status === statusFilter;
+  // =======================================================
+  // STATS CALCULATIONS
+  // =======================================================
+  const stats = useMemo(() => {
+    const total = orders.length;
+    let pending = 0;
+    let confirmed = 0;
+    let shipped = 0;
+    let outForDelivery = 0;
+    let delivered = 0;
+    let cancelled = 0;
+    let revenue = 0;
 
-      const matchesPayment =
-        paymentFilter === "All Payment Status" ||
-        o.paymentStatus === paymentFilter;
+    orders.forEach((o) => {
+      const s = String(o.orderStatus || "").toLowerCase();
+      if (s === "pending") pending++;
+      else if (s === "confirmed") confirmed++;
+      else if (s === "shipped") shipped++;
+      else if (s === "out_for_delivery") outForDelivery++;
+      else if (s === "delivered") delivered++;
+      else if (s === "cancelled" || s === "refunded") cancelled++;
 
-      const orderDate = new Date(o.createdAt || o.date);
-      const matchesStart = !dateStart || orderDate >= new Date(dateStart);
-      const matchesEnd = !dateEnd || orderDate <= new Date(dateEnd);
-
-      return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesPayment &&
-        matchesStart &&
-        matchesEnd &&
-        matchesQuickChip(o)
-      );
+      if (s !== "cancelled" && s !== "refunded") {
+        revenue += Number(o.payableAmount ?? o.totalAmount ?? 0);
+      }
     });
-  }, [
-    orders,
-    searchTerm,
-    statusFilter,
-    paymentFilter,
-    dateStart,
-    dateEnd,
-    quickChip,
-  ]);
+
+    return { total, pending, confirmed, shipped, outForDelivery, delivered, cancelled, revenue };
+  }, [orders]);
+
+  // =======================================================
+  // FILTERING LOGIC
+  // =======================================================
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      if (!isPaymentSuccessful(order)) return false;
+      const status = String(order.orderStatus || "").toLowerCase();
+      const paymentMethod = String(order.paymentMethod || "").toLowerCase();
+      const customerName = String(order.deliveryAddress?.name || "").toLowerCase();
+      const customerPhone = String(order.deliveryAddress?.mobile || "");
+      const orderNum = String(order.orderNumber || order._id || "").toLowerCase();
+
+      // Tab filter
+      if (activeTab !== "all") {
+        if (activeTab === "pending" && status !== "pending") return false;
+        if (activeTab === "confirmed" && status !== "confirmed") return false;
+        if (activeTab === "shipped" && status !== "shipped") return false;
+        if (activeTab === "out_for_delivery" && status !== "out_for_delivery") return false;
+        if (activeTab === "delivered" && status !== "delivered") return false;
+        if (activeTab === "cancelled" && status !== "cancelled" && status !== "refunded") return false;
+      }
+
+      // Payment filter
+      if (paymentFilter !== "all") {
+        if (paymentFilter === "cod" && paymentMethod !== "cod") return false;
+        if (paymentFilter === "online" && paymentMethod === "cod") return false;
+      }
+
+      // Date filter
+      if (dateFilter !== "all" && order.createdAt) {
+        const orderDate = new Date(order.createdAt);
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        if (dateFilter === "today") {
+          const check = new Date(orderDate);
+          check.setHours(0, 0, 0, 0);
+          if (check.getTime() !== now.getTime()) return false;
+        } else if (dateFilter === "7days") {
+          const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          if (orderDate < sevenDaysAgo) return false;
+        } else if (dateFilter === "month") {
+          if (orderDate.getMonth() !== now.getMonth() || orderDate.getFullYear() !== now.getFullYear()) {
+            return false;
+          }
+        }
+      }
+
+      // Search query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matches =
+          orderNum.includes(q) ||
+          customerName.includes(q) ||
+          customerPhone.includes(q) ||
+          (order.deliveryAddress?.city && order.deliveryAddress.city.toLowerCase().includes(q)) ||
+          (order.deliveryAddress?.pincode && String(order.deliveryAddress.pincode).includes(q));
+        if (!matches) return false;
+      }
+
+      return true;
+    });
+  }, [orders, activeTab, paymentFilter, dateFilter, searchQuery]);
+
+  // Pagination slice
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage) || 1;
+  const paginatedOrders = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredOrders.slice(start, start + itemsPerPage);
+  }, [filteredOrders, currentPage, itemsPerPage]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, paymentFilter, dateStart, dateEnd, quickChip]);
+  }, [activeTab, paymentFilter, dateFilter, searchQuery]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
-  const safePage = Math.min(currentPage, totalPages);
-  const pageStart = (safePage - 1) * pageSize;
-  const pageOrders = filteredOrders.slice(pageStart, pageStart + pageSize);
+  // =======================================================
+  // OPEN STATUS UPDATE MODAL
+  // =======================================================
+  const handleOpenStatusModal = (order) => {
+    const ship = order.shippingDetails || {};
+    const formattedDate = ship.deliveryDate ? new Date(ship.deliveryDate).toISOString().slice(0, 10) : "";
 
-  const pageNumbers = useMemo(() => {
-    const pages = [];
-    for (let p = 1; p <= totalPages; p++) {
-      if (p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
-        pages.push(p);
-      else if (pages[pages.length - 1] !== "...") pages.push("...");
-    }
-    return pages;
-  }, [totalPages, safePage]);
-
-  // ======================================================
-  // SELECTION
-  // ======================================================
-
-  const allVisibleSelected =
-    pageOrders.length > 0 && pageOrders.every((o) => selectedIds.has(o.id));
-
-  const toggleSelectAll = () => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (allVisibleSelected) {
-        pageOrders.forEach((o) => next.delete(o.id));
-      } else {
-        pageOrders.forEach((o) => next.add(o.id));
-      }
-      return next;
+    setStatusModalOrder(order);
+    setStatusFormData({
+      status: order.orderStatus || "confirmed",
+      note: "",
+      courierName: ship.courierName || "Delhivery",
+      currentHub: ship.currentHub || "",
+      deliveryDate: formattedDate,
+      trackingId: ship.trackingId || "",
+      trackingUrl: ship.trackingUrl || "",
+      agentName: ship.agentName || "",
+      agentPhone: ship.agentPhone || "",
     });
   };
 
-  const toggleSelectOne = (id) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
-
-  // ======================================================
-  // UPDATE STATUS
-  // ======================================================
-
-  const handleUpdateStatus = async (order, newStatus) => {
-    const backendStatus = reverseMapStatus[newStatus];
-    if (!backendStatus) return;
-
-    try {
-      setUpdatingId(order._id);
-
-      await API.put(`/orders/${order._id}/status`, {
-        status: backendStatus,
-        note: `Status changed to ${newStatus} by admin`,
-      });
-
-      setOrders((prev) =>
-        prev.map((o) =>
-          o._id === order._id
-            ? {
-                ...o,
-                status: newStatus,
-                orderStatus: backendStatus,
-                updatedAt: new Date().toISOString(),
-              }
-            : o,
-        ),
-      );
-
-      setActiveMenuId(null);
-      showToast(`Order #${order.id} marked as ${newStatus}`);
-    } catch (err) {
-      console.error("Update status error:", err);
-      alert(err.response?.data?.message || "Failed to update order status.");
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  // ======================================================
-  // CANCEL ORDER
-  // ======================================================
-
-  const handleCancelOrder = async (order) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to cancel order ${order.id}?`,
-    );
-    if (!confirmed) return;
-
-    try {
-      setUpdatingId(order._id);
-
-      await API.put(`/orders/${order._id}/status`, {
-        status: "cancelled",
-        note: "Cancelled by admin",
-      });
-
-      setOrders((prev) =>
-        prev.map((o) =>
-          o._id === order._id
-            ? { ...o, status: "Cancelled", orderStatus: "cancelled" }
-            : o,
-        ),
-      );
-
-      setActiveMenuId(null);
-      showToast(`Order #${order.id} cancelled`);
-    } catch (err) {
-      console.error("Cancel order error:", err);
-      alert(err.response?.data?.message || "Failed to cancel order.");
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  // ======================================================
-  // EDIT ORDER (local-only)
-  // ======================================================
-
-  const handleSaveEdit = async (e) => {
+  // =======================================================
+  // SUBMIT STATUS UPDATE
+  // =======================================================
+  const handleSaveStatusUpdate = async (e) => {
     e.preventDefault();
-    if (!editOrder) return;
+    if (!statusModalOrder) return;
 
     try {
-      // Only status persists to backend
-      if (editOrder.orderStatus !== reverseMapStatus[editOrder.status]) {
-        await API.put(`/orders/${editOrder._id}/status`, {
-          status: reverseMapStatus[editOrder.status],
-          note: "Status updated via edit form",
+      setSavingStatus(true);
+      const payload = {
+        status: statusFormData.status,
+        note: statusFormData.note.trim() || `Status updated to ${statusFormData.status}`,
+        shippingDetails: {
+          courierName: statusFormData.courierName.trim(),
+          currentHub: statusFormData.currentHub.trim(),
+          deliveryDate: statusFormData.deliveryDate || null,
+          trackingId: statusFormData.trackingId.trim(),
+          trackingUrl: statusFormData.trackingUrl.trim(),
+          agentName: statusFormData.agentName.trim(),
+          agentPhone: statusFormData.agentPhone.trim(),
+        },
+      };
+
+      const res = await API.put(`/orders/${statusModalOrder._id}/status`, payload);
+      if (res.data?.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Status Updated",
+          text: `Order #${statusModalOrder.orderNumber || statusModalOrder._id} marked as ${statusFormData.status.toUpperCase()}.`,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        // Update in state
+        setOrders((prev) =>
+          prev.map((o) => (o._id === statusModalOrder._id ? res.data.order || { ...o, ...payload } : o))
+        );
+        setStatusModalOrder(null);
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Update Failed",
+          text: res.data?.message || "Could not update order status.",
+          confirmButtonColor: "#059669",
         });
       }
-
-      setOrders((prev) =>
-        prev.map((o) => (o._id === editOrder._id ? { ...o, ...editOrder } : o)),
-      );
-
-      showToast(`Order #${editOrder.id} updated`);
-      setEditOrder(null);
     } catch (err) {
-      console.error("Edit order error:", err);
-      alert(err.response?.data?.message || "Failed to update order.");
+      console.error("Status update error:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: err.response?.data?.message || "Failed to communicate with server.",
+        confirmButtonColor: "#059669",
+      });
+    } finally {
+      setSavingStatus(false);
     }
   };
 
-  // ======================================================
-  // FILTERS
-  // ======================================================
+  // =======================================================
+  // EXPORT TO CSV
+  // =======================================================
+  const handleExportCSV = () => {
+    if (filteredOrders.length === 0) {
+      Swal.fire({
+        icon: "info",
+        title: "No Orders to Export",
+        text: "There are no orders matching your current filter criteria.",
+        confirmButtonColor: "#059669",
+      });
+      return;
+    }
 
-  const clearAllFilters = () => {
-    setSearchTerm("");
-    setStatusFilter("All Status");
-    setPaymentFilter("All Payment Status");
-    setDateStart("");
-    setDateEnd("");
-    setQuickChip("All Time");
-  };
-
-  const handleRefresh = () => {
-    fetchOrders(true);
-    setSelectedIds(new Set());
-  };
-
-  // ======================================================
-  // EXPORT
-  // ======================================================
-
-  const handleExport = () => {
-    const header = [
+    const headers = [
       "Order ID",
-      "Customer",
-      "Email",
-      "Mobile",
-      "Items",
-      "Amount (INR)",
-      "Payment Method",
-      "Payment Status",
-      "Status",
       "Date",
-      "Time",
+      "Customer Name",
+      "Phone",
+      "Address",
+      "City",
+      "Pincode",
+      "Total Items",
+      "Total Amount",
+      "Payment Mode",
+      "Payment Status",
+      "Order Status",
+      "Courier Name",
+      "Current Hub",
+      "Tracking ID",
+      "Agent Phone",
     ];
 
-    const rows = filteredOrders.map((o) => [
-      o.id,
-      o.customer,
-      o.email,
-      o.mobile,
-      o.items,
-      o.amount,
-      o.paymentMethod,
-      o.paymentStatus,
-      o.status,
-      o.date,
-      o.time,
-    ]);
+    const rows = filteredOrders.map((o) => {
+      const a = o.deliveryAddress || {};
+      const s = o.shippingDetails || {};
+      return [
+        `"${o.orderNumber || o._id}"`,
+        `"${o.createdAt ? new Date(o.createdAt).toLocaleDateString("en-IN") : ""}"`,
+        `"${(a.name || "").replace(/"/g, '""')}"`,
+        `"${a.mobile || ""}"`,
+        `"${(a.address || "").replace(/"/g, '""')}"`,
+        `"${a.city || ""}"`,
+        `"${a.pincode || ""}"`,
+        (o.items || []).length,
+        Number(o.payableAmount ?? o.totalAmount ?? 0).toFixed(2),
+        `"${o.paymentMethod === "cod" ? "Cash on Delivery" : "Online"}"`,
+        `"${o.paymentStatus || "paid"}"`,
+        `"${o.orderStatus || ""}"`,
+        `"${s.courierName || ""}"`,
+        `"${s.currentHub || ""}"`,
+        `"${s.trackingId || ""}"`,
+        `"${s.agentPhone || ""}"`,
+      ];
+    });
 
-    const csv = [header, ...rows]
-      .map((r) =>
-        r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
-      )
-      .join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
-    link.href = url;
-    link.download = `orders-export-${filteredOrders.length}-rows.csv`;
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Orders_Export_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    showToast(`Exported ${filteredOrders.length} orders`);
   };
 
-  // ======================================================
-  // IMPORT (local demo)
-  // ======================================================
-
-  const handleImportClick = () => fileInputRef.current?.click();
-
-  const handleImportFile = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const text = String(evt.target.result || "");
-        const lines = text.split(/\r?\n/).filter(Boolean);
-        const dataLines = lines[0]?.toLowerCase().includes("customer")
-          ? lines.slice(1)
-          : lines;
-
-        const imported = dataLines.map((line, idx) => {
-          const cols = line
-            .split(",")
-            .map((c) => c.replace(/^"|"$/g, "").trim());
-          const [
-            customer = `Imported Customer ${idx + 1}`,
-            email = "",
-            items = "1",
-            amount = "0",
-          ] = cols;
-
-          return {
-            id: `IMP-${Date.now()}-${idx}`,
-            refCode: "IMPORTED",
-            customer,
-            email: email || "unknown@example.com",
-            mobile: "",
-            items: parseInt(items, 10) || 1,
-            amount: parseFloat(amount) || 0,
-            paymentMethod: "Online",
-            paymentStatus: "Paid",
-            status: "Pending",
-            date: new Date().toISOString().slice(0, 10),
-            time: "12:00 PM",
-            createdAt: new Date().toISOString(),
-            _local: true,
-          };
-        });
-
-        setOrders((prev) => [...imported, ...prev]);
-        showToast(
-          `Imported ${imported.length} order${imported.length === 1 ? "" : "s"} (local only)`,
-        );
-      } catch (err) {
-        showToast("Could not read that file — expected a CSV");
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = "";
-  };
-
-  // ======================================================
-  // ADD ORDER (local)
-  // ======================================================
-
-  const handleAddOrder = (e) => {
-    e.preventDefault();
-    if (!form.customer.trim() || !form.amount) return;
-
-    const newOrder = {
-      id: `NEW-${Date.now()}`,
-      refCode: "MANUAL",
-      customer: form.customer.trim(),
-      email: form.email.trim() || "unknown@example.com",
-      mobile: "",
-      items: Number(form.items) || 1,
-      amount: Number(form.amount) || 0,
-      paymentMethod: form.paymentMethod,
-      paymentStatus: form.paymentStatus,
-      status: form.status,
-      date: new Date().toISOString().slice(0, 10),
-      time: "12:00 PM",
-      createdAt: new Date().toISOString(),
-      _local: true,
+  // Status Badge Component
+  const renderStatusPill = (status) => {
+    const s = String(status || "pending").toLowerCase();
+    const config = {
+      pending: { label: "Pending", bg: "#fef3c7", color: "#92400e", icon: Clock },
+      confirmed: { label: "Confirmed", bg: "#ecfdf5", color: "#065f46", icon: CheckCircle2 },
+      shipped: { label: "Shipped", bg: "#eff6ff", color: "#1e40af", icon: Truck },
+      processing: { label: "Shipped", bg: "#eff6ff", color: "#1e40af", icon: Truck },
+      out_for_delivery: { label: "Out for Delivery", bg: "#f5f3ff", color: "#6b21a8", icon: Package },
+      delivered: { label: "Delivered", bg: "#d1fae5", color: "#065f46", icon: CheckCircle2 },
+      cancelled: { label: "Cancelled", bg: "#fee2e2", color: "#991b1b", icon: XCircle },
+      refunded: { label: "Refunded", bg: "#f1f5f9", color: "#475569", icon: RefreshCw },
     };
 
-    setOrders((prev) => [newOrder, ...prev]);
-    setForm({
-      customer: "",
-      email: "",
-      items: 1,
-      amount: "",
-      paymentMethod: "Online",
-      paymentStatus: "Paid",
-      status: "Pending",
-    });
-    setShowAddModal(false);
-    showToast(`Order ${newOrder.id} created (local only)`);
+    const cur = config[s] || config.confirmed;
+    const Icon = cur.icon;
+
+    return (
+      <span className="admin-status-pill" style={{ backgroundColor: cur.bg, color: cur.color }}>
+        <Icon size={12} />
+        <span>{cur.label}</span>
+      </span>
+    );
   };
-
-  // ======================================================
-  // HELPERS
-  // ======================================================
-
-  const initials = (name) =>
-    String(name || "")
-      .split(" ")
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((p) => p[0].toUpperCase())
-      .join("") || "U";
-
-  const avatarStyle = (idx) => ({
-    backgroundColor: AVATAR_COLORS[idx % AVATAR_COLORS.length],
-    color: AVATAR_TEXT[idx % AVATAR_TEXT.length],
-  });
-
-  // ======================================================
-  // LOADING / ERROR
-  // ======================================================
-
-  if (loading) {
-    return (
-      <div className="Order">
-        <div className="Order-loading">Loading orders…</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="Order">
-        <div className="Order-error">
-          <p>{error}</p>
-          <button onClick={() => fetchOrders()}>Try Again</button>
-        </div>
-      </div>
-    );
-  }
-
-  // ======================================================
-  // RENDER
-  // ======================================================
 
   return (
-    <div className="Order">
-      {/* HEADER */}
-      <div className="Order-header">
-        <div>
-          <h1 className="Order-title">Orders</h1>
-          <div className="Order-breadcrumb">
-            <span>Dashboard</span>
-            <ChevronRight size={13} />
-            <span>Orders</span>
-            <ChevronRight size={13} />
-            <span className="Order-breadcrumb-current">All Orders</span>
+    <div className="admin-orders-page-wrapper">
+      <div className="admin-orders-container">
+        {/* =======================================================
+            PAGE HEADER & CONTROLS
+        ======================================================== */}
+        <div className="admin-orders-header">
+          <div className="header-text-block">
+            <h1 className="header-title">Orders Management</h1>
+            <p className="header-subtitle">
+              Manage fulfillment, update live courier hubs, assign agents, and monitor orders.
+            </p>
           </div>
-        </div>
-      </div>
 
-      {/* STATS */}
-      <div className="Order-stats">
-        <div className="Order-stat-card">
-          <div
-            className="Order-stat-icon"
-            style={{ background: "#dcfce7", color: "#16a34a" }}
-          >
-            <ShoppingBag size={20} />
-          </div>
-          <div className="Order-stat-body">
-            <p className="Order-stat-label">Total Orders</p>
-            <p className="Order-stat-value">{stats.total}</p>
-            <span className="Order-stat-delta up">
-              <ArrowUp size={12} /> 12.5% this month
-            </span>
-          </div>
-        </div>
-
-        <div className="Order-stat-card">
-          <div
-            className="Order-stat-icon"
-            style={{ background: "#fef3c7", color: "#d97706" }}
-          >
-            <Clock size={20} />
-          </div>
-          <div className="Order-stat-body">
-            <p className="Order-stat-label">Pending Orders</p>
-            <p className="Order-stat-value">{stats.pending}</p>
-            <span className="Order-stat-delta up">
-              <ArrowUp size={12} /> 5.2% this month
-            </span>
-          </div>
-        </div>
-
-        <div className="Order-stat-card">
-          <div
-            className="Order-stat-icon"
-            style={{ background: "#dbeafe", color: "#2563eb" }}
-          >
-            <RefreshCw size={20} />
-          </div>
-          <div className="Order-stat-body">
-            <p className="Order-stat-label">Processing Orders</p>
-            <p className="Order-stat-value">{stats.processing}</p>
-            <span className="Order-stat-delta up">
-              <ArrowUp size={12} /> 8.1% this month
-            </span>
-          </div>
-        </div>
-
-        <div className="Order-stat-card">
-          <div
-            className="Order-stat-icon"
-            style={{ background: "#f3e8ff", color: "#9333ea" }}
-          >
-            <CheckCircle2 size={20} />
-          </div>
-          <div className="Order-stat-body">
-            <p className="Order-stat-label">Delivered Orders</p>
-            <p className="Order-stat-value">{stats.delivered}</p>
-            <span className="Order-stat-delta up">
-              <ArrowUp size={12} /> 15.3% this month
-            </span>
-          </div>
-        </div>
-
-        <div className="Order-stat-card">
-          <div
-            className="Order-stat-icon"
-            style={{ background: "#fee2e2", color: "#dc2626" }}
-          >
-            <XCircle size={20} />
-          </div>
-          <div className="Order-stat-body">
-            <p className="Order-stat-label">Cancelled Orders</p>
-            <p className="Order-stat-value">{stats.cancelled}</p>
-            <span className="Order-stat-delta down">
-              <ArrowDown size={12} /> 2.1% this month
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* MAIN */}
-      <div className="Order-main">
-        {/* FILTERS */}
-        <div className="Order-filters-card">
-          <div className="Order-filters-row">
-            <div className="Order-field Order-field-search">
-              <label>Search Order</label>
-              <div className="Order-search-box">
-                <Search size={16} className="Order-search-icon" />
-                <input
-                  type="text"
-                  placeholder="Search by Order ID, Name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="Order-field">
-              <label>Order Status</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option>All Status</option>
-                <option>Pending</option>
-                <option>Confirmed</option>
-                <option>Processing</option>
-                <option>Shipped</option>
-                <option>Out for Delivery</option>
-                <option>Delivered</option>
-                <option>Cancelled</option>
-                <option>Refunded</option>
-              </select>
-            </div>
-
-            <div className="Order-field">
-              <label>Payment Status</label>
-              <select
-                value={paymentFilter}
-                onChange={(e) => setPaymentFilter(e.target.value)}
-              >
-                <option>All Payment Status</option>
-                <option>Paid</option>
-                <option>COD</option>
-                <option>Failed</option>
-              </select>
-            </div>
-
-            <div className="Order-field">
-              <label>Date Range</label>
-              <div className="Order-date-range">
-                <Calendar size={15} />
-                <input
-                  type="date"
-                  value={dateStart}
-                  onChange={(e) => setDateStart(e.target.value)}
-                />
-                <span>–</span>
-                <input
-                  type="date"
-                  value={dateEnd}
-                  onChange={(e) => setDateEnd(e.target.value)}
-                />
-              </div>
-            </div>
-
+          <div className="header-actions-row">
             <button
               type="button"
-              className={`Order-btn Order-btn-outline ${showFilterPanel ? "active" : ""}`}
-              onClick={() => setShowFilterPanel((v) => !v)}
+              className="btn-action-refresh"
+              onClick={() => fetchOrders(true)}
+              disabled={refreshing}
+              title="Refresh Orders"
             >
-              <Filter size={15} /> Filters
+              <RefreshCw size={15} className={refreshing ? "spin-icon" : ""} />
+              <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
             </button>
+
+
+          </div>
+        </div>
+
+        {/* =======================================================
+            KPI SUMMARY STATS CARDS
+        ======================================================== */}
+        <div className="orders-stats-grid">
+          <div className="stat-card stat-total">
+            <div className="stat-icon-wrapper bg-blue">
+              <ShoppingBag size={20} />
+            </div>
+            <div className="stat-meta">
+              <span className="stat-label">Total Orders</span>
+              <h3 className="stat-value">{stats.total}</h3>
+            </div>
           </div>
 
-          {showFilterPanel && (
-            <div className="Order-quick-chips">
-              {["Today", "This Week", "This Month", "All Time"].map((chip) => (
-                <button
-                  key={chip}
-                  type="button"
-                  className={`Order-chip ${quickChip === chip ? "active" : ""}`}
-                  onClick={() => setQuickChip(chip)}
-                >
-                  {chip}
-                </button>
-              ))}
-              <button
-                type="button"
-                className="Order-chip Order-chip-clear"
-                onClick={clearAllFilters}
-              >
-                Clear all filters
-              </button>
+          <div className="stat-card stat-confirmed">
+            <div className="stat-icon-wrapper bg-green">
+              <CheckCircle2 size={20} />
             </div>
-          )}
+            <div className="stat-meta">
+              <span className="stat-label">Confirmed</span>
+              <h3 className="stat-value">{stats.confirmed + stats.pending}</h3>
+            </div>
+          </div>
 
-          <div className="Order-actions-row">
-            <span className="Order-result-count">
-              {filteredOrders.length} order
-              {filteredOrders.length === 1 ? "" : "s"} found
-              {selectedIds.size > 0 ? ` · ${selectedIds.size} selected` : ""}
-            </span>
-            <div className="Order-actions-buttons">
-              <button
-                type="button"
-                className="Order-btn Order-btn-outline"
-                onClick={handleImportClick}
-              >
-                <Upload size={15} /> Import
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv,text/csv"
-                onChange={handleImportFile}
-                style={{ display: "none" }}
-              />
-              <button
-                type="button"
-                className="Order-btn Order-btn-outline"
-                onClick={handleExport}
-              >
-                <Download size={15} /> Export
-              </button>
-              <button
-                type="button"
-                className="Order-btn Order-btn-primary"
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-              >
-                <RefreshCw size={15} className={isRefreshing ? "spin" : ""} />{" "}
-                {isRefreshing ? "Refreshing..." : "Refresh"}
-              </button>
+          <div className="stat-card stat-shipped">
+            <div className="stat-icon-wrapper bg-sky">
+              <Truck size={20} />
+            </div>
+            <div className="stat-meta">
+              <span className="stat-label">Shipped</span>
+              <h3 className="stat-value">{stats.shipped}</h3>
+            </div>
+          </div>
+
+          <div className="stat-card stat-out">
+            <div className="stat-icon-wrapper bg-purple">
+              <Package size={20} />
+            </div>
+            <div className="stat-meta">
+              <span className="stat-label">Out for Delivery</span>
+              <h3 className="stat-value">{stats.outForDelivery}</h3>
+            </div>
+          </div>
+
+          <div className="stat-card stat-delivered">
+            <div className="stat-icon-wrapper bg-emerald">
+              <CheckCircle2 size={20} />
+            </div>
+            <div className="stat-meta">
+              <span className="stat-label">Delivered</span>
+              <h3 className="stat-value">{stats.delivered}</h3>
+            </div>
+          </div>
+
+          <div className="stat-card stat-revenue">
+            <div className="stat-icon-wrapper bg-amber">
+              <CreditCard size={20} />
+            </div>
+            <div className="stat-meta">
+              <span className="stat-label">Total Revenue</span>
+              <h3 className="stat-value">₹{stats.revenue.toLocaleString("en-IN")}</h3>
             </div>
           </div>
         </div>
 
-        {/* TABLE */}
-        <div className="Order-table-card">
-          <div className="Order-table-scroll">
-            <table className="Order-table">
-              <thead>
-                <tr>
-                  <th className="Order-th-check">
-                    <input
-                      type="checkbox"
-                      checked={allVisibleSelected}
-                      onChange={toggleSelectAll}
-                    />
-                  </th>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th>Items</th>
-                  <th>Amount</th>
-                  <th>Payment</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                  <th style={{ textAlign: "center" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageOrders.length === 0 && (
-                  <tr>
-                    <td colSpan={9} className="Order-empty-row">
-                      No orders match your filters.
-                    </td>
-                  </tr>
-                )}
+        {/* =======================================================
+            FILTER TABS & SEARCH BAR
+        ======================================================== */}
+        <div className="orders-filter-section">
+          {/* Status Tabs */}
+          <div className="orders-status-tabs-nav">
+            {[
+              { key: "all", label: "All Orders", count: stats.total },
+              { key: "confirmed", label: "Confirmed", count: stats.confirmed },
+              { key: "shipped", label: "Shipped", count: stats.shipped },
+              { key: "out_for_delivery", label: "Out for Delivery", count: stats.outForDelivery },
+              { key: "delivered", label: "Delivered", count: stats.delivered },
+              { key: "pending", label: "Pending", count: stats.pending },
+              { key: "cancelled", label: "Cancelled", count: stats.cancelled },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                className={`status-tab-btn ${activeTab === tab.key ? "active" : ""}`}
+                onClick={() => setActiveTab(tab.key)}
+              >
+                <span>{tab.label}</span>
+                <span className="tab-count-badge">{tab.count}</span>
+              </button>
+            ))}
+          </div>
 
-                {pageOrders.map((o, idx) => {
-                  const meta = statusMeta[o.status] || statusMeta.Pending;
-                  const StatusIcon = meta.icon;
-                  const payMeta =
-                    paymentBadgeMeta[o.paymentStatus] || paymentBadgeMeta.COD;
-                  const isUpdating = updatingId === o._id;
+          {/* Controls Bar: Search, Payment Filter, Date Filter */}
+          <div className="orders-controls-bar">
+            <div className="search-input-wrapper">
+              <Search size={16} className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search by Order ID, customer, phone, city..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
+              {searchQuery && (
+                <button type="button" className="clear-search-btn" onClick={() => setSearchQuery("")}>
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            <div className="filter-dropdowns-group">
+              <div className="select-pill-wrapper">
+                <span className="select-label">Payment:</span>
+                <select
+                  value={paymentFilter}
+                  onChange={(e) => setPaymentFilter(e.target.value)}
+                  className="filter-select"
+                >
+                  <option value="all">All Successful Payments</option>
+                  <option value="online">Online Paid (Success)</option>
+                  <option value="cod">Cash on Delivery</option>
+                </select>
+              </div>
+
+              <div className="select-pill-wrapper">
+                <span className="select-label">Date:</span>
+                <select
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="filter-select"
+                >
+                  <option value="all">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="7days">Last 7 Days</option>
+                  <option value="month">This Month</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* =======================================================
+            ORDERS TABLE & MOBILE CARDS
+        ======================================================== */}
+        <div className="orders-table-card">
+          {loading ? (
+            <div className="admin-orders-loading">
+              <div className="spinner-loader"></div>
+              <span>Loading orders from database...</span>
+            </div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="admin-orders-empty-state">
+              <ShoppingBag size={48} className="empty-icon" />
+              <h3>No Orders Found</h3>
+              <p>No orders matched your current search and filter selections.</p>
+              {(searchQuery || activeTab !== "all" || paymentFilter !== "all" || dateFilter !== "all") && (
+                <button
+                  type="button"
+                  className="btn-reset-filters"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setActiveTab("all");
+                    setPaymentFilter("all");
+                    setDateFilter("all");
+                  }}
+                >
+                  Reset All Filters
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* DESKTOP TABLE */}
+              <div className="table-responsive-wrapper">
+                <table className="admin-orders-table">
+                  <thead>
+                    <tr>
+                      <th>Order ID & Date</th>
+                      <th>Customer Details</th>
+                      <th>Items Preview</th>
+                      <th>Amount & Payment</th>
+                      <th>Order Status</th>
+                      <th>Live Shipping / Courier Info</th>
+                      <th className="text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedOrders.map((order) => {
+                      const addr = order.deliveryAddress || {};
+                      const ship = order.shippingDetails || {};
+                      const items = order.items || [];
+                      const firstItem = items[0] || {};
+                      const totalQty = items.reduce((s, it) => s + Number(it.quantity || 1), 0);
+                      const amount = Number(order.payableAmount ?? order.totalAmount ?? 0);
+                      const dateStr = order.createdAt
+                        ? new Date(order.createdAt).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "-";
+
+                      return (
+                        <tr key={order._id} className="admin-order-row">
+                          {/* Order ID & Date */}
+                          <td>
+                            <div className="order-id-cell">
+                              <span
+                                className="order-number-text"
+                                onClick={() => setDetailsModalOrder(order)}
+                                title="View details"
+                              >
+                                #{order.orderNumber || String(order._id).slice(-8).toUpperCase()}
+                              </span>
+                              <span className="order-date-text">{dateStr}</span>
+                            </div>
+                          </td>
+
+                          {/* Customer Details */}
+                          <td>
+                            <div className="customer-cell">
+                              <span className="customer-name">{addr.name || "Customer"}</span>
+                              {addr.mobile && (
+                                <span className="customer-phone">
+                                  <Phone size={11} /> {addr.mobile}
+                                </span>
+                              )}
+                              <span className="customer-city">
+                                {addr.city ? `${addr.city}, ` : ""}
+                                {addr.pincode || ""}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Items Preview */}
+                          <td>
+                            <div className="items-summary-cell">
+                              <div className="items-thumb-box">
+                                <img
+                                  src={getProductImage(firstItem.image)}
+                                  alt="Item"
+                                  className="thumb-img"
+                                />
+                                {items.length > 1 && (
+                                  <span className="items-badge-count">+{items.length - 1}</span>
+                                )}
+                              </div>
+                              <div className="items-desc">
+                                <span className="first-item-name">
+                                  {firstItem.productName || "Grocery Item"}
+                                </span>
+                                <span className="total-items-count">{totalQty} items total</span>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Amount & Payment */}
+                          <td>
+                            <div className="amount-cell">
+                              <span className="amount-val">₹{amount.toFixed(2)}</span>
+                              <span className={`payment-pill ${order.paymentMethod === "cod" ? "cod" : "online"}`}>
+                                {order.paymentMethod === "cod" ? "COD" : "Payment Success"}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Status */}
+                          <td>{renderStatusPill(order.orderStatus)}</td>
+
+                          {/* Live Shipping Info */}
+                          <td>
+                            <div className="shipping-info-cell">
+                              {order.orderStatus === "shipped" ? (
+                                <div className="shipping-badge-box shipped-box">
+                                  <div className="ship-line">
+                                    <strong>{ship.courierName || "Courier"}:</strong>{" "}
+                                    {ship.trackingId ? (
+                                      <span className="track-id-code">{ship.trackingId}</span>
+                                    ) : (
+                                      <span className="text-muted">No Tracking ID</span>
+                                    )}
+                                  </div>
+                                  {ship.currentHub && (
+                                    <div className="ship-line hub-line">
+                                      <Building2 size={11} />
+                                      <span>{ship.currentHub}</span>
+                                    </div>
+                                  )}
+                                  {ship.deliveryDate && (
+                                    <div className="ship-line date-line">
+                                      <Calendar size={11} />
+                                      <span>
+                                        Exp: {new Date(ship.deliveryDate).toLocaleDateString("en-IN")}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : order.orderStatus === "out_for_delivery" ? (
+                                <div className="shipping-badge-box out-box">
+                                  <div className="ship-line agent-line">
+                                    <User size={11} />
+                                    <span>
+                                      Agent: {ship.agentName || "Assigned"}{" "}
+                                      {ship.agentPhone ? `(${ship.agentPhone})` : ""}
+                                    </span>
+                                  </div>
+                                  {ship.currentHub && (
+                                    <div className="ship-line hub-line">
+                                      <Building2 size={11} />
+                                      <span>Hub: {ship.currentHub}</span>
+                                    </div>
+                                  )}
+                                  {ship.deliveryDate && (
+                                    <div className="ship-line date-line">
+                                      <Calendar size={11} />
+                                      <span>
+                                        Delivery: {new Date(ship.deliveryDate).toLocaleDateString("en-IN")}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : order.orderStatus === "delivered" ? (
+                                <span className="delivered-check-text">
+                                  <CheckCircle2 size={13} /> Delivered to customer
+                                </span>
+                              ) : order.orderStatus === "cancelled" ? (
+                                <span className="cancelled-text-badge">Cancelled</span>
+                              ) : (
+                                <span className="ready-to-dispatch-text">Ready for Dispatch</span>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="text-right">
+                            <div className="action-buttons-group">
+                              <button
+                                type="button"
+                                className="btn-update-status-action"
+                                onClick={() => handleOpenStatusModal(order)}
+                                title="Update order status & shipping details"
+                              >
+                                <Truck size={14} />
+                                <span>Update Status</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                className="btn-view-details-action"
+                                onClick={() => setDetailsModalOrder(order)}
+                                title="View order details"
+                              >
+                                <Eye size={15} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* MOBILE CARDS (SHOWN ON MOBILE PHONES) */}
+              <div className="mobile-orders-cards-list">
+                {paginatedOrders.map((order) => {
+                  const addr = order.deliveryAddress || {};
+                  const ship = order.shippingDetails || {};
+                  const items = order.items || [];
+                  const amount = Number(order.payableAmount ?? order.totalAmount ?? 0);
 
                   return (
-                    <tr key={o._id || o.id}>
-                      <td>
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(o.id)}
-                          onChange={() => toggleSelectOne(o.id)}
-                        />
-                      </td>
-                      <td>
-                        <p className="Order-cell-strong">#{o.id}</p>
-                        <p className="Order-cell-muted">{o.refCode}</p>
-                      </td>
-                      <td>
-                        <div className="Order-customer-cell">
-                          <div
-                            className="Order-avatar"
-                            style={avatarStyle(idx)}
+                    <div key={order._id} className="admin-mobile-order-card">
+                      <div className="card-top-header">
+                        <div>
+                          <h4
+                            className="card-order-id"
+                            onClick={() => setDetailsModalOrder(order)}
                           >
-                            {initials(o.customer)}
-                          </div>
-                          <div>
-                            <p className="Order-cell-strong">{o.customer}</p>
-                            <p className="Order-cell-muted">
-                              {o.email || o.mobile || "—"}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <p className="Order-cell-strong">{o.items} Items</p>
-                        <button
-                          type="button"
-                          className="Order-view-items-link"
-                          onClick={() => setViewOrder(o)}
-                        >
-                          View Items
-                        </button>
-                      </td>
-                      <td>
-                        <p className="Order-cell-strong">
-                          {formatINR(o.amount)}
-                        </p>
-                      </td>
-                      <td>
-                        <span
-                          className="Order-badge"
-                          style={{
-                            background: payMeta.bg,
-                            color: payMeta.color,
-                          }}
-                        >
-                          {o.paymentStatus}
-                        </span>
-                        <p
-                          className="Order-cell-muted"
-                          style={{ marginTop: 3 }}
-                        >
-                          {o.paymentMethod}
-                        </p>
-                      </td>
-                      <td>
-                        <span
-                          className="Order-status-badge"
-                          style={{ background: meta.bg, color: meta.color }}
-                        >
-                          {o.status} <StatusIcon size={12} />
-                        </span>
-                      </td>
-                      <td>
-                        <p className="Order-cell-strong">{o.date}</p>
-                        <p className="Order-cell-muted">{o.time}</p>
-                      </td>
-                      <td>
-                        <div className="Order-row-actions">
-                          <button
-                            type="button"
-                            className="Order-icon-btn"
-                            onClick={() => setEditOrder(o)}
-                            title="Edit Order"
-                            aria-label="Edit order"
-                          >
-                            <Edit2 size={15} />
-                          </button>
-
-                          <button
-                            type="button"
-                            className="Order-icon-btn"
-                            onClick={() => setViewOrder(o)}
-                            title="View Details"
-                            aria-label="View order details"
-                          >
-                            <Eye size={15} />
-                          </button>
-
-                          <div className="Order-actions-dropdown-wrap">
-                            <button
-                              type="button"
-                              className="Order-icon-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveMenuId(
-                                  activeMenuId === o.id ? null : o.id,
-                                );
-                              }}
-                              title="Update Status"
-                              aria-label="Status menu"
-                              disabled={isUpdating}
-                            >
-                              <MoreVertical size={15} />
-                            </button>
-
-                            {activeMenuId === o.id && (
-                              <div className="Order-dropdown-menu">
-                                <div className="Order-dropdown-header">
-                                  Update Status
-                                </div>
-                                <button
-                                  onClick={() =>
-                                    handleUpdateStatus(o, "Pending")
-                                  }
-                                >
-                                  <Clock size={14} className="icon-amber" /> Set
-                                  Pending
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleUpdateStatus(o, "Confirmed")
-                                  }
-                                >
-                                  <CheckCircle2
-                                    size={14}
-                                    className="icon-purple"
-                                  />{" "}
-                                  Set Confirmed
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleUpdateStatus(o, "Processing")
-                                  }
-                                >
-                                  <RefreshCw size={14} className="icon-amber" />{" "}
-                                  Set Processing
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleUpdateStatus(o, "Shipped")
-                                  }
-                                >
-                                  <Truck size={14} className="icon-blue" /> Set
-                                  Shipped
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleUpdateStatus(o, "Out for Delivery")
-                                  }
-                                >
-                                  <Truck size={14} className="icon-cyan" /> Set
-                                  Out for Delivery
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleUpdateStatus(o, "Delivered")
-                                  }
-                                >
-                                  <CheckCircle2
-                                    size={14}
-                                    className="icon-green"
-                                  />{" "}
-                                  Set Delivered
-                                </button>
-                                <div className="Order-dropdown-divider" />
-                                <button
-                                  onClick={() => handleCancelOrder(o)}
-                                  style={{ color: "#dc2626" }}
-                                >
-                                  <XCircle size={14} /> Cancel Order
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleUpdateStatus(o, "Refunded")
-                                  }
-                                  style={{ color: "#9333ea" }}
-                                >
-                                  <RefreshCw size={14} /> Mark Refunded
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* PAGINATION */}
-          <div className="Order-pagination">
-            <span className="Order-pagination-info">
-              Showing {filteredOrders.length === 0 ? 0 : pageStart + 1} to{" "}
-              {Math.min(pageStart + pageSize, filteredOrders.length)} of{" "}
-              {filteredOrders.length} orders
-            </span>
-
-            <div className="Order-pagination-controls">
-              <button
-                type="button"
-                className="Order-page-btn"
-                disabled={safePage === 1}
-                onClick={() => setCurrentPage(1)}
-              >
-                <ChevronsLeft size={15} />
-              </button>
-              <button
-                type="button"
-                className="Order-page-btn"
-                disabled={safePage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              >
-                <ChevronLeft size={15} />
-              </button>
-
-              {pageNumbers.map((p, i) =>
-                p === "..." ? (
-                  <span key={`ellipsis-${i}`} className="Order-page-ellipsis">
-                    …
-                  </span>
-                ) : (
-                  <button
-                    key={p}
-                    type="button"
-                    className={`Order-page-btn ${p === safePage ? "active" : ""}`}
-                    onClick={() => setCurrentPage(p)}
-                  >
-                    {p}
-                  </button>
-                ),
-              )}
-
-              <button
-                type="button"
-                className="Order-page-btn"
-                disabled={safePage === totalPages}
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
-                }
-              >
-                <ChevronRight size={15} />
-              </button>
-              <button
-                type="button"
-                className="Order-page-btn"
-                disabled={safePage === totalPages}
-                onClick={() => setCurrentPage(totalPages)}
-              >
-                <ChevronsRight size={15} />
-              </button>
-            </div>
-
-            <div className="Order-pagesize">
-              <select
-                value={pageSize}
-                onChange={(e) => setPageSize(Number(e.target.value))}
-              >
-                <option value={8}>8 / page</option>
-                <option value={16}>16 / page</option>
-                <option value={24}>24 / page</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* BOTTOM */}
-      <div className="Order-bottom-horizontal">
-        <div className="Order-card">
-          <div className="Order-card-header">
-            <h3>Order Summary</h3>
-            <select defaultValue="This Month" className="Order-mini-select">
-              <option>This Month</option>
-              <option>Last Month</option>
-              <option>This Year</option>
-            </select>
-          </div>
-
-          <div className="Order-donut-wrap">
-            <div
-              className="Order-donut"
-              style={{
-                background: `conic-gradient(${donutData.segments
-                  .map((s) => `${s.color} ${s.start}% ${s.start + s.pct}%`)
-                  .join(", ")})`,
-              }}
-            >
-              <div className="Order-donut-hole">
-                <span className="Order-donut-total">{donutData.total}</span>
-                <span className="Order-donut-caption">Total Orders</span>
-              </div>
-            </div>
-
-            <ul className="Order-legend">
-              {donutData.segments.map((s) => (
-                <li key={s.label}>
-                  <span
-                    className="Order-legend-dot"
-                    style={{ background: s.color }}
-                  />
-                  <span className="Order-legend-label">{s.label}</span>
-                  <span className="Order-legend-value">
-                    {s.count} ({s.pct.toFixed(1)}%)
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        <div className="Order-card">
-          <div className="Order-card-header">
-            <h3>Top Selling Products</h3>
-            <button type="button" className="Order-link-btn">
-              View All
-            </button>
-          </div>
-          <ul className="Order-product-list">
-            {topProducts.map((p) => (
-              <li key={p.name}>
-                <div
-                  className="Order-product-thumb"
-                  style={{ background: p.bg }}
-                >
-                  {p.emoji}
-                </div>
-                <div>
-                  <p className="Order-cell-strong">{p.name}</p>
-                  <p className="Order-cell-muted">{p.orders} Orders</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="Order-card">
-          <h3 className="Order-quick-title">Quick Actions</h3>
-          <div className="Order-quick-actions">
-            <button
-              type="button"
-              className="Order-btn Order-btn-green Order-quick-btn"
-              onClick={() => setShowAddModal(true)}
-            >
-              <Plus size={16} /> Add New Order
-            </button>
-            <button
-              type="button"
-              className="Order-btn Order-btn-outline Order-quick-btn"
-              onClick={handleImportClick}
-            >
-              <Upload size={16} /> Import Orders
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* VIEW MODAL */}
-      {viewOrder && (
-        <div className="Order-modal-overlay" onClick={() => setViewOrder(null)}>
-          <div
-            className="Order-modal Order-view-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="Order-modal-header">
-              <div className="Order-view-title-wrap">
-                <h3>Order #{viewOrder.id}</h3>
-                <span className="Order-view-ref">{viewOrder.refCode}</span>
-              </div>
-              <button
-                type="button"
-                className="Order-close-btn"
-                onClick={() => setViewOrder(null)}
-                aria-label="Close modal"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="Order-modal-body Order-view-body">
-              <div className="Order-view-user-card">
-                <div className="Order-avatar large" style={avatarStyle(0)}>
-                  {initials(viewOrder.customer)}
-                </div>
-                <div>
-                  <p className="Order-view-user-name">{viewOrder.customer}</p>
-                  <p className="Order-view-user-email">
-                    {viewOrder.email || viewOrder.mobile}
-                  </p>
-                </div>
-              </div>
-
-              <div className="Order-view-grid">
-                <div className="Order-view-item">
-                  <span className="Order-view-label">Order Status</span>
-                  <span
-                    className="Order-status-badge"
-                    style={{
-                      background: (statusMeta[viewOrder.status] || {}).bg,
-                      color: (statusMeta[viewOrder.status] || {}).color,
-                    }}
-                  >
-                    {viewOrder.status}
-                  </span>
-                </div>
-
-                <div className="Order-view-item">
-                  <span className="Order-view-label">Payment Status</span>
-                  <span
-                    className="Order-badge"
-                    style={{
-                      background: (
-                        paymentBadgeMeta[viewOrder.paymentStatus] || {}
-                      ).bg,
-                      color: (paymentBadgeMeta[viewOrder.paymentStatus] || {})
-                        .color,
-                    }}
-                  >
-                    {viewOrder.paymentStatus}
-                  </span>
-                </div>
-
-                <div className="Order-view-item">
-                  <span className="Order-view-label">Total Amount</span>
-                  <span className="Order-view-value highlight">
-                    {formatINR(viewOrder.amount)}
-                  </span>
-                </div>
-
-                <div className="Order-view-item">
-                  <span className="Order-view-label">Payment Method</span>
-                  <span className="Order-view-value">
-                    {viewOrder.paymentMethod}
-                  </span>
-                </div>
-
-                <div className="Order-view-item">
-                  <span className="Order-view-label">Total Items</span>
-                  <span className="Order-view-value">
-                    {viewOrder.items} Items
-                  </span>
-                </div>
-
-                <div className="Order-view-item">
-                  <span className="Order-view-label">Placed Date</span>
-                  <span className="Order-view-value">
-                    {viewOrder.date} · {viewOrder.time}
-                  </span>
-                </div>
-              </div>
-
-              {/* ITEMS */}
-              {viewOrder.itemList?.length > 0 && (
-                <div className="Order-view-items-list">
-                  <h4 className="Order-view-items-title">Items</h4>
-                  <ul>
-                    {viewOrder.itemList.map((it, i) => (
-                      <li key={i} className="Order-view-item-row">
-                        {it.image && (
-                          <img
-                            src={it.image}
-                            alt={it.name}
-                            className="Order-view-item-img"
-                          />
-                        )}
-                        <div className="Order-view-item-info">
-                          <span className="Order-cell-strong">{it.name}</span>
-                          <span className="Order-cell-muted">
-                            {it.unit ? `${it.unit} · ` : ""}₹
-                            {it.price.toFixed(2)} × {it.quantity}
+                            #{order.orderNumber || String(order._id).slice(-8).toUpperCase()}
+                          </h4>
+                          <span className="card-order-date">
+                            {order.createdAt
+                              ? new Date(order.createdAt).toLocaleDateString("en-IN")
+                              : ""}
                           </span>
                         </div>
-                        <span className="Order-view-item-total">
-                          ₹{(it.price * it.quantity).toFixed(2)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                        {renderStatusPill(order.orderStatus)}
+                      </div>
 
-              {/* ADDRESS */}
-              {viewOrder.deliveryAddress && (
-                <div className="Order-view-address">
-                  <h4 className="Order-view-items-title">Delivery Address</h4>
-                  <p className="Order-view-address-text">
-                    <strong>{viewOrder.deliveryAddress.name}</strong>
-                    <br />
-                    {viewOrder.deliveryAddress.address}
-                    {viewOrder.deliveryAddress.landmark
-                      ? `, ${viewOrder.deliveryAddress.landmark}`
-                      : ""}
-                    <br />
-                    {viewOrder.deliveryAddress.city},{" "}
-                    {viewOrder.deliveryAddress.state} -{" "}
-                    {viewOrder.deliveryAddress.pincode}
-                    <br />
-                    📞 {viewOrder.deliveryAddress.mobile}
+                      <div className="card-customer-row">
+                        <strong>{addr.name || "Customer"}</strong>
+                        {addr.mobile && <span>• {addr.mobile}</span>}
+                        {addr.city && <span>• {addr.city}</span>}
+                      </div>
+
+                      <div className="card-items-preview-bar">
+                        <span>{items.length} items</span>
+                        <strong className="card-amount">₹{amount.toFixed(2)}</strong>
+                        <span className={`payment-pill ${order.paymentMethod === "cod" ? "cod" : "online"}`}>
+                          {order.paymentMethod === "cod" ? "COD" : "Paid Success"}
+                        </span>
+                      </div>
+
+                      {/* Live Shipping on Mobile */}
+                      {(order.orderStatus === "shipped" || order.orderStatus === "out_for_delivery") && (
+                        <div className="card-mobile-shipping-info">
+                          {order.orderStatus === "shipped" ? (
+                            <>
+                              <div className="ship-line">
+                                <strong>{ship.courierName || "Courier"}:</strong>{" "}
+                                {ship.trackingId || "In Transit"}
+                              </div>
+                              {ship.currentHub && <div className="ship-line">Hub: {ship.currentHub}</div>}
+                              {ship.deliveryDate && (
+                                <div className="ship-line">
+                                  Delivery: {new Date(ship.deliveryDate).toLocaleDateString("en-IN")}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <div className="ship-line">
+                                <strong>Agent:</strong> {ship.agentName || "Assigned"} ({ship.agentPhone})
+                              </div>
+                              {ship.currentHub && <div className="ship-line">Hub: {ship.currentHub}</div>}
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="card-actions-footer">
+                        <button
+                          type="button"
+                          className="btn-update-status-action mobile-btn"
+                          onClick={() => handleOpenStatusModal(order)}
+                        >
+                          <Truck size={14} />
+                          <span>Update Status</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btn-view-details-action mobile-btn"
+                          onClick={() => setDetailsModalOrder(order)}
+                        >
+                          <Eye size={14} />
+                          <span>View Details</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* PAGINATION BAR */}
+              <div className="table-pagination-footer">
+                <div className="pagination-info">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                  {Math.min(currentPage * itemsPerPage, filteredOrders.length)} of{" "}
+                  {filteredOrders.length} orders
+                </div>
+
+                <div className="pagination-controls">
+                  <button
+                    type="button"
+                    className="pagination-btn"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+
+                  <span className="pagination-page-indicator">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    className="pagination-btn"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* =======================================================
+          MODAL 1: STATUS UPDATE & LIVE COURIER / AGENT HUB MODAL
+      ======================================================== */}
+      {statusModalOrder && (
+        <div className="admin-modal-backdrop" onClick={() => setStatusModalOrder(null)}>
+          <div className="admin-status-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <div className="modal-title-box">
+                <Truck size={20} className="modal-icon" />
+                <div>
+                  <h3>Update Order Fulfillment</h3>
+                  <p>
+                    Order #{statusModalOrder.orderNumber || statusModalOrder._id} •{" "}
+                    {statusModalOrder.deliveryAddress?.name || "Customer"}
                   </p>
                 </div>
-              )}
-            </div>
+              </div>
 
-            <div className="Order-modal-footer">
               <button
                 type="button"
-                className="Order-btn Order-btn-outline"
-                onClick={() => setViewOrder(null)}
+                className="btn-close-modal"
+                onClick={() => setStatusModalOrder(null)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveStatusUpdate} className="admin-status-form">
+              {/* SELECT STATUS CHIPS */}
+              <div className="form-group">
+                <label className="form-label">Select Order Status</label>
+                <div className="status-selector-grid">
+                  {[
+                    { key: "confirmed", label: "Confirmed" },
+                    { key: "shipped", label: "Shipped" },
+                    { key: "out_for_delivery", label: "Out for Delivery" },
+                    { key: "delivered", label: "Delivered" },
+                    { key: "cancelled", label: "Cancelled" },
+                  ].map((s) => (
+                    <button
+                      key={s.key}
+                      type="button"
+                      className={`status-choice-chip ${statusFormData.status === s.key ? "selected" : ""}`}
+                      onClick={() => setStatusFormData((prev) => ({ ...prev, status: s.key }))}
+                    >
+                      <span className="radio-dot" />
+                      <span>{s.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* DYNAMIC FIELDS: WHEN SHIPPED */}
+              {statusFormData.status === "shipped" && (
+                <div className="dynamic-status-fields-container highlight-blue">
+                  <div className="dynamic-fields-header">
+                    <Truck size={16} />
+                    <h4>Courier & Tracking Details (Shipped)</h4>
+                  </div>
+
+                  <div className="form-grid-2col">
+                    <div className="form-group">
+                      <label className="form-label">Courier Name</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Delhivery, BlueDart, Shadowfax, DTDC"
+                        value={statusFormData.courierName}
+                        onChange={(e) =>
+                          setStatusFormData({ ...statusFormData, courierName: e.target.value })
+                        }
+                        className="form-control"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">
+                        Current Courier Hub <span className="req">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Bhubaneswar Central Sorting Facility"
+                        value={statusFormData.currentHub}
+                        onChange={(e) =>
+                          setStatusFormData({ ...statusFormData, currentHub: e.target.value })
+                        }
+                        className="form-control"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-grid-2col">
+                    <div className="form-group">
+                      <label className="form-label">
+                        Expected Delivery Date <span className="req">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        value={statusFormData.deliveryDate}
+                        onChange={(e) =>
+                          setStatusFormData({ ...statusFormData, deliveryDate: e.target.value })
+                        }
+                        className="form-control"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Tracking ID / AWB No.</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. DLHV987654321"
+                        value={statusFormData.trackingId}
+                        onChange={(e) =>
+                          setStatusFormData({ ...statusFormData, trackingId: e.target.value })
+                        }
+                        className="form-control"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Courier Tracking URL</label>
+                    <input
+                      type="url"
+                      placeholder="e.g. https://www.delhivery.com/track/package/..."
+                      value={statusFormData.trackingUrl}
+                      onChange={(e) =>
+                        setStatusFormData({ ...statusFormData, trackingUrl: e.target.value })
+                      }
+                      className="form-control"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* DYNAMIC FIELDS: WHEN OUT FOR DELIVERY */}
+              {statusFormData.status === "out_for_delivery" && (
+                <div className="dynamic-status-fields-container highlight-purple">
+                  <div className="dynamic-fields-header">
+                    <Package size={16} />
+                    <h4>Delivery Agent & Final Hub (Out for Delivery)</h4>
+                  </div>
+
+                  <div className="form-grid-2col">
+                    <div className="form-group">
+                      <label className="form-label">
+                        Delivery Agent Phone No. <span className="req">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        placeholder="e.g. 9876543210"
+                        value={statusFormData.agentPhone}
+                        onChange={(e) =>
+                          setStatusFormData({ ...statusFormData, agentPhone: e.target.value })
+                        }
+                        className="form-control"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Delivery Agent Name</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Rajesh Kumar"
+                        value={statusFormData.agentName}
+                        onChange={(e) =>
+                          setStatusFormData({ ...statusFormData, agentName: e.target.value })
+                        }
+                        className="form-control"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-grid-2col">
+                    <div className="form-group">
+                      <label className="form-label">
+                        Current Hub / Delivery Center <span className="req">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Patia Local Distribution Center"
+                        value={statusFormData.currentHub}
+                        onChange={(e) =>
+                          setStatusFormData({ ...statusFormData, currentHub: e.target.value })
+                        }
+                        className="form-control"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">
+                        Date of Delivery <span className="req">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        value={statusFormData.deliveryDate}
+                        onChange={(e) =>
+                          setStatusFormData({ ...statusFormData, deliveryDate: e.target.value })
+                        }
+                        className="form-control"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STATUS UPDATE NOTE */}
+              <div className="form-group">
+                <label className="form-label">Internal Note / Customer Notification (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Dispatched from primary warehouse via express cargo."
+                  value={statusFormData.note}
+                  onChange={(e) => setStatusFormData({ ...statusFormData, note: e.target.value })}
+                  className="form-control"
+                />
+              </div>
+
+              {/* MODAL FOOTER */}
+              <div className="admin-modal-footer">
+                <button
+                  type="button"
+                  className="btn-cancel-modal"
+                  onClick={() => setStatusModalOrder(null)}
+                  disabled={savingStatus}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn-submit-status" disabled={savingStatus}>
+                  {savingStatus ? (
+                    <span>Saving Changes...</span>
+                  ) : (
+                    <>
+                      <span>Save & Update Status</span>
+                      <Send size={15} />
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* =======================================================
+          MODAL 2: FULL ORDER DETAILS DRAWER / MODAL
+      ======================================================== */}
+      {detailsModalOrder && (
+        <div className="admin-modal-backdrop" onClick={() => setDetailsModalOrder(null)}>
+          <div className="admin-details-drawer-card" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-modal-header">
+              <div className="modal-title-box">
+                <ShoppingBag size={20} className="modal-icon" />
+                <div>
+                  <h3>Order Inspection</h3>
+                  <div className="drawer-header-meta">
+                    <span>#{detailsModalOrder.orderNumber || detailsModalOrder._id}</span>
+                    <button
+                      type="button"
+                      className="btn-copy-sm"
+                      onClick={() =>
+                        handleCopyText(detailsModalOrder.orderNumber || detailsModalOrder._id)
+                      }
+                    >
+                      {copiedId ? <Check size={12} /> : <Copy size={12} />}
+                      <span>{copiedId ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="btn-close-modal"
+                onClick={() => setDetailsModalOrder(null)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="admin-drawer-scroll-body">
+              {/* TOP STATUS & PAYMENT BAR */}
+              <div className="drawer-status-summary-bar">
+                <div className="summary-col">
+                  <span className="caption">Order Status</span>
+                  <div className="mt-1">{renderStatusPill(detailsModalOrder.orderStatus)}</div>
+                </div>
+
+                <div className="summary-col">
+                  <span className="caption">Payment Mode</span>
+                  <div className="mt-1">
+                    <span
+                      className={`payment-pill ${
+                        detailsModalOrder.paymentMethod === "cod" ? "cod" : "online"
+                      }`}
+                    >
+                      {detailsModalOrder.paymentMethod === "cod"
+                        ? "Cash on Delivery"
+                        : "Payment Success (Paid)"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="summary-col">
+                  <span className="caption">Order Placed</span>
+                  <div className="mt-1 date-val">
+                    {detailsModalOrder.createdAt
+                      ? new Date(detailsModalOrder.createdAt).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "-"}
+                  </div>
+                </div>
+
+                <div className="summary-col">
+                  <span className="caption">Total Amount</span>
+                  <div className="mt-1 total-hero-val">
+                    ₹{Number(detailsModalOrder.payableAmount ?? detailsModalOrder.totalAmount ?? 0).toFixed(2)}
+                  </div>
+                </div>
+              </div>
+
+              {/* 2-COLUMN PREMIUM DASHBOARD GRID */}
+              <div className="drawer-two-columns-layout">
+                {/* LEFT COLUMN: ORDERED PRODUCTS & CUSTOMER INFO */}
+                <div className="drawer-col-left">
+                  {/* ORDER ITEMS */}
+                  <div className="drawer-section-card">
+                    <div className="drawer-card-header">
+                      <h4>Ordered Products ({(detailsModalOrder.items || []).length})</h4>
+                    </div>
+                    <div className="drawer-items-list">
+                      {(detailsModalOrder.items || []).map((it, idx) => {
+                        const prod = it.product && typeof it.product === "object" ? it.product : {};
+                        const name = it.productName || prod.productName || prod.name || "Item";
+                        const img = getProductImage(
+                          it.image || (Array.isArray(prod.images) && prod.images[0]) || prod.image
+                        );
+                        const qty = Number(it.quantity || 1);
+                        const price = Number(it.price || 0);
+                        const total = Number(it.itemTotal || price * qty);
+
+                        return (
+                          <div key={idx} className="drawer-item-row">
+                            <img src={img} alt={name} className="drawer-item-img" />
+                            <div className="drawer-item-info">
+                              <span className="item-name">{name}</span>
+                              <span className="item-unit">{it.unit || prod.unit || "1 unit"}</span>
+                            </div>
+                            <div className="drawer-item-calc">
+                              <span>
+                                ₹{price.toFixed(2)} × {qty}
+                              </span>
+                              <strong className="item-total">₹{total.toFixed(2)}</strong>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* CUSTOMER & DELIVERY ADDRESS */}
+                  <div className="drawer-section-card">
+                    <div className="drawer-card-header">
+                      <h4>Customer & Delivery Address</h4>
+                    </div>
+                    <div className="drawer-address-box">
+                      <div className="name-phone-row">
+                        <strong>{detailsModalOrder.deliveryAddress?.name || "Customer"}</strong>
+                        {detailsModalOrder.deliveryAddress?.mobile && (
+                          <span>• {detailsModalOrder.deliveryAddress.mobile}</span>
+                        )}
+                      </div>
+                      <p className="address-text">
+                        {detailsModalOrder.deliveryAddress?.address || "Address not provided"}
+                        {detailsModalOrder.deliveryAddress?.landmark
+                          ? `, Near ${detailsModalOrder.deliveryAddress.landmark}`
+                          : ""}
+                        {detailsModalOrder.deliveryAddress?.city
+                          ? `, ${detailsModalOrder.deliveryAddress.city}`
+                          : ""}
+                        {detailsModalOrder.deliveryAddress?.state
+                          ? `, ${detailsModalOrder.deliveryAddress.state}`
+                          : ""}
+                        {detailsModalOrder.deliveryAddress?.pincode
+                          ? ` - ${detailsModalOrder.deliveryAddress.pincode}`
+                          : ""}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* RIGHT COLUMN: SHIPPING DETAILS, BILL BREAKDOWN & TIMELINE */}
+                <div className="drawer-col-right">
+                  {/* LIVE SHIPPING DETAILS CARD - ONLY IF DATA EXISTS */}
+                  {detailsModalOrder.shippingDetails &&
+                    (detailsModalOrder.shippingDetails.courierName ||
+                      detailsModalOrder.shippingDetails.currentHub ||
+                      detailsModalOrder.shippingDetails.trackingId ||
+                      detailsModalOrder.shippingDetails.agentPhone) && (
+                      <div className="drawer-section-card shipping-highlight-card">
+                        <div className="drawer-card-header">
+                          <Truck size={16} className="text-emerald" />
+                          <h4>Live Shipping & Tracking</h4>
+                        </div>
+                        <div className="shipping-grid-details">
+                          {detailsModalOrder.shippingDetails.courierName && (
+                            <div className="ship-field">
+                              <span className="label">Courier Service:</span>
+                              <strong className="val">{detailsModalOrder.shippingDetails.courierName}</strong>
+                            </div>
+                          )}
+
+                          {detailsModalOrder.shippingDetails.currentHub && (
+                            <div className="ship-field">
+                              <span className="label">Current Hub:</span>
+                              <strong className="val">{detailsModalOrder.shippingDetails.currentHub}</strong>
+                            </div>
+                          )}
+
+                          {detailsModalOrder.shippingDetails.deliveryDate && (
+                            <div className="ship-field">
+                              <span className="label">Expected Delivery:</span>
+                              <strong className="val">
+                                {new Date(detailsModalOrder.shippingDetails.deliveryDate).toLocaleDateString(
+                                  "en-IN"
+                                )}
+                              </strong>
+                            </div>
+                          )}
+
+                          {detailsModalOrder.shippingDetails.trackingId && (
+                            <div className="ship-field">
+                              <span className="label">Tracking ID / AWB:</span>
+                              <span className="val-code">{detailsModalOrder.shippingDetails.trackingId}</span>
+                            </div>
+                          )}
+
+                          {detailsModalOrder.shippingDetails.trackingUrl && (
+                            <div className="ship-field full-width">
+                              <span className="label">Tracking URL:</span>
+                              <a
+                                href={detailsModalOrder.shippingDetails.trackingUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="external-track-link"
+                              >
+                                <span>Open Courier Tracking Page</span>
+                                <ExternalLink size={12} />
+                              </a>
+                            </div>
+                          )}
+
+                          {detailsModalOrder.shippingDetails.agentPhone && (
+                            <div className="ship-field">
+                              <span className="label">Delivery Agent Phone:</span>
+                              <a
+                                href={`tel:${detailsModalOrder.shippingDetails.agentPhone}`}
+                                className="agent-phone-link"
+                              >
+                                <Phone size={12} />
+                                <span>{detailsModalOrder.shippingDetails.agentPhone}</span>
+                              </a>
+                            </div>
+                          )}
+
+                          {detailsModalOrder.shippingDetails.agentName && (
+                            <div className="ship-field">
+                              <span className="label">Agent Name:</span>
+                              <strong className="val">{detailsModalOrder.shippingDetails.agentName}</strong>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* PRICE BREAKDOWN */}
+                  <div className="drawer-section-card">
+                    <div className="drawer-card-header">
+                      <h4>Financial Summary</h4>
+                    </div>
+                    <div className="drawer-bill-summary">
+                      <div className="bill-line">
+                        <span>Items Subtotal:</span>
+                        <span>₹{Number(detailsModalOrder.subtotal || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="bill-line">
+                        <span>Delivery Charge:</span>
+                        <span className="text-emerald font-semibold">
+                          {Number(detailsModalOrder.deliveryCharge || 0) === 0
+                            ? "FREE"
+                            : `₹${Number(detailsModalOrder.deliveryCharge).toFixed(2)}`}
+                        </span>
+                      </div>
+                      {Number(detailsModalOrder.walletUsed || 0) > 0 && (
+                        <div className="bill-line discount">
+                          <span>Wallet Used:</span>
+                          <span>-₹{Number(detailsModalOrder.walletUsed).toFixed(2)}</span>
+                        </div>
+                      )}
+                      {Number(detailsModalOrder.pointsValue || 0) > 0 && (
+                        <div className="bill-line discount">
+                          <span>Points Used:</span>
+                          <span>-₹{Number(detailsModalOrder.pointsValue).toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="bill-divider" />
+                      <div className="bill-line total">
+                        <span>Total Paid:</span>
+                        <span className="total-val">
+                          ₹
+                          {Number(
+                            detailsModalOrder.payableAmount ?? detailsModalOrder.totalAmount ?? 0
+                          ).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* TIMELINE HISTORY */}
+                  {Array.isArray(detailsModalOrder.statusHistory) &&
+                    detailsModalOrder.statusHistory.length > 0 && (
+                      <div className="drawer-section-card">
+                        <div className="drawer-card-header">
+                          <h4>Status History</h4>
+                        </div>
+                        <div className="status-history-timeline">
+                          {detailsModalOrder.statusHistory.map((h, i) => (
+                            <div key={i} className="timeline-entry">
+                              <span className="timeline-dot" />
+                              <div className="timeline-content">
+                                <span className="status-title">{h.status?.toUpperCase()}</span>
+                                {h.note && <p className="status-note">{h.note}</p>}
+                                <span className="status-time">
+                                  {h.at
+                                    ? new Date(h.at).toLocaleDateString("en-IN", {
+                                        day: "numeric",
+                                        month: "short",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })
+                                    : ""}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                </div>
+              </div>
+            </div>
+
+            <div className="drawer-footer-actions">
+              <button
+                type="button"
+                className="btn-drawer-update"
+                onClick={() => {
+                  const ord = detailsModalOrder;
+                  setDetailsModalOrder(null);
+                  handleOpenStatusModal(ord);
+                }}
+              >
+                <Truck size={15} />
+                <span>Update Status</span>
+              </button>
+
+              <button
+                type="button"
+                className="btn-drawer-close"
+                onClick={() => setDetailsModalOrder(null)}
               >
                 Close
               </button>
@@ -1624,298 +1532,6 @@ const Order = () => {
           </div>
         </div>
       )}
-
-      {/* EDIT MODAL */}
-      {editOrder && (
-        <div className="Order-modal-overlay" onClick={() => setEditOrder(null)}>
-          <form
-            className="Order-modal"
-            onClick={(e) => e.stopPropagation()}
-            onSubmit={handleSaveEdit}
-          >
-            <div className="Order-modal-header">
-              <h3>Edit Order #{editOrder.id}</h3>
-              <button
-                type="button"
-                className="Order-close-btn"
-                onClick={() => setEditOrder(null)}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="Order-modal-body">
-              <label className="Order-form-label">
-                Customer Name
-                <input
-                  required
-                  value={editOrder.customer}
-                  onChange={(e) =>
-                    setEditOrder({ ...editOrder, customer: e.target.value })
-                  }
-                />
-              </label>
-
-              <label className="Order-form-label">
-                Email
-                <input
-                  type="email"
-                  value={editOrder.email}
-                  onChange={(e) =>
-                    setEditOrder({ ...editOrder, email: e.target.value })
-                  }
-                />
-              </label>
-
-              <div className="Order-form-grid">
-                <label className="Order-form-label">
-                  Items
-                  <input
-                    type="number"
-                    min="1"
-                    value={editOrder.items}
-                    onChange={(e) =>
-                      setEditOrder({
-                        ...editOrder,
-                        items: Number(e.target.value),
-                      })
-                    }
-                  />
-                </label>
-                <label className="Order-form-label">
-                  Amount (INR)
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    value={editOrder.amount}
-                    onChange={(e) =>
-                      setEditOrder({
-                        ...editOrder,
-                        amount: Number(e.target.value),
-                      })
-                    }
-                  />
-                </label>
-              </div>
-
-              <div className="Order-form-grid">
-                <label className="Order-form-label">
-                  Payment Method
-                  <select
-                    value={editOrder.paymentMethod}
-                    onChange={(e) =>
-                      setEditOrder({
-                        ...editOrder,
-                        paymentMethod: e.target.value,
-                      })
-                    }
-                  >
-                    <option>Online</option>
-                    <option>UPI</option>
-                    <option>Credit Card</option>
-                    <option>Cash on Delivery</option>
-                    <option>Wallet</option>
-                    <option>Net Banking</option>
-                  </select>
-                </label>
-
-                <label className="Order-form-label">
-                  Payment Status
-                  <select
-                    value={editOrder.paymentStatus}
-                    onChange={(e) =>
-                      setEditOrder({
-                        ...editOrder,
-                        paymentStatus: e.target.value,
-                      })
-                    }
-                  >
-                    <option>Paid</option>
-                    <option>COD</option>
-                    <option>Failed</option>
-                  </select>
-                </label>
-              </div>
-
-              <label className="Order-form-label">
-                Order Status
-                <select
-                  value={editOrder.status}
-                  onChange={(e) =>
-                    setEditOrder({ ...editOrder, status: e.target.value })
-                  }
-                >
-                  <option>Pending</option>
-                  <option>Confirmed</option>
-                  <option>Processing</option>
-                  <option>Shipped</option>
-                  <option>Out for Delivery</option>
-                  <option>Delivered</option>
-                  <option>Cancelled</option>
-                  <option>Refunded</option>
-                </select>
-              </label>
-
-              <p className="Order-form-note">
-                ⚠️ Only the order status will be saved to the backend. Other
-                fields are local-only.
-              </p>
-            </div>
-
-            <div className="Order-modal-footer">
-              <button
-                type="button"
-                className="Order-btn Order-btn-outline"
-                onClick={() => setEditOrder(null)}
-              >
-                Cancel
-              </button>
-              <button type="submit" className="Order-btn Order-btn-primary">
-                Save Changes
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* ADD MODAL */}
-      {showAddModal && (
-        <div
-          className="Order-modal-overlay"
-          onClick={() => setShowAddModal(false)}
-        >
-          <form
-            className="Order-modal"
-            onClick={(e) => e.stopPropagation()}
-            onSubmit={handleAddOrder}
-          >
-            <div className="Order-modal-header">
-              <h3>Add New Order</h3>
-              <button
-                type="button"
-                className="Order-close-btn"
-                onClick={() => setShowAddModal(false)}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="Order-modal-body">
-              <label className="Order-form-label">
-                Customer Name
-                <input
-                  required
-                  value={form.customer}
-                  onChange={(e) =>
-                    setForm({ ...form, customer: e.target.value })
-                  }
-                />
-              </label>
-              <label className="Order-form-label">
-                Email
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                />
-              </label>
-              <div className="Order-form-grid">
-                <label className="Order-form-label">
-                  Items
-                  <input
-                    type="number"
-                    min="1"
-                    value={form.items}
-                    onChange={(e) =>
-                      setForm({ ...form, items: e.target.value })
-                    }
-                  />
-                </label>
-                <label className="Order-form-label">
-                  Amount (INR)
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    value={form.amount}
-                    onChange={(e) =>
-                      setForm({ ...form, amount: e.target.value })
-                    }
-                  />
-                </label>
-              </div>
-              <div className="Order-form-grid">
-                <label className="Order-form-label">
-                  Payment Method
-                  <select
-                    value={form.paymentMethod}
-                    onChange={(e) =>
-                      setForm({ ...form, paymentMethod: e.target.value })
-                    }
-                  >
-                    <option>Online</option>
-                    <option>UPI</option>
-                    <option>Credit Card</option>
-                    <option>Cash on Delivery</option>
-                    <option>Wallet</option>
-                    <option>Net Banking</option>
-                  </select>
-                </label>
-                <label className="Order-form-label">
-                  Payment Status
-                  <select
-                    value={form.paymentStatus}
-                    onChange={(e) =>
-                      setForm({ ...form, paymentStatus: e.target.value })
-                    }
-                  >
-                    <option>Paid</option>
-                    <option>COD</option>
-                    <option>Failed</option>
-                  </select>
-                </label>
-              </div>
-              <label className="Order-form-label">
-                Order Status
-                <select
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
-                >
-                  <option>Pending</option>
-                  <option>Processing</option>
-                  <option>Shipped</option>
-                  <option>Delivered</option>
-                  <option>Cancelled</option>
-                </select>
-              </label>
-
-              <p className="Order-form-note">
-                ⚠️ This creates a local-only order. Add a backend endpoint to
-                persist it.
-              </p>
-            </div>
-
-            <div className="Order-modal-footer">
-              <button
-                type="button"
-                className="Order-btn Order-btn-outline"
-                onClick={() => setShowAddModal(false)}
-              >
-                Cancel
-              </button>
-              <button type="submit" className="Order-btn Order-btn-green">
-                Create Order
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* TOAST */}
-      {toast && <div className="Order-toast">{toast}</div>}
     </div>
   );
 };

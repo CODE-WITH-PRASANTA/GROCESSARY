@@ -4,6 +4,20 @@ import './BlogReadmoreOne.css';
 
 const API_BASE_URL = 'http://localhost:5000/api/blogs';
 
+const getBlogImageUrl = (url) => {
+  if (!url) return "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&auto=format&fit=crop";
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("blob:") ||
+    url.startsWith("data:")
+  ) {
+    return url;
+  }
+  const clean = url.startsWith("/") ? url : "/" + url;
+  return "http://localhost:5000" + clean;
+};
+
 const BlogReadmoreOne = () => {
   // Reads dynamic ID from URL e.g. /news/6a7edbfca9b63324310d3fba
   const { id } = useParams();
@@ -194,7 +208,7 @@ const BlogReadmoreOne = () => {
 
             <div className="blog-readmore-one-feature-img-wrapper">
               <img
-                src={blog.image || fallbackImage}
+                src={getBlogImageUrl(blog.image)}
                 alt={blog.title}
                 className="blog-readmore-one-feature-img"
                 onError={(e) => {
