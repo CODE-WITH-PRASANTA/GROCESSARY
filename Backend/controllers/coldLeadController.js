@@ -8,6 +8,8 @@ const createColdLead = async (req, res) => {
   try {
     const {
       name,
+      firstName,
+      lastName,
       phone,
       email,
       lookingFor,
@@ -15,30 +17,45 @@ const createColdLead = async (req, res) => {
       date,
       status,
       notes,
-    } = req.body;
+      description,
+      message,
+    } = req.body || {};
+
+    const fullName = (
+      name ||
+      [firstName, lastName].filter(Boolean).join(" ")
+    ).trim();
+
+    const leadPhone = String(phone || "").trim();
+    const leadEmail = String(email || "").trim().toLowerCase();
+    const leadNotes = (notes || description || message || "").trim();
+    const leadDate = date || new Date().toISOString().split("T")[0];
+    const leadLookingFor = (lookingFor || "Contact Us Inquiry").trim();
+    const leadSource = (source || "Website - Contact Us").trim();
 
     // Basic validation
-    if (!name || !phone || !email || !lookingFor || !source || !date) {
+    if (!fullName || !leadPhone || !leadEmail) {
       return res.status(400).json({
         success: false,
-        message: "Please fill all required fields.",
+        message: "Please fill all required fields: Name, Phone, and Email.",
       });
     }
 
     const lead = await ColdLead.create({
-      name,
-      phone,
-      email,
-      lookingFor,
-      source,
-      date,
+      name: fullName,
+      phone: leadPhone,
+      email: leadEmail,
+      lookingFor: leadLookingFor,
+      source: leadSource,
+      date: leadDate,
       status: status || "New",
-      notes: notes || "",
+      notes: leadNotes,
+      message: leadNotes,
     });
 
     res.status(201).json({
       success: true,
-      message: "Cold lead created successfully.",
+      message: "Thank you! Your message has been submitted successfully.",
       data: lead,
     });
   } catch (error) {
@@ -46,7 +63,7 @@ const createColdLead = async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: "Failed to create cold lead.",
+      message: "Failed to submit inquiry. Please try again.",
       error: error.message,
     });
   }

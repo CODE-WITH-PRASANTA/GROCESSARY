@@ -23,7 +23,6 @@ import InventoryAdjustment from "./Components/Blog/InventoryAdjustment/Inventory
 import ActivityLog from "./Components/Blog/ActivityLog/ActivityLog";
 
 import EditUnit from "./Components/EditUnit/EditUnit";
-import ListUploads from "./Components/ListUploads/ListUploads";
 import Banners from "./Components/Banners/Banners";
 import BlogPosting from "./Components/BlogPosting/BlogPosting";
 import BlogManagement from "./Components/BlogManagement/BlogManagement";
@@ -36,6 +35,7 @@ import Dashboard from "./Pages/Dashboard/Dashboard";
 import Order from "./Pages/Order/Order";
 
 import ColdLeadManagement from "./Components/ColdLeadManagement/ColdLeadManagement";
+import Users from "./Components/Users/Users";
 import Import from "./Components/Import/Import";
 import Catagory from "./Components/Catagory/Catagory";
 import TodayDiscounts from "./Components/TodayDiscounts/TodayDiscounts";
@@ -74,7 +74,6 @@ const App = () => {
             <Route path="products/categories" element={<Categories />} />
             <Route path="products/brands" element={<Brands />} />
             <Route path="products/units" element={<EditUnit />} />
-            <Route path="products/list-uploads" element={<ListUploads />} />
             <Route path="products/coupons" element={<Coupons />} />
             <Route path="today-discounts" element={<TodayDiscounts />} />
 
@@ -82,7 +81,9 @@ const App = () => {
             <Route path="orders/all-orders" element={<Order />} />
             <Route path="orders/returns" element={<ReturnManagement />} />
 
-            {/* Customers */}
+            {/* Users */}
+            <Route path="users" element={<Users />} />
+            <Route path="customers/all-customers" element={<Users />} />
             <Route path="customers/reviews" element={<ReviewsManagement />} />
 
             {/* Returns */}

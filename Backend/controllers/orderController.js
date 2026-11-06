@@ -759,7 +759,7 @@ const refundWalletAndPoints = async (order, reason = "") => {
 const updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, note = "" } = req.body;
+    const { status, note = "", shippingDetails } = req.body;
 
     const allowed = [
       "confirmed",
@@ -789,6 +789,40 @@ const updateOrderStatus = async (req, res) => {
 
     order.orderStatus = status;
     order.statusHistory.push({ status, note });
+
+    // Update shipping & tracking details if provided
+    if (shippingDetails && typeof shippingDetails === "object") {
+      order.shippingDetails = {
+        courierName:
+          shippingDetails.courierName !== undefined
+            ? String(shippingDetails.courierName).trim()
+            : order.shippingDetails?.courierName || "",
+        currentHub:
+          shippingDetails.currentHub !== undefined
+            ? String(shippingDetails.currentHub).trim()
+            : order.shippingDetails?.currentHub || "",
+        deliveryDate: shippingDetails.deliveryDate
+          ? new Date(shippingDetails.deliveryDate)
+          : order.shippingDetails?.deliveryDate || null,
+        trackingId:
+          shippingDetails.trackingId !== undefined
+            ? String(shippingDetails.trackingId).trim()
+            : order.shippingDetails?.trackingId || "",
+        trackingUrl:
+          shippingDetails.trackingUrl !== undefined
+            ? String(shippingDetails.trackingUrl).trim()
+            : order.shippingDetails?.trackingUrl || "",
+        agentName:
+          shippingDetails.agentName !== undefined
+            ? String(shippingDetails.agentName).trim()
+            : order.shippingDetails?.agentName || "",
+        agentPhone:
+          shippingDetails.agentPhone !== undefined
+            ? String(shippingDetails.agentPhone).trim()
+            : order.shippingDetails?.agentPhone || "",
+      };
+      order.markModified("shippingDetails");
+    }
 
     // ------------------------------------------------
     // CANCEL / REFUND → refund wallet, points, and Razorpay

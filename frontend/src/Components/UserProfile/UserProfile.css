@@ -228,12 +228,8 @@
 }
 
 .tab-arrow {
-  margin-left: 6px;
-  opacity: 0.5;
-}
-
-.profile-tab-btn:not(:has(.tab-count-badge)) .tab-arrow {
   margin-left: auto;
+  opacity: 0.5;
 }
 
 /* =========================================================
@@ -672,14 +668,14 @@
 .orders-cards-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 .order-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 18px;
+  border-radius: 10px;
+  padding: 10px 14px;
   transition: box-shadow 0.2s ease;
 }
 
@@ -691,25 +687,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 14px;
+  padding-bottom: 7px;
   border-bottom: 1px solid #f1f5f9;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .order-header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .order-id-label {
-  font-size: 14px;
+  font-size: 13px;
   color: #0f172a;
 }
 
 .order-date-text {
-  font-size: 12.5px;
+  font-size: 12px;
   color: #64748b;
 }
 
@@ -717,10 +713,10 @@
 .order-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 12px;
+  gap: 4px;
+  font-size: 11.5px;
   font-weight: 700;
-  padding: 3px 9px;
+  padding: 2px 8px;
   border-radius: 6px;
 }
 
@@ -748,36 +744,37 @@
 .order-items-preview {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 0;
+  gap: 8px;
+  padding: 7px 0;
   overflow-x: auto;
 }
 
 .order-item-chip {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   background: #f8fafc;
   border: 1px solid #f1f5f9;
-  border-radius: 8px;
-  padding: 6px 10px;
+  border-radius: 6px;
+  padding: 3px 8px;
   flex-shrink: 0;
 }
 
 .order-item-chip-img {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
   object-fit: cover;
 }
 
 .order-item-chip-meta {
   display: flex;
   flex-direction: column;
+  line-height: 1.25;
 }
 
 .chip-name {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #0f172a;
   max-width: 140px;
@@ -787,17 +784,17 @@
 }
 
 .chip-qty {
-  font-size: 11px;
+  font-size: 10.5px;
   color: #64748b;
 }
 
 .order-item-more-badge {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: #64748b;
   background: #f1f5f9;
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
   flex-shrink: 0;
 }
 
@@ -805,30 +802,30 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 14px;
+  padding-top: 7px;
   border-top: 1px solid #f1f5f9;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
 }
 
 .order-footer-meta {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .payment-mode {
-  font-size: 13px;
+  font-size: 12.5px;
   color: #64748b;
 }
 
 .order-total-amount {
-  font-size: 14px;
+  font-size: 13px;
   color: #0f172a;
 }
 
 .order-total-amount strong {
-  font-size: 16px;
+  font-size: 14.5px;
   color: #059669;
 }
 
@@ -1490,13 +1487,13 @@
 .btn-view-order-details {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 5px;
+  padding: 5px 12px;
   background: #ecfdf5;
   border: 1px solid #a7f3d0;
-  border-radius: 8px;
+  border-radius: 6px;
   color: #065f46;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;

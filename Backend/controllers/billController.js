@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const Bill = require("../models/Bill");
 const Product = require("../models/Product");
 const crypto = require("crypto");
+const QRCode = require("qrcode");
 const upiConfig = require("../config/upi");
 
 // ======================================================
@@ -28,6 +29,7 @@ exports.createBill = async (req, res) => {
     const {
       items,
       customer = {},
+      couponCode = "",
       discountType = "amount",
       discountValue = 0,
       discountAmount = 0,
@@ -156,15 +158,12 @@ exports.createBill = async (req, res) => {
       }
       changeReturned = amountReceivedNum - totalAmount;
     } else if (paymentMethod === "UPI") {
-      if (!upiTransactionId || String(upiTransactionId).trim().length < 4) {
-        return res.status(400).json({
-          success: false,
-          message: "UPI transaction ID is required for UPI payments.",
-        });
-      }
       // For UPI, treat as fully paid
       amountReceivedNum = totalAmount;
       changeReturned = 0;
+      if (!upiTransactionId || String(upiTransactionId).trim().length === 0) {
+        upiTransactionId = `UPI-${Date.now().toString().slice(-6)}`;
+      }
     }
 
     // --- total savings (info only) ---
@@ -187,6 +186,7 @@ exports.createBill = async (req, res) => {
       },
       items: billItems,
       subtotal,
+      couponCode: String(couponCode || "").trim(),
       discountType,
       discountValue: rawDiscountValue,
       discountAmount: safeDiscount,
@@ -380,10 +380,15 @@ exports.initUpiPayment = async (req, res) => {
       note
     )}`;
 
-    // QR code — Google Charts API (free, no key)
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(
+    // Generate QR code — High-resolution Data URL (Instant & Offline) with fallback
+    let qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(
       upiLink
     )}`;
+    try {
+      qrUrl = await QRCode.toDataURL(upiLink, { width: 320, margin: 2 });
+    } catch (qrErr) {
+      console.warn("Local QR generation failed, fallback to remote API:", qrErr.message);
+    }
 
     return res.json({
       success: true,

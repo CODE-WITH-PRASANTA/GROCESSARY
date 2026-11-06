@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import './ContactUs.css';
+import API from '../../api/axios';
+import Swal from 'sweetalert2';
 
 const ContactUs = () => {
   const [formData, setFormData] = useState({
@@ -10,6 +12,7 @@ const ContactUs = () => {
     description: '',
   });
 
+  const [loading, setLoading] = useState(false);
   const [wordCount, setWordCount] = useState(0);
 
   // Handle description text with UNLIMITED word count
@@ -26,10 +29,96 @@ const ContactUs = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form Data:', formData);
-    alert('Your message has been sent successfully to Grocery Sathi support!');
+
+    const firstName = formData.firstName.trim();
+    const lastName = formData.lastName.trim();
+    const email = formData.email.trim();
+    const phone = formData.phone.trim().replace(/\D/g, '');
+    const description = formData.description.trim();
+
+    if (!firstName || !lastName) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Name Required',
+        text: 'Please enter your first and last name.',
+        confirmButtonColor: '#0aad4b',
+      });
+      return;
+    }
+
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Valid Email Required',
+        text: 'Please enter a valid email address.',
+        confirmButtonColor: '#0aad4b',
+      });
+      return;
+    }
+
+    if (!phone || phone.length < 10) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Valid Phone Required',
+        text: 'Please enter a valid 10-digit mobile number.',
+        confirmButtonColor: '#0aad4b',
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const payload = {
+        firstName,
+        lastName,
+        name: `${firstName} ${lastName}`.trim(),
+        email,
+        phone,
+        description,
+        notes: description,
+        message: description,
+        source: 'Website - Contact Us',
+        lookingFor: 'Contact Us Inquiry',
+      };
+
+      const response = await API.post('/cold-leads', payload);
+
+      if (response.data && response.data.success) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Message Sent Successfully!',
+          text: 'Thank you for reaching out to Grocery Sathi! Our team has received your message and will contact you shortly.',
+          confirmButtonColor: '#0aad4b',
+        });
+
+        // Reset form
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          description: '',
+        });
+        setWordCount(0);
+      } else {
+        throw new Error(response.data?.message || 'Failed to send message.');
+      }
+    } catch (error) {
+      console.error('Contact Form Submit Error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Submission Failed',
+        text:
+          error.response?.data?.message ||
+          'Could not send your message. Please check your connection and try again.',
+        confirmButtonColor: '#0aad4b',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Structured Data (JSON-LD) for SEO Rich Results & Local Business Contact
@@ -268,8 +357,8 @@ const ContactUs = () => {
 
                 {/* Submit Button */}
                 <div className="form-btn-wrapper">
-                  <button type="submit" className="send-msg-btn">
-                    <span>Send Message</span>
+                  <button type="submit" className="send-msg-btn" disabled={loading}>
+                    <span>{loading ? 'Sending Message…' : 'Send Message'}</span>
                     <svg
                       className="arrow-icon"
                       width="18"

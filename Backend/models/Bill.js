@@ -39,6 +39,7 @@ const billSchema = new mongoose.Schema(
     items: { type: [billItemSchema], required: true },
 
     subtotal: { type: Number, required: true },
+    couponCode: { type: String, default: "" },
     discountType: {
       type: String,
       enum: ["percentage", "amount"],

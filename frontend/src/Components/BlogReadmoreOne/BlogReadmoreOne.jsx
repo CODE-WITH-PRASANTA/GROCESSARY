@@ -148,7 +148,7 @@ const BlogReadmoreOne = () => {
           <nav aria-label="Breadcrumb Navigation">
             <button 
               type="button" 
-              onClick={() => navigate('/blog')} 
+              onClick={() => navigate('/blogs')} 
               className="blog-readmore-one-back-btn" 
               title="Back to Blog Management"
               style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}

@@ -13,8 +13,6 @@ import {
   RotateCcw,
   Users,
   Star,
-  Sliders,
-  ShieldCheck,
   ShoppingBasket,
   Book,
   NotebookPen,
@@ -109,11 +107,6 @@ const menuSections = [
         path: "/products/units",
         icon: Scale,
       },
-      {
-        label: "ListUploads",
-        path: "/products/list-uploads",
-        icon: Book,
-      },
     ],
   },
 
@@ -134,11 +127,11 @@ const menuSections = [
   },
 
   {
-    title: "CUSTOMERS",
+    title: "USERS",
     items: [
       {
-        label: "Customers",
-        path: "/customers/all-customers",
+        label: "Users",
+        path: "/users",
         icon: Users,
       },
       {
@@ -161,22 +154,6 @@ const menuSections = [
         label: "Blog Management",
         path: "/blogmanagement",
         icon: Book,
-      },
-    ],
-  },
-
-  {
-    title: "SETTINGS",
-    items: [
-      {
-        label: "Site Settings",
-        path: "/settings/site-settings",
-        icon: Sliders,
-      },
-      {
-        label: "Users & Roles",
-        path: "/settings/users-roles",
-        icon: ShieldCheck,
       },
     ],
   },

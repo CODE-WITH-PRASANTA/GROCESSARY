@@ -14,7 +14,6 @@ import {
   Calendar,
   Phone,
   MapPin,
-  ExternalLink,
   ChevronRight,
   ChevronLeft,
   X,
@@ -1066,19 +1065,6 @@ const Order = () => {
                       />
                     </div>
                   </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Courier Tracking URL</label>
-                    <input
-                      type="url"
-                      placeholder="e.g. https://www.delhivery.com/track/package/..."
-                      value={statusFormData.trackingUrl}
-                      onChange={(e) =>
-                        setStatusFormData({ ...statusFormData, trackingUrl: e.target.value })
-                      }
-                      className="form-control"
-                    />
-                  </div>
                 </div>
               )}
 
@@ -1389,21 +1375,6 @@ const Order = () => {
                             <div className="ship-field">
                               <span className="label">Tracking ID / AWB:</span>
                               <span className="val-code">{detailsModalOrder.shippingDetails.trackingId}</span>
-                            </div>
-                          )}
-
-                          {detailsModalOrder.shippingDetails.trackingUrl && (
-                            <div className="ship-field full-width">
-                              <span className="label">Tracking URL:</span>
-                              <a
-                                href={detailsModalOrder.shippingDetails.trackingUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="external-track-link"
-                              >
-                                <span>Open Courier Tracking Page</span>
-                                <ExternalLink size={12} />
-                              </a>
                             </div>
                           )}
 
