@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { User, MapPin, Package, Gift, Copy, Check, LogOut } from "lucide-react";
+import { User, MapPin, Package, Gift, Copy, Check, LogOut, HelpCircle } from "lucide-react";
 import API from "../../api/axios";
 import "./UserAuth.css";
-
-const PROJECT2_URL = import.meta.env.VITE_PROJECT2_URL;
 
 // ======================================================
 // COMPONENT
@@ -47,6 +45,18 @@ const UserAuth = ({ onNavigate }) => {
       user?.email?.split("@")[0] ||
       "User";
     return String(raw).trim();
+  };
+
+  const getFirstName = (user) => {
+    if (!user) return "";
+    if (user?.firstName && user.firstName.trim()) {
+      return user.firstName.trim();
+    }
+    const full = getUserName(user);
+    if (!full) return "User";
+    // Return only the first name (first word)
+    const firstWord = full.trim().split(/\s+/)[0];
+    return firstWord || "User";
   };
 
   const handleNavigate = (path) => {
@@ -101,7 +111,9 @@ const UserAuth = ({ onNavigate }) => {
       const { data } = await API.get("/referrals/link");
 
       if (data?.success) {
-        setReferralLink(data.link || "");
+        const code = data.code || data.referralCode || "";
+        const fullLink = `${window.location.origin}/login?ref=${encodeURIComponent(code)}`;
+        setReferralLink(fullLink);
       }
     } catch (error) {
       console.error("NavAuth fetch referral link error:", error);
@@ -178,56 +190,6 @@ const UserAuth = ({ onNavigate }) => {
   }, [fetchCurrentUser]);
 
   // ======================================================
-  // OPEN USER PANEL (SSO)
-  // ======================================================
-
-  const handleUserPanel = async () => {
-    try {
-      setAccountLoading(true);
-
-      const token = getToken();
-
-      if (!token) {
-        setCurrentUser(null);
-        setIsAccountOpen(false);
-        handleNavigate("/login");
-        return;
-      }
-
-      const { data } = await API.post("/auth/create-handoff");
-
-      if (!data?.success) {
-        throw new Error(data?.message || "Unable to create login handoff.");
-      }
-
-      const code = data?.code;
-
-      if (!code) {
-        throw new Error("Handoff code was not returned.");
-      }
-
-      setIsAccountOpen(false);
-
-      window.location.href = `${PROJECT2_URL}/sso?code=${encodeURIComponent(
-        code,
-      )}`;
-    } catch (error) {
-      console.error("NavAuth user panel error:", error);
-
-      const message = String(error?.message || "").toLowerCase();
-
-      if (message.includes("token") || message.includes("authentication")) {
-        localStorage.removeItem("token");
-        setCurrentUser(null);
-        setIsAccountOpen(false);
-        handleNavigate("/login");
-      }
-    } finally {
-      setAccountLoading(false);
-    }
-  };
-
-  // ======================================================
   // COPY REFERRAL LINK
   // ======================================================
 
@@ -258,9 +220,10 @@ const UserAuth = ({ onNavigate }) => {
   // ======================================================
 
   const handleLogout = () => {
-    // 1. Clear Project 1's own auth
+    // 1. Clear all stored auth tokens and user data
     localStorage.removeItem("token");
     localStorage.removeItem("adminToken");
+    localStorage.removeItem("user");
     sessionStorage.clear();
 
     // 2. Reset local component state
@@ -268,12 +231,12 @@ const UserAuth = ({ onNavigate }) => {
     setReferralLink("");
     setIsAccountOpen(false);
 
-    // 3. Notify other listeners in this app
+    // 3. Notify all listeners in this app
     window.dispatchEvent(new Event("authChanged"));
+    window.dispatchEvent(new Event("storage"));
 
-    // 4. Notify Project 2 via redirect with a logout flag
-    const project2Url = PROJECT2_URL;
-    window.location.href = `${project2Url}/?logout=1`;
+    // 4. Navigate cleanly to login page
+    navigate("/login");
   };
 
   // ======================================================
@@ -294,7 +257,7 @@ const UserAuth = ({ onNavigate }) => {
 
             {!userLoading && (
               <span className="navbar-user-name">
-                {getUserName(currentUser)}
+                {getFirstName(currentUser)}
               </span>
             )}
           </button>
@@ -362,17 +325,29 @@ const UserAuth = ({ onNavigate }) => {
                 <span>My Order</span>
               </button>
 
-              {/* <button
+              <button
                 type="button"
                 onClick={() => {
                   setIsAccountOpen(false);
-                  handleNavigate("/refer-earn");
+                  handleNavigate("/profile?tab=referral");
                 }}
                 className="navbar-account-item"
               >
                 <Gift size={16} />
                 <span>Refer &amp; Earn</span>
-              </button> */}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAccountOpen(false);
+                  handleNavigate("/profile?tab=help");
+                }}
+                className="navbar-account-item"
+              >
+                <HelpCircle size={16} />
+                <span>Help Center</span>
+              </button>
 
               {referralLink && (
                 <div className="navbar-account-referral">

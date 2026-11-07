@@ -8,6 +8,7 @@ const {
   updateCoupon,
   deleteCoupon,
   toggleCouponStatus,
+  toggleCouponVisibility,
   validateCoupon,
 } = require("../controllers/couponController");
 
@@ -26,8 +27,9 @@ router
   .put(updateCoupon)
   .delete(deleteCoupon);
 
-// Status toggle route
+// Status and Visibility toggle routes
 router.patch("/:id/status", toggleCouponStatus);
+router.patch("/:id/visibility", toggleCouponVisibility);
 
 module.exports = router;
 

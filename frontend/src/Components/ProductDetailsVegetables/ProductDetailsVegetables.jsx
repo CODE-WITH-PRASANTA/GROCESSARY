@@ -179,7 +179,7 @@ const UserPlaceholder = () => (
 // PRODUCT DETAILS
 // ======================================================
 
-const ProductDetailsVegetables = ({ productId }) => {
+const ProductDetailsVegetables = ({ productId, onProductLoaded }) => {
   const [product, setProduct] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState("1 KG");
@@ -219,6 +219,8 @@ const ProductDetailsVegetables = ({ productId }) => {
   // ====================================================
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+
     const fetchProduct = async () => {
       if (!productId) {
         setError("Product ID is missing.");
@@ -230,7 +232,7 @@ const ProductDetailsVegetables = ({ productId }) => {
         setLoading(true);
         setError("");
 
-        const { data } = await API.get(`/products/${productId}`);
+        const { data } = await API.get(`/products/${encodeURIComponent(productId)}`);
 
         const productData = data?.product || data?.data || data;
 
@@ -239,6 +241,9 @@ const ProductDetailsVegetables = ({ productId }) => {
         }
 
         setProduct(productData);
+        if (typeof onProductLoaded === "function") {
+          onProductLoaded(productData);
+        }
         setActiveImage(0);
       } catch (err) {
         console.error("Product details fetch error:", err);
@@ -383,13 +388,14 @@ const ProductDetailsVegetables = ({ productId }) => {
     const checkWishlistStatus = async () => {
       try {
         const token = localStorage.getItem("token");
+        const targetId = product?._id || (mongooseValidId(productId) ? productId : null);
 
-        if (!token || !productId) {
+        if (!token || !targetId) {
           setIsWishlisted(false);
           return;
         }
 
-        const response = await API.get(`/wishlist/check/${productId}`);
+        const response = await API.get(`/wishlist/check/${targetId}`);
 
         setIsWishlisted(Boolean(response.data?.isWishlisted));
       } catch (error) {
@@ -398,8 +404,10 @@ const ProductDetailsVegetables = ({ productId }) => {
       }
     };
 
+    const mongooseValidId = (id) => typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+
     checkWishlistStatus();
-  }, [productId]);
+  }, [productId, product?._id]);
 
   // ====================================================
   // PRODUCT IMAGES
@@ -577,16 +585,6 @@ const ProductDetailsVegetables = ({ productId }) => {
         localStorage.setItem("guestCart", JSON.stringify(existingCart));
 
         window.dispatchEvent(new Event("cartUpdated"));
-
-        await Swal.fire({
-          icon: "success",
-          title: "Added to Cart!",
-          text: "Product added to cart successfully.",
-          confirmButtonText: "Continue Shopping",
-          timer: 1800,
-          timerProgressBar: true,
-        });
-
         return;
       }
 
@@ -600,16 +598,6 @@ const ProductDetailsVegetables = ({ productId }) => {
       });
 
       window.dispatchEvent(new Event("cartUpdated"));
-
-      await Swal.fire({
-        icon: "success",
-        title: "Added to Cart!",
-        text:
-          response.data?.message || "Product added to cart successfully.",
-        confirmButtonText: "Continue Shopping",
-        timer: 1800,
-        timerProgressBar: true,
-      });
     } catch (error) {
       console.error("Add to cart error:", error);
 
@@ -1064,7 +1052,7 @@ const ProductDetailsVegetables = ({ productId }) => {
               className={`OurBestsellers-icon-btn ${
                 isWishlisted ? "wishlisted" : ""
               }`}
-              onClick={() => handleWishlist(productId)}
+              onClick={() => handleWishlist(product?._id || productId)}
               disabled={wishlistLoading}
               aria-label={
                 isWishlisted

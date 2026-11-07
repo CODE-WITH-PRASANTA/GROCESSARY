@@ -42,7 +42,23 @@ router.post("/place", protect, placeOrder);
 router.post("/verify", protect, verifyPayment);
 router.post("/:id/abandon", protect, abandonOrder);
 router.post("/:id/cancel", protect, cancelOrder);
-router.post("/:id/return", protect, requestReturn);
+router.post(
+  "/:id/return",
+  protect,
+  (req, res, next) => {
+    const contentType = req.headers["content-type"] || "";
+    if (contentType.includes("multipart/form-data")) {
+      return upload.array("images", 5)(req, res, (err) => {
+        if (err) {
+          return res.status(400).json({ success: false, message: err.message || "Image upload failed." });
+        }
+        convertToWebp(req, res, next);
+      });
+    }
+    next();
+  },
+  requestReturn
+);
 
 // ---- Return pickup flow ----
 router.get("/:id/return-pickup", protect, getReturnPickup);

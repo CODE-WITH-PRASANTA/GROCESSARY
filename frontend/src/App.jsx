@@ -36,8 +36,22 @@ import { fetchCart } from "./Utils/cartSlice";
 const App = () => {
 
 
-  const dispatch = useDispatch()
-   useEffect(() => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    // Capture referral code from URL anywhere on the site
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get("ref") || urlParams.get("referral");
+      if (ref && ref.trim()) {
+        const cleanRef = ref.trim().toUpperCase();
+        sessionStorage.setItem("grocery_referral_code", cleanRef);
+        localStorage.setItem("grocery_referral_code", cleanRef);
+      }
+    } catch (e) {}
+  }, []);
+
+  useEffect(() => {
     const token = localStorage.getItem("token");
 
     if (token) {
@@ -59,7 +73,9 @@ const App = () => {
         <Route path="/terms-and-conditions" element={<TermAndCondition />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/shipping-delivery" element={<ShippingAndDelivery />} />
+        <Route path="/product/:slug" element={<ProductDetails />} />
         <Route path="/productdetails/:id" element={<ProductDetails />} />
+        <Route path="/productdetails/:slug" element={<ProductDetails />} />
         {/* Blog System Routes */}
         <Route path="/blogs" element={<BlogGrid />} />
         <Route path="/news/:id" element={<BlogReadmoreOne />} />
@@ -74,6 +90,8 @@ const App = () => {
 
         {/* User & Store Routes */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<LoginPage initialView="register" />} />
+        <Route path="/register" element={<LoginPage initialView="register" />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/cart" element={<CartSection />} />
         <Route path="/deliverytime" element={<Navigate to="/cart" replace />} />

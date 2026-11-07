@@ -122,6 +122,7 @@ const orderSchema = new mongoose.Schema(
     },
     returnReason: { type: String, default: "" },
     returnNote: { type: String, default: "" },
+    returnPhotos: { type: [String], default: [] },
     returnRequestedAt: { type: Date, default: null },
     returnResolvedAt: { type: Date, default: null },
     returnAssignedTo: {

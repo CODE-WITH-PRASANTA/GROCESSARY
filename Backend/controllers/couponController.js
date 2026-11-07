@@ -3,30 +3,56 @@ const Coupon = require("../models/Coupon");
 // ======================================================
 // GET ALL COUPONS
 // ======================================================
-// GET /api/coupons?status=Active&search=WELCOME
+// GET /api/coupons?status=Active&search=WELCOME&visibility=public&isPublic=true
 const getAllCoupons = async (req, res) => {
   try {
-    const { status, search } = req.query;
+    const { status, search, visibility, isPublic } = req.query;
     const query = {};
 
     if (status && status !== "All") {
       query.status = status;
     }
 
+    if (visibility === "public" || isPublic === "true" || isPublic === true) {
+      query.isPublic = true;
+    } else if (visibility === "private" || isPublic === "false" || isPublic === false) {
+      query.isPublic = false;
+    }
+
     if (search && search.trim()) {
-      query.$or = [
+      const searchConditions = [
         { code: { $regex: search.trim(), $options: "i" } },
         { title: { $regex: search.trim(), $options: "i" } },
         { description: { $regex: search.trim(), $options: "i" } },
       ];
+      if (query.$or) {
+        query.$and = [{ $or: query.$or }, { $or: searchConditions }];
+        delete query.$or;
+      } else {
+        query.$or = searchConditions;
+      }
     }
 
-    // Auto-update expired coupons
+    // Auto-update expired coupons (by expiryDate or usageLimit reached)
     const now = new Date();
     await Coupon.updateMany(
-      { expiryDate: { $lt: now }, status: "Active" },
+      { expiryDate: { $lte: now }, status: "Active" },
       { $set: { status: "Expired" } }
     );
+    await Coupon.updateMany(
+      {
+        usageLimit: { $ne: null },
+        $expr: { $gte: ["$usageCount", "$usageLimit"] },
+        status: "Active",
+      },
+      { $set: { status: "Expired" } }
+    );
+
+    if (status === "Active") {
+      query.status = "Active";
+      query.expiryDate = { $gt: now };
+      query.startDate = { $lte: now };
+    }
 
     const coupons = await Coupon.find(query).sort({ createdAt: -1 });
 
@@ -37,6 +63,8 @@ const getAllCoupons = async (req, res) => {
       active: allCoupons.filter((c) => c.status === "Active").length,
       inactive: allCoupons.filter((c) => c.status === "Inactive").length,
       expired: allCoupons.filter((c) => c.status === "Expired").length,
+      publicCount: allCoupons.filter((c) => c.isPublic !== false).length,
+      privateCount: allCoupons.filter((c) => c.isPublic === false).length,
       totalUsage: allCoupons.reduce((sum, c) => sum + (c.usageCount || 0), 0),
     };
 
@@ -109,6 +137,7 @@ const createCoupon = async (req, res) => {
       usageLimit,
       perUserLimit,
       status,
+      isPublic,
     } = req.body;
 
     if (!code || !code.trim()) {
@@ -163,6 +192,7 @@ const createCoupon = async (req, res) => {
       usageLimit: usageLimit ? Number(usageLimit) : null,
       perUserLimit: perUserLimit ? Number(perUserLimit) : 1,
       status: status || "Active",
+      isPublic: isPublic !== undefined ? Boolean(isPublic) : true,
     });
 
     return res.status(201).json({
@@ -228,9 +258,12 @@ const updateCoupon = async (req, res) => {
     if (updateData.perUserLimit !== undefined) {
       updateData.perUserLimit = Number(updateData.perUserLimit);
     }
+    if (updateData.isPublic !== undefined) {
+      updateData.isPublic = Boolean(updateData.isPublic);
+    }
 
     const updatedCoupon = await Coupon.findByIdAndUpdate(id, updateData, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     });
 
@@ -321,6 +354,46 @@ const toggleCouponStatus = async (req, res) => {
     return res.status(400).json({
       success: false,
       message: error.message || "Failed to change coupon status",
+    });
+  }
+};
+
+// ======================================================
+// TOGGLE VISIBILITY (PUBLIC / PRIVATE)
+// ======================================================
+// PATCH /api/coupons/:id/visibility
+const toggleCouponVisibility = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const coupon = await Coupon.findById(id);
+
+    if (!coupon) {
+      return res.status(404).json({
+        success: false,
+        message: "Coupon not found",
+      });
+    }
+
+    let newVisibility;
+    if (req.body && req.body.isPublic !== undefined) {
+      newVisibility = Boolean(req.body.isPublic);
+    } else {
+      newVisibility = coupon.isPublic === false ? true : false;
+    }
+
+    coupon.isPublic = newVisibility;
+    await coupon.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Coupon is now ${coupon.isPublic ? "Public (Visible to store)" : "Private (Hidden code-only)"}`,
+      data: coupon,
+    });
+  } catch (error) {
+    console.error("Toggle coupon visibility error:", error);
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Failed to change coupon visibility",
     });
   }
 };
@@ -450,6 +523,7 @@ module.exports = {
   updateCoupon,
   deleteCoupon,
   toggleCouponStatus,
+  toggleCouponVisibility,
   validateCoupon,
 };
 

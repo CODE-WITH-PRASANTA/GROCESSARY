@@ -1,12 +1,17 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const { OAuth2Client } = require("google-auth-library");
 
 const User = require("../models/User");
 const AuthHandoff = require("../models/AuthHandoff");
 const { sendEmailOtp } = require("../utils/sendOtp");
 const generateReferralCode = require("../utils/generateReferralCode");
 const { applyReferralCode } = require("./referralController");
+
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID || "1070313248799-q3r7khugifnf6rr69nh7uhpmucaeurq0.apps.googleusercontent.com"
+);
 
 // ======================================================
 // HELPER: GENERATE JWT
@@ -427,20 +432,78 @@ const updateMe = async (req, res) => {
       }
     }
 
+    // 1. Email validation & duplicate check
     if (updates.email) {
       updates.email = updates.email.toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updates.email)) {
+        return res.status(400).json({
+          success: false,
+          message: "Please enter a valid email address.",
+        });
+      }
+
+      const existingWithEmail = await User.findOne({
+        email: updates.email,
+        _id: { $ne: req.user._id },
+      });
+
+      if (existingWithEmail) {
+        return res.status(409).json({
+          success: false,
+          message: `Email address "${updates.email}" is already registered to another account.`,
+        });
+      }
+    }
+
+    // 2. Mobile validation & duplicate check
+    if (updates.mobile) {
+      if (!/^[0-9]{10}$/.test(updates.mobile)) {
+        return res.status(400).json({
+          success: false,
+          message: "Please enter a valid 10-digit mobile number.",
+        });
+      }
+
+      const existingWithMobile = await User.findOne({
+        mobile: updates.mobile,
+        _id: { $ne: req.user._id },
+      });
+
+      if (existingWithMobile) {
+        return res.status(409).json({
+          success: false,
+          message: `Mobile number "${updates.mobile}" is already registered to another user (${existingWithMobile.email}). Please use a different mobile number.`,
+        });
+      }
+    }
+
+    // Build update operations (handle unsetting empty mobile if cleared)
+    const updateOps = {};
+    const setFields = { ...updates };
+    const unsetFields = {};
+
+    if (setFields.mobile === "" || setFields.mobile === null) {
+      delete setFields.mobile;
+      unsetFields.mobile = 1;
+    }
+
+    if (Object.keys(setFields).length > 0) {
+      updateOps.$set = setFields;
+    }
+    if (Object.keys(unsetFields).length > 0) {
+      updateOps.$unset = unsetFields;
     }
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
-      { $set: updates },
-      { new: true, runValidators: true }
+      updateOps,
+      { returnDocument: "after", runValidators: true }
     );
 
     if (!updatedUser) {
       return res.status(404).json({
         success: false,
-        message: "User not found.",
+        message: "User account not found.",
       });
     }
 
@@ -450,14 +513,16 @@ const updateMe = async (req, res) => {
       user: updatedUser.toSafeObject(),
     });
   } catch (error) {
-    console.error("Update profile error:", error);
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern || {})[0];
-      return res.status(400).json({
+      const val = error.keyValue ? error.keyValue[field] : "";
+      return res.status(409).json({
         success: false,
-        message: `${field === "email" ? "Email" : "Mobile number"} is already in use by another account.`,
+        message: `${field === "email" ? "Email address" : "Mobile number"} ${val ? `"${val}"` : ""} is already registered to another account.`,
       });
     }
+
+    console.error("Update profile error:", error.message || error);
     return res.status(500).json({
       success: false,
       message: error.message || "Failed to update profile.",
@@ -550,9 +615,195 @@ const consumeHandoff = async (req, res) => {
   }
 };
 
+// ======================================================
+// GOOGLE OAUTH LOGIN / SIGNUP
+// ======================================================
+const googleLogin = async (req, res) => {
+  try {
+    const { credential, accessToken, referralCode } = req.body;
+
+    if (!credential && !accessToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Google credential or access token is required.",
+      });
+    }
+
+    let googlePayload = null;
+
+    if (credential) {
+      try {
+        const ticket = await googleClient.verifyIdToken({
+          idToken: credential,
+          audience: [
+            process.env.GOOGLE_CLIENT_ID,
+            "1070313248799-q3r7khugifnf6rr69nh7uhpmucaeurq0.apps.googleusercontent.com",
+          ].filter(Boolean),
+        });
+        googlePayload = ticket.getPayload();
+      } catch (verifyErr) {
+        console.warn("verifyIdToken warning, attempting Google tokeninfo:", verifyErr.message);
+        try {
+          const resp = await fetch(
+            `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`
+          );
+          if (resp.ok) {
+            googlePayload = await resp.json();
+          } else {
+            throw verifyErr;
+          }
+        } catch (fallbackErr) {
+          console.error("Google token verification failure:", fallbackErr.message);
+          return res.status(401).json({
+            success: false,
+            message: "Invalid or expired Google authentication credential.",
+          });
+        }
+      }
+    } else if (accessToken) {
+      try {
+        const resp = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (resp.ok) {
+          googlePayload = await resp.json();
+        } else {
+          return res.status(401).json({
+            success: false,
+            message: "Unable to retrieve Google user profile with access token.",
+          });
+        }
+      } catch (err) {
+        return res.status(401).json({
+          success: false,
+          message: "Error communicating with Google profile endpoint.",
+        });
+      }
+    }
+
+    if (!googlePayload || !googlePayload.email) {
+      return res.status(400).json({
+        success: false,
+        message: "Could not obtain user email from Google account.",
+      });
+    }
+
+    const sub = googlePayload.sub || googlePayload.id;
+    const email = googlePayload.email.trim().toLowerCase();
+    const givenName = googlePayload.given_name || "";
+    const familyName = googlePayload.family_name || "";
+    const name = googlePayload.name || "";
+    const picture = googlePayload.picture || "";
+
+    // 1. Check whether user already exists by googleId or email
+    let user = await User.findOne({
+      $or: [{ googleId: sub }, { email }],
+    });
+
+    let isNewUser = false;
+
+    if (user) {
+      // User exists
+      if (!user.isActive) {
+        return res.status(403).json({
+          success: false,
+          message: "Your account is deactivated. Please contact support.",
+        });
+      }
+
+      let modified = false;
+      if (!user.googleId) {
+        user.googleId = sub;
+        modified = true;
+      }
+      if (!user.profileImage && picture) {
+        user.profileImage = picture;
+        modified = true;
+      }
+      if (modified) {
+        await user.save();
+      }
+    } else {
+      // User does NOT exist -> Create new account
+      isNewUser = true;
+
+      const firstName =
+        givenName ||
+        (name ? name.split(" ")[0] : "Google");
+      const lastName =
+        familyName ||
+        (name && name.split(" ").length > 1
+          ? name.split(" ").slice(1).join(" ")
+          : "User");
+
+      // Generate unique referral code
+      let newReferralCode;
+      let isUnique = false;
+      let attempts = 0;
+      const baseClean = firstName.replace(/[^a-zA-Z]/g, "") || "USER";
+
+      while (!isUnique && attempts < 10) {
+        attempts += 1;
+        newReferralCode = generateReferralCode(baseClean);
+        const exists = await User.exists({ referralCode: newReferralCode });
+        if (!exists) isUnique = true;
+      }
+
+      if (!isUnique) {
+        newReferralCode = `GS${Date.now().toString(36).toUpperCase()}`;
+      }
+
+      // Generate random secure password
+      const randomPassword = crypto.randomBytes(24).toString("hex");
+      const salt = await bcrypt.genSalt(12);
+      const hashedPassword = await bcrypt.hash(randomPassword, salt);
+
+      user = await User.create({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email,
+        googleId: sub,
+        authProvider: "google",
+        profileImage: picture,
+        password: hashedPassword,
+        referralCode: newReferralCode,
+        isActive: true,
+      });
+
+      // Apply incoming referral code if provided
+      if (referralCode && referralCode.trim()) {
+        try {
+          await applyReferralCode(user._id, referralCode.trim().toUpperCase());
+        } catch (refErr) {
+          console.error("Non-fatal referral application error on Google signup:", refErr.message);
+        }
+      }
+    }
+
+    const token = generateToken(user._id);
+
+    return res.status(isNewUser ? 201 : 200).json({
+      success: true,
+      isNewUser,
+      message: isNewUser
+        ? `Welcome to Grocery Sathi, ${user.firstName}! Your account has been created.`
+        : `Welcome back, ${user.firstName}!`,
+      token,
+      user: user.toSafeObject(),
+    });
+  } catch (error) {
+    console.error("Google login error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while processing Google login. Please try again.",
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
+  googleLogin,
   forgotPassword,
   resetPassword,
   getMe,

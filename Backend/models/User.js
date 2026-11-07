@@ -28,10 +28,29 @@ const userSchema = new mongoose.Schema(
     },
     mobile: {
       type: String,
-      required: [true, "Mobile number is required"],
+      required: false,
       unique: true,
+      sparse: true,
       trim: true,
-      match: [/^[0-9]{10}$/, "Please provide a valid 10-digit mobile number"],
+      validate: {
+        validator: function (v) {
+          if (!v) return true;
+          return /^[0-9]{10}$/.test(v);
+        },
+        message: "Please provide a valid 10-digit mobile number",
+      },
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+      default: undefined,
+    },
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
     },
     profileImage: {
       type: String,
@@ -78,7 +97,7 @@ const userSchema = new mongoose.Schema(
     // Authentication & Authorization
     password: {
       type: String,
-      required: [true, "Password is required"],
+      required: false,
       minlength: [6, "Password must be at least 6 characters"],
     },
     role: {
@@ -133,9 +152,11 @@ userSchema.methods.toSafeObject = function () {
     lastName: this.lastName,
     name: `${this.firstName} ${this.lastName}`.trim(),
     email: this.email,
-    mobile: this.mobile,
+    mobile: this.mobile || "",
     role: this.role,
     profileImage: this.profileImage || "",
+    authProvider: this.authProvider || "local",
+    googleId: this.googleId || null,
     gender: this.gender || "",
     dateOfBirth: this.dateOfBirth,
     address: this.address || "",

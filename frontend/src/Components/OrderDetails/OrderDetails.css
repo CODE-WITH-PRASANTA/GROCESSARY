@@ -5,13 +5,14 @@
 .order-details-wrapper {
   min-height: calc(100vh - 80px);
   background-color: #f8fafc;
-  padding: 32px 16px 60px;
+  padding: 36px 24px 70px;
   font-family: inherit;
   color: #1e293b;
 }
 
 .order-details-container {
-  max-width: 1120px;
+  width: min(1380px, 100%);
+  max-width: 1380px;
   margin: 0 auto;
 }
 
@@ -108,7 +109,7 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  padding: 24px 28px;
+  padding: 26px 32px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -128,7 +129,7 @@
 
 .order-title {
   margin: 0;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   color: #0f172a;
 }
@@ -213,8 +214,8 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  padding: 24px 28px;
-  margin-bottom: 24px;
+  padding: 26px 32px;
+  margin-bottom: 26px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
@@ -334,14 +335,15 @@
 /* 2-COLUMN MAIN GRID */
 .order-main-grid {
   display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 24px;
+  grid-template-columns: 1fr 420px;
+  gap: 28px;
   align-items: start;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .order-main-grid {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
 }
 
@@ -350,8 +352,8 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  padding: 22px 24px;
-  margin-bottom: 20px;
+  padding: 24px 28px;
+  margin-bottom: 22px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
@@ -749,8 +751,15 @@
 
 .skeleton-grid {
   display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 20px;
+  grid-template-columns: 1fr 420px;
+  gap: 28px;
+}
+
+@media (max-width: 1024px) {
+  .skeleton-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
 }
 
 .skeleton-box {
@@ -810,29 +819,6 @@
 .btn-back-to-orders:hover {
   background: #047857;
 }
-
-/* PRINT MEDIA QUERY */
-@media print {
-  .no-print,
-  nav,
-  footer,
-  .FloatingButton,
-  .FloatingForm {
-    display: none !important;
-  }
-
-  .order-details-wrapper {
-    background: #ffffff !important;
-    padding: 0 !important;
-  }
-
-  .order-hero-card,
-  .order-section-card {
-    box-shadow: none !important;
-    border: 1px solid #ccc !important;
-  }
-}
-
 
 /* LIVE SHIPMENT CARD */
 .order-live-tracking-card {
@@ -946,3 +932,744 @@
 .external-tracking-btn:hover {
   background: #0369a1;
 }
+
+/* ========================================================
+   RESPONSIVE MEDIA QUERIES (FULL WEBSITE WIDTH SYNC)
+   ======================================================== */
+@media (max-width: 1200px) {
+  .order-details-container {
+    width: min(100%, 100% - 32px);
+  }
+
+  .order-main-grid {
+    grid-template-columns: 1fr 380px;
+    gap: 22px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .order-details-wrapper {
+    padding: 28px 16px 50px;
+  }
+
+  .order-details-container {
+    width: 100%;
+  }
+
+  .order-hero-card,
+  .order-tracker-card {
+    padding: 20px 22px;
+  }
+
+  .order-section-card {
+    padding: 20px 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .order-top-nav-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .order-top-actions,
+  .order-invoice-top-actions {
+    width: 100%;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn-back-link,
+  .btn-download-invoice,
+  .btn-view-invoice-action {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .order-hero-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .order-hero-right {
+    width: 100%;
+  }
+
+  .order-status-block {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .order-tracker-card {
+    padding: 16px 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .order-title {
+    font-size: 20px;
+  }
+
+  .order-item-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .item-total-col {
+    text-align: left;
+    width: 100%;
+  }
+}
+
+
+/* ======================================================
+   RETURN ORDER & REFUND STATUS STYLES
+   Grocery Sathi
+====================================================== */
+
+.btn-request-return {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-request-return:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  transform: translateY(-1px);
+}
+
+.btn-return-action {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  background: #ffffff;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.08);
+}
+
+.btn-return-action:hover {
+  background: #fef2f2;
+  border-color: #f87171;
+  color: #b91c1c;
+}
+
+/* Return Status Card */
+.order-return-status-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.order-return-status-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  background: #059669;
+}
+
+.return-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.return-card-badge-wrap {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.return-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.return-status-sub {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.return-refund-success-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  border-radius: 20px;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+/* Details grid */
+.return-card-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.return-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.return-meta-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.return-meta-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.return-meta-val {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.return-meta-val.highlight {
+  color: #0f2a4a;
+}
+
+.return-meta-val.capitalize {
+  text-transform: capitalize;
+}
+
+/* Photos section */
+.return-photos-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.return-photos-heading {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.return-photos-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.return-photo-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1.5px solid #cbd5e1;
+  display: block;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.return-photo-thumb:hover {
+  transform: scale(1.06);
+  border-color: #059669;
+}
+
+.return-photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 640px) {
+  .order-return-status-card {
+    padding: 16px;
+  }
+
+  .return-card-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .return-card-details {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ======================================================
+   RETURN PICKUP DETAILS & VERIFICATION OTP STYLES
+====================================================== */
+
+.return-pickup-details-card {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.pickup-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pickup-card-title-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.pickup-truck-icon {
+  color: #059669;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.pickup-card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.pickup-card-sub {
+  margin: 3px 0 0 0;
+  font-size: 12.5px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.pickup-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pickup-status-pill.pending {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.pickup-status-pill.verified {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+/* OTP Highlight Box */
+.pickup-otp-highlight-box {
+  background: #ffffff;
+  border: 2px dashed #059669;
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.08);
+}
+
+.otp-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.otp-label-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #059669;
+}
+
+.otp-digits-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.otp-digit-box {
+  width: 38px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ecfdf5;
+  border: 1.5px solid #a7f3d0;
+  border-radius: 8px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #047857;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.otp-security-instruction {
+  margin: 0;
+  font-size: 12px;
+  color: #047857;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.otp-right-col {
+  flex-shrink: 0;
+}
+
+.btn-copy-otp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  background: #059669;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+  transition: all 0.15s ease;
+}
+
+.btn-copy-otp:hover {
+  background: #047857;
+  transform: translateY(-1px);
+}
+
+/* Appointment Metadata Grid */
+.pickup-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.pickup-meta-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pickup-meta-block.full-col {
+  grid-column: 1 / -1;
+}
+
+.pm-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pm-val {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1e293b;
+  flex-wrap: wrap;
+}
+
+.pm-val.note {
+  font-style: italic;
+  font-weight: 500;
+  color: #475569;
+}
+
+.pm-phone-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: #e2e8f0;
+  border-radius: 6px;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.pm-phone-link:hover {
+  background: #cbd5e1;
+}
+
+@media (max-width: 600px) {
+  .pickup-otp-highlight-box {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn-copy-otp {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
+/* ======================================================
+   COMPACT RETURN & REFUND STRIP (MINIMAL HEIGHT)
+====================================================== */
+
+.order-return-compact-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #059669;
+  border-radius: 12px;
+  padding: 12px 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.return-compact-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.return-compact-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.return-compact-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 13.5px;
+  color: #334155;
+}
+
+.return-compact-reason strong {
+  color: #0f172a;
+}
+
+.return-compact-note {
+  color: #64748b;
+  max-width: 400px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.return-compact-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Compact Pickup Row */
+.return-compact-pickup-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
+  font-size: 12.5px;
+}
+
+.pickup-compact-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+}
+
+.pickup-compact-otp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+
+.pickup-otp-lbl {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #047857;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pickup-otp-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 15px;
+  font-weight: 800;
+  color: #065f46;
+  letter-spacing: 2px;
+}
+
+.btn-copy-otp-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: #059669;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-copy-otp-compact:hover {
+  background: #047857;
+}
+
+@media (max-width: 640px) {
+  .order-return-compact-card {
+    padding: 10px 14px;
+  }
+
+  .return-compact-main {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .return-compact-pickup-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ======================================================
+   PRODUCT RATE & REVIEW STYLES IN ORDER ITEMS
+====================================================== */
+
+.item-review-action {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.item-rate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.item-rate-btn:hover {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #f59e0b;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.2);
+}
+
+.item-rate-btn svg {
+  color: #f59e0b;
+}
+
+.item-reviewed-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.item-reviewed-pill:hover {
+  background: #d1fae5;
+  border-color: #10b981;
+}
+
+.item-reviewed-pill svg {
+  color: #10b981;
+}
+

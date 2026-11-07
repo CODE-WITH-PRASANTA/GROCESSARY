@@ -59,7 +59,7 @@ exports.updateBanner = async (req, res) => {
       // Optional: Delete old image file from server if needed
     }
 
-    const updatedBanner = await Banner.findByIdAndUpdate(id, updateData, { new: true });
+    const updatedBanner = await Banner.findByIdAndUpdate(id, updateData, { returnDocument: 'after' });
     if (!updatedBanner) return res.status(404).json({ error: 'Banner not found' });
 
     res.status(200).json(updatedBanner);
@@ -74,7 +74,7 @@ exports.updateBannerStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const updatedBanner = await Banner.findByIdAndUpdate(id, { status }, { new: true });
+    const updatedBanner = await Banner.findByIdAndUpdate(id, { status }, { returnDocument: 'after' });
     if (!updatedBanner) return res.status(404).json({ error: 'Banner not found' });
 
     res.status(200).json(updatedBanner);

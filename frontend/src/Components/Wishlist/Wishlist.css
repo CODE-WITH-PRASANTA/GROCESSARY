@@ -10,7 +10,8 @@
 }
 
 .wishlist-container {
-  width: min(1280px, 100% - 40px);
+  width: min(1380px, 100% - 40px);
+  max-width: 1380px;
   margin: 0 auto;
 }
 

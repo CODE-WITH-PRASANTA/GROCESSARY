@@ -458,7 +458,7 @@ const changeUnitStatus = async (req, res) => {
         status,
       },
       {
-        new: true,
+        returnDocument: "after",
         runValidators: true,
       }
     );

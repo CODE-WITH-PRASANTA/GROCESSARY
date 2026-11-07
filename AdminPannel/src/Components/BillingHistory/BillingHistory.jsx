@@ -28,6 +28,7 @@ import {
 
 import Swal from "sweetalert2";
 import API, { BASE_URL } from "../../api/axios";
+import { downloadOrderInvoicePdf } from "../../Utils/directInvoiceDownloader";
 import "./BillingHistory.css";
 
 // =========================================================
@@ -92,6 +93,7 @@ const BillingHistory = () => {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [downloadingBillId, setDownloadingBillId] = useState(null);
 
   const billsPerPage = 8;
 
@@ -308,115 +310,15 @@ const BillingHistory = () => {
     fetchBills();
   };
 
-  const handlePrint = () => {
-    if (!activeBill) return;
-
-    const itemsHtml = (activeBill.products || [])
-      .map(
-        (p, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${p.name}<br/><small>${p.variant || ""}</small></td>
-          <td>₹${p.price}</td>
-          <td>${p.qty}</td>
-          <td>₹${p.price * p.qty}</td>
-        </tr>`,
-      )
-      .join("");
-
-    const cashLines =
-      activeBill.payment === "Cash"
-        ? `
-        <div class="row"><span>Amount Received</span><strong>₹${activeBill.amountReceived}</strong></div>
-        <div class="row"><span>Change</span><strong>₹${activeBill.changeReturned}</strong></div>`
-        : "";
-
-    const upiLine =
-      activeBill.payment === "UPI" && activeBill.upiTransactionId
-        ? `<div class="details"><span>UPI Txn: ${activeBill.upiTransactionId}</span></div>`
-        : "";
-
-    const w = window.open("", "_blank", "width=450,height=750");
-    if (!w) {
-      Swal.fire({
-        icon: "error",
-        title: "Print blocked",
-        text: "Please allow popups.",
-        confirmButtonColor: "#0aad4b",
-      });
-      return;
+  const handleDirectDownloadInvoice = async (bill) => {
+    const target = bill || activeBill;
+    if (!target) return;
+    setDownloadingBillId(target.id || target._id || "active");
+    try {
+      await downloadOrderInvoicePdf(target);
+    } finally {
+      setDownloadingBillId(null);
     }
-
-    w.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${activeBill.invoice}</title>
-        <style>
-          * { box-sizing: border-box; }
-          body { margin: 0; padding: 25px; font-family: Arial, sans-serif; }
-          .receipt { max-width: 430px; margin: auto; }
-          .logo { text-align: center; color: #078c3e; font-size: 27px; font-weight: 800; }
-          .tagline { text-align: center; font-size: 13px; color: #475569; margin-bottom: 20px; }
-          .details { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; }
-          table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 12px; }
-          th { background: #f1f5f9; text-align: left; }
-          th, td { padding: 8px 5px; border-bottom: 1px solid #e5e7eb; }
-          .grand { margin-top: 8px; padding: 12px; background: #eaffed; border-radius: 8px; color: #087b38; font-weight: 800; font-size: 18px; }
-          .row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; }
-        </style>
-      </head>
-      <body>
-        <div class="receipt">
-          <div class="logo">Grocery Sati</div>
-          <div class="tagline">Fresh Grocery, Better Living!</div>
-
-          <div class="details">
-            <span>Invoice: ${activeBill.invoice}</span>
-            <span>Date: ${activeBill.date}</span>
-          </div>
-
-          <div class="details">
-            <span>Customer: ${activeBill.customer}</span>
-            <span>Mobile: ${activeBill.contact}</span>
-          </div>
-
-          <div class="details">
-            <span>Payment: ${activeBill.payment}</span>
-          </div>
-
-          ${upiLine}
-
-          <table>
-            <thead>
-              <tr><th>#</th><th>Item</th><th>Price</th><th>Qty</th><th>Total</th></tr>
-            </thead>
-            <tbody>${itemsHtml}</tbody>
-          </table>
-
-          <div style="margin-top:18px">
-            <div class="row"><span>Subtotal</span><strong>₹${activeBill.subtotal}</strong></div>
-            <div class="row"><span>Discount</span><strong>₹${activeBill.discount}</strong></div>
-            <div class="grand">
-              <div class="row"><span>Total Amount</span><span>₹${activeBill.total}</span></div>
-            </div>
-            ${cashLines}
-          </div>
-
-          <div style="text-align:center;margin-top:25px;font-size:13px;color:#475569">
-            Thank you for shopping with us!
-          </div>
-        </div>
-        <script>
-          window.onload = function() {
-            window.print();
-            window.onafterprint = function() { window.close(); };
-          };
-        </script>
-      </body>
-      </html>
-    `);
-    w.document.close();
   };
 
   const handleDownload = () => {
@@ -762,14 +664,12 @@ Thank you for shopping with us!
                               </button>
 
                               <button
-                                title="Print"
-                                onClick={() => {
-                                  setSelectedBill(bill);
-                                  setTimeout(handlePrint, 50);
-                                }}
+                                title="Download Invoice PDF"
+                                onClick={() => handleDirectDownloadInvoice(bill)}
                                 className="BillingHistory-printAction"
+                                disabled={downloadingBillId === bill.id}
                               >
-                                <Printer size={17} />
+                                <Download size={17} />
                               </button>
 
                               <button
@@ -976,10 +876,13 @@ Thank you for shopping with us!
             <div className="BillingHistory-detailsActions">
               <button
                 className="BillingHistory-printBill"
-                onClick={handlePrint}
+                onClick={() => handleDirectDownloadInvoice(activeBill)}
+                disabled={downloadingBillId === (activeBill.id || "active")}
               >
-                <Printer size={19} />
-                Print Bill
+                <Download size={19} />
+                {downloadingBillId === (activeBill.id || "active")
+                  ? "Downloading..."
+                  : "Download Invoice"}
               </button>
 
               <button
@@ -987,7 +890,7 @@ Thank you for shopping with us!
                 onClick={handleDownload}
               >
                 <Download size={19} />
-                Download
+                Text Slip
               </button>
 
               <button

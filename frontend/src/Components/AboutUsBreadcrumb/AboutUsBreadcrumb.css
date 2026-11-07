@@ -83,7 +83,7 @@
 }
 
 .about-us-breadcrumb__title {
-  font-family: serif;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   font-size: 3rem;
   font-weight: 700;
   color: #fff9f0;

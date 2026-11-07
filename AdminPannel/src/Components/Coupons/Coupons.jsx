@@ -13,6 +13,10 @@ import {
   CheckCircle,
   Clock,
   Award,
+  Globe,
+  Lock,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import API from "../../api/axios";
 import "./Coupons.css";
@@ -32,6 +36,7 @@ const initialForm = {
   usageLimit: "",
   perUserLimit: 1,
   status: "Active",
+  isPublic: true,
 };
 
 const Coupons = () => {
@@ -41,11 +46,14 @@ const Coupons = () => {
     active: 0,
     inactive: 0,
     expired: 0,
+    publicCount: 0,
+    privateCount: 0,
     totalUsage: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [visibilityFilter, setVisibilityFilter] = useState("All");
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,6 +68,7 @@ const Coupons = () => {
       setIsLoading(true);
       const params = {};
       if (statusFilter !== "All") params.status = statusFilter;
+      if (visibilityFilter !== "All") params.visibility = visibilityFilter;
       if (search.trim()) params.search = search.trim();
 
       const res = await API.get("/coupons", { params });
@@ -81,7 +90,7 @@ const Coupons = () => {
 
   useEffect(() => {
     loadCoupons();
-  }, [statusFilter]);
+  }, [statusFilter, visibilityFilter]);
 
   // Handle Search submit
   const handleSearchSubmit = (e) => {
@@ -116,16 +125,22 @@ const Coupons = () => {
       usageLimit: coupon.usageLimit || "",
       perUserLimit: coupon.perUserLimit || 1,
       status: coupon.status || "Active",
+      isPublic: coupon.isPublic !== false,
     });
     setIsModalOpen(true);
   };
 
   // Form input changes
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "code" ? value.toUpperCase().replace(/\s+/g, "") : value,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : name === "code"
+          ? value.toUpperCase().replace(/\s+/g, "")
+          : value,
     }));
   };
 
@@ -141,6 +156,7 @@ const Coupons = () => {
         maxDiscount: formData.maxDiscount ? Number(formData.maxDiscount) : null,
         usageLimit: formData.usageLimit ? Number(formData.usageLimit) : null,
         perUserLimit: formData.perUserLimit ? Number(formData.perUserLimit) : 1,
+        isPublic: formData.isPublic !== false,
       };
 
       if (editingId) {
@@ -186,6 +202,21 @@ const Coupons = () => {
       }
     } catch (err) {
       alert(err.response?.data?.message || "Failed to change coupon status");
+    }
+  };
+
+  // Toggle visibility (Public / Private)
+  const handleToggleVisibility = async (coupon) => {
+    try {
+      const res = await API.patch(`/coupons/${coupon._id}/visibility`);
+      if (res.data?.success) {
+        setCoupons((prev) =>
+          prev.map((c) => (c._id === coupon._id ? res.data.data : c))
+        );
+        loadCoupons();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to change coupon visibility");
     }
   };
 
@@ -238,12 +269,22 @@ const Coupons = () => {
         </div>
 
         <div className="coupon-stat-card">
-          <div className="coupon-stat-icon amber">
-            <Clock />
+          <div className="coupon-stat-icon teal">
+            <Globe />
           </div>
           <div className="coupon-stat-info">
-            <h4>Inactive / Expired</h4>
-            <h2>{stats.inactive + stats.expired}</h2>
+            <h4>Public (Store)</h4>
+            <h2>{stats.publicCount ?? coupons.filter((c) => c.isPublic !== false).length}</h2>
+          </div>
+        </div>
+
+        <div className="coupon-stat-card">
+          <div className="coupon-stat-icon indigo">
+            <Lock />
+          </div>
+          <div className="coupon-stat-info">
+            <h4>Private (Hidden)</h4>
+            <h2>{stats.privateCount ?? coupons.filter((c) => c.isPublic === false).length}</h2>
           </div>
         </div>
 
@@ -274,6 +315,16 @@ const Coupons = () => {
         <div className="coupons-filter-group">
           <select
             className="coupons-filter-select"
+            value={visibilityFilter}
+            onChange={(e) => setVisibilityFilter(e.target.value)}
+          >
+            <option value="All">All Visibility (Public & Private)</option>
+            <option value="public">🌐 Public (Visible on Website)</option>
+            <option value="private">🔒 Private (Hidden Promo Code)</option>
+          </select>
+
+          <select
+            className="coupons-filter-select"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -302,6 +353,7 @@ const Coupons = () => {
               <tr>
                 <th>Code</th>
                 <th>Title / Description</th>
+                <th>Visibility</th>
                 <th>Discount</th>
                 <th>Min Order</th>
                 <th>Validity</th>
@@ -313,13 +365,13 @@ const Coupons = () => {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: "center", padding: "32px", color: "#64748b" }}>
+                  <td colSpan="9" style={{ textAlign: "center", padding: "32px", color: "#64748b" }}>
                     Loading coupons...
                   </td>
                 </tr>
               ) : coupons.length === 0 ? (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: "center", padding: "32px", color: "#64748b" }}>
+                  <td colSpan="9" style={{ textAlign: "center", padding: "32px", color: "#64748b" }}>
                     No coupons found. Click "Add New Coupon" to create your first discount coupon.
                   </td>
                 </tr>
@@ -343,6 +395,29 @@ const Coupons = () => {
                     <td className="coupon-title-cell">
                       <strong>{c.title}</strong>
                       <span>{c.description || "No description provided"}</span>
+                    </td>
+
+                    <td>
+                      <button
+                        type="button"
+                        className={`coupon-visibility-toggle-btn ${c.isPublic !== false ? "is-public" : "is-private"}`}
+                        onClick={() => handleToggleVisibility(c)}
+                        title={
+                          c.isPublic !== false
+                            ? "Public: Visible to shoppers in Cart & Checkout offers. Click to make Private."
+                            : "Private: Hidden from website, code-only. Click to make Public."
+                        }
+                      >
+                        <span className="cvt-icon">
+                          {c.isPublic !== false ? <Globe size={13} /> : <Lock size={13} />}
+                        </span>
+                        <span className="cvt-label">
+                          {c.isPublic !== false ? "Public" : "Private"}
+                        </span>
+                        <span className="cvt-switch">
+                          <span className="cvt-slider" />
+                        </span>
+                      </button>
                     </td>
 
                     <td>
@@ -467,6 +542,48 @@ const Coupons = () => {
                     value={formData.description}
                     onChange={handleInputChange}
                   />
+                </div>
+
+                {/* Visibility Toggle Selector: Public vs Private */}
+                <div className="coupon-visibility-selector-group">
+                  <label className="coupon-vis-field-label">Coupon Visibility *</label>
+                  <div className="coupon-vis-toggle-grid">
+                    <div
+                      className={`coupon-vis-option-card ${formData.isPublic ? "active" : ""}`}
+                      onClick={() => setFormData((prev) => ({ ...prev, isPublic: true }))}
+                    >
+                      <div className="vis-card-header">
+                        <div className="vis-radio-indicator">
+                          <span className={`vis-radio-dot ${formData.isPublic ? "checked" : ""}`} />
+                        </div>
+                        <div className="vis-card-badge public">
+                          <Globe size={16} />
+                          <span>Public Coupon</span>
+                        </div>
+                      </div>
+                      <p className="vis-card-description">
+                        Visible on website offers list. All customers can see and apply this coupon during checkout.
+                      </p>
+                    </div>
+
+                    <div
+                      className={`coupon-vis-option-card ${!formData.isPublic ? "active" : ""}`}
+                      onClick={() => setFormData((prev) => ({ ...prev, isPublic: false }))}
+                    >
+                      <div className="vis-card-header">
+                        <div className="vis-radio-indicator">
+                          <span className={`vis-radio-dot ${!formData.isPublic ? "checked" : ""}`} />
+                        </div>
+                        <div className="vis-card-badge private">
+                          <Lock size={16} />
+                          <span>Private Coupon</span>
+                        </div>
+                      </div>
+                      <p className="vis-card-description">
+                        Hidden from website offers. Only customers with the direct promo code (SMS/Email/Campaign) can apply it.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="coupon-form-row">

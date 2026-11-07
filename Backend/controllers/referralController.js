@@ -9,9 +9,13 @@ const generateReferralCode = require("../utils/generateReferralCode");
 // Internal — called on new user signup when a referral code is provided
 const applyReferralCode = async (newUserId, code) => {
   if (!code) return null;
+  const cleanCode = code.toString().trim().toUpperCase();
 
-  const referrer = await User.findOne({ referralCode: code });
+  const referrer = await User.findOne({ referralCode: cleanCode });
   if (!referrer) return null;
+
+  // A user cannot refer themselves
+  if (referrer._id.toString() === newUserId.toString()) return null;
 
   // A user can only be referred once
   const alreadyReferred = await Referral.findOne({ referred: newUserId });
@@ -21,7 +25,7 @@ const applyReferralCode = async (newUserId, code) => {
   const referral = await Referral.create({
     referrer: referrer._id,
     referred: newUserId,
-    referralCode: code,
+    referralCode: cleanCode,
     status: "pending",
     friendRewardAmount: rewards.FRIEND_WALLET_BONUS,
     friendRewardPoints: rewards.FRIEND_POINTS_BONUS,
@@ -124,7 +128,7 @@ const rewardReferrerOnFirstOrder = async (userId, orderId) => {
 const getMyReferrals = async (req, res) => {
   try {
     const referrals = await Referral.find({ referrer: req.user._id })
-      .populate("referred", "name phone email avatar createdAt")
+      .populate("referred", "firstName lastName email mobile profileImage createdAt")
       .sort({ createdAt: -1 });
 
     const summary = {
@@ -146,7 +150,6 @@ const getMyReferrals = async (req, res) => {
 };
 
 // GET /api/referrals/link
-// GET /api/referrals/link
 const getMyReferralLink = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -163,7 +166,7 @@ const getMyReferralLink = async (req, res) => {
       let exists = true;
 
       while (exists) {
-        code = generateReferralCode(user.name || "USER");
+        code = generateReferralCode(user.firstName || "USER");
         exists = await User.exists({ referralCode: code });
       }
 
@@ -171,12 +174,13 @@ const getMyReferralLink = async (req, res) => {
       await user.save();
     }
 
-    const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const link = `${baseUrl}/signup?ref=${user.referralCode}`;
+    const baseUrl = process.env.FRONTEND_URL || "";
+    const link = baseUrl ? `${baseUrl}/login?ref=${user.referralCode}` : `/login?ref=${user.referralCode}`;
 
     return res.status(200).json({
       success: true,
       code: user.referralCode,
+      referralCode: user.referralCode,
       link,
     });
   } catch (err) {
@@ -187,9 +191,154 @@ const getMyReferralLink = async (req, res) => {
   }
 };
 
+// GET /api/referrals/validate/:code
+const validateReferralCode = async (req, res) => {
+  try {
+    const { code } = req.params;
+    if (!code) {
+      return res
+        .status(400)
+        .json({ success: false, valid: false, message: "Referral code required." });
+    }
+
+    const cleanCode = code.toString().trim().toUpperCase();
+    const referrer = await User.findOne({ referralCode: cleanCode }).select(
+      "firstName lastName email"
+    );
+
+    if (!referrer) {
+      return res.status(200).json({
+        success: true,
+        valid: false,
+        message: "Invalid or expired referral code.",
+      });
+    }
+
+    const maskedName = `${referrer.firstName || "Grocery Sathi Member"} ${(
+      referrer.lastName || ""
+    ).slice(0, 1)}.`.trim();
+
+    return res.status(200).json({
+      success: true,
+      valid: true,
+      code: cleanCode,
+      referrerName: maskedName,
+      friendRewardAmount: rewards.FRIEND_WALLET_BONUS,
+      friendRewardPoints: rewards.FRIEND_POINTS_BONUS,
+      rewardDescription: `₹${rewards.FRIEND_WALLET_BONUS} Welcome Wallet Bonus + ${rewards.FRIEND_POINTS_BONUS} Reward Points`,
+    });
+  } catch (err) {
+    console.error("validateReferralCode error:", err);
+    return res
+      .status(500)
+      .json({ success: false, valid: false, message: "Validation error." });
+  }
+};
+
+// GET /api/referrals/admin/all
+const adminGetAllReferrals = async (req, res) => {
+  try {
+    const { search, status } = req.query;
+    let filter = {};
+    if (status && status !== "all") {
+      filter.status = status;
+    }
+
+    const referrals = await Referral.find(filter)
+      .populate(
+        "referrer",
+        "firstName lastName email mobile profileImage referralCode"
+      )
+      .populate(
+        "referred",
+        "firstName lastName email mobile profileImage createdAt"
+      )
+      .populate("firstOrderId", "orderId totalAmount orderStatus createdAt")
+      .sort({ createdAt: -1 });
+
+    let filteredList = referrals;
+    if (search && search.trim()) {
+      const q = search.trim().toLowerCase();
+      filteredList = referrals.filter((r) => {
+        const refName = `${r.referrer?.firstName || ""} ${
+          r.referrer?.lastName || ""
+        }`.toLowerCase();
+        const refEmail = (r.referrer?.email || "").toLowerCase();
+        const friendName = `${r.referred?.firstName || ""} ${
+          r.referred?.lastName || ""
+        }`.toLowerCase();
+        const friendEmail = (r.referred?.email || "").toLowerCase();
+        const code = (r.referralCode || "").toLowerCase();
+        return (
+          refName.includes(q) ||
+          refEmail.includes(q) ||
+          friendName.includes(q) ||
+          friendEmail.includes(q) ||
+          code.includes(q)
+        );
+      });
+    }
+
+    const totalAll = await Referral.countDocuments();
+    const completedAll = await Referral.countDocuments({ status: "completed" });
+    const pendingAll = await Referral.countDocuments({ status: "pending" });
+
+    const paidAgg = await Referral.aggregate([
+      { $match: { status: "completed" } },
+      {
+        $group: {
+          _id: null,
+          totalReward: { $sum: "$rewardAmount" },
+          totalPoints: { $sum: "$rewardPoints" },
+        },
+      },
+    ]);
+
+    const friendPaidAgg = await Referral.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalFriendReward: { $sum: "$friendRewardAmount" },
+          totalFriendPoints: { $sum: "$friendRewardPoints" },
+        },
+      },
+    ]);
+
+    const summary = {
+      totalReferrals: totalAll,
+      completedReferrals: completedAll,
+      pendingReferrals: pendingAll,
+      totalReferrerPaid: paidAgg[0]?.totalReward || 0,
+      totalFriendBonusPaid: friendPaidAgg[0]?.totalFriendReward || 0,
+      totalPointsAwarded:
+        (paidAgg[0]?.totalPoints || 0) +
+        (friendPaidAgg[0]?.totalFriendPoints || 0),
+      config: {
+        referrerWalletBonus: rewards.REFERRER_WALLET_BONUS,
+        referrerPointsBonus: rewards.REFERRER_POINTS_BONUS,
+        friendWalletBonus: rewards.FRIEND_WALLET_BONUS,
+        friendPointsBonus: rewards.FRIEND_POINTS_BONUS,
+      },
+    };
+
+    return res.status(200).json({
+      success: true,
+      referrals: filteredList,
+      summary,
+    });
+  } catch (err) {
+    console.error("adminGetAllReferrals error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to load admin referrals." });
+  }
+};
+
 module.exports = {
   applyReferralCode,
   rewardReferrerOnFirstOrder,
   getMyReferrals,
   getMyReferralLink,
+  validateReferralCode,
+  adminGetAllReferrals,
 };

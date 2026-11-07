@@ -1719,28 +1719,17 @@ export const OurBestsellers = () => {
 
         
 
-        setCartMessage(
-          `${getProductName(
-            item
-          )} added to cart`
-        );
-
         window.dispatchEvent(
           new CustomEvent(
             "cartUpdated",
             {
               detail: {
                 productId,
-
                 quantity: qty,
               },
             }
           )
         );
-
-        setTimeout(() => {
-          setCartMessage("");
-        }, 2500);
 
         return;
       }
@@ -1753,16 +1742,6 @@ export const OurBestsellers = () => {
         item,
         qty
       );
-
-      setCartMessage(
-        `${getProductName(
-          item
-        )} added to cart`
-      );
-
-      setTimeout(() => {
-        setCartMessage("");
-      }, 2500);
     } catch (error) {
       console.error(
         "Add to cart error:",
@@ -2208,23 +2187,6 @@ export const OurBestsellers = () => {
             No products found in this category.
           </div>
         )}
-
-      {/* =====================================================
-          CART SUCCESS MESSAGE
-      ===================================================== */}
-
-      {cartMessage && (
-        <div
-          className="OurBestsellers-cart-toast"
-          role="status"
-        >
-          <FaShoppingBag />
-
-          <span>
-            {cartMessage}
-          </span>
-        </div>
-      )}
 
       {/* =====================================================
           QUICK VIEW MODAL

@@ -22,10 +22,66 @@ import {
   ShieldCheck,
   ChevronRight,
   ShoppingBag,
+  FileText,
+  RotateCcw,
+  Star,
 } from "lucide-react";
 import API, { BASE_URL } from "../../api/axios";
-import { downloadInvoicePdf } from "../../Utils/generateInvoicePdf";
+import { downloadOrderInvoicePdf } from "../../Utils/directInvoiceDownloader";
+import ReturnOrderModal from "./ReturnOrderModal";
+import ReviewProductModal from "./ReviewProductModal";
 import "./OrderDetails.css";
+
+const RETURN_STATUS_MAP = {
+  requested: {
+    label: "Return Requested",
+    sub: "Under Review by Grocery Sathi Team",
+    color: "#d97706",
+    bg: "#fef3c7",
+  },
+  approved: {
+    label: "Return Approved",
+    sub: "Pickup will be scheduled shortly",
+    color: "#2563eb",
+    bg: "#dbeafe",
+  },
+  pickup_scheduled: {
+    label: "Pickup Scheduled",
+    sub: "Delivery partner assigned for pickup",
+    color: "#7c3aed",
+    bg: "#ede9fe",
+  },
+  picked: {
+    label: "Item Picked Up",
+    sub: "In transit to verification hub",
+    color: "#0891b2",
+    bg: "#cffafe",
+  },
+  inspection: {
+    label: "Quality Inspection",
+    sub: "Verifying returned items & condition",
+    color: "#ea580c",
+    bg: "#ffedd5",
+  },
+  refunded: {
+    label: "Refund Successfully Processed",
+    sub: "Amount credited to your source / wallet",
+    color: "#16a34a",
+    bg: "#dcfce7",
+  },
+  rejected: {
+    label: "Return Request Rejected",
+    sub: "Did not meet return guidelines",
+    color: "#dc2626",
+    bg: "#fee2e2",
+  },
+  replaced: {
+    label: "Replacement Dispatched",
+    sub: "Replacement order is on its way",
+    color: "#16a34a",
+    bg: "#dcfce7",
+  },
+};
 
 const OrderDetails = () => {
   const { id } = useParams();
@@ -37,6 +93,14 @@ const OrderDetails = () => {
   const [copied, setCopied] = useState(false);
   const [copiedTracking, setCopiedTracking] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [copiedOtp, setCopiedOtp] = useState(false);
+
+  // Review states
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewProduct, setReviewProduct] = useState(null);
+  const [orderReviews, setOrderReviews] = useState({});
 
   // Helper: Resolve product image url
   const resolveImage = (path) => {
@@ -50,6 +114,24 @@ const OrderDetails = () => {
     return `${BASE_URL}/${str.replace(/^\/+/, "")}`;
   };
 
+  // Fetch reviews already submitted for this order
+  const fetchOrderReviews = useCallback(async (orderNumber) => {
+    if (!orderNumber) return;
+    try {
+      const res = await API.get(`/reviews/order/${encodeURIComponent(orderNumber)}`);
+      if (res.data?.success && Array.isArray(res.data.reviews)) {
+        const map = {};
+        res.data.reviews.forEach((r) => {
+          const pid = String(r.product?._id || r.product || "");
+          if (pid) map[pid] = r;
+        });
+        setOrderReviews(map);
+      }
+    } catch (e) {
+      // Non-blocking
+    }
+  }, []);
+
   // Fetch Order by ID
   const fetchOrder = useCallback(async () => {
     try {
@@ -58,6 +140,7 @@ const OrderDetails = () => {
       const res = await API.get(`/orders/${id}`);
       if (res.data?.success && res.data?.order) {
         setOrder(res.data.order);
+        fetchOrderReviews(res.data.order?.orderNumber || id);
       } else {
         setError(res.data?.message || "Order not found.");
       }
@@ -69,7 +152,39 @@ const OrderDetails = () => {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, fetchOrderReviews]);
+
+  // Open review modal for a specific product item
+  const handleOpenReviewModal = (item, existing = null) => {
+    const prod = item.product && typeof item.product === "object" ? item.product : {};
+    const prodId = prod._id || prod.id || item.productId || item.product;
+    const prodName = item.productName || prod.productName || prod.name || "Grocery Item";
+    const prodImg = resolveImage(
+      item.image || (Array.isArray(prod.images) && prod.images[0]) || prod.image
+    );
+    const prodUnit = item.unit || prod.unit || "";
+
+    setReviewProduct({
+      _id: prodId,
+      id: prodId,
+      name: prodName,
+      productName: prodName,
+      image: prodImg,
+      unit: prodUnit,
+      existingReview: existing,
+    });
+    setReviewModalOpen(true);
+  };
+
+  const handleReviewSubmitted = (reviewData) => {
+    if (reviewData?.productId) {
+      setOrderReviews((prev) => ({
+        ...prev,
+        [String(reviewData.productId)]: reviewData,
+      }));
+    }
+    fetchOrder();
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -90,6 +205,14 @@ const OrderDetails = () => {
     navigator.clipboard.writeText(code);
     setCopiedTracking(true);
     setTimeout(() => setCopiedTracking(false), 2000);
+  };
+
+  // Copy Pickup OTP
+  const handleCopyOtp = (otpCode) => {
+    if (!otpCode) return;
+    navigator.clipboard.writeText(otpCode);
+    setCopiedOtp(true);
+    setTimeout(() => setCopiedOtp(false), 2000);
   };
 
   // Cancel Order Handler
@@ -264,6 +387,8 @@ const OrderDetails = () => {
     : "Recently placed";
 
   const isCancellable = ["pending", "confirmed"].includes(currentStatus);
+  const hasReturn = Boolean(order.returnStatus && order.returnStatus !== "none");
+  const isReturnable = isDelivered && !hasReturn;
 
   // Resolve user-friendly payment mode name
   const paymentModeLabel =
@@ -273,7 +398,7 @@ const OrderDetails = () => {
     <div className="order-details-wrapper">
       <div className="order-details-container">
         {/* TOP BAR / BREADCRUMB */}
-        <div className="order-top-nav-row no-print">
+        <div className="order-top-nav-row">
           <nav className="order-breadcrumb" aria-label="Breadcrumb">
             <Link to="/" className="breadcrumb-link">
               Home
@@ -303,15 +428,118 @@ const OrderDetails = () => {
               <button
                 type="button"
                 className="btn-download-invoice"
-                onClick={() => downloadInvoicePdf(order)}
-                title="Download Tax Invoice (PDF)"
+                onClick={async () => {
+                  setDownloadingInvoice(true);
+                  try {
+                    await downloadOrderInvoicePdf(order);
+                  } finally {
+                    setDownloadingInvoice(false);
+                  }
+                }}
+                disabled={downloadingInvoice}
+                title="Direct Download Tax Invoice (PDF)"
               >
                 <Download size={16} />
-                <span>Download Invoice</span>
+                <span>{downloadingInvoice ? "Downloading..." : "Download Invoice"}</span>
+              </button>
+            )}
+
+            {/* RETURN / REFUND ORDER BUTTON AFTER DELIVERED */}
+            {isReturnable && (
+              <button
+                type="button"
+                className="btn-request-return"
+                onClick={() => setShowReturnModal(true)}
+                title="Request Return or Refund for Damaged/Defective Items"
+              >
+                <RotateCcw size={16} />
+                <span>Return / Refund</span>
               </button>
             )}
           </div>
         </div>
+
+        {/* COMPACT RETURN & REFUND STATUS STRIP */}
+        {hasReturn && (
+          <div className="order-return-compact-card">
+            <div className="return-compact-main">
+              <div className="return-compact-left">
+                <span
+                  className="return-status-badge"
+                  style={{
+                    color: (RETURN_STATUS_MAP[order.returnStatus] || RETURN_STATUS_MAP.requested).color,
+                    background: (RETURN_STATUS_MAP[order.returnStatus] || RETURN_STATUS_MAP.requested).bg,
+                  }}
+                >
+                  <RotateCcw size={14} />
+                  {(RETURN_STATUS_MAP[order.returnStatus] || RETURN_STATUS_MAP.requested).label}
+                </span>
+
+                <div className="return-compact-info">
+                  <span className="return-compact-reason">
+                    <strong>Reason:</strong> {order.returnReason || "Return requested"} ({order.returnType || "Refund"})
+                  </span>
+                  {order.returnNote && (
+                    <span className="return-compact-note">
+                      • Note: <em>"{order.returnNote}"</em>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="return-compact-right">
+                {order.returnStatus === "refunded" ? (
+                  <span className="return-refund-success-pill">
+                    <CheckCircle2 size={14} />
+                    <span>Refunded: ₹{Number(order.returnAmount || order.payableAmount || 0).toFixed(2)}</span>
+                  </span>
+                ) : (
+                  <span className="return-status-sub">
+                    {(RETURN_STATUS_MAP[order.returnStatus] || RETURN_STATUS_MAP.requested).sub}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* ONLY SHOW PICKUP DETAILS IF STATUS IS PICKUP_SCHEDULED (OR HAS ACTIVE OTP) */}
+            {order.returnStatus === "pickup_scheduled" && order.pickupDetails && (
+              <div className="return-compact-pickup-row">
+                <div className="pickup-compact-left">
+                  <Truck size={15} className="pickup-truck-icon" />
+                  <span className="pickup-compact-text">
+                    <strong>Pickup Scheduled:</strong>{" "}
+                    {order.pickupDetails.scheduledAt
+                      ? new Date(order.pickupDetails.scheduledAt).toLocaleString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "Soon"}
+                    {order.pickupDetails.slot ? ` (${order.pickupDetails.slot})` : ""}
+                    {order.pickupDetails.agent ? ` • Agent: ${order.pickupDetails.agent}` : ""}
+                  </span>
+                </div>
+
+                {order.pickupDetails.otp && (
+                  <div className="pickup-compact-otp">
+                    <span className="pickup-otp-lbl">OTP:</span>
+                    <span className="pickup-otp-code">{order.pickupDetails.otp}</span>
+                    <button
+                      type="button"
+                      className="btn-copy-otp-compact"
+                      onClick={() => handleCopyOtp(order.pickupDetails.otp)}
+                      title="Copy OTP"
+                    >
+                      {copiedOtp ? <Check size={12} /> : <Copy size={12} />}
+                      <span>{copiedOtp ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ORDER HEADER HERO CARD */}
         <div className="order-hero-card">
@@ -354,7 +582,7 @@ const OrderDetails = () => {
 
         {/* ORDER PROGRESS TRACKER (SHIPPED ADDED, PROCESSING REMOVED) */}
         {!isCancelled ? (
-          <div className="order-tracker-card no-print">
+          <div className="order-tracker-card">
             <h3 className="tracker-heading">Delivery Status</h3>
             <div className="tracker-steps-container">
               {trackerSteps.map((step, idx) => {
@@ -411,7 +639,7 @@ const OrderDetails = () => {
             order.shippingDetails.agentName
           ))
         ) && (
-          <div className="order-live-tracking-card no-print">
+          <div className="order-live-tracking-card">
             <div className="live-tracking-header">
               <Truck size={18} className="tracking-truck-icon" />
               <h3>Live Shipment & Delivery Details</h3>
@@ -552,6 +780,36 @@ const OrderDetails = () => {
 
                       <div className="item-total-col">
                         <span className="item-subtotal-price">₹{itemTotal.toFixed(2)}</span>
+                        <div className="item-review-action">
+                          {orderReviews[String(prod._id || prod.id || item.productId || item.product)] ? (
+                            <button
+                              type="button"
+                              className="item-reviewed-pill"
+                              onClick={() =>
+                                handleOpenReviewModal(
+                                  item,
+                                  orderReviews[String(prod._id || prod.id || item.productId || item.product)]
+                                )
+                              }
+                              title="Click to view or edit your review"
+                            >
+                              <Star size={12} fill="#febb00" stroke="#febb00" />
+                              <span>
+                                {orderReviews[String(prod._id || prod.id || item.productId || item.product)].rating}★ Reviewed
+                              </span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="item-rate-btn"
+                              onClick={() => handleOpenReviewModal(item)}
+                              title="Share your review for this product"
+                            >
+                              <Star size={12} />
+                              <span>Rate &amp; Review</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -673,7 +931,7 @@ const OrderDetails = () => {
             </div>
 
             {/* ORDER ACTIONS & SUPPORT */}
-            <div className="order-section-card support-section-card no-print">
+            <div className="order-section-card support-section-card">
               {isCancellable && (
                 <button
                   type="button"
@@ -683,6 +941,17 @@ const OrderDetails = () => {
                 >
                   <XCircle size={16} />
                   <span>{cancelling ? "Cancelling..." : "Cancel Order"}</span>
+                </button>
+              )}
+
+              {isReturnable && (
+                <button
+                  type="button"
+                  className="btn-return-action"
+                  onClick={() => setShowReturnModal(true)}
+                >
+                  <RotateCcw size={16} />
+                  <span>Return / Refund Order</span>
                 </button>
               )}
 
@@ -709,6 +978,24 @@ const OrderDetails = () => {
           </div>
         </div>
       </div>
+
+      {/* RETURN ORDER MODAL */}
+      <ReturnOrderModal
+        order={order}
+        isOpen={showReturnModal}
+        onClose={() => setShowReturnModal(false)}
+        onSuccess={fetchOrder}
+      />
+
+      {/* REVIEW PRODUCT MODAL */}
+      <ReviewProductModal
+        isOpen={reviewModalOpen}
+        onClose={() => setReviewModalOpen(false)}
+        product={reviewProduct}
+        orderId={order?.orderNumber || id}
+        existingReview={reviewProduct?.existingReview}
+        onReviewSubmitted={handleReviewSubmitted}
+      />
     </div>
   );
 };

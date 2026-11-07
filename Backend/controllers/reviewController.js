@@ -139,10 +139,24 @@ const createReview = async (req, res) => {
     const cleanComment = comment.trim();
 
     // ======================================================
-    // FIND PRODUCT
+    // FIND PRODUCT (SUPPORT OBJECTID OR SLUG/NAME)
     // ======================================================
 
-    const product = await Product.findById(productId);
+    let product = null;
+    if (mongoose.Types.ObjectId.isValid(productId)) {
+      product = await Product.findById(productId);
+    }
+    if (!product) {
+      const decoded = decodeURIComponent(productId).trim();
+      const slugCandidate = decoded.toLowerCase().replace(/\s+/g, "-");
+      product = await Product.findOne({
+        $or: [
+          { slug: decoded.toLowerCase() },
+          { slug: slugCandidate },
+          { productName: new RegExp(`^${decoded}$`, "i") },
+        ],
+      });
+    }
 
     if (!product) {
       return res.status(404).json({
@@ -152,10 +166,7 @@ const createReview = async (req, res) => {
     }
 
     // ======================================================
-    // OPTIONAL DUPLICATE CHECK FOR LOGGED-IN USER
-    //
-    // Guests are allowed to submit reviews.
-    // Logged-in users cannot review the same product twice.
+    // LOGGED-IN USER: UPDATE IF EXISTING OR CREATE NEW
     // ======================================================
 
     let userId = null;
@@ -165,23 +176,38 @@ const createReview = async (req, res) => {
 
       const existingReview = await Review.findOne({
         user: userId,
-        product: productId,
+        product: product._id,
       });
 
       if (existingReview) {
-        return res.status(400).json({
-          success: false,
-          message: "You have already reviewed this product.",
+        existingReview.rating = reviewRating;
+        existingReview.title = cleanTitle;
+        existingReview.comment = cleanComment;
+        existingReview.reviewerName = cleanName;
+        if (cleanEmail) existingReview.reviewerEmail = cleanEmail;
+        existingReview.status = "pending";
+        if (req.body.orderId) {
+          existingReview.orderId = String(req.body.orderId).trim();
+          existingReview.verifiedPurchase = true;
+        }
+        await existingReview.save();
+
+        return res.status(200).json({
+          success: true,
+          message: "Review updated successfully. It will appear after admin approval.",
+          review: existingReview,
         });
       }
     }
 
     // ======================================================
     // CREATE REVIEW
-    //
-    // ALWAYS PENDING
-    // Admin must publish it.
+    // ALWAYS PENDING - Admin will publish it from admin panel
     // ======================================================
+
+    const isVerified = Boolean(
+      req.body.verifiedPurchase || req.body.orderId || req.body.order
+    );
 
     const review = await Review.create({
       user: userId,
@@ -190,7 +216,7 @@ const createReview = async (req, res) => {
 
       reviewerEmail: cleanEmail,
 
-      product: productId,
+      product: product._id,
 
       rating: reviewRating,
 
@@ -198,7 +224,14 @@ const createReview = async (req, res) => {
 
       comment: cleanComment,
 
-      verifiedPurchase: false,
+      verifiedPurchase: isVerified,
+
+      orderId: req.body.orderId ? String(req.body.orderId).trim() : "",
+
+      order:
+        req.body.order && mongoose.Types.ObjectId.isValid(req.body.order)
+          ? req.body.order
+          : null,
 
       status: "pending",
 
@@ -247,10 +280,29 @@ const getProductReviews = async (req, res) => {
     const { productId } = req.params;
 
     // ======================================================
-    // CHECK PRODUCT
+    // CHECK PRODUCT (SUPPORT OBJECTID OR SLUG/NAME)
     // ======================================================
 
-    const product = await Product.findById(productId);
+    let product = null;
+    if (mongoose.Types.ObjectId.isValid(productId)) {
+      product = await Product.findById(productId);
+    }
+    if (!product) {
+      const decoded = decodeURIComponent(productId).trim();
+      const slugCandidate = decoded.toLowerCase().replace(/\s+/g, "-");
+      const nameCandidate = decoded.replace(/-/g, " ");
+      const safeName = nameCandidate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const safeDecoded = decoded.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      product = await Product.findOne({
+        $or: [
+          { slug: decoded.toLowerCase() },
+          { slug: slugCandidate },
+          { productName: { $regex: new RegExp(`^${safeName}$`, "i") } },
+          { name: { $regex: new RegExp(`^${safeName}$`, "i") } },
+          { productName: { $regex: new RegExp(`^${safeDecoded}$`, "i") } },
+        ],
+      });
+    }
 
     if (!product) {
       return res.status(404).json({
@@ -264,10 +316,10 @@ const getProductReviews = async (req, res) => {
     // ======================================================
 
     const reviews = await Review.find({
-      product: productId,
+      product: product._id,
       status: "published",
     })
-      .populate("user", "name email mobile")
+      .populate("user", "name email mobile profileImage")
       .sort({
         createdAt: -1,
       });
@@ -575,12 +627,41 @@ const deleteReview = async (req, res) => {
 };
 
 
+// ======================================================
+// GET USER REVIEWS FOR SPECIFIC ORDER
+// ======================================================
+
+const getUserReviewsForOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    if (!orderId) {
+      return res.status(400).json({ success: false, message: "Order ID is required." });
+    }
+
+    const reviews = await Review.find({ orderId: String(orderId).trim() })
+      .select("product rating title comment status verifiedPurchase createdAt")
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      reviews,
+    });
+  } catch (error) {
+    console.error("Get order reviews error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch reviews for order.",
+    });
+  }
+};
+
 module.exports = {
   createReview,
   getProductReviews,
   getProductReviewSummaries,
   getLatestPublishedReviews,
   getAllReviews,
+  getUserReviewsForOrder,
   publishReview,
   rejectReview,
   unpublishReview,

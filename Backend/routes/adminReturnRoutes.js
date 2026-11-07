@@ -14,6 +14,9 @@ router.get("/", ctrl.listReturns);
 // Summary — must be BEFORE any /:id route
 router.get("/summary", ctrl.returnsSummary);
 
+// Get individual return details
+router.get("/:orderId", ctrl.getReturnDetails);
+
 // Actions
 router.put("/:orderId/status", ctrl.updateReturnStatus);
 router.put("/:orderId/assign", ctrl.assignReturn);

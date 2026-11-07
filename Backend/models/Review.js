@@ -83,12 +83,25 @@ const reviewSchema = new mongoose.Schema(
     },
 
     // ======================================================
-    // VERIFIED PURCHASE
+    // VERIFIED PURCHASE & ORDER TRACKING
     // ======================================================
 
     verifiedPurchase: {
       type: Boolean,
       default: false,
+    },
+
+    order: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      default: null,
+    },
+
+    orderId: {
+      type: String,
+      default: "",
+      trim: true,
+      index: true,
     },
 
     // ======================================================

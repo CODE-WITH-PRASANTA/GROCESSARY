@@ -1255,10 +1255,7 @@ const requestReturn = async (req, res) => {
     }
 
     if (!deliveredAt) {
-      return res.status(400).json({
-        success: false,
-        message: "Delivery date not available for this order.",
-      });
+      deliveredAt = order.updatedAt || order.createdAt || new Date();
     }
 
     // ---- Check the return window ----
@@ -1273,16 +1270,38 @@ const requestReturn = async (req, res) => {
       });
     }
 
+    // Collect uploaded damage photos (either via req.files or req.body.photos / req.body.images)
+    let photoPaths = [];
+    if (Array.isArray(req.files) && req.files.length > 0) {
+      photoPaths = req.files.map((f) => f.path || f.filename || "").filter(Boolean);
+    } else if (req.body.photos) {
+      photoPaths = Array.isArray(req.body.photos)
+        ? req.body.photos
+        : [req.body.photos];
+    } else if (req.body.images) {
+      photoPaths = Array.isArray(req.body.images)
+        ? req.body.images
+        : [req.body.images];
+    }
+
     // ---- Save the return request ----
     order.returnStatus = "requested";
     order.returnReason = reason;
     order.returnNote = note;
+    order.returnPhotos = photoPaths;
     order.returnRequestedAt = now;
+    order.returnAmount = order.payableAmount ?? order.totalAmount ?? 0;
+
+    order.pickupProof = order.pickupProof || {};
+    order.pickupProof.images = photoPaths;
+    order.pickupProof.condition = reason;
+    order.pickupProof.note = note;
+    order.pickupProof.uploadedAt = now;
 
     order.statusHistory = order.statusHistory || [];
     order.statusHistory.push({
       status: "return_requested",
-      note: `Return requested: ${reason}${note ? ` — ${note}` : ""}`,
+      note: `Return requested: ${reason}${note ? ` — ${note}` : ""}${photoPaths.length > 0 ? ` (${photoPaths.length} photo attached)` : ""}`,
     });
 
     await order.save();

@@ -60,13 +60,13 @@ const getBlogById = async (req, res) => {
       blog = await Blog.findByIdAndUpdate(
         id,
         { $inc: { views: 1 } },
-        { new: true }
+        { returnDocument: "after" }
       );
     } else {
       blog = await Blog.findOneAndUpdate(
         { slug: id.toLowerCase() },
         { $inc: { views: 1 } },
-        { new: true }
+        { returnDocument: "after" }
       );
     }
 
@@ -218,7 +218,7 @@ const updateBlog = async (req, res) => {
     }
 
     const updatedBlog = await Blog.findByIdAndUpdate(id, updateData, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     });
 
@@ -255,7 +255,7 @@ const updateBlogStatus = async (req, res) => {
     const blog = await Blog.findByIdAndUpdate(
       id,
       { status },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     );
 
     if (!blog) {

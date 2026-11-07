@@ -6,6 +6,7 @@ const {
   getProductReviewSummaries,
   getLatestPublishedReviews,
   getAllReviews,
+  getUserReviewsForOrder,
   publishReview,
   rejectReview,
   unpublishReview,
@@ -38,6 +39,12 @@ router.get(
 router.get(
   "/latest",
   getLatestPublishedReviews
+);
+
+router.get(
+  "/order/:orderId",
+  optionalAuth,
+  getUserReviewsForOrder
 );
 
 
@@ -112,7 +119,11 @@ router.put(
 
 router.delete(
   "/:reviewId",
- 
+  deleteReview
+);
+
+router.delete(
+  "/admin/:reviewId",
   deleteReview
 );
 

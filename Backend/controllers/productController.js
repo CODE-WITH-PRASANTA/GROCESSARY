@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Product = require("../models/Product");
 
 // ======================================================
@@ -312,26 +313,53 @@ const getAllProducts = async (req, res) => {
 };
 
 // ======================================================
-// GET PRODUCT BY ID
+// GET PRODUCT BY ID OR SLUG / NAME
 // ======================================================
 
 const getProductById = async (req, res) => {
   try {
-    const product = await getPopulatedProduct(req.params.id);
+    const rawId = req.params.id;
+    let product = null;
+
+    // 1. If rawId is a valid Mongo ObjectId, query by _id first
+    if (rawId && mongoose.Types.ObjectId.isValid(rawId)) {
+      product = await getPopulatedProduct(rawId);
+    }
+
+    // 2. If not found by ObjectId, or rawId is a slug / product name
+    if (!product && rawId) {
+      const decoded = decodeURIComponent(rawId).trim();
+      const slugCandidate = decoded.toLowerCase().replace(/\s+/g, "-");
+      const nameCandidate = decoded.replace(/-/g, " ");
+
+      // Escape special regex characters in name candidate
+      const safeName = nameCandidate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const safeDecoded = decoded.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      product = await Product.findOne({
+        $or: [
+          { slug: decoded.toLowerCase() },
+          { slug: slugCandidate },
+          { productName: { $regex: new RegExp(`^${safeName}$`, "i") } },
+          { name: { $regex: new RegExp(`^${safeName}$`, "i") } },
+          { productName: { $regex: new RegExp(`^${safeDecoded}$`, "i") } },
+        ],
+      })
+        .populate("category", "name")
+        .populate("brand", "name")
+        .populate("unit", "name");
+    }
 
     if (!product) {
       return res.status(404).json({
         success: false,
-
         message: "Product not found.",
       });
     }
 
     return res.status(200).json({
       success: true,
-
       product,
-
       data: product,
     });
   } catch (error) {
@@ -339,9 +367,7 @@ const getProductById = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-
       message: "Failed to fetch product.",
-
       error: error.message,
     });
   }

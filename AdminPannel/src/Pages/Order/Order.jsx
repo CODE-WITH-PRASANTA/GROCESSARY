@@ -25,9 +25,11 @@ import {
   Send,
   Building2,
   ShieldCheck,
+  FileText,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import API, { BASE_URL } from "../../api/axios";
+import { downloadOrderInvoicePdf } from "../../Utils/directInvoiceDownloader";
 import "./Order.css";
 
 const Order = () => {
@@ -37,6 +39,7 @@ const Order = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [downloadingOrderId, setDownloadingOrderId] = useState(null);
 
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -789,6 +792,27 @@ const Order = () => {
                           {/* Actions */}
                           <td className="text-right">
                             <div className="action-buttons-group">
+                              {/* ONLY SHOW INVOICE AFTER ORDER IS DELIVERED */}
+                              {order.orderStatus === "delivered" && (
+                                <button
+                                  type="button"
+                                  className="btn-view-invoice-action"
+                                  onClick={async () => {
+                                    setDownloadingOrderId(order._id);
+                                    try {
+                                      await downloadOrderInvoicePdf(order);
+                                    } finally {
+                                      setDownloadingOrderId(null);
+                                    }
+                                  }}
+                                  disabled={downloadingOrderId === order._id}
+                                  title="Direct Download Tax Invoice (PDF)"
+                                >
+                                  <Download size={14} />
+                                  <span>{downloadingOrderId === order._id ? "Downloading..." : "Invoice"}</span>
+                                </button>
+                              )}
+
                               <button
                                 type="button"
                                 className="btn-update-status-action"
@@ -885,6 +909,25 @@ const Order = () => {
                       )}
 
                       <div className="card-actions-footer">
+                        {order.orderStatus === "delivered" && (
+                          <button
+                            type="button"
+                            className="btn-view-invoice-action mobile-btn"
+                            onClick={async () => {
+                              setDownloadingOrderId(order._id);
+                              try {
+                                await downloadOrderInvoicePdf(order);
+                              } finally {
+                                setDownloadingOrderId(null);
+                              }
+                            }}
+                            disabled={downloadingOrderId === order._id}
+                          >
+                            <Download size={14} />
+                            <span>{downloadingOrderId === order._id ? "Downloading..." : "Invoice"}</span>
+                          </button>
+                        )}
+
                         <button
                           type="button"
                           className="btn-update-status-action mobile-btn"
@@ -1479,6 +1522,29 @@ const Order = () => {
             </div>
 
             <div className="drawer-footer-actions">
+              {detailsModalOrder.orderStatus === "delivered" && (
+                <button
+                  type="button"
+                  className="btn-drawer-invoice"
+                  onClick={async () => {
+                    setDownloadingOrderId(detailsModalOrder._id);
+                    try {
+                      await downloadOrderInvoicePdf(detailsModalOrder);
+                    } finally {
+                      setDownloadingOrderId(null);
+                    }
+                  }}
+                  disabled={downloadingOrderId === detailsModalOrder._id}
+                >
+                  <Download size={15} />
+                  <span>
+                    {downloadingOrderId === detailsModalOrder._id
+                      ? "Downloading..."
+                      : "Download Invoice"}
+                  </span>
+                </button>
+              )}
+
               <button
                 type="button"
                 className="btn-drawer-update"

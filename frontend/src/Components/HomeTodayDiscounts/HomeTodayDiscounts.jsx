@@ -640,18 +640,6 @@ const HomeTodayDiscounts = () => {
         localStorage.setItem("guestCart", JSON.stringify(guestCart));
 
         window.dispatchEvent(new Event("cartUpdated"));
-
-        await Swal.fire({
-          icon: "success",
-          title: "Added to Cart!",
-          text: `${
-            product?.productName || product?.name || "Product"
-          } has been added to your cart.`,
-          confirmButtonText: "Continue Shopping",
-          timer: 1800,
-          timerProgressBar: true,
-        });
-
         return;
       }
 
@@ -665,19 +653,6 @@ const HomeTodayDiscounts = () => {
       });
 
       window.dispatchEvent(new Event("cartUpdated"));
-
-      await Swal.fire({
-        icon: "success",
-        title: "Added to Cart!",
-        text:
-          response?.data?.message ||
-          `${
-            product?.productName || product?.name || "Product"
-          } has been added to your cart.`,
-        confirmButtonText: "Continue Shopping",
-        timer: 1800,
-        timerProgressBar: true,
-      });
     } catch (error) {
       console.error("ADD TO CART ERROR:", error);
 

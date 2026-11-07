@@ -112,17 +112,29 @@ const Topbar = ({ toggleSidebar }) => {
     try {
       setLoggingOut(true);
 
-      await API.post("/admin/logout");
+      try {
+        await API.post("/admin/logout");
+      } catch (apiErr) {
+        console.warn("Server logout notification skipped:", apiErr.message);
+      }
+
+      // Clear all stored tokens
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("token");
+      sessionStorage.clear();
 
       setAdmin(null);
       setProfileOpen(false);
 
-      // no redirect
+      navigate("/login");
     } catch (error) {
       console.error("Logout error:", error);
-
-      // Redirect anyway because the frontend session should be cleared
-      // no redirect
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("token");
+      sessionStorage.clear();
+      setAdmin(null);
+      setProfileOpen(false);
+      navigate("/login");
     } finally {
       setLoggingOut(false);
     }

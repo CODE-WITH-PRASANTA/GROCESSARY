@@ -1241,3 +1241,56 @@
   background: #ea580c;
   color: #fff;
 }
+
+
+/* ======================================================
+   VIEW INDIVIDUAL DETAILS PAGE SHORTCUTS
+====================================================== */
+
+.rm-btn-view-page {
+  padding: 6px 12px;
+  background: #059669;
+  color: #ffffff;
+  border: none;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2);
+}
+
+.rm-btn-view-page:hover {
+  background: #047857;
+  transform: translateY(-1px);
+}
+
+.rm-btn-open-page {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #0f2a4a;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rm-btn-open-page:hover {
+  background: #1e3a5f;
+  transform: translateY(-1px);
+}
+
+
+.rm-row-interactive {
+  transition: background-color 0.15s ease;
+}
+
+.rm-row-interactive:hover {
+  background-color: #f0fdf4 !important;
+}
