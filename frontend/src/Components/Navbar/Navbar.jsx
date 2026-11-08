@@ -77,8 +77,14 @@ const Navbar = () => {
   useEffect(() => {
     refreshWishlistCount();
 
-    const handleWishlistUpdate = () => {
-      refreshWishlistCount();
+    const handleWishlistUpdate = (e) => {
+      if (e?.detail?.cleared || e?.detail?.count === 0) {
+        setWishlistCount(0);
+      } else if (typeof e?.detail?.count === "number") {
+        setWishlistCount(e.detail.count);
+      } else {
+        refreshWishlistCount();
+      }
     };
 
     window.addEventListener("wishlistUpdated", handleWishlistUpdate);
@@ -116,7 +122,7 @@ const Navbar = () => {
       });
 
       if (validCoupons.length > 0) {
-        // Pick best public coupon (prioritize highest discount percentage or value)
+        // Prioritize highest discount percentage or value
         validCoupons.sort(
           (a, b) => (Number(b.discountValue) || 0) - (Number(a.discountValue) || 0)
         );
@@ -814,8 +820,13 @@ const Navbar = () => {
   // ======================================================
 
   useEffect(() => {
-    const handleCartUpdated = () => {
-      fetchCart();
+    const handleCartUpdated = (e) => {
+      if (e?.detail?.itemCount === 0 || e?.detail?.items?.length === 0) {
+        setCartItemCount(0);
+        setCartTotal(0);
+      } else {
+        fetchCart();
+      }
     };
 
     window.addEventListener("cartUpdated", handleCartUpdated);
@@ -852,6 +863,7 @@ const Navbar = () => {
   useEffect(() => {
     const handleAuthChanged = () => {
       fetchCart();
+      refreshWishlistCount();
     };
 
     window.addEventListener("authChanged", handleAuthChanged);
@@ -859,7 +871,7 @@ const Navbar = () => {
     return () => {
       window.removeEventListener("authChanged", handleAuthChanged);
     };
-  }, [fetchCart]);
+  }, [fetchCart, refreshWishlistCount]);
 
   // ======================================================
   // STORAGE EVENT

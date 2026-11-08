@@ -25,9 +25,11 @@ import {
   FileText,
   RotateCcw,
   Star,
+  Banknote,
 } from "lucide-react";
 import API, { BASE_URL } from "../../api/axios";
 import { downloadOrderInvoicePdf } from "../../Utils/directInvoiceDownloader";
+import { retryOrderPayment } from "../../Utils/razorpayPaymentHelper";
 import ReturnOrderModal from "./ReturnOrderModal";
 import ReviewProductModal from "./ReviewProductModal";
 import "./OrderDetails.css";
@@ -96,6 +98,8 @@ const OrderDetails = () => {
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [copiedOtp, setCopiedOtp] = useState(false);
+  const [retryingPayment, setRetryingPayment] = useState(false);
+  const [switchingCod, setSwitchingCod] = useState(false);
 
   // Review states
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -213,6 +217,74 @@ const OrderDetails = () => {
     navigator.clipboard.writeText(otpCode);
     setCopiedOtp(true);
     setTimeout(() => setCopiedOtp(false), 2000);
+  };
+
+  // Retry Online Payment Handler
+  const handleRetryPayment = async () => {
+    if (retryingPayment || !order) return;
+    setRetryingPayment(true);
+    await retryOrderPayment(order._id || id, {
+      onSuccess: (updatedOrder) => {
+        setRetryingPayment(false);
+        if (updatedOrder) setOrder(updatedOrder);
+        fetchOrder();
+      },
+      onFailure: () => {
+        setRetryingPayment(false);
+      },
+    });
+  };
+
+  // Switch Pending Order to Cash on Delivery
+  const handleSwitchToCod = async () => {
+    if (!order || switchingCod) return;
+    const payableVal = Number(order.payableAmount ?? order.totalAmount ?? 0).toFixed(2);
+    const result = await Swal.fire({
+      icon: "question",
+      title: "Switch to Cash on Delivery?",
+      text: `Pay ₹${payableVal} in cash when your groceries arrive at your doorstep.`,
+      showCancelButton: true,
+      confirmButtonColor: "#059669",
+      confirmButtonText: "Yes, Switch to COD",
+      cancelButtonText: "Keep Online",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        setSwitchingCod(true);
+        Swal.fire({
+          title: "Switching to COD...",
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading(),
+        });
+        const res = await API.post(`/orders/${order._id || id}/switch-to-cod`);
+        if (res.data?.success) {
+          Swal.fire({
+            icon: "success",
+            title: "Switched to COD",
+            text: "Your order is now confirmed with Cash on Delivery!",
+            confirmButtonColor: "#059669",
+          });
+          fetchOrder();
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Could not switch",
+            text: res.data?.message || "Failed to switch payment mode.",
+            confirmButtonColor: "#059669",
+          });
+        }
+      } catch (err) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: err.response?.data?.message || "Failed to switch payment mode.",
+          confirmButtonColor: "#059669",
+        });
+      } finally {
+        setSwitchingCod(false);
+      }
+    }
   };
 
   // Cancel Order Handler
@@ -390,6 +462,12 @@ const OrderDetails = () => {
   const hasReturn = Boolean(order.returnStatus && order.returnStatus !== "none");
   const isReturnable = isDelivered && !hasReturn;
 
+  const isPaymentPending =
+    Boolean(order) &&
+    (order.paymentStatus === "pending" || order.paymentStatus === "failed") &&
+    order.paymentMethod === "razorpay" &&
+    order.orderStatus !== "cancelled";
+
   // Resolve user-friendly payment mode name
   const paymentModeLabel =
     order.paymentMethod === "cod" ? "Cash on Delivery" : "Online Payment";
@@ -458,6 +536,53 @@ const OrderDetails = () => {
             )}
           </div>
         </div>
+
+        {/* HIGH PRIORITY PAYMENT PENDING ACTION BANNER */}
+        {isPaymentPending && (
+          <div className="order-payment-pending-banner">
+            <div className="pending-banner-left">
+              <div className="pending-banner-pulse-icon">
+                <AlertCircle size={26} color="#d97706" />
+              </div>
+              <div className="pending-banner-text">
+                <div className="pending-banner-title-row">
+                  <h4>Payment Pending for this Order</h4>
+                  <span className="pending-timer-pill">Action Required</span>
+                </div>
+                <p>
+                  Your items are reserved. Complete payment of{" "}
+                  <strong>₹{Number(order.payableAmount ?? order.totalAmount ?? 0).toFixed(2)}</strong>{" "}
+                  to confirm your order and schedule prompt delivery.
+                </p>
+              </div>
+            </div>
+            <div className="pending-banner-actions">
+              <button
+                type="button"
+                className="btn-pending-retry-primary"
+                onClick={handleRetryPayment}
+                disabled={retryingPayment}
+              >
+                <CreditCard size={17} />
+                <span>
+                  {retryingPayment
+                    ? "Connecting..."
+                    : `Pay ₹${Number(order.payableAmount ?? order.totalAmount ?? 0).toFixed(2)} Now`}
+                </span>
+              </button>
+              <button
+                type="button"
+                className="btn-pending-switch-cod"
+                onClick={handleSwitchToCod}
+                disabled={switchingCod}
+                title="Switch order to pay in cash upon delivery"
+              >
+                <Banknote size={16} />
+                <span>Switch to COD</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* COMPACT RETURN & REFUND STATUS STRIP */}
         {hasReturn && (
@@ -859,7 +984,7 @@ const OrderDetails = () => {
           =============================================== */}
           <div className="order-grid-right">
             {/* PAYMENT INFORMATION CARD */}
-            <div className="order-section-card payment-section-card">
+            <div className={`order-section-card payment-section-card ${isPaymentPending ? "is-pending-card" : ""}`}>
               <div className="section-card-header">
                 <h3>Payment Details</h3>
                 <span className={`payment-status-tag ${order.paymentStatus || "paid"}`}>
@@ -876,6 +1001,35 @@ const OrderDetails = () => {
                       : "Online Payment (UPI, Cards, Net Banking)"}
                   </span>
                 </div>
+
+                {isPaymentPending && (
+                  <div className="payment-pending-inline-box">
+                    <div className="pending-inline-notice">
+                      <AlertCircle size={15} color="#d97706" />
+                      <span>Online transaction was incomplete. Complete payment to confirm order.</span>
+                    </div>
+                    <div className="pending-inline-btns">
+                      <button
+                        type="button"
+                        className="btn-inline-retry"
+                        onClick={handleRetryPayment}
+                        disabled={retryingPayment}
+                      >
+                        <CreditCard size={15} />
+                        <span>{retryingPayment ? "Connecting..." : `Retry Payment (₹${Number(order.payableAmount ?? order.totalAmount ?? 0).toFixed(2)})`}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-inline-cod"
+                        onClick={handleSwitchToCod}
+                        disabled={switchingCod}
+                      >
+                        <Banknote size={14} />
+                        <span>Switch to COD</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {order.razorpayPaymentId && (
                   <div className="payment-info-line">
@@ -932,6 +1086,22 @@ const OrderDetails = () => {
 
             {/* ORDER ACTIONS & SUPPORT */}
             <div className="order-section-card support-section-card">
+              {isPaymentPending && (
+                <button
+                  type="button"
+                  className="btn-primary-retry-big"
+                  onClick={handleRetryPayment}
+                  disabled={retryingPayment}
+                >
+                  <CreditCard size={18} />
+                  <span>
+                    {retryingPayment
+                      ? "Opening Gateway..."
+                      : `Complete Payment (₹${Number(order.payableAmount ?? order.totalAmount ?? 0).toFixed(2)})`}
+                  </span>
+                </button>
+              )}
+
               {isCancellable && (
                 <button
                   type="button"

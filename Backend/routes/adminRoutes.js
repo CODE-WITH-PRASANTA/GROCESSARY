@@ -2,44 +2,32 @@ const express = require("express");
 const router = express.Router();
 
 const {
-  checkAdminRegistration,
-  registerAdmin,
-  loginAdmin,
-  getAdminProfile,
+  adminLogin,
+  adminRegister,
+  getAdminMe,
   updateAdminProfile,
-  logoutAdmin,
-} = require("../controllers/adminController");
+  adminLogout,
+  checkAdminStatus,
+} = require("../controllers/adminAuthController");
 
 const adminAuthMiddleware = require("../middleware/adminAuthMiddleware");
 
 // Registration status
-router.get(
-  "/registration-status",
-  checkAdminRegistration
-);
+router.get("/registration-status", checkAdminStatus);
 
-// Register first admin
-router.post("/register", registerAdmin);
+// Register admin
+router.post("/register", adminRegister);
 
 // Login
-router.post("/login", loginAdmin);
+router.post("/login", adminLogin);
 
 // Get profile
-router.get(
-  "/profile",
-  adminAuthMiddleware,
-  getAdminProfile
-);
+router.get("/profile", adminAuthMiddleware, getAdminMe);
 
 // Update name, email and password
-router.put(
-  "/profile",
-  adminAuthMiddleware,
-  updateAdminProfile
-);
+router.put("/profile", adminAuthMiddleware, updateAdminProfile);
 
 // Logout
-// No middleware required so logout also works if token expired
-router.post("/logout", logoutAdmin);
+router.post("/logout", adminLogout);
 
 module.exports = router;

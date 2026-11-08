@@ -185,16 +185,11 @@ export const fetchCart = async () => {
       const rawItems = cartData?.items || [];
       const items = rawItems.map(normalizeCartItem).filter(Boolean);
 
-      try {
-        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items));
-      } catch {}
-
       const summary = calculateCartSummary(items);
       return { items, summary };
     } catch (error) {
-      console.warn("Backend cart fetch failed, using local cart:", error);
-      const local = getGuestCart().map(normalizeCartItem).filter(Boolean);
-      return { items: local, summary: calculateCartSummary(local) };
+      console.warn("Backend cart fetch failed:", error);
+      return { items: [], summary: calculateCartSummary([]) };
     }
   }
 
@@ -212,6 +207,27 @@ export const addToCart = async (product, quantity = 1) => {
   const pid = normalized.productId;
   const qty = Math.max(1, Number(quantity || 1));
 
+  if (isLoggedIn()) {
+    try {
+      await API.post("/cart/add", { productId: pid, quantity: qty });
+    } catch (error) {
+      console.error("Backend add to cart error:", error);
+    }
+
+    const { items, summary } = await fetchCart();
+    window.dispatchEvent(
+      new CustomEvent("cartUpdated", {
+        detail: {
+          items,
+          itemCount: summary.itemCount,
+          total: summary.grandTotal,
+          productId: pid,
+        },
+      })
+    );
+    return { success: true, message: "Added to cart" };
+  }
+
   let localCart = getGuestCart();
   const existingIndex = localCart.findIndex(
     (i) => String(i.productId || i.id) === pid
@@ -226,15 +242,6 @@ export const addToCart = async (product, quantity = 1) => {
 
   localStorage.setItem(GUEST_CART_KEY, JSON.stringify(localCart));
 
-  if (isLoggedIn()) {
-    try {
-      await API.post("/cart/add", { productId: pid, quantity: qty });
-    } catch (error) {
-      console.error("Backend add to cart error:", error);
-    }
-  }
-
-  // Dispatch after backend has been updated
   const summary = calculateCartSummary(localCart);
   window.dispatchEvent(
     new CustomEvent("cartUpdated", {
@@ -257,6 +264,27 @@ export const updateCartQuantity = async (productId, quantity) => {
   const pid = String(productId);
   const qty = Math.max(1, Number(quantity));
 
+  if (isLoggedIn()) {
+    try {
+      await API.put(`/cart/update/${pid}`, { quantity: qty });
+    } catch (error) {
+      console.error("Backend update quantity error:", error);
+    }
+
+    const { items, summary } = await fetchCart();
+    window.dispatchEvent(
+      new CustomEvent("cartUpdated", {
+        detail: {
+          items,
+          itemCount: summary.itemCount,
+          total: summary.grandTotal,
+          productId: pid,
+        },
+      })
+    );
+    return { success: true };
+  }
+
   let localCart = getGuestCart();
   const item = localCart.find((i) => String(i.productId || i.id) === pid);
   if (item) {
@@ -264,15 +292,6 @@ export const updateCartQuantity = async (productId, quantity) => {
     localStorage.setItem(GUEST_CART_KEY, JSON.stringify(localCart));
   }
 
-  if (isLoggedIn()) {
-    try {
-      await API.put(`/cart/update/${pid}`, { quantity: qty });
-    } catch (error) {
-      console.error("Backend update quantity error:", error);
-    }
-  }
-
-  // Dispatch event AFTER backend update finishes so listeners get accurate data
   const summary = calculateCartSummary(localCart);
   window.dispatchEvent(
     new CustomEvent("cartUpdated", {
@@ -294,18 +313,31 @@ export const updateCartQuantity = async (productId, quantity) => {
 export const removeFromCart = async (productId) => {
   const pid = String(productId);
 
-  let localCart = getGuestCart().filter(
-    (i) => String(i.productId || i.id) !== pid
-  );
-  localStorage.setItem(GUEST_CART_KEY, JSON.stringify(localCart));
-
   if (isLoggedIn()) {
     try {
       await API.delete(`/cart/remove/${pid}`);
     } catch (error) {
       console.error("Backend remove from cart error:", error);
     }
+
+    const { items, summary } = await fetchCart();
+    window.dispatchEvent(
+      new CustomEvent("cartUpdated", {
+        detail: {
+          items,
+          itemCount: summary.itemCount,
+          total: summary.grandTotal,
+          productId: pid,
+        },
+      })
+    );
+    return { success: true };
   }
+
+  let localCart = getGuestCart().filter(
+    (i) => String(i.productId || i.id) !== pid
+  );
+  localStorage.setItem(GUEST_CART_KEY, JSON.stringify(localCart));
 
   const summary = calculateCartSummary(localCart);
   window.dispatchEvent(
@@ -326,14 +358,17 @@ export const removeFromCart = async (productId) => {
 // CLEAR CART
 // =========================================================
 export const clearCart = async () => {
-  localStorage.setItem(GUEST_CART_KEY, JSON.stringify([]));
-
   if (isLoggedIn()) {
     try {
       await API.delete("/cart/clear");
     } catch (error) {
       console.error("Backend clear cart error:", error);
     }
+  } else {
+    try {
+      localStorage.removeItem(GUEST_CART_KEY);
+      localStorage.removeItem("guestCart");
+    } catch {}
   }
 
   window.dispatchEvent(
@@ -350,24 +385,67 @@ export const clearCart = async () => {
 };
 
 // =========================================================
+// CLEAR LOCAL CART ON LOGOUT
+// =========================================================
+export const clearLocalCartOnLogout = () => {
+  try {
+    localStorage.removeItem(GUEST_CART_KEY);
+    localStorage.removeItem("guestCart");
+    localStorage.removeItem("cart");
+  } catch {}
+  window.dispatchEvent(
+    new CustomEvent("cartUpdated", {
+      detail: {
+        items: [],
+        itemCount: 0,
+        total: 0,
+      },
+    })
+  );
+};
+
+// =========================================================
 // SYNC GUEST CART ON LOGIN
 // =========================================================
 export const syncGuestCartOnLogin = async () => {
   if (!isLoggedIn()) return;
   const localCart = getGuestCart();
-  if (localCart.length === 0) return;
+  if (!Array.isArray(localCart) || localCart.length === 0) return;
 
   try {
     for (const item of localCart) {
-      const pid = item.productId || item.id;
-      const qty = item.quantity || 1;
+      const pidRaw =
+        item.productId ||
+        item._id ||
+        item.id ||
+        item.product?._id ||
+        item.product;
+      const pid =
+        typeof pidRaw === "object" ? pidRaw?._id || pidRaw?.id : pidRaw;
+      const qty = Math.max(1, Number(item.quantity) || 1);
+
       if (pid) {
-        await API.post("/cart/add", { productId: pid, quantity: qty }).catch(
-          () => {}
-        );
+        try {
+          await API.post("/cart/add", {
+            productId: String(pid),
+            quantity: qty,
+          });
+        } catch (itemErr) {
+          console.warn(
+            `Unable to sync guest item ${pid}:`,
+            itemErr?.response?.data?.message || itemErr?.message
+          );
+        }
       }
     }
   } catch (error) {
     console.error("Error syncing guest cart on login:", error);
+  } finally {
+    // Clear guest cart once synced to avoid duplicate additions
+    try {
+      localStorage.removeItem(GUEST_CART_KEY);
+      localStorage.removeItem("guestCart");
+    } catch {}
+    window.dispatchEvent(new Event("cartUpdated"));
   }
 };

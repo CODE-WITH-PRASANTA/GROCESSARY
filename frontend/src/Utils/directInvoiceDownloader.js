@@ -52,19 +52,23 @@ export const downloadOrderInvoicePdf = async (order) => {
 
   const invoiceNo =
     order.invoiceNumber ||
+    order.invoice ||
     order.orderNumber ||
+    order.orderId ||
     (order._id ? `GS${String(order._id).slice(-10).toUpperCase()}` : "GSINVOICE");
 
   const customerName =
     order.deliveryAddress?.name ||
     order.customer?.name ||
-    order.customer ||
+    (typeof order.customer === "string" && order.customer ? order.customer : null) ||
     order.user?.name ||
     "Valued Customer";
 
   const customerPhone =
     order.deliveryAddress?.mobile ||
     order.customer?.mobile ||
+    (order.contact && order.contact !== "-" ? order.contact : null) ||
+    order.mobile ||
     order.user?.mobile ||
     "9407057752";
 
@@ -78,13 +82,23 @@ export const downloadOrderInvoicePdf = async (order) => {
     return order.paymentMethod || order.payment || "Cash";
   };
 
-  // Normalized Items List
-  const rawItems = order.items || order.products || [];
+  // Normalized Items List (handling arrays safely)
+  let rawItems = [];
+  if (Array.isArray(order.items)) {
+    rawItems = order.items;
+  } else if (Array.isArray(order.products)) {
+    rawItems = order.products;
+  } else if (Array.isArray(order.orderItems)) {
+    rawItems = order.orderItems;
+  } else if (order.rawBill && Array.isArray(order.rawBill.items)) {
+    rawItems = order.rawBill.items;
+  }
+
   const items = rawItems.map((it, idx) => {
     const prod = it.product && typeof it.product === "object" ? it.product : {};
     const name = it.productName || prod.productName || prod.name || it.name || "Grocery Item";
-    const unit = it.unit || prod.unit || "";
-    const fullName = unit ? `${name} ${unit}` : name;
+    const unit = it.unit || prod.unit || it.variant || "";
+    const fullName = unit ? `${name} ${unit}`.trim() : name;
     const price = Number(it.price || 0);
     const qty = Number(it.quantity || it.qty || 1);
     const total = Number(it.itemTotal || it.total || price * qty);
@@ -112,7 +126,9 @@ export const downloadOrderInvoicePdf = async (order) => {
   );
 
   const amountReceived = Math.round(Number(order.amountReceived ?? payableTotal));
-  const changeAmount = Math.round(Number(order.change ?? 0));
+  const changeAmount = Math.round(
+    Number(order.changeReturned ?? order.change ?? 0)
+  );
   const orderDate = formatDate(order.createdAt || order.date);
 
   // Pre-load base64 logo for html2canvas

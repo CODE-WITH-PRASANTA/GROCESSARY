@@ -241,6 +241,38 @@ const PopularProducts = () => {
     return () => window.removeEventListener("cartUpdated", handler);
   }, [refreshCartCount]);
 
+  useEffect(() => {
+    const handleWishlistUpdated = (event) => {
+      if (event?.detail?.cleared || (event?.detail?.count === 0 && !event?.detail?.productId)) {
+        setWishlistIds(new Set());
+        return;
+      }
+      const { productId, isWishlisted } = event?.detail || {};
+      if (productId) {
+        setWishlistIds((prev) => {
+          const next = new Set(prev);
+          if (isWishlisted) next.add(String(productId));
+          else next.delete(String(productId));
+          return next;
+        });
+      }
+    };
+
+    const handleAuth = () => {
+      refreshCartCount();
+      if (!localStorage.getItem("token")) {
+        setWishlistIds(new Set());
+      }
+    };
+
+    window.addEventListener("wishlistUpdated", handleWishlistUpdated);
+    window.addEventListener("authChanged", handleAuth);
+    return () => {
+      window.removeEventListener("wishlistUpdated", handleWishlistUpdated);
+      window.removeEventListener("authChanged", handleAuth);
+    };
+  }, [refreshCartCount]);
+
   // Sync category selection triggered from Navbar or URL
   useEffect(() => {
     const handleSelectCategory = (e) => {

@@ -113,28 +113,34 @@ const Topbar = ({ toggleSidebar }) => {
       setLoggingOut(true);
 
       try {
-        await API.post("/admin/logout");
+        await API.post("/admin/auth/logout");
       } catch (apiErr) {
-        console.warn("Server logout notification skipped:", apiErr.message);
+        try {
+          await API.post("/admin/logout");
+        } catch {
+          // ignore
+        }
       }
 
-      // Clear all stored tokens
+      // Clear all stored tokens and admin data
       localStorage.removeItem("adminToken");
       localStorage.removeItem("token");
+      localStorage.removeItem("adminUser");
       sessionStorage.clear();
 
       setAdmin(null);
       setProfileOpen(false);
 
-      navigate("/login");
+      navigate("/login", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
       localStorage.removeItem("adminToken");
       localStorage.removeItem("token");
+      localStorage.removeItem("adminUser");
       sessionStorage.clear();
       setAdmin(null);
       setProfileOpen(false);
-      navigate("/login");
+      navigate("/login", { replace: true });
     } finally {
       setLoggingOut(false);
     }

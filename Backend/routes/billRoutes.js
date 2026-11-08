@@ -12,8 +12,10 @@ router.use(adminMiddleware);
 router.post("/", billController.createBill);
 router.post("/upi-init", billController.initUpiPayment);
 
-// UPI helpers
+// UPI helpers & live transaction status
 router.get("/upi-config", billController.getUpiConfig);
+router.get("/upi-status/:sessionId", billController.getUpiStatus);
+router.post("/upi-status", billController.updateUpiStatus);
 router.get("/upi-check/:upiTransactionId", billController.checkUpiTransaction);
 
 // List bills (admin-only — already enforced by router.use above)

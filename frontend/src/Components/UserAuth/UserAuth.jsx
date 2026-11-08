@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { User, MapPin, Package, Gift, Copy, Check, LogOut, HelpCircle } from "lucide-react";
 import API from "../../api/axios";
+import { clearLocalCartOnLogout } from "../../Utils/cartService";
+import { clearLocalWishlistOnLogout } from "../../Utils/wishlistService";
 import "./UserAuth.css";
 
 // ======================================================
@@ -14,6 +16,7 @@ const UserAuth = ({ onNavigate }) => {
 
   const [currentUser, setCurrentUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
+  const [avatarLoadError, setAvatarLoadError] = useState(false);
 
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [accountLoading, setAccountLoading] = useState(false);
@@ -87,7 +90,10 @@ const UserAuth = ({ onNavigate }) => {
 
       if (error.response?.status === 401 || error.response?.status === 403) {
         localStorage.removeItem("token");
+        clearLocalCartOnLogout();
+        clearLocalWishlistOnLogout();
         setCurrentUser(null);
+        window.dispatchEvent(new Event("authChanged"));
       }
     } finally {
       setUserLoading(false);
@@ -129,6 +135,10 @@ const UserAuth = ({ onNavigate }) => {
   useEffect(() => {
     fetchCurrentUser();
   }, [fetchCurrentUser]);
+
+  useEffect(() => {
+    setAvatarLoadError(false);
+  }, [currentUser?.profileImage]);
 
   useEffect(() => {
     if (currentUser) {
@@ -226,16 +236,20 @@ const UserAuth = ({ onNavigate }) => {
     localStorage.removeItem("user");
     sessionStorage.clear();
 
-    // 2. Reset local component state
+    // 2. Automatically clear local cart and wishlist so account items don't linger
+    clearLocalCartOnLogout();
+    clearLocalWishlistOnLogout();
+
+    // 3. Reset local component state
     setCurrentUser(null);
     setReferralLink("");
     setIsAccountOpen(false);
 
-    // 3. Notify all listeners in this app
+    // 4. Notify all listeners in this app
     window.dispatchEvent(new Event("authChanged"));
     window.dispatchEvent(new Event("storage"));
 
-    // 4. Navigate cleanly to login page
+    // 5. Navigate cleanly to login page
     navigate("/login");
   };
 
@@ -249,11 +263,28 @@ const UserAuth = ({ onNavigate }) => {
         <div className="navbar-user-logged-in">
           <button
             type="button"
-            className="navbar-icon-btn"
+            className="navbar-icon-btn navbar-user-btn"
             aria-label={`Account of ${getUserName(currentUser)}`}
             onClick={() => setIsAccountOpen((previous) => !previous)}
           >
-            <User size={22} aria-hidden="true" />
+            {currentUser?.profileImage && !avatarLoadError ? (
+              <span className="navbar-btn-avatar">
+                <img
+                  src={currentUser.profileImage}
+                  alt={getUserName(currentUser)}
+                  className="navbar-btn-avatar-img"
+                  onError={() => setAvatarLoadError(true)}
+                />
+              </span>
+            ) : (
+              <span className="navbar-btn-avatar navbar-btn-avatar-initial">
+                {getUserName(currentUser) ? (
+                  getUserName(currentUser).charAt(0).toUpperCase()
+                ) : (
+                  <User size={16} aria-hidden="true" />
+                )}
+              </span>
+            )}
 
             {!userLoading && (
               <span className="navbar-user-name">

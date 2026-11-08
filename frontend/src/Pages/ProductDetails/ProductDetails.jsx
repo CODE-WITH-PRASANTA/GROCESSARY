@@ -11,18 +11,18 @@ const ProductDetails = () => {
   const [productData, setProductData] = useState(null);
 
   return (
-    <div>
+    <div className="product-details-page-root">
       <ProductDetailsVegetables
         productId={identifier}
         onProductLoaded={(prod) => setProductData(prod)}
       />
 
-      {/* <ProductDetailsDiscounts /> */}
-
-      <ProductDetailsTestimonials
-        productId={productData?._id || productData?.id || identifier}
-        product={productData}
-      />
+      <div id="customer-reviews">
+        <ProductDetailsTestimonials
+          productId={productData?._id || productData?.id || identifier}
+          product={productData}
+        />
+      </div>
     </div>
   );
 };

@@ -38,38 +38,53 @@ const InvoiceModal = ({ order, isOpen, onClose }) => {
 
   const invoiceNo =
     order.invoiceNumber ||
+    order.invoice ||
     order.orderNumber ||
+    order.orderId ||
     (order._id ? `GS${String(order._id).slice(-10).toUpperCase()}` : "GSINVOICE");
 
   const customerName =
     order.deliveryAddress?.name ||
     order.customer?.name ||
+    (typeof order.customer === "string" && order.customer ? order.customer : null) ||
     order.user?.name ||
     "Valued Customer";
 
   const customerPhone =
     order.deliveryAddress?.mobile ||
     order.customer?.mobile ||
+    (order.contact && order.contact !== "-" ? order.contact : null) ||
+    order.mobile ||
     order.user?.mobile ||
     "9407057752";
 
   // Payment Method Clean Display
   const getPaymentDisplay = () => {
-    const method = String(order.paymentMethod || "").toLowerCase();
+    const method = String(order.paymentMethod || order.payment || "").toLowerCase();
     if (method.includes("cash") || method === "cod") return "Cash";
     if (method.includes("upi")) return "UPI";
     if (method.includes("razorpay") || method.includes("online")) return "Online (Paid)";
     if (method.includes("wallet")) return "Wallet";
-    return order.paymentMethod || "Cash";
+    return order.paymentMethod || order.payment || "Cash";
   };
 
-  // Normalized Items List
-  const rawItems = order.items || order.products || [];
+  // Normalized Items List (handling arrays safely)
+  let rawItems = [];
+  if (Array.isArray(order.items)) {
+    rawItems = order.items;
+  } else if (Array.isArray(order.products)) {
+    rawItems = order.products;
+  } else if (Array.isArray(order.orderItems)) {
+    rawItems = order.orderItems;
+  } else if (order.rawBill && Array.isArray(order.rawBill.items)) {
+    rawItems = order.rawBill.items;
+  }
+
   const items = rawItems.map((it, idx) => {
     const prod = it.product && typeof it.product === "object" ? it.product : {};
     const name = it.productName || prod.productName || prod.name || it.name || "Grocery Item";
-    const unit = it.unit || prod.unit || "";
-    const fullName = unit ? `${name} ${unit}` : name;
+    const unit = it.unit || prod.unit || it.variant || "";
+    const fullName = unit ? `${name} ${unit}`.trim() : name;
     const price = Number(it.price || 0);
     const qty = Number(it.quantity || it.qty || 1);
     const total = Number(it.itemTotal || it.total || price * qty);
@@ -216,7 +231,7 @@ const InvoiceModal = ({ order, isOpen, onClose }) => {
           {/* METADATA INFO: INVOICE ID, CUSTOMER, PAYMENT */}
           <div className="invoice-meta-info-list">
             <div className="invoice-meta-row">
-              <FileText size={14} className="meta-icon" />
+              <FileText size={18} className="meta-icon" />
               <div className="meta-content">
                 <span className="meta-label">Invoice:</span>{" "}
                 <span className="meta-value font-mono">{invoiceNo}</span>
@@ -224,7 +239,7 @@ const InvoiceModal = ({ order, isOpen, onClose }) => {
             </div>
 
             <div className="invoice-meta-row">
-              <User size={14} className="meta-icon" />
+              <User size={18} className="meta-icon" />
               <div className="meta-content">
                 <span className="meta-label">Customer:</span>{" "}
                 <span className="meta-value">{customerName}</span>
@@ -232,7 +247,7 @@ const InvoiceModal = ({ order, isOpen, onClose }) => {
             </div>
 
             <div className="invoice-meta-row">
-              <CreditCard size={14} className="meta-icon" />
+              <CreditCard size={18} className="meta-icon" />
               <div className="meta-content">
                 <span className="meta-label">Payment:</span>{" "}
                 <span className="meta-value">{getPaymentDisplay()}</span>
@@ -299,7 +314,7 @@ const InvoiceModal = ({ order, isOpen, onClose }) => {
           <div className="invoice-received-section">
             <div className="received-row">
               <div className="received-left">
-                <CheckCircle size={15} className="received-icon check-icon" />
+                <CheckCircle size={18} className="received-icon check-icon" />
                 <span className="received-text">Amount Received</span>
               </div>
               <div className="received-right">₹{Math.round(amountReceived)}</div>
@@ -307,7 +322,7 @@ const InvoiceModal = ({ order, isOpen, onClose }) => {
 
             <div className="received-row">
               <div className="received-left">
-                <RotateCcw size={15} className="received-icon change-icon" />
+                <RotateCcw size={18} className="received-icon change-icon" />
                 <span className="received-text">Change</span>
               </div>
               <div className="received-right">₹{Math.round(changeAmount)}</div>

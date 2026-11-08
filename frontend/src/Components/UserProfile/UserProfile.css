@@ -2241,6 +2241,33 @@
   transform: translateY(-1px);
 }
 
+.btn-order-retry-payment {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #059669;
+  border: 1px solid #047857;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.28);
+}
+
+.btn-order-retry-payment:hover:not(:disabled) {
+  background: #047857;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+}
+
+.btn-order-retry-payment:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .btn-view-order-details {
   display: inline-flex;
   align-items: center;

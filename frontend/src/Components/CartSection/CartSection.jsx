@@ -484,7 +484,7 @@ const CartSection = () => {
         cancelButtonText: "Continue Shopping",
       }).then((result) => {
         if (result.isConfirmed) {
-          navigate("/login");
+          navigate("/login?redirect=/cart");
         }
       });
       return;

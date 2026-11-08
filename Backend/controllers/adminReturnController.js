@@ -5,6 +5,7 @@ const Order = require("../models/Order");
 const User = require("../models/User");
 const Wallet = require("../models/Wallet");
 const RewardPoints = require("../models/RewardPoints");
+const { restoreStock } = require("./orderController");
 
 const toNumber = (v) => {
   const n = Number(v);
@@ -346,6 +347,11 @@ exports.updateReturnStatus = async (req, res) => {
     }
 
     await order.save();
+
+    // If return was refunded or replaced, restore stock to inventory
+    if (status === "refunded" || status === "replaced") {
+      await restoreStock(order);
+    }
 
     return res.json({
       success: true,

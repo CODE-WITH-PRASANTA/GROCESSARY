@@ -12,26 +12,45 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   // Registration status states
-  const [isRegistered, setIsRegistered] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(true);
   const [checkingRegistration, setCheckingRegistration] = useState(true);
 
   const navigate = useNavigate();
+
+  // If already logged in, redirect to dashboard
+  useEffect(() => {
+    const existingToken =
+      localStorage.getItem("adminToken") || localStorage.getItem("token");
+    if (existingToken) {
+      // Check quickly if token is valid
+      API.get("/admin/auth/me")
+        .then((res) => {
+          if (res.data?.success) {
+            navigate("/dashboard", { replace: true });
+          }
+        })
+        .catch(() => {
+          // Token expired or invalid, keep on login page
+          localStorage.removeItem("adminToken");
+          localStorage.removeItem("token");
+          localStorage.removeItem("adminUser");
+        });
+    }
+  }, [navigate]);
 
   // Check whether an admin is already registered
   useEffect(() => {
     const checkRegistrationStatus = async () => {
       try {
-        const response = await API.get("/admin/registration-status");
-
+        const response = await API.get("/admin/auth/status");
         setIsRegistered(response.data?.isRegistered === true);
       } catch (error) {
-        console.error(
-          "Unable to check registration status:",
-          error.response?.data || error.message
-        );
-
-        // Hide register button if status check fails
-        setIsRegistered(true);
+        try {
+          const fallback = await API.get("/admin/registration-status");
+          setIsRegistered(fallback.data?.isRegistered === true);
+        } catch {
+          setIsRegistered(true);
+        }
       } finally {
         setCheckingRegistration(false);
       }
@@ -45,39 +64,68 @@ const Login = () => {
     setError("");
 
     if (!identifier.trim() || !password.trim()) {
-      setError("Please fill in all required fields.");
+      setError("Please fill in both email and password.");
       return;
     }
 
     try {
       setLoading(true);
 
-      const response = await API.post("/admin/login", {
-        email: identifier.trim(),
-        password,
-      });
+      // Attempt login via dedicated AdminUser auth endpoint
+      let response;
+      try {
+        response = await API.post("/admin/auth/login", {
+          email: identifier.trim(),
+          password,
+        });
+      } catch (firstErr) {
+        // Fallback to /admin/login if necessary
+        if (firstErr.response?.status === 404) {
+          response = await API.post("/admin/login", {
+            email: identifier.trim(),
+            password,
+          });
+        } else {
+          throw firstErr;
+        }
+      }
 
       if (response.data?.success) {
         setIsSuccess(true);
 
-        // Backend sets the HTTP-only adminToken cookie.
-        // No localStorage token is required.
+        const token = response.data?.token;
+        if (token) {
+          localStorage.setItem("adminToken", token);
+          localStorage.setItem("token", token);
+        }
+
+        if (response.data?.admin) {
+          localStorage.setItem(
+            "adminUser",
+            JSON.stringify(response.data.admin)
+          );
+        }
 
         setTimeout(() => {
           navigate("/dashboard", { replace: true });
-        }, 2500);
+        }, 1200);
       } else {
-        setError(response.data?.message || "Login failed.");
+        setError(response.data?.message || "Invalid credentials.");
       }
     } catch (error) {
       const message =
         error.response?.data?.message ||
         "Unable to login. Please check your credentials.";
-
       setError(message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFillDemo = () => {
+    setIdentifier("admin@grocerysathi.com");
+    setPassword("Admin@12345");
+    setError("");
   };
 
   return (
@@ -116,7 +164,7 @@ const Login = () => {
             <h1 className="login-success-title">Login Successful!</h1>
 
             <p className="login-success-subtitle">
-              Welcome back to GrocerySathi Admin Panel...
+              Welcome back to GrocerySathi Admin Portal...
             </p>
           </div>
         </div>
@@ -139,7 +187,6 @@ const Login = () => {
                 strokeWidth="2"
                 d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
               />
-
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -161,10 +208,9 @@ const Login = () => {
         {/* Form Body */}
         <div className="login-body">
           <div className="login-form-header">
-            <h2 className="login-heading">Admin Login</h2>
-
+            <h2 className="login-heading">Admin Portal Login</h2>
             <p className="login-subheading">
-              Welcome back! Please login to continue.
+              Secure JWT authorization for administrators & staff
             </p>
           </div>
 
@@ -194,13 +240,14 @@ const Login = () => {
               </span>
 
               <input
-                type="text"
+                type="email"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="Email"
+                placeholder="admin@grocerysathi.com"
                 className="login-input"
                 autoComplete="username"
                 disabled={loading || isSuccess}
+                required
               />
             </div>
 
@@ -230,6 +277,7 @@ const Login = () => {
                 className="login-input pr-10"
                 autoComplete="current-password"
                 disabled={loading || isSuccess}
+                required
               />
 
               <button
@@ -251,7 +299,6 @@ const Login = () => {
                     strokeWidth="1.8"
                     d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                   />
-
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -262,15 +309,35 @@ const Login = () => {
               </button>
             </div>
 
-            {/* Forgot Password Link */}
-            <div className="login-forgot-wrapper">
-              <a
-                href="#forgot"
-                onClick={(e) => e.preventDefault()}
-                className="login-link"
+            {/* Quick Demo Credentials Helper */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                margin: "4px 0 10px 0",
+              }}
+            >
+              <button
+                type="button"
+                onClick={handleFillDemo}
+                style={{
+                  background: "#ecfdf5",
+                  border: "1px dashed #059669",
+                  color: "#059669",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  borderRadius: "6px",
+                  padding: "4px 8px",
+                  cursor: "pointer",
+                }}
               >
-                Forgot Password?
-              </a>
+                Auto-fill Default Admin
+              </button>
+
+              <span style={{ fontSize: "12px", color: "#64748b" }}>
+                JWT Secured
+              </span>
             </div>
 
             {/* Submit Button */}
@@ -279,7 +346,7 @@ const Login = () => {
               className="login-submit-btn"
               disabled={loading || isSuccess}
             >
-              {loading ? "Logging in..." : "Login"}
+              {loading ? "Authenticating..." : "Sign In to Admin Panel"}
             </button>
           </form>
 
@@ -318,8 +385,7 @@ const Login = () => {
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-
-                Register Admin
+                Register First Admin
               </button>
             </>
           )}

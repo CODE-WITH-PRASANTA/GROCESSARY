@@ -640,6 +640,11 @@
   color: #203b63;
 }
 
+.BillingHistory-previewAction {
+  border: 1px solid #cbd5e1;
+  color: #0f2a4a;
+}
+
 .BillingHistory-printAction {
   border: 1px solid #bed7f8;
   color: #0875df;
@@ -1020,6 +1025,12 @@
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+}
+
+.BillingHistory-previewBill {
+  border: 1px solid #cbd5e1;
+  color: #0f2a4a;
+  background: #f8fafc;
 }
 
 .BillingHistory-printBill {

@@ -44,14 +44,19 @@ import AdminProfile from "./Components/AdminProfile/AdminProfile";
 import AdminSettings from "./Components/AdminSettings/AdminSettings";
 import Billing from "./Components/Billing/Billing";
 import BillingHistory from "./Components/BillingHistory/BillingHistory";
+import Login from "./Components/Login/Login";
+import AdminRegister from "./Components/AdminRegister/AdminRegister";
 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public Authentication Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<AdminRegister />} />
+
         {/* Direct Root Access to Dashboard */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/login" element={<Navigate to="/dashboard" replace />} />
 
         {/* Admin Routes */}
         <Route element={<ProtectedRoute />}>

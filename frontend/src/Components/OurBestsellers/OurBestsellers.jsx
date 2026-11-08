@@ -787,7 +787,11 @@ export const OurBestsellers = () => {
 
   useEffect(() => {
     const syncWishlist = (event) => {
-      const { productId, isWishlisted } = event.detail || {};
+      if (event?.detail?.cleared || (event?.detail?.count === 0 && !event?.detail?.productId)) {
+        setWishlistIds(new Set());
+        return;
+      }
+      const { productId, isWishlisted } = event?.detail || {};
       if (!productId) return;
 
       setWishlistIds((previous) => {
@@ -798,8 +802,18 @@ export const OurBestsellers = () => {
       });
     };
 
+    const handleAuth = () => {
+      if (!localStorage.getItem("token")) {
+        setWishlistIds(new Set());
+      }
+    };
+
     window.addEventListener("wishlistUpdated", syncWishlist);
-    return () => window.removeEventListener("wishlistUpdated", syncWishlist);
+    window.addEventListener("authChanged", handleAuth);
+    return () => {
+      window.removeEventListener("wishlistUpdated", syncWishlist);
+      window.removeEventListener("authChanged", handleAuth);
+    };
   }, []);
 
   useEffect(() => {

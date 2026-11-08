@@ -36,9 +36,13 @@ import {
   Download,
   Sparkles,
   Ticket,
+  CreditCard,
 } from "lucide-react";
 import API from "../../api/axios";
 import { downloadOrderInvoicePdf } from "../../Utils/directInvoiceDownloader";
+import { retryOrderPayment } from "../../Utils/razorpayPaymentHelper";
+import { clearLocalCartOnLogout } from "../../Utils/cartService";
+import { clearLocalWishlistOnLogout } from "../../Utils/wishlistService";
 import "./UserProfile.css";
 
 const UserProfile = ({ defaultTab = "profile" }) => {
@@ -102,6 +106,7 @@ const UserProfile = ({ defaultTab = "profile" }) => {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [downloadingOrderId, setDownloadingOrderId] = useState(null);
+  const [retryingOrderId, setRetryingOrderId] = useState(null);
 
   // Help Center FAQs
   const [expandedFaq, setExpandedFaq] = useState(0);
@@ -135,6 +140,9 @@ const UserProfile = ({ defaultTab = "profile" }) => {
       console.error("Load user error:", error);
       if (error.response?.status === 401) {
         localStorage.removeItem("token");
+        clearLocalCartOnLogout();
+        clearLocalWishlistOnLogout();
+        window.dispatchEvent(new Event("authChanged"));
         navigate("/login");
       }
     } finally {
@@ -196,6 +204,22 @@ const UserProfile = ({ defaultTab = "profile" }) => {
     }
   }, []);
 
+  // Handle retry payment directly from order card
+  const handleRetryPaymentFromList = async (ord) => {
+    const orderId = ord._id || ord.id;
+    if (retryingOrderId === orderId) return;
+    setRetryingOrderId(orderId);
+    await retryOrderPayment(orderId, {
+      onSuccess: () => {
+        setRetryingOrderId(null);
+        loadOrders();
+      },
+      onFailure: () => {
+        setRetryingOrderId(null);
+      },
+    });
+  };
+
   // Handle user logout
   const handleLogout = () => {
     Swal.fire({
@@ -213,6 +237,9 @@ const UserProfile = ({ defaultTab = "profile" }) => {
         localStorage.removeItem("adminToken");
         localStorage.removeItem("user");
         sessionStorage.clear();
+
+        clearLocalCartOnLogout();
+        clearLocalWishlistOnLogout();
 
         window.dispatchEvent(new Event("authChanged"));
         window.dispatchEvent(new Event("storage"));
@@ -1188,6 +1215,25 @@ const UserProfile = ({ defaultTab = "profile" }) => {
                             </div>
 
                             <div className="order-actions-row">
+                              {/* RETRY PAYMENT IF ONLINE PAYMENT IS PENDING */}
+                              {((ord.paymentStatus === "pending" || ord.paymentStatus === "failed") &&
+                                ord.paymentMethod === "razorpay" &&
+                                ord.orderStatus !== "cancelled") && (
+                                <button
+                                  type="button"
+                                  className="btn-order-retry-payment"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRetryPaymentFromList(ord);
+                                  }}
+                                  disabled={retryingOrderId === id}
+                                  title="Complete online payment for this pending order"
+                                >
+                                  <CreditCard size={14} />
+                                  <span>{retryingOrderId === id ? "Opening..." : "Retry Payment"}</span>
+                                </button>
+                              )}
+
                               {/* ONLY SHOW INVOICE AFTER ORDER IS DELIVERED */}
                               {String(ord.orderStatus || ord.status || "").toLowerCase() === "delivered" && (
                                 <button

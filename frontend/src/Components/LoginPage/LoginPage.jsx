@@ -21,6 +21,7 @@ import {
 import Swal from "sweetalert2";
 import API from "../../api/axios";
 import { fetchCart } from "../../Utils/cartSlice";
+import { syncGuestCartOnLogin } from "../../Utils/cartService";
 import { syncGuestWishlistOnLogin } from "../../Utils/wishlistService";
 import logo from "../../assets/Grocessary Sathi Png.png";
 import "./LoginPage.css";
@@ -58,7 +59,19 @@ const LoginPage = ({ initialView }) => {
   // Parse query parameters
   const queryParams = new URLSearchParams(location.search);
   const refCodeFromUrl = queryParams.get("ref") || queryParams.get("referral") || "";
-  const redirectTarget = queryParams.get("redirect") || "/profile";
+
+  // Check if guest cart has items
+  const hasGuestItems = () => {
+    try {
+      const g = JSON.parse(localStorage.getItem("guestCart") || "[]");
+      return Array.isArray(g) && g.length > 0;
+    } catch {
+      return false;
+    }
+  };
+
+  const redirectTarget =
+    queryParams.get("redirect") || (hasGuestItems() ? "/cart" : "/profile");
 
   // Persistent referral code from URL or storage
   const storedRefCode =
@@ -389,21 +402,29 @@ const LoginPage = ({ initialView }) => {
   };
 
   // Broadcast auth state & update localStorage
-  const handleAuthSuccess = (token, user, successTitle, successText) => {
+  const handleAuthSuccess = async (token, user, successTitle, successText) => {
     if (token) localStorage.setItem("token", token);
     if (user) localStorage.setItem("user", JSON.stringify(user));
 
     // Dispatch global auth event so Navbar/UserAuth update immediately
     window.dispatchEvent(new Event("authChanged"));
 
-    // Sync Wishlist from guest to account
+    // 1. Sync Guest Cart items into the user's logged-in database cart
+    try {
+      await syncGuestCartOnLogin();
+    } catch (e) {
+      console.warn("Guest cart sync error:", e);
+    }
+
+    // 2. Sync Wishlist from guest to account
     try {
       syncGuestWishlistOnLogin();
     } catch (e) {}
 
-    // Sync Redux Cart
+    // 3. Sync Redux Cart & broadcast update
     try {
-      dispatch(fetchCart());
+      await dispatch(fetchCart());
+      window.dispatchEvent(new Event("cartUpdated"));
     } catch (e) {
       console.warn("Cart fetch trigger:", e);
     }

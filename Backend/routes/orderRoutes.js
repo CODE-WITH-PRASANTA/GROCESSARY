@@ -15,6 +15,8 @@ const {
 const {
   placeOrder,
   verifyPayment,
+  retryPayment,
+  switchOrderToCod,
   razorpayWebhook,
   updateOrderStatus,
   getMyOrders,
@@ -40,6 +42,8 @@ router.get("/return-config", getReturnConfig);
 // ======================================================
 router.post("/place", protect, placeOrder);
 router.post("/verify", protect, verifyPayment);
+router.post("/:id/retry-payment", protect, retryPayment);
+router.post("/:id/switch-to-cod", protect, switchOrderToCod);
 router.post("/:id/abandon", protect, abandonOrder);
 router.post("/:id/cancel", protect, cancelOrder);
 router.post(
