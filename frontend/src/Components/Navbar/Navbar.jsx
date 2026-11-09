@@ -12,6 +12,10 @@ import {
   ChevronDown,
   Menu,
   X,
+  Ticket,
+  Copy,
+  Check,
+  Sparkles,
 } from "lucide-react";
 
 import logo from "../../assets/Grocessary Sathi Png.png";
@@ -73,13 +77,82 @@ const Navbar = () => {
   useEffect(() => {
     refreshWishlistCount();
 
-    const handleWishlistUpdate = () => {
-      refreshWishlistCount();
+    const handleWishlistUpdate = (e) => {
+      if (e?.detail?.cleared || e?.detail?.count === 0) {
+        setWishlistCount(0);
+      } else if (typeof e?.detail?.count === "number") {
+        setWishlistCount(e.detail.count);
+      } else {
+        refreshWishlistCount();
+      }
     };
 
     window.addEventListener("wishlistUpdated", handleWishlistUpdate);
     return () => window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
   }, [refreshWishlistCount]);
+
+  // ======================================================
+  // DYNAMIC PUBLIC COUPON FOR TOP ANNOUNCEMENT BAR
+  // Validates: isPublic, Active status, expiryDate not exceeded, usage limit not exceeded
+  // ======================================================
+  const [publicCoupon, setPublicCoupon] = useState(null);
+  const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
+  const [copiedCouponCode, setCopiedCouponCode] = useState(false);
+
+  const fetchPublicCoupon = useCallback(async () => {
+    try {
+      const res = await API.get("/coupons?status=Active&isPublic=true");
+      const list = res.data?.data || res.data?.coupons || [];
+      const now = new Date();
+
+      // Strict client-side validation to guarantee no expired/private coupons show
+      const validCoupons = (Array.isArray(list) ? list : []).filter((c) => {
+        if (c.status !== "Active") return false;
+        if (c.isPublic === false) return false;
+        if (c.expiryDate && new Date(c.expiryDate) <= now) return false;
+        if (c.startDate && new Date(c.startDate) > now) return false;
+        if (
+          c.usageLimit !== null &&
+          c.usageLimit !== undefined &&
+          c.usageCount >= c.usageLimit
+        ) {
+          return false;
+        }
+        return true;
+      });
+
+      if (validCoupons.length > 0) {
+        // Prioritize highest discount percentage or value
+        validCoupons.sort(
+          (a, b) => (Number(b.discountValue) || 0) - (Number(a.discountValue) || 0)
+        );
+        setPublicCoupon(validCoupons[0]);
+      } else {
+        setPublicCoupon(null);
+      }
+    } catch (err) {
+      console.error("Failed to load public coupon in navbar:", err);
+      setPublicCoupon(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPublicCoupon();
+
+    const handleCouponUpdate = () => {
+      fetchPublicCoupon();
+    };
+
+    window.addEventListener("couponUpdated", handleCouponUpdate);
+    return () => window.removeEventListener("couponUpdated", handleCouponUpdate);
+  }, [fetchPublicCoupon]);
+
+  const handleCopyCouponCode = (code) => {
+    if (!code) return;
+    navigator.clipboard.writeText(code);
+    setCopiedCouponCode(true);
+    setTimeout(() => setCopiedCouponCode(false), 2000);
+  };
 
   // ======================================================
   // GET TOKEN
@@ -690,6 +763,13 @@ const Navbar = () => {
         );
       });
 
+      // Sort real database categories by order ascending
+      activeCategories.sort((a, b) => {
+        const orderA = a.order !== undefined && a.order !== null ? Number(a.order) : 999;
+        const orderB = b.order !== undefined && b.order !== null ? Number(b.order) : 999;
+        return orderA - orderB;
+      });
+
       setCategories(activeCategories);
     } catch (error) {
       console.error("Navbar category fetch error:", error);
@@ -698,6 +778,16 @@ const Navbar = () => {
       setLoadingCategories(false);
     }
   }, []);
+
+  // Sync real-time category updates from admin panel or storage
+  useEffect(() => {
+    const handleCategoryUpdate = () => {
+      fetchCategories();
+    };
+
+    window.addEventListener("categoryUpdated", handleCategoryUpdate);
+    return () => window.removeEventListener("categoryUpdated", handleCategoryUpdate);
+  }, [fetchCategories]);
 
   // ======================================================
   // INITIAL LOAD
@@ -730,8 +820,13 @@ const Navbar = () => {
   // ======================================================
 
   useEffect(() => {
-    const handleCartUpdated = () => {
-      fetchCart();
+    const handleCartUpdated = (e) => {
+      if (e?.detail?.itemCount === 0 || e?.detail?.items?.length === 0) {
+        setCartItemCount(0);
+        setCartTotal(0);
+      } else {
+        fetchCart();
+      }
     };
 
     window.addEventListener("cartUpdated", handleCartUpdated);
@@ -768,6 +863,7 @@ const Navbar = () => {
   useEffect(() => {
     const handleAuthChanged = () => {
       fetchCart();
+      refreshWishlistCount();
     };
 
     window.addEventListener("authChanged", handleAuthChanged);
@@ -775,7 +871,7 @@ const Navbar = () => {
     return () => {
       window.removeEventListener("authChanged", handleAuthChanged);
     };
-  }, [fetchCart]);
+  }, [fetchCart, refreshWishlistCount]);
 
   // ======================================================
   // STORAGE EVENT
@@ -863,42 +959,46 @@ const Navbar = () => {
   );
 
   // ======================================================
-  // ONLY SHOW CATEGORY IF PRODUCT COUNT > 0
+  // REAL CATEGORIES FROM DATABASE
   // ======================================================
 
   const visibleCategories = useMemo(() => {
-    if (loadingProducts) return [];
-
     return categories.filter((category) => {
       const name = getCategoryName(category);
-      if (!name) return false;
-
-      const categoryProducts = getProductsByCategory(category);
-      return categoryProducts.length > 0;
+      return Boolean(name);
     });
-  }, [categories, loadingProducts, getProductsByCategory]);
+  }, [categories]);
 
   // ======================================================
-  // OPEN PRODUCT DETAILS
+  // OPEN PRODUCT DETAILS (SEO-FRIENDLY SLUG OR ID)
   // ======================================================
 
   const handleProductClick = (product) => {
     if (!product) return;
 
     const productId = getProductId(product);
-    if (!productId) {
-      console.error("Product ID not found:", product);
-      return;
-    }
+    const rawName = product.productName || product.name || "";
+    const cleanSlug =
+      product.slug ||
+      rawName
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-") ||
+      productId;
 
     closeCategoryMenu();
     closeMobileMenu();
 
-    navigate(`/productdetails/${productId}`);
+    if (cleanSlug) {
+      navigate(`/product/${encodeURIComponent(cleanSlug)}`);
+    } else if (productId) {
+      navigate(`/productdetails/${productId}`);
+    }
   };
 
   // ======================================================
-  // CATEGORY CLICK
+  // CATEGORY CLICK (NAVIGATE & FILTER POPULAR PRODUCTS)
   // ======================================================
 
   const handleCategoryClick = (category, event) => {
@@ -909,11 +1009,16 @@ const Navbar = () => {
 
     if (!category) return;
 
-    const categoryKey = getCategoryKey(category);
+    const categoryName = getCategoryName(category);
+    closeCategoryMenu();
+    closeMobileMenu();
 
-    setActiveCategory((previous) =>
-      previous === categoryKey ? null : categoryKey,
-    );
+    if (categoryName) {
+      navigate(`/?category=${encodeURIComponent(categoryName)}`);
+      window.dispatchEvent(
+        new CustomEvent("selectCategory", { detail: categoryName })
+      );
+    }
   };
 
   // ======================================================
@@ -1180,7 +1285,20 @@ const Navbar = () => {
         >
           <div className="navbar-container navbar-bottom-container">
             {/* ALL CATEGORIES */}
-            <div className="navbar-category-wrapper">
+            <div
+              className="navbar-category-wrapper"
+              onMouseEnter={() => {
+                if (window.innerWidth > 768) {
+                  setIsCategoryOpen(true);
+                }
+              }}
+              onMouseLeave={() => {
+                if (window.innerWidth > 768) {
+                  setIsCategoryOpen(false);
+                  setActiveCategory(null);
+                }
+              }}
+            >
               <button
                 type="button"
                 className={`navbar-category-btn ${
@@ -1239,7 +1357,17 @@ const Navbar = () => {
                       const isSubOpen = activeCategory === categoryKey;
 
                       return (
-                        <li key={categoryKey} className="navbar-dropdown-item">
+                        <li
+                          key={categoryKey}
+                          className={`navbar-dropdown-item ${
+                            isSubOpen ? "navbar-dropdown-item-active" : ""
+                          }`}
+                          onMouseEnter={() => {
+                            if (window.innerWidth > 768) {
+                              setActiveCategory(categoryKey);
+                            }
+                          }}
+                        >
                           <div className="navbar-dropdown-item-header">
                             <button
                               type="button"
@@ -1248,11 +1376,6 @@ const Navbar = () => {
                                 handleCategoryClick(category, event)
                               }
                             >
-                              <Grid
-                                size={18}
-                                className="navbar-dropdown-icon"
-                                aria-hidden="true"
-                              />
                               <span className="navbar-category-title-text">
                                 {categoryName}
                               </span>
@@ -1283,6 +1406,15 @@ const Navbar = () => {
                             }`}
                           >
                             <ul className="navbar-sub-list">
+                              <li className="navbar-sub-dropdown-header">
+                                <span>{categoryName}</span>
+                                {categoryProducts.length > 0 && (
+                                  <span className="navbar-sub-count-badge">
+                                    {categoryProducts.length} items
+                                  </span>
+                                )}
+                              </li>
+
                               {subCategories.map((subCategory) => {
                                 const subKey =
                                   getSubCategoryId(subCategory) ||
@@ -1318,7 +1450,7 @@ const Navbar = () => {
                                 <li className="navbar-sub-item">
                                   Loading products...
                                 </li>
-                              ) : (
+                              ) : categoryProducts.length > 0 ? (
                                 categoryProducts.map((product) => {
                                   const productId = getProductId(product);
                                   const productName = getProductName(product);
@@ -1366,6 +1498,12 @@ const Navbar = () => {
                                     </li>
                                   );
                                 })
+                              ) : (
+                                <li className="navbar-sub-item navbar-sub-item-empty">
+                                  <span style={{ fontSize: "12px", color: "#9ca3af", fontStyle: "italic", padding: "10px 14px", display: "block" }}>
+                                    No products found in this category
+                                  </span>
+                                </li>
                               )}
                             </ul>
                           </div>
@@ -1377,15 +1515,58 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* SPECIAL OFFER */}
+            {/* SPECIAL OFFER / COUPON BANNER */}
             <div className="navbar-offer-text">
-              <strong>-30% off</strong> on your first order over ₹200.{" "}
-              <Link
-                to="/promotions/first-order-discount"
-                onClick={closeMobileMenu}
-              >
-                Show More
-              </Link>
+              {publicCoupon ? (
+                <div className="navbar-offer-content">
+                  <span className="navbar-offer-highlight">
+                    {publicCoupon.discountType === "percentage"
+                      ? `-${publicCoupon.discountValue}% off`
+                      : `Flat ₹${publicCoupon.discountValue} off`}
+                  </span>{" "}
+                  <span className="navbar-offer-subtext">
+                    {publicCoupon.minPurchase > 0
+                      ? `on your order over ₹${publicCoupon.minPurchase}.`
+                      : "on your grocery order."}
+                  </span>
+
+                  {/* ULTRA-PREMIUM COUPON CODE PILL */}
+                  <button
+                    type="button"
+                    className={`navbar-premium-coupon-pill ${copiedCouponCode ? "copied" : ""}`}
+                    onClick={() => handleCopyCouponCode(publicCoupon.code)}
+                    title="Click to copy coupon code"
+                    aria-label={`Coupon code ${publicCoupon.code}. Click to copy`}
+                  >
+                    <span className="navbar-coupon-pill-shine" aria-hidden="true" />
+                    <span className="navbar-coupon-pill-tag">
+                      <Ticket size={13} className="navbar-coupon-pill-icon" />
+                      <span>CODE:</span>
+                    </span>
+                    <span className="navbar-coupon-pill-code">{publicCoupon.code}</span>
+                    <span className="navbar-coupon-pill-action">
+                      {copiedCouponCode ? (
+                        <>
+                          <Check size={12} className="copy-icon check-icon" />
+                          <span>COPIED!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={12} className="copy-icon" />
+                          <span>COPY</span>
+                        </>
+                      )}
+                    </span>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <strong>Fresh Grocery</strong> delivered daily to your doorstep.{" "}
+                  <Link to={NAV_PATHS.HOME} onClick={closeMobileMenu}>
+                    Shop Now
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* QUICK NAVIGATION */}
@@ -1409,10 +1590,147 @@ const Navbar = () => {
               <Link to={NAV_PATHS.ABOUT} onClick={closeMobileMenu}>
                 About Us
               </Link>
+
+              <Link
+                to={NAV_PATHS.WISHLIST}
+                onClick={closeMobileMenu}
+                className="navbar-nav-mobile-only"
+              >
+                Wishlist {wishlistCount > 0 ? `(${wishlistCount})` : ""}
+              </Link>
+
+              <Link
+                to={NAV_PATHS.CART}
+                onClick={closeMobileMenu}
+                className="navbar-nav-mobile-only"
+              >
+                Shopping Cart {cartItemCount > 0 ? `(${cartItemCount})` : ""}
+              </Link>
             </div>
           </div>
         </nav>
+
+        {/* MOBILE MENU BACKDROP */}
+        {isMobileMenuOpen && (
+          <div
+            className="navbar-mobile-backdrop"
+            onClick={closeMobileMenu}
+            aria-hidden="true"
+          />
+        )}
       </header>
+
+      {/* PUBLIC COUPON DETAILS POPUP / MODAL */}
+      {isCouponModalOpen && publicCoupon && (
+        <div
+          className="navbar-coupon-modal-backdrop"
+          onClick={() => setIsCouponModalOpen(false)}
+        >
+          <div
+            className="navbar-coupon-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="navbar-coupon-modal-close"
+              onClick={() => setIsCouponModalOpen(false)}
+              aria-label="Close coupon modal"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="navbar-coupon-modal-badge">
+              <Sparkles size={15} /> Store Coupon Offer
+            </div>
+
+            <h3 className="navbar-coupon-modal-title">
+              {publicCoupon.title || "Special Store Discount"}
+            </h3>
+
+            {publicCoupon.description && (
+              <p className="navbar-coupon-modal-desc">
+                {publicCoupon.description}
+              </p>
+            )}
+
+            <div className="navbar-coupon-code-box">
+              <div className="navbar-coupon-code-left">
+                <Ticket size={18} className="navbar-coupon-ticket-icon" />
+                <span className="navbar-coupon-code-text">
+                  {publicCoupon.code}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="navbar-coupon-copy-btn"
+                onClick={() => handleCopyCouponCode(publicCoupon.code)}
+              >
+                {copiedCouponCode ? (
+                  <>
+                    <Check size={14} /> Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy size={14} /> Copy Code
+                  </>
+                )}
+              </button>
+            </div>
+
+            <div className="navbar-coupon-details-grid">
+              <div className="coupon-detail-item">
+                <span className="detail-label">Discount</span>
+                <span className="detail-val highlight">
+                  {publicCoupon.discountType === "percentage"
+                    ? `${publicCoupon.discountValue}% OFF`
+                    : `₹${publicCoupon.discountValue} FLAT`}
+                </span>
+              </div>
+              <div className="coupon-detail-item">
+                <span className="detail-label">Min Purchase</span>
+                <span className="detail-val">
+                  {publicCoupon.minPurchase > 0
+                    ? `₹${publicCoupon.minPurchase}`
+                    : "No Minimum"}
+                </span>
+              </div>
+              {publicCoupon.maxDiscount && (
+                <div className="coupon-detail-item">
+                  <span className="detail-label">Max Discount</span>
+                  <span className="detail-val">Up to ₹{publicCoupon.maxDiscount}</span>
+                </div>
+              )}
+              <div className="coupon-detail-item">
+                <span className="detail-label">Valid Until</span>
+                <span className="detail-val">
+                  {publicCoupon.expiryDate
+                    ? new Date(publicCoupon.expiryDate).toLocaleDateString(
+                        "en-IN",
+                        {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        }
+                      )
+                    : "No Expiry"}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="navbar-coupon-apply-btn"
+              onClick={() => {
+                handleCopyCouponCode(publicCoupon.code);
+                setIsCouponModalOpen(false);
+                navigate(NAV_PATHS.CART);
+              }}
+            >
+              Copy Code & Go to Cart →
+            </button>
+          </div>
+        </div>
+      )}
 
       
     </>

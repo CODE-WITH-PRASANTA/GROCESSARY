@@ -1,0 +1,49 @@
+# Environment files (Global)
+.env
+.env.*
+*.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+!.env.example
+
+# Frontend Environment files
+frontend/.env
+frontend/.env.*
+frontend/*.env
+frontend/.env.local
+frontend/.env.development
+frontend/.env.development.local
+frontend/.env.production
+frontend/.env.production.local
+!frontend/.env.example
+
+# Backend Environment files
+Backend/.env
+Backend/.env.*
+Backend/*.env
+Backend/.env.local
+Backend/.env.development
+Backend/.env.production
+backend/.env
+backend/.env.*
+backend/*.env
+!Backend/.env.example
+!backend/.env.example
+
+# Admin Panel Environment files
+AdminPannel/.env
+AdminPannel/.env.*
+AdminPannel/*.env
+AdminPannel/.env.local
+AdminPannel/.env.development
+AdminPannel/.env.production
+adminpannel/.env
+adminpannel/.env.*
+adminpannel/*.env
+!AdminPannel/.env.example
+!adminpannel/.env.example

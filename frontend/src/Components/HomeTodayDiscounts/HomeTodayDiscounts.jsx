@@ -325,7 +325,11 @@ const HomeTodayDiscounts = () => {
 
   useEffect(() => {
     const syncWishlist = (event) => {
-      const { productId, isWishlisted } = event.detail || {};
+      if (event?.detail?.cleared || (event?.detail?.count === 0 && !event?.detail?.productId)) {
+        setWishlistIds(new Set());
+        return;
+      }
+      const { productId, isWishlisted } = event?.detail || {};
       if (!productId) return;
 
       setWishlistIds((previous) => {
@@ -336,8 +340,18 @@ const HomeTodayDiscounts = () => {
       });
     };
 
+    const handleAuth = () => {
+      if (!localStorage.getItem("token")) {
+        setWishlistIds(new Set());
+      }
+    };
+
     window.addEventListener("wishlistUpdated", syncWishlist);
-    return () => window.removeEventListener("wishlistUpdated", syncWishlist);
+    window.addEventListener("authChanged", handleAuth);
+    return () => {
+      window.removeEventListener("wishlistUpdated", syncWishlist);
+      window.removeEventListener("authChanged", handleAuth);
+    };
   }, []);
 
   useEffect(() => {
@@ -640,18 +654,6 @@ const HomeTodayDiscounts = () => {
         localStorage.setItem("guestCart", JSON.stringify(guestCart));
 
         window.dispatchEvent(new Event("cartUpdated"));
-
-        await Swal.fire({
-          icon: "success",
-          title: "Added to Cart!",
-          text: `${
-            product?.productName || product?.name || "Product"
-          } has been added to your cart.`,
-          confirmButtonText: "Continue Shopping",
-          timer: 1800,
-          timerProgressBar: true,
-        });
-
         return;
       }
 
@@ -665,19 +667,6 @@ const HomeTodayDiscounts = () => {
       });
 
       window.dispatchEvent(new Event("cartUpdated"));
-
-      await Swal.fire({
-        icon: "success",
-        title: "Added to Cart!",
-        text:
-          response?.data?.message ||
-          `${
-            product?.productName || product?.name || "Product"
-          } has been added to your cart.`,
-        confirmButtonText: "Continue Shopping",
-        timer: 1800,
-        timerProgressBar: true,
-      });
     } catch (error) {
       console.error("ADD TO CART ERROR:", error);
 

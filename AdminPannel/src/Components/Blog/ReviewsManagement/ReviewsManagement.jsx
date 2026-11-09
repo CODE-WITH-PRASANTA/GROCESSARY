@@ -261,6 +261,12 @@ const formatReview = (review) => {
 
     id: review?._id,
 
+    orderId: review?.orderId || review?.order?.orderId || review?.order || "",
+
+    verifiedPurchase: Boolean(
+      review?.verifiedPurchase || review?.orderId || review?.order
+    ),
+
     customer: {
       name: customerName,
       email: customerEmail,
@@ -1069,6 +1075,22 @@ const ReviewsManagement = () => {
                         <span className="ReviewsManagement-subtext">
                           {row.customer.email}
                         </span>
+
+                        {row.verifiedPurchase && (
+                          <span
+                            style={{
+                              fontSize: "11px",
+                              color: "#059669",
+                              fontWeight: 700,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "3px",
+                              marginTop: "2px",
+                            }}
+                          >
+                            ✓ Verified Buyer {row.orderId ? `(#${String(row.orderId).slice(-6)})` : ""}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </td>

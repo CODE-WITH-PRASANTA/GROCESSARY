@@ -92,15 +92,49 @@ const CartSection = () => {
   }, []);
 
   // =======================================================
-  // LOAD REAL DYNAMIC COUPONS FROM BACKEND
-  // (Backed by http://localhost:5174/products/coupons)
+  // LOAD REAL DYNAMIC COUPONS FROM BACKEND (PUBLIC ONLY)
   // =======================================================
   const loadDynamicCoupons = useCallback(async () => {
     try {
       setCouponsLoading(true);
-      const { data } = await API.get("/coupons?status=Active");
+      const { data } = await API.get("/coupons?status=Active&isPublic=true");
       const list = data?.coupons || data?.data || [];
-      setAvailableCoupons(Array.isArray(list) ? list : []);
+      const now = new Date();
+
+      // Strict validation: Only show verified Active PUBLIC coupons. NEVER show Private coupons.
+      const publicCoupons = (Array.isArray(list) ? list : []).filter((c) => {
+        if (!c) return false;
+        if (c.status !== "Active") return false;
+
+        // Strict Private check: Never show private coupons in cart suggestions
+        if (
+          c.isPublic === false ||
+          c.isPublic === "false" ||
+          c.visibility === "private"
+        ) {
+          return false;
+        }
+        if (c.isPublic !== true && c.isPublic !== "true") {
+          return false;
+        }
+
+        // Expiry check
+        if (c.expiryDate && new Date(c.expiryDate) <= now) return false;
+        if (c.startDate && new Date(c.startDate) > now) return false;
+
+        // Usage limit check
+        if (
+          c.usageLimit !== null &&
+          c.usageLimit !== undefined &&
+          Number(c.usageCount || 0) >= Number(c.usageLimit)
+        ) {
+          return false;
+        }
+
+        return true;
+      });
+
+      setAvailableCoupons(publicCoupons);
     } catch (error) {
       console.error("Error loading dynamic coupons:", error);
       setAvailableCoupons([]);
@@ -108,6 +142,19 @@ const CartSection = () => {
       setCouponsLoading(false);
     }
   }, []);
+
+  // Listen to coupon updates in real-time
+  useEffect(() => {
+    loadDynamicCoupons();
+
+    const handleCouponUpdate = () => {
+      loadDynamicCoupons();
+    };
+
+    window.addEventListener("couponUpdated", handleCouponUpdate);
+    return () =>
+      window.removeEventListener("couponUpdated", handleCouponUpdate);
+  }, [loadDynamicCoupons]);
 
   // =======================================================
   // LOAD SAVED DELIVERY ADDRESSES
@@ -437,7 +484,7 @@ const CartSection = () => {
         cancelButtonText: "Continue Shopping",
       }).then((result) => {
         if (result.isConfirmed) {
-          navigate("/login");
+          navigate("/login?redirect=/cart");
         }
       });
       return;
@@ -1097,32 +1144,36 @@ const CartSection = () => {
                   </div>
                 )}
 
-                {/* AVAILABLE REAL PROMO CODE CHIPS */}
-                {!appliedCoupon && availableCoupons.length > 0 && (
-                  <div className="available-coupons-wrap">
-                    <span className="coupon-chips-title">Available Offers:</span>
-                    <div className="coupon-chips-list">
-                      {availableCoupons.map((coupon) => (
-                        <button
-                          key={coupon._id || coupon.code}
-                          type="button"
-                          className="coupon-chip"
-                          onClick={() => handleApplyCoupon(coupon.code)}
-                          title={coupon.description || coupon.title}
-                        >
-                          <span className="coupon-chip-code">
-                            {coupon.code}
-                          </span>
-                          <span className="coupon-chip-badge">
-                            {coupon.discountType === "percentage"
-                              ? `${coupon.discountValue}% OFF`
-                              : `₹${coupon.discountValue} OFF`}
-                          </span>
-                        </button>
-                      ))}
+                {/* AVAILABLE REAL PUBLIC PROMO CODE CHIPS */}
+                {!appliedCoupon &&
+                  availableCoupons.filter((c) => c.isPublic === true).length >
+                    0 && (
+                    <div className="available-coupons-wrap">
+                      <span className="coupon-chips-title">Available Offers:</span>
+                      <div className="coupon-chips-list">
+                        {availableCoupons
+                          .filter((coupon) => coupon.isPublic === true)
+                          .map((coupon) => (
+                            <button
+                              key={coupon._id || coupon.code}
+                              type="button"
+                              className="coupon-chip"
+                              onClick={() => handleApplyCoupon(coupon.code)}
+                              title={coupon.description || coupon.title}
+                            >
+                              <span className="coupon-chip-code">
+                                {coupon.code}
+                              </span>
+                              <span className="coupon-chip-badge">
+                                {coupon.discountType === "percentage"
+                                  ? `${coupon.discountValue}% OFF`
+                                  : `₹${coupon.discountValue} OFF`}
+                              </span>
+                            </button>
+                          ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
 
               {/* CHECKOUT BUTTON */}

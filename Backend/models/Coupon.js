@@ -70,6 +70,10 @@ const couponSchema = new mongoose.Schema(
       enum: ["Active", "Inactive", "Expired"],
       default: "Active",
     },
+    isPublic: {
+      type: Boolean,
+      default: true, // true = Public coupon (visible to customers on store), false = Private coupon (code-only)
+    },
     usedBy: [
       {
         userId: {

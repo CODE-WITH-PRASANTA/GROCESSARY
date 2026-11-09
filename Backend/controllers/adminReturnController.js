@@ -1,9 +1,11 @@
 // controllers/adminReturnController.js
 const mongoose = require("mongoose");
+const crypto = require("crypto");
 const Order = require("../models/Order");
 const User = require("../models/User");
 const Wallet = require("../models/Wallet");
 const RewardPoints = require("../models/RewardPoints");
+const { restoreStock } = require("./orderController");
 
 const toNumber = (v) => {
   const n = Number(v);
@@ -88,6 +90,8 @@ exports.listReturns = async (req, res) => {
         qty,
         reason: o.returnReason || "",
         note: o.returnNote || "",
+        photos: (o.returnPhotos && o.returnPhotos.length > 0) ? o.returnPhotos : (o.pickupProof?.images || []),
+        damagePhotos: (o.returnPhotos && o.returnPhotos.length > 0) ? o.returnPhotos : (o.pickupProof?.images || []),
         requestedAt: o.returnRequestedAt,
         resolvedAt: o.returnResolvedAt || null,
         type: o.returnType || "refund",
@@ -273,6 +277,11 @@ exports.updateReturnStatus = async (req, res) => {
       order.returnResolvedAt = new Date();
     }
 
+    if (status === "picked" && order.pickupDetails) {
+      order.pickupDetails.otpVerified = true;
+      order.pickupDetails.otpVerifiedAt = new Date();
+    }
+
     order.statusHistory = order.statusHistory || [];
     order.statusHistory.push({
       status: `return_${status}`,
@@ -338,6 +347,11 @@ exports.updateReturnStatus = async (req, res) => {
     }
 
     await order.save();
+
+    // If return was refunded or replaced, restore stock to inventory
+    if (status === "refunded" || status === "replaced") {
+      await restoreStock(order);
+    }
 
     return res.json({
       success: true,
@@ -408,8 +422,6 @@ exports.assignReturn = async (req, res) => {
   }
 };
 
-const crypto = require("crypto");
-
 // ======================================================
 // PUT /api/admin/returns/:orderId/schedule-pickup
 // Body: { scheduledAt, slot, agent, agentPhone, address, instructions }
@@ -438,7 +450,7 @@ exports.schedulePickup = async (req, res) => {
         .json({ success: false, message: "Pickup date is required." });
     }
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId).populate("user", "name email mobile");
     if (!order) {
       return res
         .status(404)
@@ -455,12 +467,19 @@ exports.schedulePickup = async (req, res) => {
     // Generate 4-digit OTP
     const otp = String(crypto.randomInt(1000, 9999));
 
+    const targetAddress =
+      address ||
+      order.deliveryAddress?.address ||
+      (order.deliveryAddress
+        ? `${order.deliveryAddress.street || ""} ${order.deliveryAddress.city || ""} ${order.deliveryAddress.pincode || ""}`.trim()
+        : "");
+
     order.pickupDetails = {
       scheduledAt: new Date(scheduledAt),
       slot,
       agent,
       agentPhone,
-      address: address || order.deliveryAddress?.address || "",
+      address: targetAddress,
       instructions,
       otp,
       otpVerified: false,
@@ -471,21 +490,82 @@ exports.schedulePickup = async (req, res) => {
     order.statusHistory = order.statusHistory || [];
     order.statusHistory.push({
       status: "return_pickup_scheduled",
-      note: `Pickup scheduled for ${new Date(scheduledAt).toLocaleString()}`,
+      note: `Pickup scheduled for ${new Date(scheduledAt).toLocaleString()}${slot ? ` (${slot})` : ""}. Agent: ${agent || "Assigned"}`,
     });
 
     await order.save();
 
+    // Send Email Notification to Customer with Pickup OTP & Schedule Details
+    try {
+      const customerEmail = order.user?.email || order.deliveryAddress?.email;
+      const customerName = order.deliveryAddress?.name || order.user?.name || "Customer";
+      const formattedDate = new Date(scheduledAt).toLocaleString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      if (customerEmail) {
+        const { sendMail } = require("../utils/sendOtp");
+        await sendMail({
+          to: customerEmail,
+          subject: `Return Pickup Scheduled - Order #${order.orderNumber || order._id} [OTP: ${otp}]`,
+          html: `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden;">
+              <div style="background: #0f2a4a; padding: 22px 24px; text-align: center; color: #ffffff;">
+                <h2 style="margin: 0; font-size: 22px; font-weight: 800;">Grocery Sathi</h2>
+                <p style="margin: 4px 0 0; font-size: 13.5px; opacity: 0.9;">Return Pickup Scheduled</p>
+              </div>
+              <div style="padding: 24px;">
+                <p style="font-size: 15px; color: #1e293b; margin: 0 0 14px;">Hello <strong>${customerName}</strong>,</p>
+                <p style="font-size: 14px; color: #475569; line-height: 1.5; margin: 0 0 18px;">
+                  Your return request for Order <strong>#${order.orderNumber || String(order._id).slice(-8).toUpperCase()}</strong> has been approved and a pickup has been scheduled.
+                </p>
+
+                <!-- OTP BOX -->
+                <div style="background: #ecfdf5; border: 2px dashed #059669; border-radius: 12px; padding: 18px; text-align: center; margin-bottom: 20px;">
+                  <span style="font-size: 12px; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 6px;">Your Return Pickup OTP</span>
+                  <div style="font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #047857; font-family: monospace;">
+                    ${otp}
+                  </div>
+                  <p style="margin: 8px 0 0; font-size: 12px; color: #065f46;">
+                    🔒 Share this 4-digit OTP with the delivery executive only when they arrive to collect the package.
+                  </p>
+                </div>
+
+                <!-- PICKUP DETAILS -->
+                <div style="background: #f8fafc; border-radius: 10px; padding: 16px; margin-bottom: 20px; font-size: 13.5px; color: #334155; line-height: 1.6;">
+                  <div style="margin-bottom: 6px;"><strong>Scheduled Date:</strong> ${formattedDate}</div>
+                  ${slot ? `<div style="margin-bottom: 6px;"><strong>Time Slot:</strong> ${slot}</div>` : ""}
+                  ${agent ? `<div style="margin-bottom: 6px;"><strong>Pickup Agent:</strong> ${agent} ${agentPhone ? `(${agentPhone})` : ""}</div>` : ""}
+                  ${targetAddress ? `<div style="margin-bottom: 6px;"><strong>Pickup Address:</strong> ${targetAddress}</div>` : ""}
+                  ${instructions ? `<div><strong>Instructions:</strong> ${instructions}</div>` : ""}
+                </div>
+
+                <p style="font-size: 13px; color: #64748b; margin: 0;">
+                  Once verified and inspected, your refund will be processed promptly.
+                </p>
+              </div>
+            </div>
+          `,
+        });
+      }
+    } catch (mailErr) {
+      console.warn("Could not send pickup notification email:", mailErr.message);
+    }
+
     return res.json({
       success: true,
-      message: "Pickup scheduled. OTP sent to user.",
+      message: `Pickup scheduled successfully! Customer OTP is ${otp}.`,
       order,
     });
   } catch (err) {
     console.error("schedulePickup error:", err);
     return res.status(500).json({
       success: false,
-      message: "Failed to schedule pickup.",
+      message: "Failed to schedule pickup: " + (err.message || "Unknown error"),
     });
   }
 };
@@ -539,5 +619,85 @@ exports.submitInspection = async (req, res) => {
       success: false,
       message: "Failed to record inspection.",
     });
+  }
+};
+
+
+// ======================================================
+// GET /api/admin/returns/:orderId
+// Get full details for an individual return case
+// ======================================================
+exports.getReturnDetails = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({ success: false, message: "Invalid order ID." });
+    }
+
+    const order = await Order.findById(orderId).populate("user", "name email mobile");
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found." });
+    }
+
+    const items = order.items || [];
+    const firstItem = items[0] || {};
+    const prod = firstItem.product && typeof firstItem.product === "object" ? firstItem.product : {};
+
+    const customerAddress = order.deliveryAddress
+      ? `${order.deliveryAddress.street || ""} ${order.deliveryAddress.city || ""} ${order.deliveryAddress.state || ""} ${order.deliveryAddress.pincode || ""}`.trim()
+      : "";
+
+    const returnData = {
+      id: order._id,
+      orderId: order._id,
+      orderNumber: order.orderNumber || order._id,
+      orderDate: order.createdAt,
+      requestedAt: order.returnRequestedAt || order.updatedAt,
+      resolvedAt: order.returnResolvedAt || null,
+      status: order.returnStatus || "requested",
+      type: order.returnType || "refund",
+      reason: order.returnReason || "",
+      note: order.returnNote || "",
+      amount: order.returnAmount || order.payableAmount || order.totalAmount || 0,
+      customer: {
+        id: order.user?._id,
+        name: order.deliveryAddress?.name || order.user?.name || "Customer",
+        phone: order.deliveryAddress?.mobile || order.user?.mobile || "",
+        email: order.deliveryAddress?.email || order.user?.email || "",
+      },
+      deliveryAddress: customerAddress || order.deliveryAddress?.address || "",
+      pickupAddress: order.pickupDetails?.address || customerAddress || "",
+      product: {
+        name: firstItem.productName || prod.productName || prod.name || "Grocery Item",
+        sku: prod.sku || String(prod._id || firstItem._id || "").slice(-6).toUpperCase(),
+        qty: firstItem.quantity || firstItem.qty || 1,
+        price: firstItem.price || 0,
+        total: firstItem.itemTotal || firstItem.total || 0,
+        image: prod.image || firstItem.image || "",
+      },
+      items: items.map((it) => ({
+        name: it.productName || it.name || "Item",
+        qty: it.quantity || it.qty || 1,
+        price: it.price || 0,
+        total: it.itemTotal || it.total || 0,
+      })),
+      photos:
+        order.returnPhotos && order.returnPhotos.length > 0
+          ? order.returnPhotos
+          : order.pickupProof?.images || [],
+      damagePhotos:
+        order.returnPhotos && order.returnPhotos.length > 0
+          ? order.returnPhotos
+          : order.pickupProof?.images || [],
+      pickupDetails: order.pickupDetails || null,
+      pickupProof: order.pickupProof || null,
+      inspectionReport: order.inspectionReport || null,
+      statusHistory: order.statusHistory || [],
+    };
+
+    return res.json({ success: true, data: returnData });
+  } catch (err) {
+    console.error("getReturnDetails error:", err);
+    return res.status(500).json({ success: false, message: "Failed to load return details." });
   }
 };

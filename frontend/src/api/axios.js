@@ -92,6 +92,15 @@ API.interceptors.response.use(
     // ====================================
 
     if (error.response) {
+      if (error.response.status === 401) {
+        const token = localStorage.getItem("token");
+        if (token) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          window.dispatchEvent(new Event("authChanged"));
+        }
+      }
+
       console.error(
         "API Error:",
         {

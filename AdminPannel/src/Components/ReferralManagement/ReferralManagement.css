@@ -1,0 +1,505 @@
+/* ReferralManagement.css */
+
+.referral-mgmt-wrapper {
+  padding: 24px;
+  background: #f8fafc;
+  min-height: 100vh;
+  font-family: inherit;
+  color: #1e293b;
+}
+
+/* HEADER */
+.referral-mgmt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.referral-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.referral-mgmt-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+}
+
+.referral-mgmt-subtitle {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: #64748b;
+}
+
+.btn-refresh-referrals {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-refresh-referrals:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.btn-refresh-referrals:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: refSpin 0.7s linear infinite;
+}
+
+@keyframes refSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* METRICS GRID */
+.referral-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.ref-metric-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.ref-metric-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ref-metric-card.blue .ref-metric-icon {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.ref-metric-card.green .ref-metric-icon {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.ref-metric-card.amber .ref-metric-icon {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.ref-metric-card.purple .ref-metric-icon {
+  background: #faf5ff;
+  color: #7c3aed;
+}
+
+.ref-metric-card.emerald .ref-metric-icon {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.ref-metric-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.ref-metric-label {
+  font-size: 12px;
+  font-weight: 650;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.ref-metric-val {
+  font-size: 24px;
+  font-weight: 850;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.ref-metric-hint {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* RULES BANNER */
+.referral-rules-banner {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: #065f46;
+  line-height: 1.5;
+}
+
+.rules-icon {
+  color: #059669;
+  flex-shrink: 0;
+}
+
+/* TOOLBAR */
+.referral-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.referral-search-box {
+  position: relative;
+  flex: 1;
+  max-width: 480px;
+  min-width: 260px;
+}
+
+.referral-search-box .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.referral-search-box input {
+  width: 100%;
+  padding: 10px 36px 10px 38px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  font-size: 13.5px;
+  color: #0f172a;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.referral-search-box input:focus {
+  border-color: #047857;
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.1);
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.referral-filter-tabs {
+  display: flex;
+  gap: 6px;
+  background: #e2e8f0;
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.ref-filter-tab {
+  padding: 6px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ref-filter-tab.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* TABLE CARD */
+.referral-table-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.referral-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13.5px;
+}
+
+.referral-table th {
+  background: #f8fafc;
+  padding: 14px 18px;
+  font-size: 12px;
+  font-weight: 750;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.referral-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.referral-table tr:hover {
+  background: #fbfcfe;
+}
+
+/* CELL STYLES */
+.user-profile-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 13px;
+  font-weight: 750;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid #a7f3d0;
+}
+
+.user-avatar-circle.friend {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.user-meta-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.user-subtext {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.ref-code-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ref-code-tag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px dashed #059669;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.ref-code-copy-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 2px;
+  display: inline-flex;
+}
+
+.ref-code-copy-btn:hover {
+  color: #0f172a;
+}
+
+.text-green {
+  color: #10b981;
+}
+
+/* STATUS BADGES */
+.ref-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.ref-status-badge.completed {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.ref-status-badge.pending {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+/* REWARD CELLS */
+.reward-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reward-cash {
+  color: #047857;
+  font-weight: 800;
+  font-size: 14.5px;
+}
+
+.reward-pending {
+  color: #d97706;
+  font-weight: 700;
+  font-size: 13.5px;
+}
+
+.friend-cash {
+  color: #2563eb;
+  font-weight: 800;
+  font-size: 14.5px;
+}
+
+.reward-sub {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.first-order-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.order-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.order-amt {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.text-muted {
+  color: #94a3b8;
+  font-size: 12.5px;
+  font-style: italic;
+}
+
+.date-cell {
+  color: #475569;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+/* EMPTY & LOADING */
+.referral-loading-box,
+.referral-empty-box {
+  padding: 48px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #64748b;
+}
+
+.empty-icon {
+  color: #cbd5e1;
+}
+
+.referral-empty-box h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 750;
+  color: #0f172a;
+}
+
+.referral-empty-box p {
+  margin: 0;
+  font-size: 13.5px;
+  color: #64748b;
+}
+

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import {
   Search,
   ScanLine,
@@ -15,17 +15,19 @@ import {
   RotateCcw,
   FileText,
   X,
+  XCircle,
   CalendarDays,
   Package,
   Banknote,
   Smartphone,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
-import { jsPDF } from "jspdf";
 
 import Swal from "sweetalert2";
 import API, { BASE_URL } from "../../api/axios";
 import BarcodeScanner from "../BarcodeScanner/BarcodeScanner";
+import { downloadOrderInvoicePdf } from "../../Utils/directInvoiceDownloader";
 import "./Billing.css";
 
 // =========================================================
@@ -100,6 +102,9 @@ const Billing = () => {
   const [upiLoading, setUpiLoading] = useState(false);
   const [upiCountdown, setUpiCountdown] = useState(0);
   const [upiRefreshKey, setUpiRefreshKey] = useState(0);
+  const [upiStatus, setUpiStatus] = useState("idle"); // "idle" | "loading" | "waiting" | "completed" | "failed"
+  const [upiFailureReason, setUpiFailureReason] = useState("");
+  const isCompletingSaleRef = useRef(false);
 
   // =========================================================
   // FETCH + MERGE PRODUCTS
@@ -404,11 +409,15 @@ const Billing = () => {
     if (paymentMethod !== "UPI" || saleCompleted) {
       setUpiQr(null);
       setUpiCountdown(0);
+      setUpiStatus("idle");
+      setUpiFailureReason("");
       return;
     }
 
     if (cart.length === 0 || totalAmount <= 0) {
       setUpiQr(null);
+      setUpiCountdown(0);
+      setUpiStatus("idle");
       return;
     }
 
@@ -418,6 +427,8 @@ const Billing = () => {
     const loadQr = async () => {
       try {
         setUpiLoading(true);
+        setUpiStatus("loading");
+        setUpiFailureReason("");
 
         const { data } = await API.post("/bills/upi-init", {
           amount: totalAmount,
@@ -425,7 +436,11 @@ const Billing = () => {
 
         if (!cancelled && data?.success && data?.data) {
           setUpiQr(data.data);
+          setUpiStatus("waiting");
           setAmountReceived(String(totalAmount.toFixed(0)));
+          if (data.data.upiTransactionId) {
+            setUpiTransactionId(data.data.upiTransactionId);
+          }
 
           const expiresAt = Date.now() + 5 * 60 * 1000;
           setUpiCountdown(Math.floor((expiresAt - Date.now()) / 1000));
@@ -436,18 +451,26 @@ const Billing = () => {
               Math.floor((expiresAt - Date.now()) / 1000),
             );
             setUpiCountdown(secs);
-            if (secs <= 0 && tickInterval) clearInterval(tickInterval);
+            if (secs <= 0) {
+              if (tickInterval) clearInterval(tickInterval);
+              setUpiStatus("failed");
+              setUpiFailureReason("QR code session expired (5-minute limit exceeded). Click Retry to generate a new QR.");
+            }
           }, 1000);
         }
       } catch (err) {
         console.error("UPI init error:", err);
-        if (!cancelled) setUpiQr(null);
+        if (!cancelled) {
+          setUpiQr(null);
+          setUpiStatus("failed");
+          setUpiFailureReason("Could not generate UPI QR code. Please check server or retry.");
+        }
       } finally {
         if (!cancelled) setUpiLoading(false);
       }
     };
 
-    const timer = setTimeout(loadQr, 350);
+    const timer = setTimeout(loadQr, 300);
 
     return () => {
       cancelled = true;
@@ -455,6 +478,53 @@ const Billing = () => {
       if (tickInterval) clearInterval(tickInterval);
     };
   }, [paymentMethod, totalAmount, cart.length, upiRefreshKey, saleCompleted]);
+
+  // =========================================================
+  // UPI LIVE STATUS POLLER — AUTO-COMPLETE ON SUCCESS
+  // =========================================================
+  useEffect(() => {
+    if (
+      paymentMethod !== "UPI" ||
+      !upiQr?.sessionId ||
+      upiStatus !== "waiting" ||
+      saleCompleted
+    ) {
+      return;
+    }
+
+    let isPolling = true;
+    const pollInterval = setInterval(async () => {
+      if (!isPolling) return;
+      try {
+        const { data } = await API.get(`/bills/upi-status/${upiQr.sessionId}`);
+        if (!isPolling) return;
+
+        if (data?.status === "completed") {
+          isPolling = false;
+          setUpiStatus("completed");
+          const txnId = data.upiTransactionId || upiQr.upiTransactionId;
+          setUpiTransactionId(txnId);
+
+          // Auto-complete sale immediately!
+          if (!isCompletingSaleRef.current) {
+            isCompletingSaleRef.current = true;
+            completeSale({ upiTxn: txnId, sessionId: upiQr.sessionId });
+          }
+        } else if (data?.status === "failed") {
+          isPolling = false;
+          setUpiStatus("failed");
+          setUpiFailureReason(data?.failureReason || "Payment was declined or cancelled.");
+        }
+      } catch (pollErr) {
+        // network retry
+      }
+    }, 2500);
+
+    return () => {
+      isPolling = false;
+      clearInterval(pollInterval);
+    };
+  }, [paymentMethod, upiQr?.sessionId, upiStatus, saleCompleted]);
 
   // =========================================================
   // CART ACTIONS
@@ -545,6 +615,10 @@ const Billing = () => {
     setSaleCompleted(false);
     setUpiTransactionId("");
     setUpiQr(null);
+    setUpiStatus("idle");
+    setUpiFailureReason("");
+    setUpiCountdown(0);
+    isCompletingSaleRef.current = false;
     setInvoiceNumber("");
     setCompletedBill(null);
     setPaymentMethod("Cash");
@@ -584,9 +658,9 @@ const Billing = () => {
   };
 
   // =========================================================
-  // DOWNLOAD PDF BILL
+  // DOWNLOAD PDF BILL (Using direct high-res invoice downloader)
   // =========================================================
-  const downloadBillPDF = (bill) => {
+  const downloadBillPDF = async (bill) => {
     const targetBill = bill || completedBill;
     if (!targetBill) {
       Swal.fire({
@@ -599,165 +673,7 @@ const Billing = () => {
     }
 
     try {
-      const doc = new jsPDF({
-        unit: "mm",
-        format: "a4",
-      });
-
-      const invNo = targetBill.invoiceNumber || invoiceNumber || "INVOICE";
-
-      // Top Brand Header Banner
-      doc.setFillColor(10, 173, 75); // #0aad4b
-      doc.rect(0, 0, 210, 24, "F");
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
-      doc.text("GROCERY SATHI", 105, 12, { align: "center" });
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.text("Fresh Grocery, Better Living | Retail Invoice and Receipt", 105, 18, { align: "center" });
-
-      // Invoice Metadata
-      doc.setTextColor(30, 41, 59);
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.text(`Invoice No: ${invNo}`, 14, 34);
-      doc.text(`Date: ${targetBill.date || formattedDate}`, 140, 34);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.text(`Payment Mode: ${targetBill.paymentMethod || "Cash"}`, 14, 40);
-      doc.text(`Time: ${targetBill.time || formattedTime}`, 140, 40);
-
-      let currentY = 46;
-      if (targetBill.customerName || targetBill.customerMobile) {
-        const parts = [
-          targetBill.customerName ? `Customer: ${targetBill.customerName}` : "",
-          targetBill.customerMobile ? `Mobile: ${targetBill.customerMobile}` : "",
-        ].filter(Boolean).join("   |   ");
-        doc.text(parts, 14, currentY);
-        currentY += 6;
-      }
-
-      if (targetBill.paymentMethod === "UPI" && targetBill.upiVpa) {
-        doc.text(`UPI Paid To: ${targetBill.upiVpa}`, 14, currentY);
-        currentY += 6;
-      }
-
-      currentY += 2;
-
-      // Table Header
-      doc.setFillColor(241, 245, 249);
-      doc.rect(14, currentY, 182, 8, "F");
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(51, 65, 85);
-
-      doc.text("#", 18, currentY + 5.5);
-      doc.text("Item Name", 30, currentY + 5.5);
-      doc.text("Unit", 105, currentY + 5.5);
-      doc.text("Qty", 130, currentY + 5.5);
-      doc.text("Price (Rs.)", 152, currentY + 5.5);
-      doc.text("Total (Rs.)", 176, currentY + 5.5);
-
-      currentY += 8;
-
-      // Table Rows
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(15, 23, 42);
-
-      const items = targetBill.items || [];
-      items.forEach((item, idx) => {
-        if (currentY > 265) {
-          doc.addPage();
-          currentY = 20;
-        }
-
-        const isEven = idx % 2 === 0;
-        doc.setFillColor(isEven ? 255 : 248, isEven ? 255 : 250, isEven ? 255 : 252);
-        doc.rect(14, currentY, 182, 8, "F");
-
-        doc.text(String(idx + 1), 18, currentY + 5.5);
-        const nameText = item.name ? (item.name.length > 36 ? item.name.slice(0, 33) + "..." : item.name) : "Item";
-        doc.text(nameText, 30, currentY + 5.5);
-        doc.text(item.quantityLabel || item.unit || "-", 105, currentY + 5.5);
-        doc.text(String(item.quantity), 130, currentY + 5.5);
-        doc.text(Number(item.price).toFixed(2), 152, currentY + 5.5);
-        doc.text((Number(item.price) * Number(item.quantity)).toFixed(2), 176, currentY + 5.5);
-
-        currentY += 8;
-      });
-
-      // Divider
-      doc.setDrawColor(203, 213, 225);
-      doc.setLineWidth(0.3);
-      doc.line(14, currentY + 2, 196, currentY + 2);
-      currentY += 6;
-
-      if (currentY > 235) {
-        doc.addPage();
-        currentY = 20;
-      }
-
-      // Summary
-      const subtotalVal = Number(targetBill.subtotal || 0).toFixed(2);
-      const discountVal = Number(targetBill.discountAmount || 0).toFixed(2);
-      const totalVal = Number(targetBill.totalAmount || 0).toFixed(2);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(71, 85, 105);
-      doc.text("Subtotal:", 135, currentY + 5);
-      doc.text(`Rs. ${subtotalVal}`, 176, currentY + 5);
-      currentY += 6;
-
-      if (Number(targetBill.discountAmount) > 0) {
-        doc.setTextColor(22, 163, 74);
-        const discLabel = targetBill.couponCode ? `Coupon (${targetBill.couponCode}):` : "Discount:";
-        doc.text(discLabel, 135, currentY + 5);
-        doc.text(`-Rs. ${discountVal}`, 176, currentY + 5);
-        currentY += 6;
-      }
-
-      // Grand Total Box
-      doc.setFillColor(240, 253, 244);
-      doc.rect(133, currentY + 1, 63, 9, "F");
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(15, 23, 42);
-      doc.text("Grand Total:", 135, currentY + 7);
-      doc.text(`Rs. ${totalVal}`, 176, currentY + 7);
-      currentY += 13;
-
-      if (targetBill.paymentMethod === "Cash") {
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
-        doc.setTextColor(71, 85, 105);
-        doc.text(`Cash Received: Rs. ${Number(targetBill.received || 0).toFixed(2)}`, 135, currentY);
-        doc.text(`Change Returned: Rs. ${Number(targetBill.change || 0).toFixed(2)}`, 135, currentY + 5);
-        currentY += 9;
-      }
-
-      // Footer
-      doc.setDrawColor(226, 232, 240);
-      doc.line(14, currentY + 6, 196, currentY + 6);
-      currentY += 12;
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.setTextColor(71, 85, 105);
-      doc.text("Thank you for shopping at Grocery Sathi!", 105, currentY, { align: "center" });
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(148, 163, 184);
-      doc.text("Visit Again  |  Fresh Products  |  Everyday Low Prices", 105, currentY + 5, { align: "center" });
-      doc.text("Support: +91 98878 68746  |  support@grocerysathi.com", 105, currentY + 9, { align: "center" });
-
-      doc.save(`${invNo}.pdf`);
+      await downloadOrderInvoicePdf(targetBill);
     } catch (err) {
       console.error("PDF generation error:", err);
       Swal.fire({
@@ -770,9 +686,57 @@ const Billing = () => {
   };
 
   // =========================================================
+  // UPI QUICK CONTROLS (Retry / Manual Confirm / Cancel)
+  // =========================================================
+  const handleRetryUpi = () => {
+    setUpiStatus("loading");
+    setUpiFailureReason("");
+    setUpiQr(null);
+    isCompletingSaleRef.current = false;
+    setUpiRefreshKey((k) => k + 1);
+  };
+
+  const handleConfirmUpiPaid = async () => {
+    if (isCompletingSaleRef.current) return;
+    try {
+      if (upiQr?.sessionId) {
+        await API.post("/bills/upi-status", {
+          sessionId: upiQr.sessionId,
+          status: "completed",
+          upiTransactionId: upiTransactionId.trim() || `UPI-${Date.now().toString().slice(-6)}`,
+        }).catch(() => {});
+      }
+      setUpiStatus("completed");
+      isCompletingSaleRef.current = true;
+      await completeSale({
+        upiTxn: upiTransactionId.trim() || `UPI-${Date.now().toString().slice(-6)}`,
+        sessionId: upiQr?.sessionId,
+      });
+    } catch (err) {
+      console.error("Confirm UPI paid error:", err);
+    }
+  };
+
+  const handleMarkUpiFailed = async (reason = "Payment cancelled by cashier") => {
+    try {
+      if (upiQr?.sessionId) {
+        await API.post("/bills/upi-status", {
+          sessionId: upiQr.sessionId,
+          status: "failed",
+          failureReason: reason,
+        }).catch(() => {});
+      }
+    } catch (err) {
+      console.error("Mark UPI failed error:", err);
+    }
+    setUpiStatus("failed");
+    setUpiFailureReason(reason);
+  };
+
+  // =========================================================
   // COMPLETE SALE
   // =========================================================
-  const completeSale = async () => {
+  const completeSale = async (overrideOptions = {}) => {
     if (saleCompleted) return; // 👈 guard
 
     if (cart.length === 0) {
@@ -826,7 +790,7 @@ const Billing = () => {
         return;
       }
     } else if (paymentMethod === "UPI") {
-      if (!upiQr) {
+      if (!upiQr && !overrideOptions.sessionId) {
         Swal.fire({
           icon: "error",
           title: "QR Not Ready",
@@ -835,16 +799,16 @@ const Billing = () => {
         });
         return;
       }
-      if (upiCountdown <= 0) {
-        Swal.fire({
-          icon: "warning",
-          title: "QR Code Expired",
-          text: "The payment session expired. Please click 'Refresh QR' to generate a fresh QR.",
-          confirmButtonColor: "#0aad4b",
-        });
-        return;
-      }
     }
+
+    const finalUpiTxn =
+      overrideOptions.upiTxn ||
+      (paymentMethod === "UPI"
+        ? upiTransactionId.trim() || upiQr?.upiTransactionId || `UPI-${Date.now().toString().slice(-6)}`
+        : "");
+
+    const finalSessionId =
+      overrideOptions.sessionId || (paymentMethod === "UPI" ? upiQr?.sessionId : "");
 
     const actualReceived = paymentMethod === "UPI" ? totalAmount : received;
     const actualChange = paymentMethod === "UPI" ? 0 : change;
@@ -865,7 +829,7 @@ const Billing = () => {
       totalAmount,
       received: actualReceived,
       change: actualChange,
-      upiTransactionId: paymentMethod === "UPI" ? upiTransactionId.trim() : "",
+      upiTransactionId: finalUpiTxn,
       upiVpa: paymentMethod === "UPI" ? upiQr?.vpa || "" : "",
       date: formattedDate,
       time: formattedTime,
@@ -890,10 +854,8 @@ const Billing = () => {
       discountAmount: safeDiscount,
       paymentMethod,
       amountReceived: actualReceived,
-      upiTransactionId:
-        paymentMethod === "UPI"
-          ? upiTransactionId.trim() || `UPI-${Date.now().toString().slice(-6)}`
-          : "",
+      sessionId: finalSessionId,
+      upiTransactionId: finalUpiTxn,
       upiStatus: paymentMethod === "UPI" ? "received" : "none",
     };
 
@@ -907,6 +869,7 @@ const Billing = () => {
 
       const savedBill = data.bill;
       const billSnapshot = {
+        ...savedBill,
         ...snapshot,
         invoiceNumber: savedBill.invoiceNumber,
         couponCode: savedBill.couponCode || snapshot.couponCode || "",
@@ -916,9 +879,9 @@ const Billing = () => {
       setCompletedBill(billSnapshot);
       setInvoiceNumber(savedBill.invoiceNumber);
 
-      // Auto-download bill PDF immediately!
+      // Auto-download bill PDF immediately using high-res invoice downloader
       try {
-        downloadBillPDF(billSnapshot);
+        await downloadOrderInvoicePdf(savedBill || billSnapshot);
       } catch (pdfErr) {
         console.error("Auto PDF download error:", pdfErr);
       }
@@ -927,6 +890,8 @@ const Billing = () => {
       setCart([]);
       setUpiQr(null);
       setUpiCountdown(0);
+      setUpiStatus("idle");
+      setUpiFailureReason("");
       setUpiTransactionId("");
       setCustomerName("");
       setCustomerMobile("");
@@ -954,6 +919,7 @@ const Billing = () => {
       });
     } finally {
       setSubmitting(false);
+      isCompletingSaleRef.current = false;
     }
   };
 
@@ -1564,13 +1530,62 @@ const Billing = () => {
                       Add items to cart to generate a dynamic UPI QR code.
                     </span>
                   </div>
-                ) : upiLoading ? (
+                ) : upiStatus === "failed" ? (
+                  <div className="Billing-upi-failed-card">
+                    <div className="Billing-upi-failed-icon">
+                      <XCircle size={42} color="#ef4444" />
+                    </div>
+                    <h4>UPI Payment Failed</h4>
+                    <p className="Billing-upi-failed-desc">
+                      {upiFailureReason || "The payment session timed out or was cancelled."}
+                    </p>
+                    <div className="Billing-upi-failed-actions">
+                      <button
+                        type="button"
+                        className="Billing-upi-retry-btn"
+                        onClick={handleRetryUpi}
+                      >
+                        <RotateCcw size={15} />
+                        Retry UPI Payment
+                      </button>
+                      <button
+                        type="button"
+                        className="Billing-upi-switch-cash-btn"
+                        onClick={() => {
+                          setPaymentMethod("Cash");
+                          setAmountReceived(String(totalAmount.toFixed(0)));
+                          setUpiStatus("idle");
+                          setUpiFailureReason("");
+                        }}
+                      >
+                        <Banknote size={15} />
+                        Switch to Cash
+                      </button>
+                    </div>
+                  </div>
+                ) : upiStatus === "completed" ? (
+                  <div className="Billing-upi-success-card">
+                    <div className="Billing-upi-success-icon">
+                      <CheckCircle2 size={44} color="#059669" />
+                    </div>
+                    <h4>Payment Received!</h4>
+                    <p>Generating tax invoice and downloading PDF…</p>
+                    <div className="Billing-upi-progress-bar">
+                      <div className="Billing-upi-progress-fill" />
+                    </div>
+                  </div>
+                ) : upiLoading || !upiQr ? (
                   <div className="Billing-upiLoading">
-                    <Package size={32} />
+                    <Loader2 size={34} className="spin-animate text-emerald" />
                     <p>Generating dynamic UPI QR code…</p>
                   </div>
-                ) : upiQr ? (
+                ) : (
                   <>
+                    <div className="Billing-upiLiveBadge">
+                      <span className="pulse-dot"></span>
+                      <span>Listening for UPI payment…</span>
+                    </div>
+
                     <div className="Billing-upi-amount-banner">
                       <span className="upi-banner-caption">Total Amount to Pay</span>
                       <strong className="upi-banner-val">
@@ -1586,10 +1601,7 @@ const Billing = () => {
                         src={upiQr.qrUrl}
                         alt="UPI QR"
                         className="Billing-upiQrImg"
-                        onClick={() => {
-                          setUpiQr(null);
-                          setUpiRefreshKey((k) => k + 1);
-                        }}
+                        onClick={handleRetryUpi}
                         style={{ cursor: "pointer" }}
                       />
                       <div className="Billing-upiQrMeta">
@@ -1602,7 +1614,9 @@ const Billing = () => {
 
                     <div className="Billing-upiCountdown">
                       <span>QR valid for</span>
-                      <strong>{formatCountdown(upiCountdown)}</strong>
+                      <strong style={{ color: upiCountdown < 60 ? "#ef4444" : "#0f172a" }}>
+                        {formatCountdown(upiCountdown)}
+                      </strong>
                     </div>
 
                     <div className="Billing-upiActions">
@@ -1618,53 +1632,41 @@ const Billing = () => {
                       <button
                         type="button"
                         className="Billing-upiRefreshBtn"
-                        onClick={() => {
-                          setUpiQr(null);
-                          setUpiRefreshKey((k) => k + 1);
-                        }}
+                        onClick={handleRetryUpi}
                       >
                         <RotateCcw size={14} />
                         Refresh QR
                       </button>
                     </div>
 
-                    {/* RECEIVE AMOUNT CARD */}
-                    <div className="Billing-upi-receive-card">
-                      <div className="receive-amount-header">
-                        <CheckCircle2 size={16} className="text-emerald" />
-                        <span>Amount to Receive:</span>
-                        <strong className="text-emerald">
-                          ₹{Number(upiQr.amount).toFixed(2)}
-                        </strong>
-                      </div>
-                      <p className="receive-amount-hint">
-                        Exact amount will be received directly in{" "}
-                        <strong>{upiQr.merchantName}</strong> ({upiQr.vpa}) account.
-                      </p>
+                    {/* Quick Cashier Controls */}
+                    <div className="Billing-upiCashierRow">
+                      <button
+                        type="button"
+                        className="Billing-upiConfirmPaidBtn"
+                        onClick={handleConfirmUpiPaid}
+                        title="Click if customer paid and payment is verified"
+                      >
+                        <CheckCircle2 size={16} />
+                        Mark Payment Received
+                      </button>
+                      <button
+                        type="button"
+                        className="Billing-upiCancelBtn"
+                        onClick={() => handleMarkUpiFailed("Payment cancelled by cashier")}
+                      >
+                        <X size={15} />
+                        Payment Failed
+                      </button>
                     </div>
 
                     <div className="Billing-upiInstructionCard">
                       <CheckCircle2 size={16} className="text-emerald" />
-                      <span>Customer can scan and pay with any UPI app. Once paid, click <strong>Complete Sale & Download Bill</strong> below.</span>
+                      <span>
+                        Automatic completion is active. When the transaction completes, the tax invoice bill is instantly generated and downloaded.
+                      </span>
                     </div>
                   </>
-                ) : (
-                  <div className="Billing-upiLoading">
-                    <AlertCircle size={32} />
-                    <p>Could not generate QR code.</p>
-                    <button
-                      type="button"
-                      className="Billing-upiRefreshBtn"
-                      style={{ marginTop: "8px" }}
-                      onClick={() => {
-                        setUpiQr(null);
-                        setUpiRefreshKey((k) => k + 1);
-                      }}
-                    >
-                      <RotateCcw size={14} />
-                      Retry Generate QR
-                    </button>
-                  </div>
                 )}
               </div>
             )}
@@ -1694,13 +1696,44 @@ const Billing = () => {
                 <button
                   type="button"
                   className="Billing-completeButton full-width"
-                  onClick={completeSale}
-                  disabled={submitting || cart.length === 0}
+                  onClick={
+                    paymentMethod === "UPI" && upiStatus === "failed"
+                      ? handleRetryUpi
+                      : paymentMethod === "UPI" && upiStatus === "waiting"
+                      ? handleConfirmUpiPaid
+                      : completeSale
+                  }
+                  disabled={
+                    submitting ||
+                    cart.length === 0 ||
+                    (paymentMethod === "UPI" && upiStatus === "loading")
+                  }
                 >
-                  <Check size={19} />
-                  {submitting
-                    ? "Saving Bill & Downloading PDF…"
-                    : "Complete Sale & Download Bill"}
+                  {paymentMethod === "UPI" && upiStatus === "completed" ? (
+                    <>
+                      <Loader2 size={19} className="spin-animate" />
+                      Generating Invoice…
+                    </>
+                  ) : paymentMethod === "UPI" && upiStatus === "failed" ? (
+                    <>
+                      <RotateCcw size={19} />
+                      Retry UPI Payment
+                    </>
+                  ) : paymentMethod === "UPI" ? (
+                    <>
+                      <Check size={19} />
+                      {submitting
+                        ? "Saving Bill & Downloading PDF…"
+                        : "Complete Sale & Download Bill"}
+                    </>
+                  ) : (
+                    <>
+                      <Check size={19} />
+                      {submitting
+                        ? "Saving Bill & Downloading PDF…"
+                        : "Complete Sale & Download Bill"}
+                    </>
+                  )}
                 </button>
               )}
             </div>

@@ -108,6 +108,16 @@
   color: #8b5cf6;
 }
 
+.coupon-stat-icon.teal {
+  background: #f0fdfa;
+  color: #0d9488;
+}
+
+.coupon-stat-icon.indigo {
+  background: #f5f3ff;
+  color: #6366f1;
+}
+
 .coupon-stat-info h4 {
   font-size: 0.8rem;
   color: #64748b;
@@ -510,8 +520,207 @@
   cursor: not-allowed;
 }
 
+/* ======================================================
+   VISIBILITY TOGGLE BUTTON (TABLE VIEW)
+   ====================================================== */
+.coupon-visibility-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px 5px 8px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  background: #f1f5f9;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.coupon-visibility-toggle-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.coupon-visibility-toggle-btn.is-public {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.coupon-visibility-toggle-btn.is-private {
+  background: #f5f3ff;
+  color: #6d28d9;
+  border-color: #ddd6fe;
+}
+
+.coupon-visibility-toggle-btn .cvt-icon {
+  display: flex;
+  align-items: center;
+}
+
+.coupon-visibility-toggle-btn .cvt-label {
+  font-weight: 600;
+}
+
+.cvt-switch {
+  width: 28px;
+  height: 16px;
+  background: #cbd5e1;
+  border-radius: 10px;
+  position: relative;
+  display: inline-block;
+  transition: background-color 0.2s ease;
+  margin-left: 2px;
+}
+
+.coupon-visibility-toggle-btn.is-public .cvt-switch {
+  background: #10b981;
+}
+
+.coupon-visibility-toggle-btn.is-private .cvt-switch {
+  background: #8b5cf6;
+}
+
+.cvt-slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.coupon-visibility-toggle-btn.is-public .cvt-slider {
+  transform: translateX(12px);
+}
+
+.coupon-visibility-toggle-btn.is-private .cvt-slider {
+  transform: translateX(0);
+}
+
+/* ======================================================
+   VISIBILITY SELECTOR (MODAL VIEW)
+   ====================================================== */
+.coupon-visibility-selector-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.coupon-vis-field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.coupon-vis-toggle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.coupon-vis-option-card {
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.coupon-vis-option-card:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.coupon-vis-option-card.active {
+  border-color: #10b981;
+  background: #f0fdf4;
+  box-shadow: 0 0 0 1px #10b981;
+}
+
+.coupon-vis-option-card:last-child.active {
+  border-color: #8b5cf6;
+  background: #faf5ff;
+  box-shadow: 0 0 0 1px #8b5cf6;
+}
+
+.vis-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vis-radio-indicator {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.coupon-vis-option-card.active .vis-radio-indicator {
+  border-color: #10b981;
+}
+
+.coupon-vis-option-card:last-child.active .vis-radio-indicator {
+  border-color: #8b5cf6;
+}
+
+.vis-radio-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background 0.2s;
+}
+
+.vis-radio-dot.checked {
+  background: #10b981;
+}
+
+.coupon-vis-option-card:last-child .vis-radio-dot.checked {
+  background: #8b5cf6;
+}
+
+.vis-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.vis-card-badge.public {
+  color: #047857;
+}
+
+.vis-card-badge.private {
+  color: #6d28d9;
+}
+
+.vis-card-description {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
 @media (max-width: 640px) {
-  .coupon-form-row {
+  .coupon-form-row,
+  .coupon-vis-toggle-grid {
     grid-template-columns: 1fr;
   }
 }

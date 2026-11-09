@@ -23,7 +23,7 @@ const { RETURN_WINDOW_DAYS, RETURN_REASONS } = require("../config/returns");
 const USER_CANCELLABLE_STATUSES = ["pending", "confirmed"];
 
 // ======================================================
-// DECREMENT STOCK (SAFE)
+// DECREMENT STOCK (IDEMPOTENT & ATOMIC)
 // ======================================================
 
 const decrementStock = async (order) => {
@@ -32,16 +32,72 @@ const decrementStock = async (order) => {
     return;
   }
 
+  // Idempotency check: Never decrement twice for the same order
+  if (order.isStockDecremented) {
+    return;
+  }
+
   try {
     for (const item of order.items) {
       if (!item.product || !item.quantity) continue;
 
-      await Product.findByIdAndUpdate(item.product, {
-        $inc: { stockQuantity: -item.quantity },
-      });
+      // Atomically decrement stockQuantity without going negative, and update isOutOfStock
+      await Product.findOneAndUpdate(
+        { _id: item.product },
+        [
+          {
+            $set: {
+              stockQuantity: {
+                $max: [0, { $subtract: ["$stockQuantity", Number(item.quantity)] }],
+              },
+              isOutOfStock: {
+                $lte: [{ $subtract: ["$stockQuantity", Number(item.quantity)] }, 0],
+              },
+            },
+          },
+        ],
+        { updatePipeline: true, returnDocument: "after" }
+      );
     }
+
+    // Flag order as stock-decremented
+    order.isStockDecremented = true;
+    await Order.findByIdAndUpdate(order._id, { isStockDecremented: true });
   } catch (err) {
     console.error("decrementStock error:", err);
+  }
+};
+
+// ======================================================
+// RESTORE STOCK (IDEMPOTENT & ATOMIC)
+// Used when an order is cancelled, refunded, or payment failed
+// ======================================================
+
+const restoreStock = async (order) => {
+  if (!order || !Array.isArray(order.items) || order.items.length === 0) {
+    return;
+  }
+
+  // Only restore if stock was actually reserved AND not already restored
+  if (!order.isStockDecremented || order.isStockRestored) {
+    return;
+  }
+
+  try {
+    for (const item of order.items) {
+      if (!item.product || !item.quantity) continue;
+
+      // Atomically increment stockQuantity and clear isOutOfStock
+      await Product.findByIdAndUpdate(item.product, {
+        $inc: { stockQuantity: Number(item.quantity) },
+        $set: { isOutOfStock: false },
+      });
+    }
+
+    order.isStockRestored = true;
+    await Order.findByIdAndUpdate(order._id, { isStockRestored: true });
+  } catch (err) {
+    console.error("restoreStock error:", err);
   }
 };
 
@@ -599,9 +655,20 @@ const verifyPayment = async (req, res) => {
 
 const razorpayWebhook = async (req, res) => {
   try {
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const webhookSecret =
+      process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET;
+
+    if (!webhookSecret) {
+      console.warn("Razorpay webhook received but no webhook secret configured.");
+      return res.status(200).json({ received: true, note: "Webhook secret not configured" });
+    }
 
     const receivedSignature = req.headers["x-razorpay-signature"];
+
+    if (!receivedSignature || !req.rawBody) {
+      console.warn("Webhook received without signature or raw body");
+      return res.status(400).json({ success: false, message: "Missing signature or body" });
+    }
 
     const expectedSignature = crypto
       .createHmac("sha256", webhookSecret)
@@ -610,11 +677,11 @@ const razorpayWebhook = async (req, res) => {
 
     if (receivedSignature !== expectedSignature) {
       console.warn("Webhook signature mismatch");
-      return res.status(400).json({ success: false });
+      return res.status(400).json({ success: false, message: "Signature verification failed" });
     }
 
-    const event = req.body.event;
-    const payload = req.body.payload;
+    const event = req.body?.event;
+    const payload = req.body?.payload;
 
     // ==================================================
     // payment.captured
@@ -655,7 +722,7 @@ const razorpayWebhook = async (req, res) => {
 
       await order.save();
 
-      // Reserve stock — safe after successful order update
+      // Reserve stock — safe after successful order update (idempotent)
       await decrementStock(order);
 
       await Cart.findOneAndUpdate(
@@ -691,9 +758,12 @@ const razorpayWebhook = async (req, res) => {
         order.paymentStatus = "failed";
         order.statusHistory.push({
           status: "pending",
-          note: "Payment failed",
+          note: "Payment failed via webhook",
         });
         await order.save();
+
+        // Release reserved stock back to inventory
+        await restoreStock(order);
 
         // Refund wallet + points
         await refundWalletAndPoints(order, "Payment failed");
@@ -861,8 +931,10 @@ const updateOrderStatus = async (req, res) => {
 
     await order.save();
 
-    // ------------------------------------------------
-    // DELIVERED → award points + referral reward
+    // If order was cancelled or refunded, restore held stock
+    if (status === "cancelled" || status === "refunded") {
+      await restoreStock(order);
+    }
     // ------------------------------------------------
 
     if (status === "delivered" && prevStatus !== "delivered") {
@@ -1014,6 +1086,9 @@ const abandonOrder = async (req, res) => {
     });
     await order.save();
 
+    // Restore reserved stock back to inventory
+    await restoreStock(order);
+
     // Refund wallet + points
     await refundWalletAndPoints(order, "Payment cancelled");
 
@@ -1105,6 +1180,9 @@ const cancelOrder = async (req, res) => {
     // If already "failed" or "refunded", leave as-is
 
     await order.save();
+
+    // Restore reserved stock back to physical inventory
+    await restoreStock(order);
 
     await createNotification({
       userId: req.user._id,
@@ -1255,10 +1333,7 @@ const requestReturn = async (req, res) => {
     }
 
     if (!deliveredAt) {
-      return res.status(400).json({
-        success: false,
-        message: "Delivery date not available for this order.",
-      });
+      deliveredAt = order.updatedAt || order.createdAt || new Date();
     }
 
     // ---- Check the return window ----
@@ -1273,19 +1348,44 @@ const requestReturn = async (req, res) => {
       });
     }
 
+    // Collect uploaded damage photos (either via req.files or req.body.photos / req.body.images)
+    let photoPaths = [];
+    if (Array.isArray(req.files) && req.files.length > 0) {
+      photoPaths = req.files.map((f) => f.path || f.filename || "").filter(Boolean);
+    } else if (req.body.photos) {
+      photoPaths = Array.isArray(req.body.photos)
+        ? req.body.photos
+        : [req.body.photos];
+    } else if (req.body.images) {
+      photoPaths = Array.isArray(req.body.images)
+        ? req.body.images
+        : [req.body.images];
+    }
+
     // ---- Save the return request ----
     order.returnStatus = "requested";
     order.returnReason = reason;
     order.returnNote = note;
+    order.returnPhotos = photoPaths;
     order.returnRequestedAt = now;
+    order.returnAmount = order.payableAmount ?? order.totalAmount ?? 0;
+
+    order.pickupProof = order.pickupProof || {};
+    order.pickupProof.images = photoPaths;
+    order.pickupProof.condition = reason;
+    order.pickupProof.note = note;
+    order.pickupProof.uploadedAt = now;
 
     order.statusHistory = order.statusHistory || [];
     order.statusHistory.push({
       status: "return_requested",
-      note: `Return requested: ${reason}${note ? ` — ${note}` : ""}`,
+      note: `Return requested: ${reason}${note ? ` — ${note}` : ""}${photoPaths.length > 0 ? ` (${photoPaths.length} photo attached)` : ""}`,
     });
 
     await order.save();
+
+    // Restore reserved stock back to physical inventory
+    await restoreStock(order);
 
     await createNotification({
       userId: req.user._id,
@@ -1415,6 +1515,9 @@ const verifyPickupOtp = async (req, res) => {
 
     await order.save();
 
+    // Restore reserved stock back to physical inventory
+    await restoreStock(order);
+
     await createNotification({
       userId: req.user._id,
       title: "Pickup confirmed",
@@ -1500,12 +1603,166 @@ const uploadPickupProof = async (req, res) => {
 };
 
 // ======================================================
+// POST /api/orders/:id/retry-payment
+// Initiates or creates a fresh Razorpay order for a pending order
+// ======================================================
+
+const retryPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const order = await Order.findOne({
+      _id: id,
+      user: req.user._id,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found.",
+      });
+    }
+
+    if (order.paymentStatus === "paid") {
+      return res.status(400).json({
+        success: false,
+        message: "This order has already been paid.",
+        order,
+      });
+    }
+
+    if (order.orderStatus === "cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot pay for a cancelled order.",
+      });
+    }
+
+    const payableAmount = Number(order.payableAmount ?? order.totalAmount ?? 0);
+    if (payableAmount <= 0) {
+      order.paymentStatus = "paid";
+      order.orderStatus = "confirmed";
+      order.statusHistory.push({
+        status: "confirmed",
+        note: "Marked paid (zero payable amount)",
+      });
+      await order.save();
+      await decrementStock(order);
+
+      return res.status(200).json({
+        success: true,
+        message: "Order confirmed with zero payable amount.",
+        order,
+        requiresPayment: false,
+      });
+    }
+
+    // Create a new Razorpay order for this retry
+    const razorpayOrder = await razorpay.orders.create({
+      amount: Math.round(payableAmount * 100), // paise
+      currency: "INR",
+      receipt: `${order.orderNumber}-R${Date.now().toString().slice(-4)}`,
+      notes: {
+        orderId: String(order._id),
+        orderNumber: order.orderNumber,
+        userId: String(req.user._id),
+        isRetry: "true",
+      },
+    });
+
+    order.razorpayOrderId = razorpayOrder.id;
+    order.paymentMethod = "razorpay";
+    await order.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment gateway initialized for retry.",
+      order,
+      requiresPayment: true,
+      razorpay: {
+        key: (process.env.RAZORPAY_KEY_ID || "rzp_test_TppGgVggUkbJv4").trim(),
+        orderId: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        name: "Grocery Sathi",
+        description: `Retry Payment for Order #${order.orderNumber}`,
+        prefill: {
+          name: order.deliveryAddress?.name || req.user.name || "",
+          contact: order.deliveryAddress?.mobile || req.user.mobile || "",
+          email: req.user.email || "",
+        },
+      },
+    });
+  } catch (err) {
+    console.error("retryPayment error:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Failed to initialize payment retry.",
+    });
+  }
+};
+
+// ======================================================
+// POST /api/orders/:id/switch-to-cod
+// Allows customer to switch pending online payment order to COD
+// ======================================================
+
+const switchOrderToCod = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const order = await Order.findOne({
+      _id: id,
+      user: req.user._id,
+    });
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found." });
+    }
+
+    if (order.paymentStatus === "paid") {
+      return res.status(400).json({ success: false, message: "Order is already paid." });
+    }
+
+    if (order.orderStatus === "cancelled") {
+      return res.status(400).json({ success: false, message: "Cannot modify a cancelled order." });
+    }
+
+    order.paymentMethod = "cod";
+    order.paymentStatus = "pending";
+    order.orderStatus = "confirmed";
+    order.statusHistory.push({
+      status: "confirmed",
+      note: "Switched payment mode to Cash on Delivery (COD)",
+    });
+    await order.save();
+
+    // Reserve stock if not already reserved
+    await decrementStock(order);
+
+    return res.status(200).json({
+      success: true,
+      message: "Order successfully converted to Cash on Delivery (COD).",
+      order,
+    });
+  } catch (err) {
+    console.error("switchOrderToCod error:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Failed to switch to COD.",
+    });
+  }
+};
+
+// ======================================================
 // EXPORT
 // ======================================================
 
 module.exports = {
   placeOrder,
   verifyPayment,
+  retryPayment,
+  switchOrderToCod,
   razorpayWebhook,
   updateOrderStatus,
   getMyOrders,
@@ -1519,4 +1776,6 @@ module.exports = {
   uploadPickupProof,
   verifyPickupOtp,
   getReturnPickup,
+  decrementStock,
+  restoreStock,
 };

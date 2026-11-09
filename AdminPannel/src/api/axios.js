@@ -28,8 +28,9 @@ const API = axios.create({
 
 API.interceptors.request.use(
   (config) => {
-    // Attach token from localStorage if available
-    const token = localStorage.getItem("token");
+    // Attach token from localStorage if available (adminToken or legacy token)
+    const token =
+      localStorage.getItem("adminToken") || localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

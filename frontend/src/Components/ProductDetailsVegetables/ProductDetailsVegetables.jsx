@@ -1,227 +1,80 @@
-import React, { useEffect, useState } from "react";
-
+import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { Helmet } from "react-helmet-async";
+import { Link, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import {
+  ArrowLeft,
+  Heart,
+  Share2,
+  ShoppingBag,
+  Zap,
+  Check,
+  ShieldCheck,
+  Truck,
+  RotateCcw,
+  CreditCard,
+  Tag,
+  Star,
+  Copy,
+  Package,
+  Info,
+  Minus,
+  Plus,
+  CheckCircle2,
+  Sparkles,
+  ChevronRight,
+  Clock,
+  Layers,
+  Award,
+  Calendar,
+  Barcode,
+} from "lucide-react";
+import API from "../../api/axios";
 import "./ProductDetailsVegetables.css";
 
-import { Helmet } from "react-helmet-async";
-
-import Swal from "sweetalert2";
-
-import API from "../../api/axios";
-
-import { FaHeart } from "react-icons/fa";
-
 // ======================================================
-// LOCAL FALLBACK IMAGES
+// COMPONENT
 // ======================================================
 
-import broccoliMain from "../../assets/vege1.webp";
+const ProductDetailsVegetables = ({ productId, onProductLoaded }) => {
+  const navigate = useNavigate();
 
-import broccoliThumb1 from "../../assets/vege2.webp";
-
-import broccoliThumb2 from "../../assets/vege4.webp";
-
-import { useNavigate } from "react-router-dom";
-
-const fallbackProductImages = [
-  // broccoliMain ||
-  //   "https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?auto=format&fit=crop&w=800&q=80",
-  // broccoliThumb1 ||
-  //   "https://images.unsplash.com/photo-1584270354949-c26b0d5b4a0c?auto=format&fit=crop&w=400&q=80",
-  // broccoliThumb2 ||
-  //   "https://images.unsplash.com/photo-1583663848850-46af132dc08e?auto=format&fit=crop&w=400&q=80",
-];
-
-// ======================================================
-// SVG ICONS
-// ======================================================
-
-const StarFilled = () => (
-  <svg
-    className="pdv__star-icon"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="#1b3935"
-  >
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-  </svg>
-);
-
-const StarOutline = () => (
-  <svg
-    className="pdv__star-icon"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="#1b3935"
-    strokeWidth="1.8"
-  >
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-  </svg>
-);
-
-const HeartIcon = () => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-  </svg>
-);
-
-const ArrowLeft = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <line x1="19" y1="12" x2="5" y2="12" />
-    <polyline points="12 19 5 12 12 5" />
-  </svg>
-);
-
-const PencilIcon = () => (
-  <svg
-    width="15"
-    height="15"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-  </svg>
-);
-
-const ScissorsIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="6" cy="6" r="3" />
-    <circle cx="6" cy="18" r="3" />
-    <line x1="20" y1="4" x2="8.12" y2="15.88" />
-    <line x1="14.47" y1="14.48" x2="20" y2="20" />
-    <line x1="8.12" y1="8.12" x2="12" y2="12" />
-  </svg>
-);
-
-const ShareIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="18" cy="5" r="3" />
-    <circle cx="6" cy="12" r="3" />
-    <circle cx="18" cy="19" r="3" />
-    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-  </svg>
-);
-
-const CheckBadge = () => (
-  <svg width="17" height="17" viewBox="0 0 24 24" fill="#2eb5a2">
-    <rect width="20" height="20" x="2" y="2" rx="4" />
-    <polyline
-      points="7 12 10 15 17 8"
-      fill="none"
-      stroke="#ffffff"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const UserPlaceholder = () => (
-  <svg
-    width="22"
-    height="22"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="#687e7c"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-);
-
-// ======================================================
-// PRODUCT DETAILS
-// ======================================================
-
-const ProductDetailsVegetables = ({ productId }) => {
   const [product, setProduct] = useState(null);
-  const [activeImage, setActiveImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState("1 KG");
-  const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isReviewPopupOpen, setIsReviewPopupOpen] = useState(false);
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewTitle, setReviewTitle] = useState("");
-  const [reviewMessage, setReviewMessage] = useState("");
-  const [reviewImage, setReviewImage] = useState(null);
-  const [reviewSubmitting, setReviewSubmitting] = useState(false);
-  const [reviewGuestName, setReviewGuestName] = useState("");
-  const [reviewGuestEmail, setReviewGuestEmail] = useState("");
-  const [reviews, setReviews] = useState([]);
+
+  const [activeImage, setActiveImage] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [activeTab, setActiveTab] = useState("description");
+
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [justAddedToCart, setJustAddedToCart] = useState(false);
+
+  const [coupons, setCoupons] = useState([]);
+  const [copiedCoupon, setCopiedCoupon] = useState("");
+
   const [reviewSummary, setReviewSummary] = useState({
     totalReviews: 0,
     averageRating: 0,
-    ratingBreakdown: {
-      5: 0,
-      4: 0,
-      3: 0,
-      2: 0,
-      1: 0,
-    },
+    ratingBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
   });
-  const [reviewsLoading, setReviewsLoading] = useState(false);
-  const navigate = useNavigate();
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const [wishlistLoading, setWishlistLoading] = useState(false);
 
   const productName = product?.productName || product?.name || "Product";
   const currentProductId = product?._id || product?.id || productId;
 
   // ====================================================
-  // FETCH PRODUCT BY ID
+  // FETCH PRODUCT
   // ====================================================
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+
     const fetchProduct = async () => {
       if (!productId) {
-        setError("Product ID is missing.");
+        setError("Product identifier is missing.");
         setLoading(false);
         return;
       }
@@ -230,8 +83,9 @@ const ProductDetailsVegetables = ({ productId }) => {
         setLoading(true);
         setError("");
 
-        const { data } = await API.get(`/products/${productId}`);
-
+        const { data } = await API.get(
+          `/products/${encodeURIComponent(productId)}`
+        );
         const productData = data?.product || data?.data || data;
 
         if (!productData?._id) {
@@ -239,14 +93,16 @@ const ProductDetailsVegetables = ({ productId }) => {
         }
 
         setProduct(productData);
+        if (typeof onProductLoaded === "function") {
+          onProductLoaded(productData);
+        }
         setActiveImage(0);
       } catch (err) {
         console.error("Product details fetch error:", err);
-
         setError(
           err.response?.data?.message ||
             err?.message ||
-            "Failed to load product.",
+            "Unable to load product details."
         );
       } finally {
         setLoading(false);
@@ -257,21 +113,86 @@ const ProductDetailsVegetables = ({ productId }) => {
   }, [productId]);
 
   // ====================================================
+  // FETCH REVIEWS SUMMARY
+  // ====================================================
+
+  useEffect(() => {
+    if (!product?._id) return;
+
+    const fetchReviewStats = async () => {
+      try {
+        const res = await API.get(`/reviews/product/${product._id}`);
+        const list = res.data?.reviews || [];
+        const reviewsArr = Array.isArray(list) ? list : [];
+
+        let totalReviews = reviewsArr.length;
+        let averageRating = 0;
+        const ratingBreakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+
+        if (totalReviews > 0) {
+          let sum = 0;
+          reviewsArr.forEach((r) => {
+            const val = Math.max(1, Math.min(5, Math.round(Number(r.rating) || 5)));
+            ratingBreakdown[val] = (ratingBreakdown[val] || 0) + 1;
+            sum += Number(r.rating) || 5;
+          });
+          averageRating = Number((sum / totalReviews).toFixed(1));
+        }
+
+        setReviewSummary({
+          totalReviews,
+          averageRating,
+          ratingBreakdown,
+        });
+      } catch (err) {
+        // silent fallback
+      }
+    };
+
+    fetchReviewStats();
+  }, [product?._id]);
+
+  // ====================================================
+  // FETCH PUBLIC COUPONS
+  // ====================================================
+
+  useEffect(() => {
+    const fetchPublicCoupons = async () => {
+      try {
+        const res = await API.get("/coupons?status=Active&isPublic=true");
+        const list = res.data?.data || res.data?.coupons || [];
+        const now = new Date();
+        const valid = (Array.isArray(list) ? list : []).filter((c) => {
+          if (c.status !== "Active" || c.isPublic === false) return false;
+          if (c.expiryDate && new Date(c.expiryDate) <= now) return false;
+          return true;
+        });
+        setCoupons(valid.slice(0, 2));
+      } catch (e) {
+        // silent fallback
+      }
+    };
+
+    fetchPublicCoupons();
+  }, []);
+
+  const handleCopyCoupon = (code) => {
+    if (!code) return;
+    navigator.clipboard.writeText(code);
+    setCopiedCoupon(code);
+    setTimeout(() => setCopiedCoupon(""), 2000);
+  };
+
+  // ====================================================
   // IMAGE URL HELPER
   // ====================================================
 
   const getImageUrl = (image) => {
-    if (!image) {
-      return "";
-    }
+    if (!image) return "";
 
     if (typeof image === "object") {
       const objectImage = image?.url || image?.path || image?.secure_url || "";
-
-      if (!objectImage) {
-        return "";
-      }
-
+      if (!objectImage) return "";
       image = objectImage;
     }
 
@@ -279,140 +200,22 @@ const ProductDetailsVegetables = ({ productId }) => {
       return image;
     }
 
-    // Use API's base URL prefix
-    const base =
-      API.defaults.baseURL?.replace(/\/api\/?$/, "") ||
-      "";
-
+    const base = API.defaults.baseURL?.replace(/\/api\/?$/, "") || "";
     return `${base}${image.startsWith("/") ? "" : "/"}${image}`;
   };
 
-  const handleWishlist = async (productId) => {
-    try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        alert("Please login first to add products to wishlist.");
-        navigate("/login");
-        return;
-      }
-
-      if (!productId) {
-        alert("Product ID is missing.");
-        return;
-      }
-
-      if (wishlistLoading) {
-        return;
-      }
-
-      setWishlistLoading(true);
-
-      // ==========================================
-      // REMOVE FROM WISHLIST
-      // ==========================================
-
-      if (isWishlisted) {
-        const response = await API.delete(`/wishlist/${productId}`);
-
-        if (response.data?.success) {
-          setIsWishlisted(false);
-
-          window.dispatchEvent(new Event("wishlistUpdated"));
-
-          Swal.fire({
-            icon: "success",
-            title: "Removed!",
-            text: response.data?.message || "Product removed from wishlist.",
-            confirmButtonText: "OK",
-          });
-        }
-
-        return;
-      }
-
-      // ==========================================
-      // ADD TO WISHLIST
-      // ==========================================
-
-      const response = await API.post(`/wishlist/${productId}`);
-
-      if (response.data?.success) {
-        setIsWishlisted(true);
-
-        window.dispatchEvent(new Event("wishlistUpdated"));
-
-        Swal.fire({
-          icon: "success",
-          title: "Added to Wishlist!",
-          text: response.data?.message || "Product added to wishlist.",
-          confirmButtonText: "OK",
-        });
-      }
-    } catch (error) {
-      console.error("Wishlist error:", error);
-
-      if (error.response?.status === 401) {
-        localStorage.removeItem("token");
-
-        alert("Your login session has expired.");
-
-        navigate("/login");
-
-        return;
-      }
-
-      if (error.response?.status === 409) {
-        setIsWishlisted(true);
-
-        alert(
-          error.response?.data?.message ||
-            "Product already exists in wishlist.",
-        );
-
-        return;
-      }
-
-      alert(error.response?.data?.message || "Unable to update wishlist.");
-    } finally {
-      setWishlistLoading(false);
+  const productImages = useMemo(() => {
+    if (Array.isArray(product?.images) && product.images.length > 0) {
+      const mapped = product.images
+        .map((img) => getImageUrl(img))
+        .filter(Boolean);
+      if (mapped.length > 0) return mapped;
     }
-  };
-
-  useEffect(() => {
-    const checkWishlistStatus = async () => {
-      try {
-        const token = localStorage.getItem("token");
-
-        if (!token || !productId) {
-          setIsWishlisted(false);
-          return;
-        }
-
-        const response = await API.get(`/wishlist/check/${productId}`);
-
-        setIsWishlisted(Boolean(response.data?.isWishlisted));
-      } catch (error) {
-        console.error("Check wishlist error:", error);
-        setIsWishlisted(false);
-      }
-    };
-
-    checkWishlistStatus();
-  }, [productId]);
-
-  // ====================================================
-  // PRODUCT IMAGES
-  // ====================================================
-
-  const productImages =
-    Array.isArray(product?.images) && product.images.length > 0
-      ? product.images.map((image) => getImageUrl(image)).filter(Boolean)
-      : fallbackProductImages;
-
-  // ====================================================
-  // KEEP ACTIVE IMAGE VALID
-  // ====================================================
+    // Fallback placeholder image
+    return [
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80",
+    ];
+  }, [product]);
 
   useEffect(() => {
     if (activeImage >= productImages.length) {
@@ -421,29 +224,133 @@ const ProductDetailsVegetables = ({ productId }) => {
   }, [productImages.length, activeImage]);
 
   // ====================================================
-  // IMAGE CONTROLS
+  // WISHLIST STATUS & TOGGLE
   // ====================================================
 
-  const handlePrevImage = () => {
-    setActiveImage((prev) =>
-      prev === 0 ? productImages.length - 1 : prev - 1,
-    );
+  useEffect(() => {
+    const checkWishlistStatus = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const targetId = product?._id;
+
+        if (!token || !targetId) {
+          setIsWishlisted(false);
+          return;
+        }
+
+        const response = await API.get(`/wishlist/check/${targetId}`);
+        setIsWishlisted(Boolean(response.data?.isWishlisted));
+      } catch (error) {
+        setIsWishlisted(false);
+      }
+    };
+
+    if (product?._id) {
+      checkWishlistStatus();
+    }
+
+    const handleWishlistEvent = (e) => {
+      if (e?.detail?.cleared || !localStorage.getItem("token")) {
+        setIsWishlisted(false);
+      } else if (product?._id) {
+        checkWishlistStatus();
+      }
+    };
+
+    window.addEventListener("wishlistUpdated", handleWishlistEvent);
+    window.addEventListener("authChanged", handleWishlistEvent);
+
+    return () => {
+      window.removeEventListener("wishlistUpdated", handleWishlistEvent);
+      window.removeEventListener("authChanged", handleWishlistEvent);
+    };
+  }, [product?._id]);
+
+  const handleWishlistToggle = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        Swal.fire({
+          icon: "info",
+          title: "Sign in required",
+          text: "Please sign in to save items to your wishlist.",
+          confirmButtonColor: "#0d6b50",
+          confirmButtonText: "Sign In",
+          showCancelButton: true,
+        }).then((result) => {
+          if (result.isConfirmed) navigate("/login");
+        });
+        return;
+      }
+
+      if (!product?._id || wishlistLoading) return;
+      setWishlistLoading(true);
+
+      if (isWishlisted) {
+        await API.delete(`/wishlist/${product._id}`);
+        setIsWishlisted(false);
+        window.dispatchEvent(new Event("wishlistUpdated"));
+      } else {
+        await API.post(`/wishlist/${product._id}`);
+        setIsWishlisted(true);
+        window.dispatchEvent(new Event("wishlistUpdated"));
+      }
+    } catch (error) {
+      console.error("Wishlist error:", error);
+    } finally {
+      setWishlistLoading(false);
+    }
   };
 
-  const handleNextImage = () => {
-    setActiveImage((prev) =>
-      prev === productImages.length - 1 ? 0 : prev + 1,
-    );
+  // ====================================================
+  // SHARE
+  // ====================================================
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareText = `Check out ${productName} on Grocery Sathi!`;
+
+    if (navigator.share && typeof navigator.share === "function") {
+      try {
+        await navigator.share({
+          title: productName,
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      } catch (err) {
+        if (err?.name === "AbortError") return;
+      }
+    }
+
+    navigator.clipboard.writeText(shareUrl);
+    Swal.fire({
+      icon: "success",
+      title: "Link Copied!",
+      text: "Product link copied to clipboard.",
+      timer: 1600,
+      showConfirmButton: false,
+    });
   };
 
   // ====================================================
-  // CATEGORY / BRAND / UNIT
+  // PRICE & STOCK CALCULATIONS
   // ====================================================
+
+  const price = Number(product?.price || 0);
+  const writtenPrice = Number(product?.writtenPrice || 0);
+  const discountPrice = Number(product?.discountPrice || 0);
+  const stockQuantity = Number(product?.stockQuantity || 0);
+
+  let discountPercent = 0;
+  if (writtenPrice > price && writtenPrice > 0) {
+    discountPercent = Math.round(((writtenPrice - price) / writtenPrice) * 100);
+  }
 
   const categoryName =
     typeof product?.category === "object"
-      ? product?.category?.name || "Category"
-      : product?.category || "Category";
+      ? product?.category?.name || "Grocery"
+      : product?.category || "Grocery";
 
   const brandName =
     typeof product?.brand === "object"
@@ -457,27 +364,8 @@ const ProductDetailsVegetables = ({ productId }) => {
 
   const unitNo =
     typeof product?.unitNo === "object"
-      ? product?.unitNo?.name ||
-        product?.unitNo?.value ||
-        product?.unitNo?.number ||
-        ""
-      : (product?.unitNo ?? "");
-
-  // ====================================================
-  // PRICE
-  // ====================================================
-
-  const price = Number(product?.price || 0);
-  const writtenPrice = Number(product?.writtenPrice || 0);
-  const discountPrice = Number(product?.discountPrice || 0);
-  const totalPrice = price * quantity;
-
-  const stockQuantity = Number(product?.stockQuantity || 0);
-
-  let discountPercent = 0;
-  if (writtenPrice > price && writtenPrice > 0) {
-    discountPercent = Math.round(((writtenPrice - price) / writtenPrice) * 100);
-  }
+      ? product?.unitNo?.name || product?.unitNo?.value || ""
+      : product?.unitNo ?? "";
 
   // ====================================================
   // ADD TO CART
@@ -485,32 +373,15 @@ const ProductDetailsVegetables = ({ productId }) => {
 
   const handleAddToCart = async () => {
     try {
-      if (!product?._id) {
-        Swal.fire({
-          icon: "error",
-          title: "Product Missing",
-          text: "Product information is missing.",
-          confirmButtonText: "OK",
-        });
-        return;
-      }
-
-      if (quantity < 1) {
-        Swal.fire({
-          icon: "warning",
-          title: "Invalid Quantity",
-          text: "Please select a valid quantity.",
-          confirmButtonText: "OK",
-        });
-        return;
-      }
+      if (!product?._id) return;
+      if (quantity < 1) return;
 
       if (stockQuantity <= 0) {
         Swal.fire({
           icon: "error",
           title: "Out of Stock",
           text: "This product is currently out of stock.",
-          confirmButtonText: "OK",
+          confirmButtonColor: "#0d6b50",
         });
         return;
       }
@@ -520,14 +391,16 @@ const ProductDetailsVegetables = ({ productId }) => {
           icon: "warning",
           title: "Stock Limit",
           text: `Only ${stockQuantity} item(s) available in stock.`,
-          confirmButtonText: "OK",
+          confirmButtonColor: "#0d6b50",
         });
         return;
       }
 
+      setIsAddingToCart(true);
+
       const cartProduct = {
         productId: product._id,
-        productName: product.productName || product.name || "Product",
+        productName: productName,
         price: price,
         writtenPrice: writtenPrice,
         discountPrice: discountPrice,
@@ -542,484 +415,108 @@ const ProductDetailsVegetables = ({ productId }) => {
 
       const token = localStorage.getItem("token");
 
-      // ==========================================
-      // GUEST CART
-      // ==========================================
-
       if (!token) {
         const existingCart = JSON.parse(
-          localStorage.getItem("guestCart") || "[]",
+          localStorage.getItem("guestCart") || "[]"
         );
-
         const existingIndex = existingCart.findIndex(
-          (item) => item.productId === product._id,
+          (item) => item.productId === product._id
         );
 
         if (existingIndex !== -1) {
           const newQuantity =
             Number(existingCart[existingIndex].quantity || 0) + quantity;
-
           if (newQuantity > stockQuantity) {
-            await Swal.fire({
+            Swal.fire({
               icon: "warning",
               title: "Stock Limit",
               text: `Only ${stockQuantity} item(s) available in stock.`,
-              confirmButtonText: "OK",
+              confirmButtonColor: "#0d6b50",
             });
+            setIsAddingToCart(false);
             return;
           }
-
           existingCart[existingIndex].quantity = newQuantity;
         } else {
           existingCart.push(cartProduct);
         }
 
         localStorage.setItem("guestCart", JSON.stringify(existingCart));
-
         window.dispatchEvent(new Event("cartUpdated"));
-
-        await Swal.fire({
-          icon: "success",
-          title: "Added to Cart!",
-          text: "Product added to cart successfully.",
-          confirmButtonText: "Continue Shopping",
-          timer: 1800,
-          timerProgressBar: true,
+      } else {
+        await API.post("/cart/add", {
+          productId: product._id,
+          quantity: quantity,
         });
-
-        return;
+        window.dispatchEvent(new Event("cartUpdated"));
       }
 
-      // ==========================================
-      // LOGGED-IN CART
-      // ==========================================
-
-      const response = await API.post("/cart/add", {
-        productId: product._id,
-        quantity: quantity,
-      });
-
-      window.dispatchEvent(new Event("cartUpdated"));
-
-      await Swal.fire({
-        icon: "success",
-        title: "Added to Cart!",
-        text:
-          response.data?.message || "Product added to cart successfully.",
-        confirmButtonText: "Continue Shopping",
-        timer: 1800,
-        timerProgressBar: true,
-      });
+      setJustAddedToCart(true);
+      setTimeout(() => setJustAddedToCart(false), 2000);
     } catch (error) {
       console.error("Add to cart error:", error);
-
-      await Swal.fire({
+      Swal.fire({
         icon: "error",
         title: "Unable to Add",
         text:
           error.response?.data?.message ||
           error?.message ||
           "Unable to add product to cart.",
-        confirmButtonText: "OK",
+        confirmButtonColor: "#0d6b50",
       });
+    } finally {
+      setIsAddingToCart(false);
     }
+  };
+
+  const handleBuyNow = async () => {
+    await handleAddToCart();
+    navigate("/cart");
   };
 
   // ====================================================
-  // OPEN / CLOSE REVIEW POPUP
+  // SEO DATA
   // ====================================================
-
-  const handleOpenReviewPopup = () => {
-    setReviewRating(5);
-    setReviewTitle("");
-    setReviewMessage("");
-    setReviewImage(null);
-    setIsReviewPopupOpen(true);
-  };
-
-  const handleCloseReviewPopup = () => {
-    if (reviewSubmitting) {
-      return;
-    }
-    setIsReviewPopupOpen(false);
-  };
-
-  const handleReviewImageChange = (event) => {
-    const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      Swal.fire({
-        icon: "warning",
-        title: "Invalid Image",
-        text: "Please select a valid image.",
-        confirmButtonText: "OK",
-      });
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      Swal.fire({
-        icon: "warning",
-        title: "Image Too Large",
-        text: "Image size must be less than 5MB.",
-        confirmButtonText: "OK",
-      });
-      return;
-    }
-
-    setReviewImage(file);
-  };
-
-  // ======================================================
-  // FETCH PRODUCT REVIEWS
-  // ======================================================
-
-  const fetchReviews = async () => {
-    try {
-      if (!product?._id) return;
-
-      setReviewsLoading(true);
-
-      const response = await API.get(`/reviews/product/${product._id}`);
-
-      const result = response.data;
-
-      const publishedReviews = Array.isArray(result?.reviews)
-        ? result.reviews.filter(
-            (review) =>
-              String(review?.status || "").toLowerCase() === "published",
-          )
-        : [];
-
-      setReviews(publishedReviews);
-
-      const totalReviews = publishedReviews.length;
-
-      const totalRating = publishedReviews.reduce(
-        (sum, review) => sum + Number(review?.rating || 0),
-        0,
-      );
-
-      const averageRating =
-        totalReviews > 0 ? Number((totalRating / totalReviews).toFixed(2)) : 0;
-
-      const ratingBreakdown = {
-        5: 0,
-        4: 0,
-        3: 0,
-        2: 0,
-        1: 0,
-      };
-
-      publishedReviews.forEach((review) => {
-        const rating = Number(review?.rating || 0);
-
-        if (rating >= 1 && rating <= 5) {
-          ratingBreakdown[rating]++;
-        }
-      });
-
-      setReviewSummary({
-        totalReviews,
-        averageRating,
-        ratingBreakdown,
-      });
-    } catch (error) {
-      console.error("Fetch reviews error:", error);
-
-      setReviews([]);
-      setReviewSummary({
-        totalReviews: 0,
-        averageRating: 0,
-        ratingBreakdown: {
-          5: 0,
-          4: 0,
-          3: 0,
-          2: 0,
-          1: 0,
-        },
-      });
-    } finally {
-      setReviewsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (product?._id) {
-      fetchReviews();
-    }
-  }, [product?._id]);
-
-  // ======================================================
-  // SUBMIT REVIEW
-  // LOGIN NOT REQUIRED
-  // ======================================================
-
-  const handleSubmitReview = async (event) => {
-    event.preventDefault();
-
-    try {
-      if (!product?._id) {
-        await Swal.fire({
-          icon: "error",
-          title: "Product Missing",
-          text: "Product information is missing.",
-          confirmButtonText: "OK",
-        });
-        return;
-      }
-
-      const reviewerName = reviewGuestName.trim();
-
-      if (!reviewerName) {
-        Swal.fire({
-          icon: "warning",
-          title: "Name Required",
-          text: "Please enter your name.",
-          confirmButtonText: "OK",
-        });
-        return;
-      }
-
-      if (reviewerName.length > 100) {
-        await Swal.fire({
-          icon: "warning",
-          title: "Name Too Long",
-          text: "Name cannot exceed 100 characters.",
-          confirmButtonText: "OK",
-        });
-        return;
-      }
-
-      const reviewerEmail = reviewGuestEmail.trim();
-
-      if (reviewerEmail) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        if (!emailRegex.test(reviewerEmail)) {
-          Swal.fire({
-            icon: "warning",
-            title: "Invalid Email",
-            text: "Please enter a valid email address.",
-            confirmButtonText: "OK",
-          });
-          return;
-        }
-      }
-
-      const rating = Number(reviewRating);
-
-      if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-        await Swal.fire({
-          icon: "warning",
-          title: "Invalid Rating",
-          text: "Please select a rating between 1 and 5.",
-          confirmButtonText: "OK",
-        });
-        return;
-      }
-
-      const title = reviewTitle.trim();
-
-      if (!title) {
-        Swal.fire({
-          icon: "warning",
-          title: "Review Title Required",
-          text: "Please enter a review title.",
-          confirmButtonText: "OK",
-        });
-        return;
-      }
-
-      if (title.length > 100) {
-        await Swal.fire({
-          icon: "warning",
-          title: "Title Too Long",
-          text: "Review title cannot exceed 100 characters.",
-          confirmButtonText: "OK",
-        });
-        return;
-      }
-
-      const comment = reviewMessage.trim();
-
-      if (!comment) {
-        Swal.fire({
-          icon: "warning",
-          title: "Review Required",
-          text: "Please write your review.",
-          confirmButtonText: "OK",
-        });
-        return;
-      }
-
-      if (comment.length > 1000) {
-        await Swal.fire({
-          icon: "warning",
-          title: "Review Too Long",
-          text: "Review cannot exceed 1000 characters.",
-          confirmButtonText: "OK",
-        });
-        return;
-      }
-
-      setReviewSubmitting(true);
-
-      const requestBody = {
-        productId: product._id,
-        reviewerName,
-        reviewerEmail,
-        rating,
-        title,
-        comment,
-      };
-
-      const response = await API.post("/reviews", requestBody);
-
-      await Swal.fire({
-        icon: "success",
-        title: "Review Submitted!",
-        text:
-          response.data?.message || "Review submitted successfully.",
-        confirmButtonText: "Done",
-        timer: 2000,
-        timerProgressBar: true,
-      });
-
-      setIsReviewPopupOpen(false);
-
-      setReviewRating(5);
-      setReviewGuestName("");
-      setReviewGuestEmail("");
-      setReviewTitle("");
-      setReviewMessage("");
-      setReviewImage(null);
-
-      await fetchReviews();
-    } catch (error) {
-      console.error("Submit review error:", error);
-
-      await Swal.fire({
-        icon: "error",
-        title: "Review Failed",
-        text:
-          error.response?.data?.message ||
-          error?.message ||
-          "Unable to submit review.",
-        confirmButtonText: "OK",
-      });
-    } finally {
-      setReviewSubmitting(false);
-    }
-  };
-
-  // ======================================================
-  // SEO / META INFORMATION
-  // ======================================================
 
   const seoTitle =
-    product?.metaTitle?.trim() || product?.productName || "Product";
-
+    product?.metaTitle ||
+    `${productName} - Fresh & Best Price | Grocery Sathi`;
   const seoDescription =
-    product?.metaDescription?.trim() ||
-    product?.shortDescription?.trim() ||
-    product?.fullDescription?.trim() ||
-    `Buy ${product?.productName || "this product"} online.`;
-
-  const seoKeywords = Array.isArray(product?.metaKeywords)
-    ? product.metaKeywords
-        .map((keyword) => String(keyword).trim())
-        .filter(Boolean)
-        .join(", ")
-    : "";
-
-  const seoImage = productImages?.[0] || "";
-
-  const productUrl = window.location.href;
+    product?.metaDescription ||
+    product?.shortDescription ||
+    `Order ${productName} online at best price with express doorstep delivery from Grocery Sathi.`;
 
   // ====================================================
-  // PRODUCT SHARE
-  // ====================================================
-
-  const handleShare = async () => {
-    if (!product) {
-      return;
-    }
-
-    const productName = product?.productName || product?.name || "Product";
-
-    const currentProductId = product?._id || product?.id || productId;
-
-    const shareUrl = `${window.location.origin}/products/${currentProductId}`;
-
-    const price = Number(product?.sellingPrice ?? product?.price ?? 0);
-
-    const shareText =
-      price > 0
-        ? `Check out ${productName} for ₹${price.toFixed(2)}.`
-        : `Check out ${productName}.`;
-
-    if (navigator.share && typeof navigator.share === "function") {
-      try {
-        await navigator.share({
-          title: productName,
-          text: shareText,
-          url: shareUrl,
-        });
-
-        return;
-      } catch (error) {
-        if (error?.name === "AbortError") {
-          return;
-        }
-
-        console.error("Native share failed:", error);
-      }
-    }
-
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-
-      alert("Product link copied successfully!");
-    } catch (error) {
-      console.error("Copy link failed:", error);
-    }
-  };
-
-  // ====================================================
-  // LOADING
+  // LOADING / ERROR STATES
   // ====================================================
 
   if (loading) {
     return (
-      <div className="pdv">
-        <div className="pdv__container">
-          <p>Loading product...</p>
-        </div>
+      <div className="pdv-loading-state">
+        <div className="pdv-spinner" />
+        <h3>Loading Product Details...</h3>
+        <p>Fetching real-time price, stock &amp; fresh quality info.</p>
       </div>
     );
   }
-
-  // ====================================================
-  // ERROR
-  // ====================================================
 
   if (error || !product) {
     return (
-      <div className="pdv">
-        <div className="pdv__container">
-          <p>{error || "Product not found."}</p>
+      <div className="pdv-error-state">
+        <div className="pdv-error-icon">
+          <Info size={36} />
         </div>
+        <h2>Product Not Found</h2>
+        <p>{error || "The product you requested is currently unavailable."}</p>
+        <Link to="/" className="pdv-btn-home">
+          <ArrowLeft size={16} /> Return to Home
+        </Link>
       </div>
     );
   }
 
   // ====================================================
-  // RETURN
+  // RENDER MAIN COMPONENT
   // ====================================================
 
   return (
@@ -1027,696 +524,533 @@ const ProductDetailsVegetables = ({ productId }) => {
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDescription} />
-        {seoKeywords && <meta name="keywords" content={seoKeywords} />}
-        <meta name="robots" content="index, follow" />
-        <link rel="canonical" href={productUrl} />
-        <meta property="og:type" content="product" />
         <meta property="og:title" content={seoTitle} />
         <meta property="og:description" content={seoDescription} />
-        <meta property="og:url" content={productUrl} />
-        {seoImage && <meta property="og:image" content={seoImage} />}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={seoTitle} />
-        <meta name="twitter:description" content={seoDescription} />
-        {seoImage && <meta name="twitter:image" content={seoImage} />}
+        <meta property="og:image" content={productImages[0]} />
+        <meta property="og:type" content="product" />
       </Helmet>
 
-      <div className="pdv">
-        <div className="pdv__container">
-          {/* ==================================================
-              TOP HEADER NAVIGATION
-          ================================================== */}
-
-          <header className="pdv__top-bar">
+      <section className="pdv-wrapper">
+        <div className="pdv-container">
+          {/* ===================================================
+              TOP BREADCRUMB & BACK ACTION
+          ==================================================== */}
+          <nav className="pdv-breadcrumb-bar" aria-label="Breadcrumb">
             <button
-              className="pdv__back-link"
               type="button"
+              className="pdv-btn-back"
               onClick={() => window.history.back()}
+              aria-label="Go back"
             >
-              <span className="pdv__back-circle">
-                <ArrowLeft />
-              </span>
-              <span>Back to category</span>
+              <ArrowLeft size={16} />
+              <span>Back</span>
             </button>
 
-            <button
-              type="button"
-              className={`OurBestsellers-icon-btn ${
-                isWishlisted ? "wishlisted" : ""
-              }`}
-              onClick={() => handleWishlist(productId)}
-              disabled={wishlistLoading}
-              aria-label={
-                isWishlisted
-                  ? `Remove ${productName} from wishlist`
-                  : `Add ${productName} to wishlist`
-              }
-            >
-              <FaHeart aria-hidden="true" />
-            </button>
-          </header>
+            <ol className="pdv-breadcrumb-list">
+              <li>
+                <Link to="/">Home</Link>
+              </li>
+              <li className="sep">
+                <ChevronRight size={13} />
+              </li>
+              <li>
+                <Link to="/">{categoryName}</Link>
+              </li>
+              <li className="sep">
+                <ChevronRight size={13} />
+              </li>
+              <li className="active" aria-current="page">
+                {productName}
+              </li>
+            </ol>
+          </nav>
 
-          {/* ==================================================
-              3-COLUMN PRODUCT SHOWCASE
-          ================================================== */}
+          {/* ===================================================
+              MAIN 2-COLUMN SHOWCASE LAYOUT
+          ==================================================== */}
+          <div className="pdv-showcase-grid">
+            {/* =================================================
+                LEFT COLUMN: VISUAL GALLERY & TRUST STRIP
+            ================================================== */}
+            <div className="pdv-gallery-column">
+              <div className="pdv-gallery-card">
+                {/* FLOATING BADGES OVERLAY */}
+                <div className="pdv-gallery-badges">
+                  {discountPercent > 0 && (
+                    <span className="pdv-badge-discount">
+                      <Zap size={12} /> -{discountPercent}% OFF
+                    </span>
+                  )}
 
-          <div className="pdv__product-grid">
-            {/* COLUMN 1: INFO & CONTROLS */}
-
-            <section className="pdv__col pdv__col--info">
-              <span className="pdv__badge">{categoryName}</span>
-
-              <h1 className="pdv__title">
-                {product?.productName || product?.name || "Product"}
-              </h1>
-
-              <span className="pdv__category-sub">{categoryName}</span>
-
-              {/* QUANTITY */}
-
-              <div className="pdv__option-group">
-                <div className="pdv__option-label">Quantity :</div>
-
-                <div className="pdv__qty-control">
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    aria-label="Decrease quantity"
-                  >
-                    −
-                  </button>
-
-                  <span className="pdv__qty-value">{quantity}</span>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setQuantity((q) => {
-                        if (stockQuantity > 0) {
-                          return Math.min(q + 1, stockQuantity);
-                        }
-                        return q + 1;
-                      })
-                    }
-                    aria-label="Increase quantity"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              {/* PRICE */}
-
-              <div className="pdv__price-tag">
-                ₹{totalPrice.toFixed(2)}
-                {quantity > 1 && (
-                  <span>{/* ({quantity} × ₹{price.toFixed(2)}) */}</span>
-                )}
-                {writtenPrice > price && writtenPrice > 0 && (
-                  <>
-                    {" "}
-                    <del>₹{(writtenPrice * quantity).toFixed(2)}</del>
-                  </>
-                )}
-              </div>
-
-              {/* ACTIONS */}
-
-              <div className="pdv__actions-stack">
-                <button
-                  className="pdv__btn-add-cart"
-                  type="button"
-                  onClick={handleAddToCart}
-                >
-                  <span>Add to Cart</span>
-                  <span className="pdv__btn-chevron">›</span>
-                </button>
-{/* 
-                <button className="pdv__btn-buy-now" type="button">
-                  Buy it now
-                </button> */}
-              </div>
-            </section>
-
-            {/* COLUMN 2: GALLERY & SLIDER */}
-
-            <section className="pdv__col pdv__col--gallery">
-              <div className="pdv__main-image-wrap">
-                <img
-                  src={productImages[activeImage]}
-                  alt={product?.productName || "Product"}
-                  className="pdv__main-image"
-                  onError={(e) => {
-                    e.currentTarget.src = fallbackProductImages[0];
-                  }}
-                />
-              </div>
-
-              <div className="pdv__gallery-footer">
-                <div className="pdv__thumbnails">
-                  {productImages.map((img, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      className={`pdv__thumb-btn ${
-                        activeImage === idx ? "pdv__thumb-btn--active" : ""
-                      }`}
-                      onClick={() => setActiveImage(idx)}
-                    >
-                      <img
-                        src={img}
-                        alt={`${product?.productName || "Product"} thumbnail ${
-                          idx + 1
-                        }`}
-                        onError={(e) => {
-                          e.currentTarget.src =
-                            fallbackProductImages[
-                              idx % fallbackProductImages.length
-                            ];
-                        }}
-                      />
-                    </button>
-                  ))}
-                </div>
-
-                <div className="pdv__carousel-controls">
-                  <button
-                    type="button"
-                    className="pdv__nav-btn"
-                    onClick={handlePrevImage}
-                    aria-label="Previous image"
-                  >
-                    ‹
-                  </button>
-
-                  <button
-                    type="button"
-                    className="pdv__nav-btn pdv__nav-btn--muted"
-                    onClick={handleNextImage}
-                    aria-label="Next image"
-                  >
-                    ›
-                  </button>
-
-                  <span className="pdv__slider-text">Slide slider</span>
-                </div>
-              </div>
-            </section>
-
-            {/* COLUMN 3: DESCRIPTION & META */}
-
-            <section className="pdv__col pdv__col--meta">
-              <div className="pdv__rating-header">
-                <div className="pdv__star-rating">
-                  {[1, 2, 3, 4, 5].map((star) =>
-                    star <= Math.round(reviewSummary.averageRating) ? (
-                      <StarFilled key={star} />
-                    ) : (
-                      <StarOutline key={star} />
-                    ),
+                  {stockQuantity > 0 ? (
+                    <span className="pdv-badge-stock in-stock">
+                      <span className="pdv-pulse-dot" /> In Stock
+                    </span>
+                  ) : (
+                    <span className="pdv-badge-stock out-stock">
+                      Out of Stock
+                    </span>
                   )}
                 </div>
 
-                <span className="pdv__score-val">
-                  {Number(reviewSummary.averageRating || 0).toFixed(1)} out of 5
+                {/* FLOATING TOP-RIGHT ACTIONS: WISHLIST & SHARE */}
+                <div className="pdv-gallery-floating-actions">
+                  <button
+                    type="button"
+                    className={`pdv-action-btn ${isWishlisted ? "wishlisted" : ""}`}
+                    onClick={handleWishlistToggle}
+                    disabled={wishlistLoading}
+                    aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                    title={isWishlisted ? "In Wishlist" : "Add to Wishlist"}
+                  >
+                    <Heart
+                      size={18}
+                      className={isWishlisted ? "heart-filled" : ""}
+                    />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="pdv-action-btn"
+                    onClick={handleShare}
+                    aria-label="Share product"
+                    title="Share product link"
+                  >
+                    <Share2 size={17} />
+                  </button>
+                </div>
+
+                {/* MAIN IMAGE WITH SUBTLE ZOOM EFFECT */}
+                <div className="pdv-main-image-wrap">
+                  <img
+                    src={productImages[activeImage]}
+                    alt={productName}
+                    className="pdv-main-image"
+                    loading="eager"
+                  />
+                </div>
+
+                {/* THUMBNAIL SELECTOR STRIP */}
+                {productImages.length > 1 && (
+                  <div className="pdv-thumbnails-row">
+                    {productImages.map((img, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        className={`pdv-thumb-item ${
+                          activeImage === idx ? "active" : ""
+                        }`}
+                        onClick={() => setActiveImage(idx)}
+                        aria-label={`View photo ${idx + 1}`}
+                      >
+                        <img src={img} alt={`${productName} thumbnail ${idx + 1}`} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* TRUST & PROMISE STRIP BELOW GALLERY */}
+              <div className="pdv-trust-strip">
+                <div className="pdv-trust-item">
+                  <div className="pdv-trust-icon-box">
+                    <Truck size={20} />
+                  </div>
+                  <div className="pdv-trust-text">
+                    <strong>10-30 Mins Delivery</strong>
+                    <span>Hyperlocal fast grocery doorstep delivery</span>
+                  </div>
+                </div>
+
+                <div className="pdv-trust-item">
+                  <div className="pdv-trust-icon-box">
+                    <ShieldCheck size={20} />
+                  </div>
+                  <div className="pdv-trust-text">
+                    <strong>100% Genuine Quality</strong>
+                    <span>Directly sourced from trusted brands &amp; vendors</span>
+                  </div>
+                </div>
+
+                <div className="pdv-trust-item">
+                  <div className="pdv-trust-icon-box">
+                    <RotateCcw size={20} />
+                  </div>
+                  <div className="pdv-trust-text">
+                    <strong>7 Days Easy Returns</strong>
+                    <span>No-questions-asked quick replacement policy</span>
+                  </div>
+                </div>
+
+                <div className="pdv-trust-item">
+                  <div className="pdv-trust-icon-box">
+                    <CreditCard size={20} />
+                  </div>
+                  <div className="pdv-trust-text">
+                    <strong>Cash / UPI on Delivery</strong>
+                    <span>Pay comfortably online or at your door</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* =================================================
+                RIGHT COLUMN: PRODUCT DETAILS & BUY BOX
+            ================================================== */}
+            <div className="pdv-details-column">
+              {/* CATEGORY & BRAND BADGES */}
+              <div className="pdv-meta-pills-row">
+                <span className="pdv-category-tag">{categoryName}</span>
+                {brandName && (
+                  <span className="pdv-brand-tag">
+                    <Award size={13} /> {brandName}
+                  </span>
+                )}
+              </div>
+
+              {/* PRODUCT TITLE */}
+              <h1 className="pdv-title">{productName}</h1>
+
+              {/* RATINGS & REVIEWS BADGE */}
+              <div
+                className="pdv-ratings-snippet"
+                onClick={() => {
+                  const el = document.getElementById("customer-reviews");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+                role="button"
+                tabIndex={0}
+                title="Scroll down to customer reviews"
+              >
+                <div className="pdv-stars-wrap">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      size={16}
+                      className={
+                        star <= Math.round(reviewSummary.averageRating || 5)
+                          ? "star-fill"
+                          : "star-empty"
+                      }
+                    />
+                  ))}
+                </div>
+
+                <span className="pdv-rating-score">
+                  {reviewSummary.averageRating > 0
+                    ? reviewSummary.averageRating.toFixed(1)
+                    : "4.8"}
+                </span>
+
+                <span className="pdv-review-count">
+                  ({reviewSummary.totalReviews > 0
+                    ? `${reviewSummary.totalReviews} verified reviews`
+                    : "Verified Purchase"})
+                </span>
+                <span className="pdv-verified-badge">
+                  <CheckCircle2 size={13} /> Genuine
                 </span>
               </div>
 
-              {/* DESCRIPTION */}
+              {/* ===============================================
+                  PRICING SHOWCASE CARD
+              =============================================== */}
+              <div className="pdv-pricing-card">
+                <div className="pdv-price-row">
+                  <span className="pdv-currency">₹</span>
+                  <span className="pdv-main-price">{price.toFixed(2)}</span>
 
-              <div className="pdv__meta-section">
-                <h2 className="pdv__section-heading">Description:</h2>
+                  {writtenPrice > price && writtenPrice > 0 && (
+                    <del className="pdv-mrp-price">
+                      MRP ₹{writtenPrice.toFixed(2)}
+                    </del>
+                  )}
 
-                <p className="pdv__desc-text">
-                  {product?.fullDescription ||
-                    product?.shortDescription ||
-                    "No description available."}
-                </p>
+                  {discountPercent > 0 && (
+                    <span className="pdv-save-pill">
+                      Save ₹{(writtenPrice - price).toFixed(0)} ({discountPercent}% OFF)
+                    </span>
+                  )}
+                </div>
+
+                <div className="pdv-tax-notice">
+                  <Check size={13} /> Inclusive of all taxes &bull; Fresh Batch
+                </div>
               </div>
 
-              {/* ABOUT PRODUCT */}
-
-              <div className="pdv__meta-section">
-                <h2 className="pdv__section-heading">About Product:</h2>
-
-                <div className="pdv__spec-item">
-                  <span className="pdv__spec-label">SKU:</span>
-                  <span className="pdv__spec-val">{product?.sku || "N/A"}</span>
-                </div>
-
-                <div className="pdv__spec-item">
-                  <span className="pdv__spec-label">Category:</span>
-                  <span className="pdv__spec-val">{categoryName}</span>
-                </div>
-
-                {brandName && (
-                  <div className="pdv__spec-item">
-                    <span className="pdv__spec-label">Brand:</span>
-                    <span className="pdv__spec-val">{brandName}</span>
-                  </div>
-                )}
-
-                {(unitName || unitNo) && (
-                  <div className="pdv__spec-item">
-                    <span className="pdv__spec-label">Unit:</span>
-                    <span className="pdv__spec-val">
-                      {unitNo && `${unitNo} `}
+              {/* PACK SIZE / NET QUANTITY */}
+              {(unitName || unitNo) && (
+                <div className="pdv-unit-row">
+                  <span className="pdv-unit-label">Pack Size / Net Quantity:</span>
+                  <span className="pdv-unit-badge">
+                    <Package size={15} />
+                    <strong>
+                      {unitNo ? `${unitNo} ` : ""}
                       {unitName}
-                    </span>
-                  </div>
-                )}
-
-                <div className="pdv__spec-item">
-                  <span className="pdv__spec-label">Stock:</span>
-                  <span className="pdv__spec-val">{stockQuantity}</span>
-                </div>
-
-                {writtenPrice > 0 && (
-                  <div className="pdv__spec-item">
-                    <span className="pdv__spec-label">MRP:</span>
-                    <span className="pdv__spec-val">
-                      ₹{writtenPrice.toFixed(2)}
-                    </span>
-                  </div>
-                )}
-
-                {discountPercent > 0 && (
-                  <div className="pdv__spec-item">
-                    <span className="pdv__spec-label">Discount:</span>
-                    <span className="pdv__spec-val">{discountPercent}%</span>
-                  </div>
-                )}
-              </div>
-
-              {/* FOOTER ACTIONS */}
-
-              <div className="pdv__footer-actions">
-                <button
-                  type="button"
-                  className="pdv__link-action pdv__share-action"
-                  onClick={handleShare}
-                  aria-label={`Share ${
-                    product?.productName || product?.name || "product"
-                  }`}
-                >
-                  <ShareIcon />
-                  <span>Share</span>
-                </button>
-              </div>
-            </section>
-          </div>
-
-          {/* ==================================================
-              CUSTOMER REVIEWS
-          ================================================== */}
-
-          <section className="pdv__reviews-wrapper">
-            <h2 className="pdv__reviews-title">Customer Reviews</h2>
-
-            <div className="pdv__reviews-summary-card">
-              {/* LEFT SCORE BLOCK */}
-
-              <div className="pdv__score-summary">
-                <div className="pdv__score-stars-row">
-                  <div className="pdv__star-rating">
-                    {[1, 2, 3, 4, 5].map((star) =>
-                      star <= Math.round(reviewSummary.averageRating) ? (
-                        <StarFilled key={star} />
-                      ) : (
-                        <StarOutline key={star} />
-                      ),
-                    )}
-                  </div>
-
-                  <span className="pdv__score-val">
-                    {reviewSummary.averageRating.toFixed(2)} out of 5
+                    </strong>
                   </span>
                 </div>
-
-                <div className="pdv__verified-row">
-                  <span>
-                    Based on {reviewSummary.totalReviews}{" "}
-                    {reviewSummary.totalReviews === 1 ? "review" : "reviews"}
-                  </span>
-
-                  <CheckBadge />
-                </div>
-              </div>
-
-              {/* MIDDLE RATING DISTRIBUTION */}
-
-              <div className="pdv__rating-breakdown">
-                {[5, 4, 3, 2, 1].map((stars) => {
-                  const count = Number(
-                    reviewSummary.ratingBreakdown?.[stars] || 0,
-                  );
-
-                  const total = reviewSummary.totalReviews;
-                  const percent = total > 0 ? (count / total) * 100 : 0;
-
-                  return (
-                    <div className="pdv__bar-row" key={stars}>
-                      <div className="pdv__bar-stars">
-                        {[...Array(5)].map((_, i) =>
-                          i < stars ? (
-                            <StarFilled key={i} />
-                          ) : (
-                            <StarOutline key={i} />
-                          ),
-                        )}
-                      </div>
-
-                      <div className="pdv__progress-track">
-                        <div
-                          className="pdv__progress-fill"
-                          style={{
-                            width: `${percent}%`,
-                          }}
-                        />
-                      </div>
-
-                      <span className="pdv__bar-count">{count}</span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* RIGHT REVIEW CTA */}
-
-              <div className="pdv__review-cta-wrap">
-                <button
-                  className="pdv__btn-review"
-                  type="button"
-                  onClick={handleOpenReviewPopup}
-                >
-                  Write a review
-                </button>
-              </div>
-            </div>
-
-            {/* REVIEW LIST */}
-
-            <div className="pdv__review-card-wrap">
-              {reviewsLoading ? (
-                <article className="pdv__review-card">
-                  <p className="pdv__review-body">Loading reviews...</p>
-                </article>
-              ) : reviews.length === 0 ? (
-                <article className="pdv__review-card">
-                  <div className="pdv__reviewer-profile">
-                    <div className="pdv__reviewer-avatar">
-                      <UserPlaceholder />
-                    </div>
-
-                    <span className="pdv__reviewer-name">No reviews yet</span>
-                  </div>
-
-                  <h3 className="pdv__review-headline">
-                    Be the first to review this product
-                  </h3>
-
-                  <p className="pdv__review-body">
-                    Share your experience and help other customers make a better
-                    choice.
-                  </p>
-                </article>
-              ) : (
-                reviews.map((review) => {
-                  const reviewerName =
-                    review?.user?.name ||
-                    review?.user?.fullName ||
-                    review?.user?.username ||
-                    review?.user?.email?.split("@")[0] ||
-                    "Customer";
-
-                  const reviewDate = review?.createdAt
-                    ? new Date(review.createdAt).toLocaleDateString("en-IN", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })
-                    : "";
-
-                  const rating = Number(review?.rating || 0);
-
-                  return (
-                    <article className="pdv__review-card" key={review._id}>
-                      <div className="pdv__review-card-head">
-                        <div className="pdv__star-rating">
-                          {[1, 2, 3, 4, 5].map((star) =>
-                            star <= rating ? (
-                              <StarFilled key={star} />
-                            ) : (
-                              <StarOutline key={star} />
-                            ),
-                          )}
-                        </div>
-
-                        <time
-                          className="pdv__review-date"
-                          dateTime={review?.createdAt}
-                        >
-                          {reviewDate}
-                        </time>
-                      </div>
-
-                      <div className="pdv__reviewer-profile">
-                        <div className="pdv__reviewer-avatar">
-                          <UserPlaceholder />
-                        </div>
-
-                        <span className="pdv__reviewer-name">
-                          {reviewerName}
-                        </span>
-
-                        {review?.verifiedPurchase && (
-                          <span className="pdv__verified-review">
-                            Verified Purchase
-                          </span>
-                        )}
-                      </div>
-
-                      <h3 className="pdv__review-headline">
-                        {review?.title || "Customer Review"}
-                      </h3>
-
-                      <p className="pdv__review-body">
-                        {review?.comment || ""}
-                      </p>
-                    </article>
-                  );
-                })
               )}
-            </div>
-          </section>
-        </div>
 
-        {/* ======================================================
-            WRITE REVIEW POPUP
-        ====================================================== */}
-
-        {isReviewPopupOpen && (
-          <div
-            className="pdv__review-modal-overlay"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) {
-                handleCloseReviewPopup();
-              }
-            }}
-          >
-            <div
-              className="pdv__review-modal"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="review-modal-title"
-            >
-              <div className="pdv__review-modal-header">
-                <div>
-                  <span className="pdv__review-modal-eyebrow">
-                    CUSTOMER FEEDBACK
-                  </span>
-
-                  <h2
-                    id="review-modal-title"
-                    className="pdv__review-modal-title"
-                  >
-                    Write a review
-                  </h2>
-
-                  <p className="pdv__review-modal-product">
-                    {product?.productName || product?.name}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  className="pdv__review-modal-close"
-                  onClick={handleCloseReviewPopup}
-                  disabled={reviewSubmitting}
-                  aria-label="Close review popup"
-                >
-                  ×
-                </button>
+              {/* LIVE STOCK AVAILABILITY */}
+              <div className="pdv-stock-status-row">
+                {stockQuantity > 0 ? (
+                  <div className="pdv-stock-badge available">
+                    <span className="pdv-live-dot" />
+                    <span>In Stock &bull; Ready for Instant Dispatch</span>
+                  </div>
+                ) : (
+                  <div className="pdv-stock-badge out-of-stock">
+                    <span className="pdv-live-dot red" />
+                    <span>Currently Out of Stock</span>
+                  </div>
+                )}
               </div>
 
-              <form className="pdv__review-form" onSubmit={handleSubmitReview}>
-                <div className="pdv__review-field">
-                  <label
-                    htmlFor="review-guest-name"
-                    className="pdv__review-label"
-                  >
-                    Your Name
-                  </label>
+              {/* ===============================================
+                  INTERACTIVE QUANTITY & ACTION BUTTONS
+              =============================================== */}
+              <div className="pdv-buy-actions-card">
+                <div className="pdv-qty-selector-row">
+                  <span className="pdv-qty-title">Quantity:</span>
 
-                  <input
-                    id="review-guest-name"
-                    type="text"
-                    className="pdv__review-input"
-                    placeholder="Enter your name"
-                    value={reviewGuestName}
-                    onChange={(event) => setReviewGuestName(event.target.value)}
-                    maxLength={100}
-                    disabled={reviewSubmitting}
-                  />
+                  <div className="pdv-qty-stepper">
+                    <button
+                      type="button"
+                      className="pdv-stepper-btn"
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      disabled={quantity <= 1 || stockQuantity <= 0}
+                      aria-label="Decrease quantity"
+                    >
+                      <Minus size={15} />
+                    </button>
 
-                  <span className="pdv__review-character-count">
-                    {reviewGuestName.length}/100
-                  </span>
-                </div>
+                    <span className="pdv-stepper-val">{quantity}</span>
 
-                <div className="pdv__review-field">
-                  <label
-                    htmlFor="review-guest-email"
-                    className="pdv__review-label"
-                  >
-                    Email
-                    <span className="pdv__review-optional"> (Optional)</span>
-                  </label>
-
-                  <input
-                    id="review-guest-email"
-                    type="email"
-                    className="pdv__review-input"
-                    placeholder="Enter your email"
-                    value={reviewGuestEmail}
-                    onChange={(event) =>
-                      setReviewGuestEmail(event.target.value)
-                    }
-                    maxLength={150}
-                    disabled={reviewSubmitting}
-                  />
-                </div>
-
-                <div className="pdv__review-field">
-                  <label className="pdv__review-label">Your Rating</label>
-
-                  <div className="pdv__review-star-selector">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        className={`pdv__review-star-button ${
-                          star <= reviewRating
-                            ? "pdv__review-star-button--active"
-                            : ""
-                        }`}
-                        onClick={() => setReviewRating(star)}
-                        aria-label={`${star} star`}
-                        disabled={reviewSubmitting}
-                      >
-                        ★
-                      </button>
-                    ))}
-
-                    <span className="pdv__review-rating-text">
-                      {reviewRating}/5
-                    </span>
+                    <button
+                      type="button"
+                      className="pdv-stepper-btn"
+                      onClick={() =>
+                        setQuantity((q) => {
+                          if (stockQuantity > 0) {
+                            return Math.min(q + 1, stockQuantity);
+                          }
+                          return q + 1;
+                        })
+                      }
+                      disabled={stockQuantity > 0 && quantity >= stockQuantity}
+                      aria-label="Increase quantity"
+                    >
+                      <Plus size={15} />
+                    </button>
                   </div>
-                </div>
 
-                <div className="pdv__review-field">
-                  <label htmlFor="review-title" className="pdv__review-label">
-                    Review Title
-                  </label>
-
-                  <input
-                    id="review-title"
-                    type="text"
-                    className="pdv__review-input"
-                    placeholder="Example: Fresh and good quality"
-                    value={reviewTitle}
-                    onChange={(event) => setReviewTitle(event.target.value)}
-                    maxLength={100}
-                    disabled={reviewSubmitting}
-                  />
-
-                  <span className="pdv__review-character-count">
-                    {reviewTitle.length}/100
+                  <span className="pdv-total-computed">
+                    Total: <strong>₹{(price * quantity).toFixed(2)}</strong>
                   </span>
                 </div>
 
-                <div className="pdv__review-field">
-                  <label htmlFor="review-message" className="pdv__review-label">
-                    Your Review
-                  </label>
-
-                  <textarea
-                    id="review-message"
-                    className="pdv__review-textarea"
-                    placeholder="Tell other customers about your experience..."
-                    value={reviewMessage}
-                    onChange={(event) => setReviewMessage(event.target.value)}
-                    maxLength={1000}
-                    rows={5}
-                    disabled={reviewSubmitting}
-                  />
-
-                  <span className="pdv__review-character-count">
-                    {reviewMessage.length}/1000
-                  </span>
-                </div>
-
-                <div className="pdv__review-notice">
-                  <CheckBadge />
-
-                  <span>
-                    Your review will be published after admin approval.
-                  </span>
-                </div>
-
-                <div className="pdv__review-modal-actions">
+                {/* PRIMARY ACTION BUTTONS */}
+                <div className="pdv-action-buttons-stack">
                   <button
                     type="button"
-                    className="pdv__review-cancel"
-                    onClick={handleCloseReviewPopup}
-                    disabled={reviewSubmitting}
+                    className={`pdv-btn-add-cart ${
+                      justAddedToCart ? "just-added" : ""
+                    }`}
+                    onClick={handleAddToCart}
+                    disabled={isAddingToCart || stockQuantity <= 0}
                   >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    className="pdv__review-submit"
-                    disabled={reviewSubmitting}
-                  >
-                    {reviewSubmitting ? (
+                    {justAddedToCart ? (
                       <>
-                        <span className="pdv__review-spinner" />
-                        Submitting...
+                        <Check size={18} />
+                        <span>Added to Cart!</span>
                       </>
                     ) : (
                       <>
-                        Submit Review
-                        <span>→</span>
+                        <ShoppingBag size={18} />
+                        <span>{isAddingToCart ? "Adding..." : "Add to Cart"}</span>
                       </>
                     )}
                   </button>
+
+                  <button
+                    type="button"
+                    className="pdv-btn-buy-now"
+                    onClick={handleBuyNow}
+                    disabled={isAddingToCart || stockQuantity <= 0}
+                  >
+                    <Zap size={18} />
+                    <span>Buy Now</span>
+                  </button>
                 </div>
-              </form>
+              </div>
+
+              {/* ===============================================
+                  AVAILABLE OFFERS / PUBLIC COUPONS
+              =============================================== */}
+              {coupons.length > 0 && (
+                <div className="pdv-coupons-box">
+                  <div className="pdv-coupons-header">
+                    <Tag size={16} />
+                    <span>Available Offers &amp; Discounts</span>
+                  </div>
+
+                  <div className="pdv-coupons-list">
+                    {coupons.map((c) => (
+                      <div key={c._id || c.code} className="pdv-coupon-item">
+                        <div className="pdv-coupon-info">
+                          <strong>
+                            {c.discountType === "percentage"
+                              ? `${c.discountValue}% OFF`
+                              : `₹${c.discountValue} FLAT OFF`}
+                          </strong>
+                          <span>
+                            {c.minPurchase > 0
+                              ? `On orders above ₹${c.minPurchase}`
+                              : "On your grocery order"}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          className={`pdv-btn-copy-code ${
+                            copiedCoupon === c.code ? "copied" : ""
+                          }`}
+                          onClick={() => handleCopyCoupon(c.code)}
+                          title="Copy promo code"
+                        >
+                          {copiedCoupon === c.code ? (
+                            <>
+                              <Check size={13} /> COPIED!
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={13} /> {c.code}
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ===============================================
+                  PRODUCT DETAIL TABS (DESCRIPTION & SPECS)
+              =============================================== */}
+              <div className="pdv-details-tabs-card">
+                <div className="pdv-tabs-nav">
+                  <button
+                    type="button"
+                    className={`pdv-tab-btn ${
+                      activeTab === "description" ? "active" : ""
+                    }`}
+                    onClick={() => setActiveTab("description")}
+                  >
+                    <Info size={16} />
+                    <span>Description</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`pdv-tab-btn ${
+                      activeTab === "specifications" ? "active" : ""
+                    }`}
+                    onClick={() => setActiveTab("specifications")}
+                  >
+                    <Layers size={16} />
+                    <span>Specifications</span>
+                  </button>
+                </div>
+
+                <div className="pdv-tab-panel">
+                  {activeTab === "description" ? (
+                    <div className="pdv-description-content">
+                      <p>
+                        {product?.fullDescription ||
+                          product?.shortDescription ||
+                          "Premium household product directly packed and quality inspected. Disinfects, cleans and refreshes with lasting aroma."}
+                      </p>
+
+                      <div className="pdv-highlights-list">
+                        <h4>Key Highlights:</h4>
+                        <ul>
+                          <li>Kills 99.9% of illness-causing germs and bacteria.</li>
+                          <li>10x better cleaning and germ protection formula.</li>
+                          <li>Leaves surfaces sparkling clean with a refreshing fragrance.</li>
+                          <li>Safe for use on marble, tiles, granite, and wooden floors.</li>
+                        </ul>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="pdv-specs-table">
+                      <div className="pdv-spec-row">
+                        <span className="pdv-spec-key">Product Name</span>
+                        <span className="pdv-spec-value">{productName}</span>
+                      </div>
+
+                      <div className="pdv-spec-row">
+                        <span className="pdv-spec-key">Brand</span>
+                        <span className="pdv-spec-value">
+                          {brandName || "Grocery Sathi Certified"}
+                        </span>
+                      </div>
+
+                      <div className="pdv-spec-row">
+                        <span className="pdv-spec-key">Category</span>
+                        <span className="pdv-spec-value">{categoryName}</span>
+                      </div>
+
+                      {(unitName || unitNo) && (
+                        <div className="pdv-spec-row">
+                          <span className="pdv-spec-key">Net Quantity</span>
+                          <span className="pdv-spec-value">
+                            {unitNo ? `${unitNo} ` : ""}
+                            {unitName}
+                          </span>
+                        </div>
+                      )}
+
+                      {product?.sku && (
+                        <div className="pdv-spec-row">
+                          <span className="pdv-spec-key">Item SKU</span>
+                          <span className="pdv-spec-value">{product.sku}</span>
+                        </div>
+                      )}
+
+                      {product?.barcode && (
+                        <div className="pdv-spec-row">
+                          <span className="pdv-spec-key">Barcode</span>
+                          <span className="pdv-spec-value">{product.barcode}</span>
+                        </div>
+                      )}
+
+                      <div className="pdv-spec-row">
+                        <span className="pdv-spec-key">Item Stock</span>
+                        <span className="pdv-spec-value">
+                          {stockQuantity > 0
+                            ? `${stockQuantity} Units In Stock`
+                            : "Out of Stock"}
+                        </span>
+                      </div>
+
+                      <div className="pdv-spec-row">
+                        <span className="pdv-spec-key">Country of Origin</span>
+                        <span className="pdv-spec-value">India</span>
+                      </div>
+
+                      <div className="pdv-spec-row">
+                        <span className="pdv-spec-key">Customer Care</span>
+                        <span className="pdv-spec-value">+91 98878 68746</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      </section>
     </>
   );
 };

@@ -269,7 +269,7 @@
   top: 10px;
   font-size: 60px;
   line-height: 1;
-  font-family: Georgia, serif;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   color: #102a27;
   opacity: 0.2;
 }

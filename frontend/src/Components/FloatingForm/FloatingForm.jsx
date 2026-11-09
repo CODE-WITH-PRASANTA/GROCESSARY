@@ -1,10 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import API from '../../api/axios'; // Adjust path according to your project structure
 import './FloatingForm.css';
 import { FaPhoneAlt, FaWhatsapp, FaPaperPlane, FaTimes } from 'react-icons/fa';
 
+const POPUP_SEEN_STORAGE_KEY = 'grocery_floating_popup_seen';
+
 const FloatingForm = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  // Only show once when the website opens, not repeatedly on every route or reload
+  const [isOpen, setIsOpen] = useState(() => {
+    try {
+      const sessionSeen = sessionStorage.getItem(POPUP_SEEN_STORAGE_KEY);
+      const localSeen = localStorage.getItem(POPUP_SEEN_STORAGE_KEY);
+      // If already shown/closed in this session or previously, do not repeat
+      if (sessionSeen || localSeen) {
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
@@ -12,6 +28,31 @@ const FloatingForm = () => {
     email: '',
     notes: ''
   });
+
+  // Mark popup as seen once it displays
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        sessionStorage.setItem(POPUP_SEEN_STORAGE_KEY, 'true');
+        localStorage.setItem(POPUP_SEEN_STORAGE_KEY, 'true');
+      } catch (e) {}
+    }
+  }, [isOpen]);
+
+  // Support manual trigger if user clicks an express quote shortcut
+  useEffect(() => {
+    const handleManualOpen = () => setIsOpen(true);
+    window.addEventListener('openExpressPopup', handleManualOpen);
+    return () => window.removeEventListener('openExpressPopup', handleManualOpen);
+  }, []);
+
+  const handleClose = () => {
+    try {
+      sessionStorage.setItem(POPUP_SEEN_STORAGE_KEY, 'true');
+      localStorage.setItem(POPUP_SEEN_STORAGE_KEY, 'true');
+    } catch (e) {}
+    setIsOpen(false);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,7 +92,7 @@ const FloatingForm = () => {
           email: '',
           notes: ''
         });
-        setIsOpen(false);
+        handleClose();
       }
     } catch (error) {
       console.error('Lead Submission Error:', error);
@@ -82,7 +123,7 @@ const FloatingForm = () => {
         })}
       </script>
 
-      <div className="floating-overlay" role="presentation" onClick={() => setIsOpen(false)}>
+      <div className="floating-overlay" role="presentation" onClick={handleClose}>
         <div 
           className="floating-form-card" 
           onClick={(e) => e.stopPropagation()}
@@ -93,7 +134,7 @@ const FloatingForm = () => {
           <button 
             type="button"
             className="floating-close-btn" 
-            onClick={() => setIsOpen(false)}
+            onClick={handleClose}
             aria-label="Close inquiry form"
           >
             <FaTimes aria-hidden="true" />

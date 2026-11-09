@@ -12,6 +12,7 @@ import Addnew from "./Components/Blog/AddProducts/AddProducts";
 
 import ReturnManagement from "./Components/Blog/ReturnManagement/ReturnManagement";
 import ReviewsManagement from "./Components/Blog/ReviewsManagement/ReviewsManagement";
+import ReferralManagement from "./Components/ReferralManagement/ReferralManagement";
 import ReturnDetails from "./Components/Blog/ReturnDetails/ReturnDetails";
 import QualityInspection from "./Components/Blog/QualityInspection/QualityInspection";
 import RefundDetails from "./Components/Blog/RefundDetails/RefundDetails";
@@ -43,14 +44,19 @@ import AdminProfile from "./Components/AdminProfile/AdminProfile";
 import AdminSettings from "./Components/AdminSettings/AdminSettings";
 import Billing from "./Components/Billing/Billing";
 import BillingHistory from "./Components/BillingHistory/BillingHistory";
+import Login from "./Components/Login/Login";
+import AdminRegister from "./Components/AdminRegister/AdminRegister";
 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public Authentication Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<AdminRegister />} />
+
         {/* Direct Root Access to Dashboard */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/login" element={<Navigate to="/dashboard" replace />} />
 
         {/* Admin Routes */}
         <Route element={<ProtectedRoute />}>
@@ -80,14 +86,18 @@ const App = () => {
             {/* Orders */}
             <Route path="orders/all-orders" element={<Order />} />
             <Route path="orders/returns" element={<ReturnManagement />} />
+            <Route path="orders/returns/:id" element={<ReturnDetails />} />
 
             {/* Users */}
             <Route path="users" element={<Users />} />
             <Route path="customers/all-customers" element={<Users />} />
             <Route path="customers/reviews" element={<ReviewsManagement />} />
+            <Route path="customers/referrals" element={<ReferralManagement />} />
+            <Route path="marketing/referrals" element={<ReferralManagement />} />
 
             {/* Returns */}
             <Route path="returns/details" element={<ReturnDetails />} />
+            <Route path="returns/details/:id" element={<ReturnDetails />} />
             <Route path="returns/inspection" element={<QualityInspection />} />
             <Route path="returns/refund" element={<RefundDetails />} />
             <Route path="returns/product-info" element={<ProductInformation />} />

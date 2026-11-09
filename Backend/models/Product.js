@@ -60,9 +60,12 @@ const productSchema = new mongoose.Schema(
     barcode: {
       type: String,
       trim: true,
-      default: null,
-      unique: true,
       sparse: true,
+      index: {
+        unique: true,
+        sparse: true,
+        partialFilterExpression: { barcode: { $type: "string" } },
+      },
     },
 
     // ====================================================

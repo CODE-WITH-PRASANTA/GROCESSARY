@@ -2,6 +2,7 @@ const express = require("express");
 const {
   register,
   login,
+  googleLogin,
   forgotPassword,
   resetPassword,
   getMe,
@@ -16,6 +17,7 @@ const router = express.Router();
 // Public Authentication Endpoints
 router.post("/register", register);
 router.post("/login", login);
+router.post("/google", googleLogin);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 

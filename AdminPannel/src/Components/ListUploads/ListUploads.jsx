@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./ListUploads.css";
 
 import API from "../../api/axios";
+import { exportInvoiceToPdf } from "../../Utils/exportInvoiceToPdf";
 
 // ======================================================
 // BACKEND DATA -> EXISTING UI DATA
@@ -263,11 +264,13 @@ const ListUploads = () => {
   };
 
   // ======================================================
-  // PRINT RECEIPT
+  // DOWNLOAD RECEIPT PDF
   // ======================================================
 
-  const handlePrintReceipt = () => {
-    window.print();
+  const handlePrintReceipt = async () => {
+    const el = document.querySelector(".printable-area");
+    if (!el) return;
+    await exportInvoiceToPdf(el, `Receipt_${downloadInvoiceModal?.receiptNo || "order"}.pdf`);
   };
 
   // ======================================================
@@ -1746,7 +1749,7 @@ const ListUploads = () => {
                   onClick={handlePrintReceipt}
                   type="button"
                 >
-                  🖨️ Print / Save PDF
+                  📥 Download PDF
                 </button>
 
                 <button

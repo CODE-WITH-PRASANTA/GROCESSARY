@@ -115,15 +115,10 @@ export const fetchWishlistItems = async () => {
         })
         .filter(Boolean);
 
-      // Keep guestWishlist mirrored as cache
-      try {
-        localStorage.setItem(GUEST_WISHLIST_KEY, JSON.stringify(items));
-      } catch {}
-
       return items;
     } catch (error) {
-      console.warn("Backend wishlist fetch error, falling back to local:", error);
-      return getGuestWishlist();
+      console.warn("Backend wishlist fetch error:", error);
+      return [];
     }
   }
 
@@ -161,13 +156,6 @@ export const addToWishlist = async (product) => {
 
   const id = normalized.id;
 
-  // Update local storage first for snappy UI
-  let localList = getGuestWishlist();
-  if (!localList.some((i) => String(i.id || i.productId) === id)) {
-    localList.unshift(normalized);
-    saveGuestWishlist(localList);
-  }
-
   if (isLoggedIn()) {
     try {
       await API.post(`/wishlist/${id}`, { productId: id });
@@ -177,11 +165,44 @@ export const addToWishlist = async (product) => {
         console.error("Backend add wishlist error:", error);
       }
     }
+
+    const items = await fetchWishlistItems();
+    window.dispatchEvent(
+      new CustomEvent("wishlistUpdated", {
+        detail: {
+          count: items.length,
+          addedId: id,
+          productId: id,
+          isWishlisted: true,
+          items,
+        },
+      })
+    );
+
+    return {
+      success: true,
+      isWishlisted: true,
+      message: "Added to wishlist",
+      item: normalized,
+    };
+  }
+
+  // Update local storage first for guest
+  let localList = getGuestWishlist();
+  if (!localList.some((i) => String(i.id || i.productId) === id)) {
+    localList.unshift(normalized);
+    saveGuestWishlist(localList);
   }
 
   window.dispatchEvent(
     new CustomEvent("wishlistUpdated", {
-      detail: { count: localList.length, addedId: id },
+      detail: {
+        count: localList.length,
+        addedId: id,
+        productId: id,
+        isWishlisted: true,
+        items: localList,
+      },
     })
   );
 
@@ -200,22 +221,47 @@ export const removeFromWishlist = async (productId) => {
   if (!productId) return { success: false, message: "Product ID required" };
   const targetId = String(productId);
 
-  let localList = getGuestWishlist().filter(
-    (i) => String(i.id || i.productId || i._id) !== targetId
-  );
-  saveGuestWishlist(localList);
-
   if (isLoggedIn()) {
     try {
       await API.delete(`/wishlist/${targetId}`);
     } catch (error) {
       console.error("Backend remove wishlist error:", error);
     }
+
+    const items = await fetchWishlistItems();
+    window.dispatchEvent(
+      new CustomEvent("wishlistUpdated", {
+        detail: {
+          count: items.length,
+          removedId: targetId,
+          productId: targetId,
+          isWishlisted: false,
+          items,
+        },
+      })
+    );
+
+    return {
+      success: true,
+      isWishlisted: false,
+      message: "Removed from wishlist",
+    };
   }
+
+  let localList = getGuestWishlist().filter(
+    (i) => String(i.id || i.productId || i._id) !== targetId
+  );
+  saveGuestWishlist(localList);
 
   window.dispatchEvent(
     new CustomEvent("wishlistUpdated", {
-      detail: { count: localList.length, removedId: targetId },
+      detail: {
+        count: localList.length,
+        removedId: targetId,
+        productId: targetId,
+        isWishlisted: false,
+        items: localList,
+      },
     })
   );
 
@@ -247,23 +293,42 @@ export const toggleWishlist = async (product) => {
 // CLEAR ALL WISHLIST
 // =========================================================
 export const clearWishlist = async () => {
-  saveGuestWishlist([]);
-
   if (isLoggedIn()) {
     try {
       await API.delete("/wishlist/clear");
     } catch (error) {
       console.error("Backend clear wishlist error:", error);
     }
+  } else {
+    try {
+      localStorage.removeItem(GUEST_WISHLIST_KEY);
+      localStorage.removeItem("guestWishlist");
+    } catch {}
   }
 
   window.dispatchEvent(
     new CustomEvent("wishlistUpdated", {
-      detail: { count: 0, cleared: true },
+      detail: { count: 0, items: [], cleared: true },
     })
   );
 
   return { success: true, message: "Wishlist cleared" };
+};
+
+// =========================================================
+// CLEAR LOCAL WISHLIST ON LOGOUT
+// =========================================================
+export const clearLocalWishlistOnLogout = () => {
+  try {
+    localStorage.removeItem(GUEST_WISHLIST_KEY);
+    localStorage.removeItem("guestWishlist");
+    localStorage.removeItem("wishlist");
+  } catch {}
+  window.dispatchEvent(
+    new CustomEvent("wishlistUpdated", {
+      detail: { count: 0, items: [], cleared: true },
+    })
+  );
 };
 
 // =========================================================
@@ -283,6 +348,20 @@ export const syncGuestWishlistOnLogin = async () => {
     }
   } catch (error) {
     console.error("Error syncing guest wishlist to backend:", error);
+  } finally {
+    try {
+      localStorage.removeItem(GUEST_WISHLIST_KEY);
+      localStorage.removeItem("guestWishlist");
+      localStorage.removeItem("wishlist");
+    } catch {}
+    try {
+      const items = await fetchWishlistItems();
+      window.dispatchEvent(
+        new CustomEvent("wishlistUpdated", {
+          detail: { count: items.length, items },
+        })
+      );
+    } catch {}
   }
 };
 

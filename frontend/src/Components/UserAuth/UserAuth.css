@@ -279,3 +279,59 @@
   height: 100%;
   object-fit: cover;
 }
+
+/* =========================================================
+   NAVBAR USER BUTTON AVATAR / PROFILE PICTURE
+   ========================================================= */
+
+.navbar-btn-avatar {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #ffc220 0%, #eab308 100%);
+  color: #0c211e;
+  border: 1.5px solid rgba(255, 194, 32, 0.55);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.navbar-icon-btn:hover .navbar-btn-avatar {
+  border-color: #ffc220;
+  transform: scale(1.05);
+}
+
+.navbar-btn-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.navbar-btn-avatar-initial {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  color: #0c211e;
+  letter-spacing: 0.2px;
+}
+
+@media (max-width: 768px) {
+  .navbar-btn-avatar {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    min-height: 26px;
+  }
+
+  .navbar-btn-avatar-initial {
+    font-size: 12px;
+  }
+}

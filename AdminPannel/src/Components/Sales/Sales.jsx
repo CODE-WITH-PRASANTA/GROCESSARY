@@ -8,6 +8,7 @@ import {
   Tooltip 
 } from 'recharts';
 import { ChevronDown, X } from 'lucide-react';
+import { exportInvoiceToPdf } from '../../Utils/exportInvoiceToPdf';
 import './Sales.css';
 
 // Sample Orders Dataset
@@ -435,8 +436,15 @@ const Sales = () => {
                 </div>
               </div>
 
-              <button type="button" className="sales-detail__print-btn" onClick={() => window.print()}>
-                Print Order Receipt
+              <button
+                type="button"
+                className="sales-detail__print-btn"
+                onClick={() => {
+                  const el = document.querySelector(".sales-detail__modal-card");
+                  if (el) exportInvoiceToPdf(el, `Order_${selectedOrder.id}.pdf`);
+                }}
+              >
+                Download Receipt PDF
               </button>
             </div>
           </div>

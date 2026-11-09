@@ -8,12 +8,7 @@
   padding: 28px 0 80px;
   background: #ffffff;
   color: #172b4d;
-  font-family:
-    "Inter",
-    "Segoe UI",
-    Arial,
-    Helvetica,
-    sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   overflow: hidden;
 }
 
@@ -590,6 +585,65 @@
   width: 15px;
   height: 15px;
   flex-shrink: 0;
+}
+
+/* =========================================================
+   QUANTITY INCREMENT / DECREMENT COUNTER (IN-CARD)
+========================================================= */
+
+.popular-products__qty-counter {
+  flex-shrink: 0;
+  min-width: 122px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3px;
+  border-radius: 5px;
+  background: #20ad6d;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(32, 173, 109, 0.28);
+  user-select: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.popular-products__qty-btn {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  padding: 0;
+}
+
+.popular-products__qty-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.38);
+  transform: scale(1.08);
+}
+
+.popular-products__qty-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.popular-products__qty-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.popular-products__qty-val {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #ffffff;
+  padding: 0 6px;
+  min-width: 22px;
+  text-align: center;
 }
 
 /* =========================================================

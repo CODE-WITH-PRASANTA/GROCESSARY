@@ -30,8 +30,19 @@ import {
   ExternalLink,
   ShoppingBag,
   ArrowRight,
+  LogOut,
+  Users,
+  FileText,
+  Download,
+  Sparkles,
+  Ticket,
+  CreditCard,
 } from "lucide-react";
 import API from "../../api/axios";
+import { downloadOrderInvoicePdf } from "../../Utils/directInvoiceDownloader";
+import { retryOrderPayment } from "../../Utils/razorpayPaymentHelper";
+import { clearLocalCartOnLogout } from "../../Utils/cartService";
+import { clearLocalWishlistOnLogout } from "../../Utils/wishlistService";
 import "./UserProfile.css";
 
 const UserProfile = ({ defaultTab = "profile" }) => {
@@ -62,8 +73,16 @@ const UserProfile = ({ defaultTab = "profile" }) => {
   const [avatarUploading, setAvatarUploading] = useState(false);
 
   // Referral
-  const [referralLink, setReferralLink] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [copiedReferral, setCopiedReferral] = useState(false);
+  const [referralStats, setReferralStats] = useState({
+    totalReferrals: 0,
+    completed: 0,
+    pending: 0,
+    totalEarned: 0,
+  });
+  const [referralList, setReferralList] = useState([]);
+  const [referralLoading, setReferralLoading] = useState(false);
 
   // Addresses
   const [addresses, setAddresses] = useState([]);
@@ -86,6 +105,8 @@ const UserProfile = ({ defaultTab = "profile" }) => {
   // Orders
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
+  const [downloadingOrderId, setDownloadingOrderId] = useState(null);
+  const [retryingOrderId, setRetryingOrderId] = useState(null);
 
   // Help Center FAQs
   const [expandedFaq, setExpandedFaq] = useState(0);
@@ -119,6 +140,9 @@ const UserProfile = ({ defaultTab = "profile" }) => {
       console.error("Load user error:", error);
       if (error.response?.status === 401) {
         localStorage.removeItem("token");
+        clearLocalCartOnLogout();
+        clearLocalWishlistOnLogout();
+        window.dispatchEvent(new Event("authChanged"));
         navigate("/login");
       }
     } finally {
@@ -126,15 +150,29 @@ const UserProfile = ({ defaultTab = "profile" }) => {
     }
   }, [navigate]);
 
-  // Load referral link
+  // Load referral details
   const loadReferral = useCallback(async () => {
     try {
-      const { data } = await API.get("/referrals/link");
-      if (data?.success && data.link) {
-        setReferralLink(data.link);
+      setReferralLoading(true);
+      const { data: linkData } = await API.get("/referrals/link");
+      if (linkData?.success) {
+        const code = linkData.code || linkData.referralCode || "";
+        setReferralCode(code);
+      }
+
+      const { data: meData } = await API.get("/referrals/me");
+      if (meData?.success) {
+        if (meData.summary) {
+          setReferralStats(meData.summary);
+        }
+        if (Array.isArray(meData.referrals)) {
+          setReferralList(meData.referrals);
+        }
       }
     } catch (error) {
       console.error("Load referral error:", error);
+    } finally {
+      setReferralLoading(false);
     }
   }, []);
 
@@ -165,6 +203,51 @@ const UserProfile = ({ defaultTab = "profile" }) => {
       setOrdersLoading(false);
     }
   }, []);
+
+  // Handle retry payment directly from order card
+  const handleRetryPaymentFromList = async (ord) => {
+    const orderId = ord._id || ord.id;
+    if (retryingOrderId === orderId) return;
+    setRetryingOrderId(orderId);
+    await retryOrderPayment(orderId, {
+      onSuccess: () => {
+        setRetryingOrderId(null);
+        loadOrders();
+      },
+      onFailure: () => {
+        setRetryingOrderId(null);
+      },
+    });
+  };
+
+  // Handle user logout
+  const handleLogout = () => {
+    Swal.fire({
+      icon: "question",
+      title: "Log out of your account?",
+      text: "Are you sure you want to log out of Grocery Sathi?",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Log Out",
+      confirmButtonColor: "#ef4444",
+      cancelButtonText: "Cancel",
+      cancelButtonColor: "#64748b",
+    }).then((res) => {
+      if (res.isConfirmed) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("user");
+        sessionStorage.clear();
+
+        clearLocalCartOnLogout();
+        clearLocalWishlistOnLogout();
+
+        window.dispatchEvent(new Event("authChanged"));
+        window.dispatchEvent(new Event("storage"));
+
+        navigate("/login");
+      }
+    });
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -457,19 +540,50 @@ const UserProfile = ({ defaultTab = "profile" }) => {
     }
   };
 
-  // Copy referral
+  const [copiedReferralLink, setCopiedReferralLink] = useState(false);
+
+  // Copy referral coupon code
   const handleCopyReferral = () => {
-    if (!referralLink) return;
-    navigator.clipboard.writeText(referralLink);
+    const code = referralCode || user?.referralCode || "";
+    if (!code) return;
+    navigator.clipboard.writeText(code);
     setCopiedReferral(true);
     setTimeout(() => setCopiedReferral(false), 2000);
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      icon: "success",
+      title: `Referral coupon "${code}" copied!`,
+      showConfirmButton: false,
+      timer: 2000,
+    });
   };
 
-  // WhatsApp Share
+  // Copy referral link (Dynamic domain - never mentions localhost)
+  const handleCopyReferralLink = () => {
+    const code = referralCode || user?.referralCode || "";
+    if (!code) return;
+    const link = `${window.location.origin}/login?ref=${encodeURIComponent(code)}`;
+    navigator.clipboard.writeText(link);
+    setCopiedReferralLink(true);
+    setTimeout(() => setCopiedReferralLink(false), 2000);
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      icon: "success",
+      title: "Referral link copied to clipboard!",
+      showConfirmButton: false,
+      timer: 2000,
+    });
+  };
+
+  // WhatsApp Share with dynamic domain link
   const handleShareWhatsApp = () => {
-    if (!referralLink) return;
+    const code = referralCode || user?.referralCode || "";
+    if (!code) return;
+    const link = `${window.location.origin}/login?ref=${encodeURIComponent(code)}`;
     const msg = encodeURIComponent(
-      `Join me on Grocery Sathi for fresh farm groceries and get exclusive discounts on your first order! Use my invite link: ${referralLink}`
+      `🛒 *Grocery Sathi Referral Voucher*\n\nHey! Use my referral coupon code *${code}* on Grocery Sathi to get *₹20 Welcome Wallet Bonus + 100 Reward Points* on fresh groceries!\n\n👉 Sign up directly using this link:\n${link}`
     );
     window.open(`https://api.whatsapp.com/send?text=${msg}`, "_blank");
   };
@@ -1100,17 +1214,60 @@ const UserProfile = ({ defaultTab = "profile" }) => {
                               </span>
                             </div>
 
-                            <button
-                              type="button"
-                              className="btn-view-order-details"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/orders/${id}`);
-                              }}
-                            >
-                              <span>View Details</span>
-                              <ChevronRight size={15} />
-                            </button>
+                            <div className="order-actions-row">
+                              {/* RETRY PAYMENT IF ONLINE PAYMENT IS PENDING */}
+                              {((ord.paymentStatus === "pending" || ord.paymentStatus === "failed") &&
+                                ord.paymentMethod === "razorpay" &&
+                                ord.orderStatus !== "cancelled") && (
+                                <button
+                                  type="button"
+                                  className="btn-order-retry-payment"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRetryPaymentFromList(ord);
+                                  }}
+                                  disabled={retryingOrderId === id}
+                                  title="Complete online payment for this pending order"
+                                >
+                                  <CreditCard size={14} />
+                                  <span>{retryingOrderId === id ? "Opening..." : "Retry Payment"}</span>
+                                </button>
+                              )}
+
+                              {/* ONLY SHOW INVOICE AFTER ORDER IS DELIVERED */}
+                              {String(ord.orderStatus || ord.status || "").toLowerCase() === "delivered" && (
+                                <button
+                                  type="button"
+                                  className="btn-order-view-invoice"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    setDownloadingOrderId(id);
+                                    try {
+                                      await downloadOrderInvoicePdf(ord);
+                                    } finally {
+                                      setDownloadingOrderId(null);
+                                    }
+                                  }}
+                                  disabled={downloadingOrderId === id}
+                                  title="Direct Download Tax Invoice (PDF)"
+                                >
+                                  <Download size={14} />
+                                  <span>{downloadingOrderId === id ? "Downloading..." : "Invoice"}</span>
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                className="btn-view-order-details"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/orders/${id}`);
+                                }}
+                              >
+                                <span>View Details</span>
+                                <ChevronRight size={15} />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -1152,47 +1309,90 @@ const UserProfile = ({ defaultTab = "profile" }) => {
                 <div className="referral-steps-grid">
                   <div className="referral-step-card">
                     <span className="step-num">1</span>
-                    <h4>Share Link</h4>
-                    <p>Copy your unique link and share via WhatsApp or Socials.</p>
+                    <h4>Share Code</h4>
+                    <p>Share your exclusive referral code with family and friends.</p>
                   </div>
                   <div className="referral-step-card">
                     <span className="step-num">2</span>
                     <h4>Friend Orders</h4>
-                    <p>Your friend registers and orders fresh farm groceries.</p>
+                    <p>Your friend registers with your code and places their first grocery order.</p>
                   </div>
                   <div className="referral-step-card">
                     <span className="step-num">3</span>
                     <h4>You Both Win</h4>
-                    <p>Instant points and discount coupons credited to your wallet!</p>
+                    <p>Instant ₹30 wallet credits + 50 points for you, and welcome bonus for your friend!</p>
                   </div>
                 </div>
 
-                {/* SHARE BOX */}
+                {/* EXCLUSIVE REFERRAL COUPON VOUCHER */}
+                <div className="referral-coupon-voucher-card">
+                  <div className="voucher-left-perk">
+                    <div className="voucher-store-tag">
+                      <Sparkles size={14} /> Official Store Referral Coupon
+                    </div>
+                    <div className="voucher-headline">
+                      Give <strong>₹20 Cash + 100 Pts</strong>
+                    </div>
+                    <div className="voucher-subline">
+                      Get <strong>₹30 Cash + 50 Pts</strong> on friend's first delivered grocery order
+                    </div>
+                    <div className="voucher-note">
+                      ✓ Valid on all fresh organic fruits, vegetables & groceries
+                    </div>
+                  </div>
+
+                  <div className="voucher-divider">
+                    <span className="notch-circle notch-top"></span>
+                    <span className="voucher-dashed-line"></span>
+                    <span className="notch-circle notch-bottom"></span>
+                  </div>
+
+                  <div className="voucher-right-code">
+                    <span className="voucher-code-title">COUPON CODE</span>
+                    <div className="voucher-code-display">
+                      {referralCode || user?.referralCode || "GSREFER"}
+                    </div>
+                    <button
+                      type="button"
+                      className={`btn-voucher-copy ${copiedReferral ? "copied" : ""}`}
+                      onClick={handleCopyReferral}
+                    >
+                      {copiedReferral ? (
+                        <>
+                          <Check size={14} /> <span>Code Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={14} /> <span>Copy Coupon</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* SHAREABLE LINK & SOCIAL ACTIONS */}
                 <div className="referral-share-section">
                   <label className="referral-box-label">
-                    Your Unique Referral Link:
+                    Direct Referral Link (Opens & Auto-applies Coupon):
                   </label>
                   <div className="referral-input-wrapper">
                     <input
                       type="text"
                       readOnly
-                      value={
-                        referralLink ||
-                        `${window.location.origin}/login?ref=${user?._id || "user"}`
-                      }
+                      value={`${window.location.origin}/login?ref=${referralCode || user?.referralCode || ""}`}
                       className="referral-main-input"
                     />
                     <button
                       type="button"
                       className={`btn-referral-copy ${
-                        copiedReferral ? "copied" : ""
+                        copiedReferralLink ? "copied" : ""
                       }`}
-                      onClick={handleCopyReferral}
+                      onClick={handleCopyReferralLink}
                     >
-                      {copiedReferral ? (
+                      {copiedReferralLink ? (
                         <>
                           <Check size={16} />
-                          <span>Copied!</span>
+                          <span>Link Copied!</span>
                         </>
                       ) : (
                         <>
@@ -1210,8 +1410,99 @@ const UserProfile = ({ defaultTab = "profile" }) => {
                       onClick={handleShareWhatsApp}
                     >
                       <MessageCircle size={18} />
-                      <span>Share via WhatsApp</span>
+                      <span>Share Coupon on WhatsApp</span>
                     </button>
+                  </div>
+                </div>
+
+                {/* REFERRAL PERFORMANCE STATS */}
+                <div className="referral-stats-container">
+                  <h3 className="referral-section-heading">Your Referral Activity</h3>
+                  <div className="referral-summary-grid">
+                    <div className="referral-stat-card">
+                      <div className="referral-stat-icon-wrap icon-blue">
+                        <Users size={22} />
+                      </div>
+                      <div className="referral-stat-info">
+                        <span className="referral-stat-num">{referralStats.totalReferrals || 0}</span>
+                        <span className="referral-stat-text">Friends Invited</span>
+                      </div>
+                    </div>
+
+                    <div className="referral-stat-card">
+                      <div className="referral-stat-icon-wrap icon-green">
+                        <CheckCircle2 size={22} />
+                      </div>
+                      <div className="referral-stat-info">
+                        <span className="referral-stat-num">{referralStats.completed || 0}</span>
+                        <span className="referral-stat-text">Successful Purchases</span>
+                      </div>
+                    </div>
+
+                    <div className="referral-stat-card">
+                      <div className="referral-stat-icon-wrap icon-yellow">
+                        <Gift size={22} />
+                      </div>
+                      <div className="referral-stat-info">
+                        <span className="referral-stat-num">₹{referralStats.totalEarned || 0}</span>
+                        <span className="referral-stat-text">Wallet Cash Earned</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* REFERRED FRIENDS LIST */}
+                  <div className="referral-history-box">
+                    <h4 className="referral-history-title">Referred Friends List</h4>
+                    {referralLoading ? (
+                      <p className="referral-empty-text">Loading referral activity...</p>
+                    ) : referralList.length === 0 ? (
+                      <div className="referral-empty-state">
+                        <Gift size={32} className="referral-empty-icon" />
+                        <p>No friends referred yet. Share your code above with friends to start earning rewards!</p>
+                      </div>
+                    ) : (
+                      <div className="referral-friends-list">
+                        {referralList.map((item, idx) => {
+                          const friendName = item.referred
+                            ? `${item.referred.firstName || ""} ${item.referred.lastName || ""}`.trim() || item.referred.email || "Friend"
+                            : "New User";
+                          const dateJoined = item.createdAt
+                            ? new Date(item.createdAt).toLocaleDateString("en-IN", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : "Recent";
+
+                          return (
+                            <div key={item._id || idx} className="referral-friend-row">
+                              <div className="referral-friend-meta">
+                                <div className="referral-friend-avatar">
+                                  {friendName.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                  <strong className="referral-friend-name">{friendName}</strong>
+                                  <span className="referral-friend-date">Joined {dateJoined}</span>
+                                </div>
+                              </div>
+                              <div className="referral-friend-status">
+                                {item.status === "completed" ? (
+                                  <span className="referral-badge completed">
+                                    <CheckCircle2 size={13} />
+                                    <span>Delivered • ₹{item.rewardAmount || 30} Earned</span>
+                                  </span>
+                                ) : (
+                                  <span className="referral-badge pending">
+                                    <Clock size={13} />
+                                    <span>Awaiting 1st Order</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>

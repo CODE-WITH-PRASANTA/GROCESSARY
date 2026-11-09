@@ -7,6 +7,20 @@ const QRCode = require("qrcode");
 const upiConfig = require("../config/upi");
 
 // ======================================================
+// IN-MEMORY ACTIVE UPI SESSIONS MAP
+// ======================================================
+const activeUpiSessions = new Map();
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, session] of activeUpiSessions.entries()) {
+    if (now - session.createdAt > 15 * 60 * 1000) {
+      activeUpiSessions.delete(id);
+    }
+  }
+}, 60 * 1000);
+
+// ======================================================
 // HELPERS
 // ======================================================
 const generateInvoiceNumber = () => {
@@ -37,6 +51,7 @@ exports.createBill = async (req, res) => {
       amountReceived = 0,
       upiTransactionId = "",
       upiStatus = "none",
+      sessionId = "",
     } = req.body || {};
 
     // --- validation ---
@@ -201,12 +216,28 @@ exports.createBill = async (req, res) => {
       status: "completed",
     });
 
-    // --- decrement stock ---
+    // Clean up active UPI session if present
+    if (sessionId && activeUpiSessions.has(sessionId)) {
+      activeUpiSessions.delete(sessionId);
+    }
     await Promise.all(
       billItems.map((it) =>
-        Product.findByIdAndUpdate(it.product, {
-          $inc: { stockQuantity: -it.quantity },
-        }).catch(() => null)
+        Product.findOneAndUpdate(
+          { _id: it.product },
+          [
+            {
+              $set: {
+                stockQuantity: {
+                  $max: [0, { $subtract: ["$stockQuantity", Number(it.quantity)] }],
+                },
+                isOutOfStock: {
+                  $lte: [{ $subtract: ["$stockQuantity", Number(it.quantity)] }, 0],
+                },
+              },
+            },
+          ],
+          { updatePipeline: true, returnDocument: "after" }
+        ).catch(() => null)
       )
     );
 
@@ -366,6 +397,8 @@ exports.initUpiPayment = async (req, res) => {
       });
     }
 
+    const sessionId = `upi_sess_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`;
+    const upiTransactionId = `UPI-${Date.now().toString().slice(-6)}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
     const vpa = upiConfig.MERCHANT_VPA;
     const name = upiConfig.MERCHANT_NAME;
     const note = invoiceNumber
@@ -373,12 +406,12 @@ exports.initUpiPayment = async (req, res) => {
       : `Bill payment`;
 
     // Build the UPI deep link per NPCI spec
-    // Format: upi://pay?pa=<vpa>&pn=<name>&am=<amount>&cu=INR&tn=<note>
+    // Format: upi://pay?pa=<vpa>&pn=<name>&am=<amount>&cu=INR&tn=<note>&tr=<txnId>
     const upiLink = `upi://pay?pa=${encodeURIComponent(
       vpa
     )}&pn=${encodeURIComponent(name)}&am=${amt.toFixed(2)}&cu=INR&tn=${encodeURIComponent(
       note
-    )}`;
+    )}&tr=${encodeURIComponent(upiTransactionId)}`;
 
     // Generate QR code — High-resolution Data URL (Instant & Offline) with fallback
     let qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(
@@ -390,16 +423,25 @@ exports.initUpiPayment = async (req, res) => {
       console.warn("Local QR generation failed, fallback to remote API:", qrErr.message);
     }
 
+    const sessionData = {
+      sessionId,
+      upiTransactionId,
+      upiLink,
+      qrUrl,
+      vpa,
+      merchantName: name,
+      amount: amt,
+      currency: "INR",
+      status: "pending", // "pending" | "completed" | "failed"
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 5 * 60 * 1000,
+    };
+
+    activeUpiSessions.set(sessionId, sessionData);
+
     return res.json({
       success: true,
-      data: {
-        upiLink,
-        qrUrl,
-        vpa,
-        merchantName: name,
-        amount: amt,
-        currency: "INR",
-      },
+      data: sessionData,
     });
   } catch (err) {
     console.error("initUpiPayment error:", err);
@@ -408,6 +450,64 @@ exports.initUpiPayment = async (req, res) => {
       message: "Failed to generate UPI payment link.",
     });
   }
+};
+
+// ======================================================
+// GET /api/bills/upi-status/:sessionId
+// Check status of a UPI session
+// ======================================================
+exports.getUpiStatus = (req, res) => {
+  const { sessionId } = req.params;
+  const session = activeUpiSessions.get(sessionId);
+
+  if (!session) {
+    return res.json({
+      success: true,
+      status: "unknown",
+      message: "Session not found or expired.",
+    });
+  }
+
+  // Check if session has expired
+  if (session.status === "pending" && Date.now() > session.expiresAt) {
+    session.status = "failed";
+    session.failureReason = "Payment session expired (5-minute timeout).";
+  }
+
+  return res.json({
+    success: true,
+    status: session.status,
+    failureReason: session.failureReason || "",
+    upiTransactionId: session.upiTransactionId,
+    amount: session.amount,
+  });
+};
+
+// ======================================================
+// POST /api/bills/upi-status
+// Update status of a UPI session (completed or failed)
+// ======================================================
+exports.updateUpiStatus = (req, res) => {
+  const { sessionId, status, upiTransactionId, failureReason } = req.body || {};
+  const session = activeUpiSessions.get(sessionId);
+
+  if (!session) {
+    return res.status(404).json({
+      success: false,
+      message: "Payment session not found.",
+    });
+  }
+
+  if (["completed", "failed", "pending"].includes(status)) {
+    session.status = status;
+    if (upiTransactionId) session.upiTransactionId = String(upiTransactionId);
+    if (failureReason) session.failureReason = String(failureReason);
+  }
+
+  return res.json({
+    success: true,
+    data: session,
+  });
 };
 
 exports.getUpiConfig = (req, res) => {

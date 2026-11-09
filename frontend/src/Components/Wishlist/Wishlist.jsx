@@ -193,16 +193,6 @@ const Wishlist = () => {
           prev.filter((item) => String(item.id || item.productId) !== pid)
         );
       }
-
-      Swal.fire({
-        icon: "success",
-        title: shouldRemoveFromWishlist ? "Moved to Cart" : "Added to Cart",
-        text: product.name,
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 1500,
-      });
     } catch (error) {
       console.error("Add to cart error:", error);
       Swal.fire({

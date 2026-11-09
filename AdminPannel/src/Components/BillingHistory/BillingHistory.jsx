@@ -28,6 +28,8 @@ import {
 
 import Swal from "sweetalert2";
 import API, { BASE_URL } from "../../api/axios";
+import { downloadOrderInvoicePdf } from "../../Utils/directInvoiceDownloader";
+import InvoiceModal from "../InvoiceModal/InvoiceModal";
 import "./BillingHistory.css";
 
 // =========================================================
@@ -77,8 +79,6 @@ const normalizeBills = (data) => {
 // COMPONENT
 // =========================================================
 const BillingHistory = () => {
-  const [detailsOpen, setDetailsOpen] = useState(true);
-
   const [activeTab, setActiveTab] = useState("All Bills");
 
   const [search, setSearch] = useState("");
@@ -87,11 +87,12 @@ const BillingHistory = () => {
   const [paymentMethod, setPaymentMethod] = useState("All");
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedBill, setSelectedBill] = useState(null);
+  const [previewInvoiceBill, setPreviewInvoiceBill] = useState(null);
 
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [downloadingBillId, setDownloadingBillId] = useState(null);
 
   const billsPerPage = 8;
 
@@ -114,44 +115,61 @@ const BillingHistory = () => {
       // Normalize into UI-friendly shape
       const formatted = list.map((b) => {
         const { date, time } = formatDateTime(b.createdAt);
-        const firstItem = b.items?.[0] || {};
+        const count = Array.isArray(b.items) ? b.items.length : 0;
 
         return {
+          ...b,
+          rawBill: b,
           id: b._id,
+          _id: b._id,
           invoice: b.invoiceNumber,
+          invoiceNumber: b.invoiceNumber,
           date,
           time,
           createdAt: b.createdAt,
-          items: Array.isArray(b.items) ? b.items.length : 0,
+          itemsCount: count,
+          items: (b.items || []).map((it) => ({
+            ...it,
+            productName: it.productName || it.name || "Product",
+            name: it.productName || it.name || "Product",
+            unit: it.unit || "",
+            price: Number(it.price || 0),
+            quantity: Number(it.quantity || it.qty || 1),
+            qty: Number(it.quantity || it.qty || 1),
+            total: Number(it.itemTotal || it.total || Number(it.price || 0) * Number(it.quantity || it.qty || 1)),
+            itemTotal: Number(it.itemTotal || it.total || Number(it.price || 0) * Number(it.quantity || it.qty || 1)),
+            image: resolveImage(it.image),
+          })),
           total: Number(b.totalAmount || 0),
+          totalAmount: Number(b.totalAmount || 0),
           subtotal: Number(b.subtotal || 0),
           discount: Number(b.discountAmount || 0),
+          discountAmount: Number(b.discountAmount || 0),
           totalSavings: Number(b.totalSavings || 0),
           payment: b.paymentMethod || "Cash",
-          customer: b.customer?.name || "Walk-in",
+          paymentMethod: b.paymentMethod || "Cash",
+          customer: b.customer?.name || (typeof b.customer === "string" ? b.customer : "Walk-in"),
           contact: b.customer?.mobile || "-",
           address: "-",
           cashier: b.cashier?.name || b.cashier?.email || "",
           upiTransactionId: b.upiTransactionId || "",
-          amountReceived: Number(b.amountReceived || 0),
+          amountReceived: Number(b.amountReceived || b.totalAmount || 0),
           changeReturned: Number(b.changeReturned || 0),
           products: (b.items || []).map((it) => ({
-            name: it.productName || "Product",
+            name: it.productName || it.name || "Product",
+            productName: it.productName || it.name || "Product",
             variant: it.unit ? `(${it.unit})` : "",
+            unit: it.unit || "",
             price: Number(it.price || 0),
-            qty: Number(it.quantity || 1),
+            qty: Number(it.quantity || it.qty || 1),
+            quantity: Number(it.quantity || it.qty || 1),
+            total: Number(it.itemTotal || it.total || Number(it.price || 0) * Number(it.quantity || it.qty || 1)),
             image: resolveImage(it.image),
           })),
         };
       });
 
       setBills(formatted);
-
-      // Keep selection if it still exists
-      if (selectedBill) {
-        const stillThere = formatted.find((x) => x.id === selectedBill.id);
-        setSelectedBill(stillThere || null);
-      }
     } catch (err) {
       console.error("Fetch bills error:", err);
       setError(err.response?.data?.message || "Failed to load bills.");
@@ -220,8 +238,6 @@ const BillingHistory = () => {
     currentPage * billsPerPage,
   );
 
-  const activeBill = selectedBill || filteredBills[0] || bills[0] || null;
-
   // =========================================================
   // STATS
   // =========================================================
@@ -233,7 +249,12 @@ const BillingHistory = () => {
     );
     const avgValue = totalBills > 0 ? totalSales / totalBills : 0;
     const totalItems = filteredBills.reduce(
-      (sum, b) => sum + Number(b.items || 0),
+      (sum, b) =>
+        sum +
+        Number(
+          b.itemsCount ??
+            (Array.isArray(b.items) ? b.items.length : b.items || 0),
+        ),
       0,
     );
     return { totalBills, totalSales, avgValue, totalItems };
@@ -243,8 +264,7 @@ const BillingHistory = () => {
   // ACTIONS
   // =========================================================
   const handleViewBill = (bill) => {
-    setSelectedBill(bill);
-    setDetailsOpen(true);
+    setPreviewInvoiceBill(bill);
   };
 
   const handleDelete = async (id) => {
@@ -279,7 +299,6 @@ const BillingHistory = () => {
 
       // Remove from local state
       setBills((prev) => prev.filter((b) => b.id !== id));
-      if (selectedBill?.id === id) setSelectedBill(null);
       fetchBills();
       Swal.fire({
         icon: "success",
@@ -308,163 +327,14 @@ const BillingHistory = () => {
     fetchBills();
   };
 
-  const handlePrint = () => {
-    if (!activeBill) return;
-
-    const itemsHtml = (activeBill.products || [])
-      .map(
-        (p, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${p.name}<br/><small>${p.variant || ""}</small></td>
-          <td>₹${p.price}</td>
-          <td>${p.qty}</td>
-          <td>₹${p.price * p.qty}</td>
-        </tr>`,
-      )
-      .join("");
-
-    const cashLines =
-      activeBill.payment === "Cash"
-        ? `
-        <div class="row"><span>Amount Received</span><strong>₹${activeBill.amountReceived}</strong></div>
-        <div class="row"><span>Change</span><strong>₹${activeBill.changeReturned}</strong></div>`
-        : "";
-
-    const upiLine =
-      activeBill.payment === "UPI" && activeBill.upiTransactionId
-        ? `<div class="details"><span>UPI Txn: ${activeBill.upiTransactionId}</span></div>`
-        : "";
-
-    const w = window.open("", "_blank", "width=450,height=750");
-    if (!w) {
-      Swal.fire({
-        icon: "error",
-        title: "Print blocked",
-        text: "Please allow popups.",
-        confirmButtonColor: "#0aad4b",
-      });
-      return;
+  const handleDirectDownloadInvoice = async (bill) => {
+    if (!bill) return;
+    setDownloadingBillId(bill.id || bill._id || "active");
+    try {
+      await downloadOrderInvoicePdf(bill);
+    } finally {
+      setDownloadingBillId(null);
     }
-
-    w.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${activeBill.invoice}</title>
-        <style>
-          * { box-sizing: border-box; }
-          body { margin: 0; padding: 25px; font-family: Arial, sans-serif; }
-          .receipt { max-width: 430px; margin: auto; }
-          .logo { text-align: center; color: #078c3e; font-size: 27px; font-weight: 800; }
-          .tagline { text-align: center; font-size: 13px; color: #475569; margin-bottom: 20px; }
-          .details { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; }
-          table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 12px; }
-          th { background: #f1f5f9; text-align: left; }
-          th, td { padding: 8px 5px; border-bottom: 1px solid #e5e7eb; }
-          .grand { margin-top: 8px; padding: 12px; background: #eaffed; border-radius: 8px; color: #087b38; font-weight: 800; font-size: 18px; }
-          .row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; }
-        </style>
-      </head>
-      <body>
-        <div class="receipt">
-          <div class="logo">Grocery Sati</div>
-          <div class="tagline">Fresh Grocery, Better Living!</div>
-
-          <div class="details">
-            <span>Invoice: ${activeBill.invoice}</span>
-            <span>Date: ${activeBill.date}</span>
-          </div>
-
-          <div class="details">
-            <span>Customer: ${activeBill.customer}</span>
-            <span>Mobile: ${activeBill.contact}</span>
-          </div>
-
-          <div class="details">
-            <span>Payment: ${activeBill.payment}</span>
-          </div>
-
-          ${upiLine}
-
-          <table>
-            <thead>
-              <tr><th>#</th><th>Item</th><th>Price</th><th>Qty</th><th>Total</th></tr>
-            </thead>
-            <tbody>${itemsHtml}</tbody>
-          </table>
-
-          <div style="margin-top:18px">
-            <div class="row"><span>Subtotal</span><strong>₹${activeBill.subtotal}</strong></div>
-            <div class="row"><span>Discount</span><strong>₹${activeBill.discount}</strong></div>
-            <div class="grand">
-              <div class="row"><span>Total Amount</span><span>₹${activeBill.total}</span></div>
-            </div>
-            ${cashLines}
-          </div>
-
-          <div style="text-align:center;margin-top:25px;font-size:13px;color:#475569">
-            Thank you for shopping with us!
-          </div>
-        </div>
-        <script>
-          window.onload = function() {
-            window.print();
-            window.onafterprint = function() { window.close(); };
-          };
-        </script>
-      </body>
-      </html>
-    `);
-    w.document.close();
-  };
-
-  const handleDownload = () => {
-    if (!activeBill) return;
-    const invoice = activeBill.invoice || "invoice";
-
-    const itemLines = (activeBill.products || [])
-      .map(
-        (p, i) =>
-          `${String(i + 1).padEnd(3)} ${p.name.padEnd(25)} ${
-            p.qty
-          }   ₹${p.price * p.qty}`,
-      )
-      .join("\n");
-
-    const content = `
-GROCERY SATI
-Offline Billing Software
-
-Invoice No: ${invoice}
-Date: ${activeBill.date}
-Time: ${activeBill.time}
-
-Customer: ${activeBill.customer}
-Mobile: ${activeBill.contact}
-Payment: ${activeBill.payment}
-
-----------------------------------------
-#   ITEM                    QTY    TOTAL
-----------------------------------------
-${itemLines}
-----------------------------------------
-
-Subtotal: ₹${activeBill.subtotal}
-Discount: ₹${activeBill.discount}
-
-TOTAL: ₹${activeBill.total}
-
-Thank you for shopping with us!
-`;
-
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${invoice}.txt`;
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   const getPaymentIcon = (payment) => {
@@ -707,14 +577,7 @@ Thank you for shopping with us!
                   <tbody>
                     {paginatedBills.length > 0 ? (
                       paginatedBills.map((bill, index) => (
-                        <tr
-                          key={bill.id}
-                          className={
-                            activeBill?.id === bill.id
-                              ? "BillingHistory-selectedRow"
-                              : ""
-                          }
-                        >
+                        <tr key={bill.id}>
                           <td>
                             {(currentPage - 1) * billsPerPage + index + 1}
                           </td>
@@ -732,7 +595,12 @@ Thank you for shopping with us!
                             </span>
                           </td>
 
-                          <td>{bill.items}</td>
+                          <td>
+                            {bill.itemsCount ??
+                              (Array.isArray(bill.items)
+                                ? bill.items.length
+                                : 0)}
+                          </td>
 
                           <td>
                             <strong className="BillingHistory-totalCell">
@@ -754,22 +622,20 @@ Thank you for shopping with us!
                           <td>
                             <div className="BillingHistory-actionButtons">
                               <button
-                                title="View"
-                                onClick={() => handleViewBill(bill)}
+                                title="View Tax Invoice"
+                                onClick={() => setPreviewInvoiceBill(bill)}
                                 className="BillingHistory-viewAction"
                               >
                                 <Eye size={17} />
                               </button>
 
                               <button
-                                title="Print"
-                                onClick={() => {
-                                  setSelectedBill(bill);
-                                  setTimeout(handlePrint, 50);
-                                }}
+                                title="Download Invoice PDF"
+                                onClick={() => handleDirectDownloadInvoice(bill)}
                                 className="BillingHistory-printAction"
+                                disabled={downloadingBillId === bill.id}
                               >
-                                <Printer size={17} />
+                                <Download size={17} />
                               </button>
 
                               <button
@@ -856,151 +722,14 @@ Thank you for shopping with us!
             </div>
           </section>
         </main>
-
-        {/* DETAILS PANEL */}
-        {detailsOpen && activeBill && (
-          <aside className="BillingHistory-detailsPanel">
-            <div className="BillingHistory-detailsHeader">
-              <div>
-                <FileText size={23} />
-                <h3>Bill Details</h3>
-              </div>
-              <button
-                onClick={() => setDetailsOpen(false)}
-                className="BillingHistory-closeDetails"
-              >
-                <X size={22} />
-              </button>
-            </div>
-
-            <div className="BillingHistory-detailsContent">
-              <div className="BillingHistory-invoiceBanner">
-                <div className="BillingHistory-invoiceCart">
-                  <ShoppingCart size={36} />
-                </div>
-                <div>
-                  <strong>Invoice #{activeBill.invoice}</strong>
-                  <span>
-                    {activeBill.date} &nbsp;•&nbsp; {activeBill.time}
-                  </span>
-                </div>
-              </div>
-
-              <div className="BillingHistory-customerSection">
-                <div className="BillingHistory-sectionTitle">
-                  <UserRound size={20} />
-                  <strong>Customer Details</strong>
-                </div>
-
-                <div className="BillingHistory-customerRows">
-                  <div>
-                    <span>Name</span>
-                    <b>:</b>
-                    <strong>{activeBill.customer}</strong>
-                  </div>
-                  <div>
-                    <span>Contact</span>
-                    <b>:</b>
-                    <strong>{activeBill.contact}</strong>
-                  </div>
-                  <div>
-                    <span>Cashier</span>
-                    <b>:</b>
-                    <strong>{activeBill.cashier || "-"}</strong>
-                  </div>
-                </div>
-              </div>
-
-              <div className="BillingHistory-itemsSection">
-                <div className="BillingHistory-sectionTitle">
-                  <ShoppingCart size={20} />
-                  <strong>Items ({activeBill.products?.length || 0})</strong>
-                </div>
-
-                <div className="BillingHistory-itemTable">
-                  <div className="BillingHistory-itemHeader">
-                    <span>#</span>
-                    <span>Item Name</span>
-                    <span>Price</span>
-                    <span>Qty</span>
-                    <span>Total</span>
-                  </div>
-
-                  {(activeBill.products || []).map((product, index) => (
-                    <div
-                      className="BillingHistory-itemRow"
-                      key={`${product.name}-${index}`}
-                    >
-                      <span>{index + 1}</span>
-
-                      <div className="BillingHistory-productInfo">
-                        {product.image ? (
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        ) : null}
-                        <span>
-                          {product.name}
-                          <small>{product.variant}</small>
-                        </span>
-                      </div>
-
-                      <span>₹ {product.price}</span>
-                      <span>{product.qty}</span>
-                      <strong>₹ {product.price * product.qty}</strong>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="BillingHistory-totalSection">
-                <div>
-                  <span>Subtotal</span>
-                  <strong>₹ {activeBill.subtotal}</strong>
-                </div>
-                <div>
-                  <span>Discount</span>
-                  <strong>₹ {activeBill.discount}</strong>
-                </div>
-                <div className="BillingHistory-grandTotal">
-                  <span>Total Amount</span>
-                  <strong>₹ {activeBill.total}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div className="BillingHistory-detailsActions">
-              <button
-                className="BillingHistory-printBill"
-                onClick={handlePrint}
-              >
-                <Printer size={19} />
-                Print Bill
-              </button>
-
-              <button
-                className="BillingHistory-downloadBill"
-                onClick={handleDownload}
-              >
-                <Download size={19} />
-                Download
-              </button>
-
-              <button
-                className="BillingHistory-deleteBill"
-                onClick={() => handleDelete(activeBill.id)}
-              >
-                <Trash2 size={19} />
-                Delete
-              </button>
-            </div>
-          </aside>
-        )}
       </div>
+
+      {/* INVOICE MODAL PREVIEW */}
+      <InvoiceModal
+        order={previewInvoiceBill}
+        isOpen={Boolean(previewInvoiceBill)}
+        onClose={() => setPreviewInvoiceBill(null)}
+      />
     </div>
   );
 };

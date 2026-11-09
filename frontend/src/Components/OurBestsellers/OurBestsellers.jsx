@@ -787,7 +787,11 @@ export const OurBestsellers = () => {
 
   useEffect(() => {
     const syncWishlist = (event) => {
-      const { productId, isWishlisted } = event.detail || {};
+      if (event?.detail?.cleared || (event?.detail?.count === 0 && !event?.detail?.productId)) {
+        setWishlistIds(new Set());
+        return;
+      }
+      const { productId, isWishlisted } = event?.detail || {};
       if (!productId) return;
 
       setWishlistIds((previous) => {
@@ -798,8 +802,18 @@ export const OurBestsellers = () => {
       });
     };
 
+    const handleAuth = () => {
+      if (!localStorage.getItem("token")) {
+        setWishlistIds(new Set());
+      }
+    };
+
     window.addEventListener("wishlistUpdated", syncWishlist);
-    return () => window.removeEventListener("wishlistUpdated", syncWishlist);
+    window.addEventListener("authChanged", handleAuth);
+    return () => {
+      window.removeEventListener("wishlistUpdated", syncWishlist);
+      window.removeEventListener("authChanged", handleAuth);
+    };
   }, []);
 
   useEffect(() => {
@@ -1719,28 +1733,17 @@ export const OurBestsellers = () => {
 
         
 
-        setCartMessage(
-          `${getProductName(
-            item
-          )} added to cart`
-        );
-
         window.dispatchEvent(
           new CustomEvent(
             "cartUpdated",
             {
               detail: {
                 productId,
-
                 quantity: qty,
               },
             }
           )
         );
-
-        setTimeout(() => {
-          setCartMessage("");
-        }, 2500);
 
         return;
       }
@@ -1753,16 +1756,6 @@ export const OurBestsellers = () => {
         item,
         qty
       );
-
-      setCartMessage(
-        `${getProductName(
-          item
-        )} added to cart`
-      );
-
-      setTimeout(() => {
-        setCartMessage("");
-      }, 2500);
     } catch (error) {
       console.error(
         "Add to cart error:",
@@ -2208,23 +2201,6 @@ export const OurBestsellers = () => {
             No products found in this category.
           </div>
         )}
-
-      {/* =====================================================
-          CART SUCCESS MESSAGE
-      ===================================================== */}
-
-      {cartMessage && (
-        <div
-          className="OurBestsellers-cart-toast"
-          role="status"
-        >
-          <FaShoppingBag />
-
-          <span>
-            {cartMessage}
-          </span>
-        </div>
-      )}
 
       {/* =====================================================
           QUICK VIEW MODAL

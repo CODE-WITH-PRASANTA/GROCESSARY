@@ -122,6 +122,7 @@ const orderSchema = new mongoose.Schema(
     },
     returnReason: { type: String, default: "" },
     returnNote: { type: String, default: "" },
+    returnPhotos: { type: [String], default: [] },
     returnRequestedAt: { type: Date, default: null },
     returnResolvedAt: { type: Date, default: null },
     returnAssignedTo: {
@@ -180,6 +181,10 @@ const orderSchema = new mongoose.Schema(
 
     // Idempotency — prevents double-processing a webhook
     processedPaymentIds: { type: [String], default: [] },
+
+    // Stock reservation tracking (prevents double-decrement & enables accurate restoration)
+    isStockDecremented: { type: Boolean, default: false },
+    isStockRestored: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

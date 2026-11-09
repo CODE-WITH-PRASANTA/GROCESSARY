@@ -694,7 +694,7 @@ exports.updateCategoryStatus =
           },
 
           {
-            new: true,
+            returnDocument: "after",
             runValidators: true,
           }
 

@@ -19,6 +19,7 @@ import {
   BadgePercent,
   FileText,
   Ticket,
+  Gift,
 } from "lucide-react";
 
 import "./Sidebar.css";
@@ -138,6 +139,11 @@ const menuSections = [
         label: "Reviews",
         path: "/customers/reviews",
         icon: Star,
+      },
+      {
+        label: "Referrals & Rewards",
+        path: "/customers/referrals",
+        icon: Gift,
       },
     ],
   },

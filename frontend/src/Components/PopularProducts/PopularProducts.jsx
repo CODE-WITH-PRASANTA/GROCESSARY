@@ -1,17 +1,17 @@
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import {
   ShoppingCart,
-  Plus,
-  Minus,
-  X,
   ChevronLeft,
   ChevronRight,
   ArrowUp,
   Heart,
   AlertCircle,
+  Plus,
+  Minus,
 } from "lucide-react";
 
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 import API, { BASE_URL } from "../../api/axios";
 import "./PopularProducts.css";
 
@@ -84,6 +84,7 @@ const getUnitSymbol = (unitValue, unitList) => {
 // COMPONENT
 // =========================================================
 const PopularProducts = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [units, setUnits] = useState([]);
@@ -95,9 +96,8 @@ const PopularProducts = () => {
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [quantity, setQuantity] = useState(1);
   const [cartCount, setCartCount] = useState(0);
+  const [cartQuantities, setCartQuantities] = useState({});
 
   const categoriesRef = useRef(null);
 
@@ -181,7 +181,7 @@ const PopularProducts = () => {
   };
 
   // =========================================================
-  // CART BADGE
+  // CART BADGE & QUANTITIES MAP
   // =========================================================
   const refreshCartCount = useCallback(async () => {
     if (isLoggedIn()) {
@@ -198,12 +198,39 @@ const PopularProducts = () => {
           0
         );
         setCartCount(count);
+
+        const qMap = {};
+        items.forEach((item) => {
+          const pid = String(
+            item.productId?._id ||
+              item.productId?.id ||
+              item.productId ||
+              item.product?._id ||
+              item.product?.id ||
+              item.product ||
+              item.id ||
+              ""
+          );
+          if (pid) {
+            qMap[pid] = Number(item.quantity || 0);
+          }
+        });
+        setCartQuantities(qMap);
       } catch {
         setCartCount(0);
+        setCartQuantities({});
       }
     } else {
       const cart = getGuestCart();
       setCartCount(cart.reduce((sum, i) => sum + Number(i.quantity || 0), 0));
+      const qMap = {};
+      cart.forEach((item) => {
+        const pid = String(item.productId || item.id || "");
+        if (pid) {
+          qMap[pid] = Number(item.quantity || 0);
+        }
+      });
+      setCartQuantities(qMap);
     }
   }, []);
 
@@ -214,20 +241,66 @@ const PopularProducts = () => {
     return () => window.removeEventListener("cartUpdated", handler);
   }, [refreshCartCount]);
 
-  // Lock body scroll and handle ESC key when modal is open
   useEffect(() => {
-    if (selectedProduct) {
-      document.body.style.overflow = "hidden";
-      const handleKeyDown = (e) => {
-        if (e.key === "Escape") closeProductDetails();
-      };
-      window.addEventListener("keydown", handleKeyDown);
-      return () => {
-        document.body.style.overflow = "";
-        window.removeEventListener("keydown", handleKeyDown);
-      };
+    const handleWishlistUpdated = (event) => {
+      if (event?.detail?.cleared || (event?.detail?.count === 0 && !event?.detail?.productId)) {
+        setWishlistIds(new Set());
+        return;
+      }
+      const { productId, isWishlisted } = event?.detail || {};
+      if (productId) {
+        setWishlistIds((prev) => {
+          const next = new Set(prev);
+          if (isWishlisted) next.add(String(productId));
+          else next.delete(String(productId));
+          return next;
+        });
+      }
+    };
+
+    const handleAuth = () => {
+      refreshCartCount();
+      if (!localStorage.getItem("token")) {
+        setWishlistIds(new Set());
+      }
+    };
+
+    window.addEventListener("wishlistUpdated", handleWishlistUpdated);
+    window.addEventListener("authChanged", handleAuth);
+    return () => {
+      window.removeEventListener("wishlistUpdated", handleWishlistUpdated);
+      window.removeEventListener("authChanged", handleAuth);
+    };
+  }, [refreshCartCount]);
+
+  // Sync category selection triggered from Navbar or URL
+  useEffect(() => {
+    const handleSelectCategory = (e) => {
+      const catName = e.detail;
+      if (catName) {
+        setActiveCategory(catName);
+        setCurrentPage(1);
+        const section = document.querySelector(".popular-products");
+        if (section) {
+          section.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    };
+
+    window.addEventListener("selectCategory", handleSelectCategory);
+
+    // Initial check from URL query param
+    const searchParams = new URLSearchParams(window.location.search);
+    const catParam = searchParams.get("category");
+    if (catParam) {
+      setActiveCategory(catParam);
+      setCurrentPage(1);
     }
-  }, [selectedProduct]);
+
+    return () => {
+      window.removeEventListener("selectCategory", handleSelectCategory);
+    };
+  }, []);
 
   // =========================================================
   // FETCH EVERYTHING
@@ -506,13 +579,16 @@ const PopularProducts = () => {
 
     try {
       setAddingId(productId);
+      setCartQuantities((prev) => ({
+        ...prev,
+        [productId]: (prev[productId] || 0) + qty,
+      }));
 
       if (isLoggedIn()) {
         await API.post("/cart/add", {
           productId,
           quantity: qty,
         });
-        window.dispatchEvent(new Event("cartUpdated"));
       } else {
         const guestCart = getGuestCart();
         const existing = guestCart.find(
@@ -537,25 +613,101 @@ const PopularProducts = () => {
         saveGuestCart(guestCart);
       }
 
+      window.dispatchEvent(new Event("cartUpdated"));
       await refreshCartCount();
-
-      Swal.fire({
-        icon: "success",
-        title: "Added to cart",
-        text: `${product.name} × ${qty}`,
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 1200,
-      });
+      // Right-side notification completely removed as requested
     } catch (err) {
       console.error("Add to cart error:", err);
+      await refreshCartCount();
       Swal.fire({
         icon: "error",
         title: "Could not add to cart",
         text: err.response?.data?.message || err.message || "Please try again.",
         confirmButtonColor: "#0aad4b",
       });
+    } finally {
+      setAddingId(null);
+    }
+  };
+
+  // =========================================================
+  // UPDATE CART QUANTITY (INCREMENT / DECREMENT)
+  // =========================================================
+  const updateCartQuantity = async (product, newQty) => {
+    const productId = getProductId(product);
+    if (!productId) return;
+
+    try {
+      setAddingId(productId);
+
+      if (newQty <= 0) {
+        // Optimistic remove
+        setCartQuantities((prev) => {
+          const next = { ...prev };
+          delete next[productId];
+          return next;
+        });
+
+        if (isLoggedIn()) {
+          await API.delete(`/cart/remove/${productId}`);
+        } else {
+          const guestCart = getGuestCart().filter(
+            (i) => String(i.productId || i.id) !== productId
+          );
+          saveGuestCart(guestCart);
+        }
+      } else {
+        const maxStock = Number(product.stockQuantity || 9999);
+        if (newQty > maxStock) {
+          Swal.fire({
+            icon: "warning",
+            title: "Stock Limit",
+            text: `Only ${maxStock} items available in stock.`,
+            confirmButtonColor: "#0aad4b",
+          });
+          return;
+        }
+
+        // Optimistic update
+        setCartQuantities((prev) => ({
+          ...prev,
+          [productId]: newQty,
+        }));
+
+        if (isLoggedIn()) {
+          await API.put(`/cart/update/${productId}`, {
+            quantity: newQty,
+          });
+        } else {
+          const guestCart = getGuestCart();
+          const existing = guestCart.find(
+            (i) => String(i.productId || i.id) === productId
+          );
+          if (existing) {
+            existing.quantity = newQty;
+          } else {
+            guestCart.push({
+              id: productId,
+              productId,
+              name: product.name,
+              price: product.price,
+              oldPrice: product.oldPrice,
+              image: product.image,
+              unit: product.unit,
+              stockQuantity: product.stockQuantity,
+              quantity: newQty,
+            });
+          }
+          saveGuestCart(guestCart);
+        }
+      }
+
+      window.dispatchEvent(new Event("cartUpdated"));
+      await refreshCartCount();
+      // Right-side notification completely removed as requested
+    } catch (err) {
+      console.error("Update cart error:", err);
+      await refreshCartCount();
     } finally {
       setAddingId(null);
     }
@@ -635,27 +787,24 @@ const PopularProducts = () => {
   };
 
   // =========================================================
-  // MODAL HANDLERS
+  // PRODUCT DETAILS NAVIGATION (DIRECT PAGE REDIRECT)
   // =========================================================
   const openProductDetails = (product) => {
-    setSelectedProduct(product);
-    setQuantity(1);
-  };
+    if (!product) return;
 
-  const closeProductDetails = () => {
-    setSelectedProduct(null);
-    setQuantity(1);
-  };
+    // Build URL-friendly product name slug: e.g. "amul-salted-pasteurised-butter"
+    const rawName = product.productName || product.name || "";
+    const cleanSlug =
+      product.slug ||
+      rawName
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-") ||
+      getProductId(product);
 
-  const handleModalAddToCart = async () => {
-    if (!selectedProduct) return;
-    await addToCart(selectedProduct, quantity);
-    closeProductDetails();
-  };
-
-  const handleModalWishlist = async () => {
-    if (!selectedProduct) return;
-    await toggleWishlist(selectedProduct);
+    navigate(`/product/${encodeURIComponent(cleanSlug)}`);
+    window.scrollTo({ top: 0, behavior: "instant" });
   };
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
@@ -871,19 +1020,72 @@ const PopularProducts = () => {
                           )}
                         </div>
 
-                        <button
-                          type="button"
-                          className="popular-products__cart-button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addToCart(product, 1);
-                          }}
-                          disabled={isAdding || product.stockQuantity === 0}
-                          aria-label={`Add ${product.name} to cart`}
-                        >
-                          <ShoppingCart size={16} />
-                          <span>{isAdding ? "Adding…" : "Add To Cart"}</span>
-                        </button>
+                        {/* CART ACTION: FIRST SHOW "ADD TO CART", AFTER SHOW 1,2,3 INCREMENT / DECREMENT */}
+                        {cartQuantities[productId] > 0 ? (
+                          <div
+                            className="popular-products__qty-counter"
+                            onClick={(e) => e.stopPropagation()}
+                            role="group"
+                            aria-label={`Quantity in cart: ${cartQuantities[productId]}`}
+                          >
+                            <button
+                              type="button"
+                              className="popular-products__qty-btn minus"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateCartQuantity(
+                                  product,
+                                  cartQuantities[productId] - 1
+                                );
+                              }}
+                              disabled={isAdding}
+                              aria-label="Decrease quantity"
+                              title="Decrease quantity"
+                            >
+                              <Minus size={13} />
+                            </button>
+
+                            <span className="popular-products__qty-val">
+                              {cartQuantities[productId]}
+                            </span>
+
+                            <button
+                              type="button"
+                              className="popular-products__qty-btn plus"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateCartQuantity(
+                                  product,
+                                  cartQuantities[productId] + 1
+                                );
+                              }}
+                              disabled={
+                                isAdding ||
+                                (product.stockQuantity &&
+                                  cartQuantities[productId] >=
+                                    product.stockQuantity)
+                              }
+                              aria-label="Increase quantity"
+                              title="Increase quantity"
+                            >
+                              <Plus size={13} />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="popular-products__cart-button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCart(product, 1);
+                            }}
+                            disabled={isAdding || product.stockQuantity === 0}
+                            aria-label={`Add ${product.name} to cart`}
+                          >
+                            <ShoppingCart size={16} />
+                            <span>{isAdding ? "Adding…" : "Add To Cart"}</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   </article>
@@ -973,151 +1175,6 @@ const PopularProducts = () => {
       >
         <ArrowUp size={20} />
       </button>
-
-      {/* RESPONSIVE PRODUCT DETAILS MODAL */}
-      {selectedProduct && (
-        <div
-          className="popular-products__modal-overlay"
-          onClick={closeProductDetails}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            className="popular-products__modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="popular-products__modal-close"
-              onClick={closeProductDetails}
-              aria-label="Close dialog"
-            >
-              <X size={20} />
-            </button>
-
-            <div className="popular-products__modal-image">
-              <img src={selectedProduct.image} alt={selectedProduct.name} />
-
-              <button
-                type="button"
-                className={`popular-products__modal-wishlist ${
-                  wishlistIds.has(getProductId(selectedProduct))
-                    ? "popular-products__modal-wishlist--active"
-                    : ""
-                }`}
-                onClick={handleModalWishlist}
-                aria-label="Toggle wishlist"
-              >
-                <Heart
-                  size={20}
-                  fill={
-                    wishlistIds.has(getProductId(selectedProduct))
-                      ? "currentColor"
-                      : "none"
-                  }
-                />
-              </button>
-
-              {selectedProduct.discount > 0 && (
-                <div className="popular-products__modal-discount-tag">
-                  {selectedProduct.discount}% OFF
-                </div>
-              )}
-            </div>
-
-            <div className="popular-products__modal-content">
-              <div className="popular-products__modal-header-meta">
-                <span className="popular-products__modal-category">
-                  {selectedProduct.category}
-                </span>
-
-                <span
-                  className={`popular-products__modal-stock ${
-                    selectedProduct.stockQuantity > 0 ? "in-stock" : "out-of-stock"
-                  }`}
-                >
-                  <span className="popular-products__modal-stock-dot"></span>
-                  {selectedProduct.stockQuantity > 0
-                    ? "In stock"
-                    : "Out of stock"}
-                </span>
-              </div>
-
-              <h3 className="popular-products__modal-title">
-                {selectedProduct.name}
-              </h3>
-
-              {selectedProduct.unit && (
-                <div className="popular-products__modal-unit">
-                  Pack Size: <strong>{selectedProduct.unit}</strong>
-                </div>
-              )}
-
-              <div className="popular-products__modal-price-row">
-                <span className="popular-products__modal-price">
-                  {formatPrice(selectedProduct.price)}
-                </span>
-                {selectedProduct.oldPrice > selectedProduct.price && (
-                  <>
-                    <span className="popular-products__modal-old-price">
-                      {formatPrice(selectedProduct.oldPrice)}
-                    </span>
-                    <span className="popular-products__modal-savings">
-                      Save {formatPrice(selectedProduct.oldPrice - selectedProduct.price)}
-                    </span>
-                  </>
-                )}
-              </div>
-
-              <p className="popular-products__modal-description">
-                {selectedProduct.description}
-              </p>
-
-              <div className="popular-products__modal-actions">
-                {/* ADD TO CART ON LEFT */}
-                <button
-                  type="button"
-                  className="popular-products__modal-cart"
-                  onClick={handleModalAddToCart}
-                  disabled={
-                    addingId === getProductId(selectedProduct) ||
-                    selectedProduct.stockQuantity === 0
-                  }
-                >
-                  <ShoppingCart size={19} className="popular-products__modal-cart-icon" />
-                  <span className="popular-products__modal-cart-label">
-                    {selectedProduct.stockQuantity === 0
-                      ? "Out of Stock"
-                      : addingId === getProductId(selectedProduct)
-                      ? "Adding…"
-                      : "Add To Cart"}
-                  </span>
-                </button>
-
-                {/* COUNTER ON RIGHT */}
-                <div className="popular-products__quantity">
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((v) => Math.max(1, v - 1))}
-                    aria-label="Decrease quantity"
-                    disabled={quantity <= 1}
-                  >
-                    <Minus size={15} />
-                  </button>
-                  <span className="popular-products__quantity-val">{quantity}</span>
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((v) => v + 1)}
-                    aria-label="Increase quantity"
-                  >
-                    <Plus size={15} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 };
