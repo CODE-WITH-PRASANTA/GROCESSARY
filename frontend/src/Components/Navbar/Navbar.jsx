@@ -16,6 +16,10 @@ import {
   Copy,
   Check,
   Sparkles,
+  ArrowRight,
+  ShoppingCart,
+  Eye,
+  Package,
 } from "lucide-react";
 
 import logo from "../../assets/Grocessary Sathi Png.png";
@@ -518,7 +522,7 @@ const Navbar = () => {
     try {
       setLoadingProducts(true);
 
-      const { data: productResult } = await API.get("/products");
+      const { data: productResult } = await API.get("/products?limit=500");
 
       let productList = [];
 
@@ -737,7 +741,7 @@ const Navbar = () => {
     try {
       setLoadingCategories(true);
 
-      const { data: result } = await API.get("/categories");
+      const { data: result } = await API.get("/categories?hasProducts=true");
 
       let categoryList = [];
 
@@ -959,15 +963,114 @@ const Navbar = () => {
   );
 
   // ======================================================
-  // REAL CATEGORIES FROM DATABASE
+  // REAL CATEGORIES FROM DATABASE (ONLY WITH PRODUCTS)
   // ======================================================
 
   const visibleCategories = useMemo(() => {
     return categories.filter((category) => {
       const name = getCategoryName(category);
-      return Boolean(name);
+      if (!name) return false;
+      // Exclude categories without products
+      if (typeof category.productCount === "number") {
+        return category.productCount > 0;
+      }
+      return getProductsByCategory(category).length > 0;
     });
-  }, [categories]);
+  }, [categories, getProductsByCategory]);
+
+  // Flip card mobile/click toggle state
+  const [flippedCards, setFlippedCards] = useState({});
+  const [categorySearchText, setCategorySearchText] = useState("");
+
+  const toggleCardFlip = (productId, event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    setFlippedCards((prev) => ({
+      ...prev,
+      [productId]: !prev[productId],
+    }));
+  };
+
+  // Instant fuzzy filter for categories when there are many
+  const filteredCategories = useMemo(() => {
+    if (!categorySearchText.trim()) return visibleCategories;
+    const query = categorySearchText.trim().toLowerCase();
+    return visibleCategories.filter((cat) => {
+      const name = getCategoryName(cat).toLowerCase();
+      return name.includes(query);
+    });
+  }, [visibleCategories, categorySearchText]);
+
+  // Currently selected category for showcase panel (defaults to 1st visible/filtered)
+  const selectedCategory = useMemo(() => {
+    const list = filteredCategories.length > 0 ? filteredCategories : visibleCategories;
+    if (list.length === 0) return null;
+    if (activeCategory) {
+      const match = list.find(
+        (cat) => getCategoryKey(cat) === activeCategory
+      );
+      if (match) return match;
+    }
+    return list[0];
+  }, [filteredCategories, visibleCategories, activeCategory]);
+
+  const activeCategoryKey = selectedCategory ? getCategoryKey(selectedCategory) : null;
+  const activeCategoryName = selectedCategory ? getCategoryName(selectedCategory) : "";
+
+  const activeCategoryProducts = useMemo(() => {
+    if (!selectedCategory) return [];
+    return getProductsByCategory(selectedCategory);
+  }, [selectedCategory, getProductsByCategory]);
+
+  // Quick Add To Cart from Flip Card
+  const handleAddToCart = async (product, event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const productId = getProductId(product);
+    if (!productId) return;
+
+    try {
+      const token = getToken();
+      if (token) {
+        await API.post("/cart/add", { productId, quantity: 1 });
+      } else {
+        const storedCart = localStorage.getItem("guestCart");
+        let guestCart = [];
+        try {
+          guestCart = storedCart ? JSON.parse(storedCart) : [];
+        } catch {
+          guestCart = [];
+        }
+        if (!Array.isArray(guestCart)) guestCart = [];
+        const existing = guestCart.find(
+          (i) => String(i.productId || i.id || i._id) === String(productId)
+        );
+        if (existing) {
+          existing.quantity = Number(existing.quantity || 0) + 1;
+        } else {
+          guestCart.push({
+            productId,
+            id: productId,
+            name: getProductName(product),
+            price: getProductPrice(product),
+            image: getProductImage(product),
+            quantity: 1,
+            unit: product.unit?.name || product.unit || "",
+            unitNo: product.unitNo || 1,
+          });
+        }
+        localStorage.setItem("guestCart", JSON.stringify(guestCart));
+      }
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
+      fetchCart();
+    } catch (err) {
+      console.error("Error adding to cart from navbar flip card:", err);
+    }
+  };
 
   // ======================================================
   // OPEN PRODUCT DETAILS (SEO-FRIENDLY SLUG OR ID)
@@ -1018,6 +1121,23 @@ const Navbar = () => {
       window.dispatchEvent(
         new CustomEvent("selectCategory", { detail: categoryName })
       );
+    }
+  };
+
+  const handleCategoryItemClick = (category, event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (!category) return;
+    const categoryKey = getCategoryKey(category);
+
+    if (window.innerWidth <= 768) {
+      // On mobile / touch, tapping selects category and updates showcase below
+      setActiveCategory(categoryKey);
+    } else {
+      // On desktop, clicking navigates to category filter
+      handleCategoryClick(category, event);
     }
   };
 
@@ -1106,6 +1226,7 @@ const Navbar = () => {
   const closeCategoryMenu = () => {
     setIsCategoryOpen(false);
     setActiveCategory(null);
+    setCategorySearchText("");
   };
 
   // ======================================================
@@ -1261,10 +1382,14 @@ const Navbar = () => {
               {/* MOBILE */}
               <button
                 type="button"
-                className="navbar-mobile-toggle"
+                className={`navbar-mobile-toggle ${
+                  isMobileMenuOpen ? "navbar-mobile-toggle-active" : ""
+                }`}
                 onClick={() => setIsMobileMenuOpen((previous) => !previous)}
                 aria-expanded={isMobileMenuOpen}
-                aria-label="Toggle navigation menu"
+                aria-label={
+                  isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"
+                }
               >
                 {isMobileMenuOpen ? (
                   <X size={24} aria-hidden="true" />
@@ -1322,196 +1447,354 @@ const Navbar = () => {
                 />
               </button>
 
-              {/* CATEGORY DROPDOWN */}
+              {/* CATEGORY DROPDOWN - MODERN FLIP STYLE SHOWCASE */}
               <div
                 id="category-dropdown-menu"
-                className={`navbar-dropdown-menu ${
+                className={`navbar-dropdown-menu navbar-flip-mega-dropdown ${
                   isCategoryOpen ? "navbar-dropdown-show" : ""
                 }`}
               >
-                <ul className="navbar-dropdown-list">
-                  {loadingCategories ? (
-                    <li className="navbar-dropdown-item">
-                      <div className="navbar-dropdown-item-header">
-                        <span className="navbar-category-title-text">
-                          Loading categories...
-                        </span>
+                {loadingCategories ? (
+                  <div className="navbar-dropdown-loading">
+                    <div className="navbar-flip-spinner"></div>
+                    <span>Loading fresh categories...</span>
+                  </div>
+                ) : visibleCategories.length === 0 ? (
+                  <div className="navbar-dropdown-empty">
+                    <Package size={28} className="navbar-empty-icon" />
+                    <span>No active categories found with products.</span>
+                  </div>
+                ) : (
+                  <div className="navbar-mega-grid">
+                    {/* LEFT COLUMN: CATEGORIES LIST */}
+                    <div className="navbar-categories-sidebar">
+                      <div className="navbar-sidebar-header">
+                        <div className="navbar-sidebar-header-left">
+                          <span>Categories</span>
+                          <span className="navbar-sidebar-badge">
+                            {visibleCategories.length}
+                          </span>
+                        </div>
                       </div>
-                    </li>
-                  ) : visibleCategories.length === 0 ? (
-                    <li className="navbar-dropdown-item">
-                      <div className="navbar-dropdown-item-header">
-                        <span className="navbar-category-title-text">
-                          {loadingProducts
-                            ? "Loading products..."
-                            : "No categories found"}
-                        </span>
-                      </div>
-                    </li>
-                  ) : (
-                    visibleCategories.map((category) => {
-                      const categoryKey = getCategoryKey(category);
-                      const categoryName = getCategoryName(category);
-                      const subCategories = getSubCategories(category);
-                      const categoryProducts = getProductsByCategory(category);
-                      const isSubOpen = activeCategory === categoryKey;
 
-                      return (
-                        <li
-                          key={categoryKey}
-                          className={`navbar-dropdown-item ${
-                            isSubOpen ? "navbar-dropdown-item-active" : ""
-                          }`}
-                          onMouseEnter={() => {
-                            if (window.innerWidth > 768) {
-                              setActiveCategory(categoryKey);
-                            }
-                          }}
-                        >
-                          <div className="navbar-dropdown-item-header">
-                            <button
-                              type="button"
-                              className="navbar-dropdown-title-link"
-                              onClick={(event) =>
-                                handleCategoryClick(category, event)
-                              }
-                            >
-                              <span className="navbar-category-title-text">
-                                {categoryName}
+                      {/* QUICK CATEGORY SEARCH BAR */}
+                      <div className="navbar-cat-search-wrap">
+                        <Search size={13} className="navbar-cat-search-icon" />
+                        <input
+                          type="text"
+                          placeholder="Filter categories..."
+                          value={categorySearchText}
+                          onChange={(e) => setCategorySearchText(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="navbar-cat-search-input"
+                          aria-label="Filter categories"
+                        />
+                        {categorySearchText && (
+                          <button
+                            type="button"
+                            className="navbar-cat-search-clear"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCategorySearchText("");
+                            }}
+                            aria-label="Clear filter"
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
+                      </div>
+
+                      <ul className="navbar-categories-menu-list">
+                        {filteredCategories.length === 0 ? (
+                          <li className="navbar-cat-no-match">
+                            <span>No categories matching "{categorySearchText}"</span>
+                          </li>
+                        ) : (
+                          filteredCategories.map((category) => {
+                            const categoryKey = getCategoryKey(category);
+                            const categoryName = getCategoryName(category);
+                            const isSelected = activeCategoryKey === categoryKey;
+                            const count =
+                              typeof category.productCount === "number"
+                                ? category.productCount
+                                : getProductsByCategory(category).length;
+                            const icon = category.icon || "🛒";
+
+                            return (
+                              <li
+                                key={categoryKey}
+                                className={`navbar-cat-menu-item ${
+                                  isSelected ? "navbar-cat-menu-item-active" : ""
+                                }`}
+                                onMouseEnter={() => {
+                                  if (window.innerWidth > 768) {
+                                    setActiveCategory(categoryKey);
+                                  }
+                                }}
+                                onClick={(e) => handleCategoryItemClick(category, e)}
+                                title={categoryName}
+                              >
+                                <div className="navbar-cat-item-content">
+                                  <span className="navbar-cat-emoji">{icon}</span>
+                                  <span className="navbar-cat-name">
+                                    {categoryName}
+                                  </span>
+                                </div>
+                                <div className="navbar-cat-item-right">
+                                  <span
+                                    className="navbar-cat-count-badge"
+                                    title={`${count} products`}
+                                  >
+                                    {count}
+                                  </span>
+                                  <ChevronRight
+                                    size={13}
+                                    className={`navbar-cat-chevron ${
+                                      isSelected ? "navbar-cat-chevron-active" : ""
+                                    }`}
+                                  />
+                                </div>
+                              </li>
+                            );
+                          })
+                        )}
+                      </ul>
+
+                      {/* SIDEBAR FOOTER */}
+                      <div className="navbar-sidebar-footer">
+                        <span>
+                          {filteredCategories.length} of {visibleCategories.length} active
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* RIGHT COLUMN: INTERACTIVE FLIP SHOWCASE */}
+                    <div className="navbar-showcase-panel">
+                      {selectedCategory && (
+                        <>
+                          <div className="navbar-showcase-header">
+                            <div className="navbar-showcase-title-wrap">
+                              <span className="navbar-showcase-icon">
+                                {selectedCategory.icon || "✨"}
                               </span>
-                            </button>
-
+                              <div>
+                                <h3 className="navbar-showcase-title">
+                                  {activeCategoryName}
+                                </h3>
+                                <p className="navbar-showcase-subtitle">
+                                  {activeCategoryProducts.length}{" "}
+                                  {activeCategoryProducts.length === 1 ? "item" : "items"}{" "}
+                                  available &bull; Hover card to flip &amp; quick-buy
+                                </p>
+                              </div>
+                            </div>
                             <button
                               type="button"
-                              className="navbar-sub-toggle-btn"
-                              onClick={(event) => {
-                                event.preventDefault();
-                                event.stopPropagation();
-                                handleCategoryToggle(categoryKey);
-                              }}
-                              aria-expanded={isSubOpen}
-                              aria-label={`Show ${categoryName} products`}
+                              className="navbar-showcase-viewall-btn"
+                              onClick={(e) => handleCategoryClick(selectedCategory, e)}
                             >
-                              {isSubOpen ? (
-                                <ChevronDown size={16} aria-hidden="true" />
-                              ) : (
-                                <ChevronRight size={16} aria-hidden="true" />
-                              )}
+                              <span>Browse All</span>
+                              <ArrowRight size={14} />
                             </button>
                           </div>
 
-                          <div
-                            className={`navbar-sub-dropdown ${
-                              isSubOpen ? "navbar-sub-dropdown-show" : ""
-                            }`}
-                          >
-                            <ul className="navbar-sub-list">
-                              <li className="navbar-sub-dropdown-header">
-                                <span>{categoryName}</span>
-                                {categoryProducts.length > 0 && (
-                                  <span className="navbar-sub-count-badge">
-                                    {categoryProducts.length} items
-                                  </span>
-                                )}
-                              </li>
-
-                              {subCategories.map((subCategory) => {
-                                const subKey =
-                                  getSubCategoryId(subCategory) ||
-                                  getSubCategorySlug(subCategory) ||
-                                  getSubCategoryName(subCategory);
-
-                                const subName = getSubCategoryName(subCategory);
-                                const subSlug = getSubCategorySlug(subCategory);
-
-                                if (!subName) return null;
-
+                          {/* Subcategory Pills if any */}
+                          {getSubCategories(selectedCategory).length > 0 && (
+                            <div className="navbar-subcat-pills">
+                              {getSubCategories(selectedCategory).map((sub) => {
+                                const subName = getSubCategoryName(sub);
+                                const subSlug = getSubCategorySlug(sub);
+                                const catSlug = getCategorySlug(selectedCategory);
                                 return (
-                                  <li key={subKey} className="navbar-sub-item">
-                                    <Link
-                                      to={`${NAV_PATHS.CATEGORIES}/${getCategorySlug(
-                                        category,
-                                      )}/${subSlug}`}
-                                      onClick={(event) =>
-                                        handleSubCategoryClick(
-                                          category,
-                                          subCategory,
-                                          event,
-                                        )
-                                      }
-                                    >
-                                      {subName}
-                                    </Link>
-                                  </li>
+                                  <Link
+                                    key={subSlug || subName}
+                                    to={`${NAV_PATHS.CATEGORIES}/${catSlug}/${subSlug}`}
+                                    className="navbar-subcat-pill"
+                                    onClick={(e) =>
+                                      handleSubCategoryClick(selectedCategory, sub, e)
+                                    }
+                                  >
+                                    {subName}
+                                  </Link>
                                 );
                               })}
+                            </div>
+                          )}
 
-                              {loadingProducts ? (
-                                <li className="navbar-sub-item">
-                                  Loading products...
-                                </li>
-                              ) : categoryProducts.length > 0 ? (
-                                categoryProducts.map((product) => {
-                                  const productId = getProductId(product);
-                                  const productName = getProductName(product);
-                                  const image = getProductImage(product);
+                          {/* 3D FLIP PRODUCTS GRID */}
+                          <div className="navbar-flip-cards-grid">
+                            {loadingProducts ? (
+                              <div className="navbar-showcase-loading">
+                                <div className="navbar-flip-spinner"></div>
+                                <span>Loading items...</span>
+                              </div>
+                            ) : activeCategoryProducts.length === 0 ? (
+                              <div className="navbar-showcase-empty">
+                                <span>No items currently in stock for this category</span>
+                              </div>
+                            ) : (
+                              activeCategoryProducts.slice(0, 6).map((product) => {
+                                const productId = getProductId(product);
+                                const productName = getProductName(product);
+                                const image = getProductImage(product);
+                                const currentPrice = getProductPrice(product);
+                                const origPrice = getOriginalPrice(product);
+                                const discountPercent =
+                                  origPrice > currentPrice && origPrice > 0
+                                    ? Math.round(((origPrice - currentPrice) / origPrice) * 100)
+                                    : 0;
+                                const isFlipped = Boolean(flippedCards[productId]);
+                                const unitText =
+                                  product.unit?.name ||
+                                  product.unit ||
+                                  (product.unitNo ? `${product.unitNo} pack` : "");
 
-                                  if (!productId) return null;
-
-                                  return (
-                                    <li
-                                      key={productId}
-                                      className="navbar-sub-item"
-                                    >
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleProductClick(product)
-                                        }
-                                        className="navbar-product-item"
-                                      >
-                                        {image && (
-                                          <img
-                                            src={image}
-                                            alt={productName}
-                                            style={{
-                                              width: "35px",
-                                              height: "35px",
-                                              objectFit: "cover",
-                                              borderRadius: "5px",
-                                              marginRight: "8px",
-                                              verticalAlign: "middle",
-                                            }}
-                                            onError={(event) => {
-                                              event.currentTarget.style.display =
-                                                "none";
-                                            }}
-                                          />
-                                        )}
-
-                                        <span className="navbar-product-content">
-                                          <span className="navbar-product-name">
-                                            {productName}
+                                return (
+                                  <div
+                                    key={productId}
+                                    className={`navbar-flip-card ${
+                                      isFlipped ? "flipped" : ""
+                                    }`}
+                                    onClick={(e) => {
+                                      // If mobile, toggle flip on tap
+                                      if (window.innerWidth <= 768) {
+                                        toggleCardFlip(productId, e);
+                                      } else {
+                                        handleProductClick(product);
+                                      }
+                                    }}
+                                  >
+                                    <div className="navbar-flip-card-inner">
+                                      {/* FRONT FACE */}
+                                      <div className="navbar-flip-face navbar-flip-front">
+                                        {discountPercent > 0 && (
+                                          <span className="navbar-flip-discount-tag">
+                                            {discountPercent}% OFF
                                           </span>
-                                        </span>
-                                      </button>
-                                    </li>
-                                  );
-                                })
-                              ) : (
-                                <li className="navbar-sub-item navbar-sub-item-empty">
-                                  <span style={{ fontSize: "12px", color: "#9ca3af", fontStyle: "italic", padding: "10px 14px", display: "block" }}>
-                                    No products found in this category
-                                  </span>
-                                </li>
-                              )}
-                            </ul>
+                                        )}
+                                        <div className="navbar-flip-thumb-wrap">
+                                          {image ? (
+                                            <img
+                                              src={image}
+                                              alt={productName}
+                                              className="navbar-flip-img"
+                                              onError={(e) => {
+                                                e.currentTarget.style.display = "none";
+                                              }}
+                                            />
+                                          ) : (
+                                            <div className="navbar-flip-noimg">🛒</div>
+                                          )}
+                                        </div>
+                                        <div className="navbar-flip-front-body">
+                                          <h4
+                                            className="navbar-flip-prod-title"
+                                            title={productName}
+                                          >
+                                            {productName}
+                                          </h4>
+                                          <div className="navbar-flip-price-row">
+                                            <span className="navbar-flip-price-curr">
+                                              ₹{currentPrice}
+                                            </span>
+                                            {origPrice > currentPrice && (
+                                              <span className="navbar-flip-price-orig">
+                                                ₹{origPrice}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className="navbar-flip-peek-tab">
+                                          <span>Flip details</span>
+                                          <Sparkles size={11} />
+                                        </div>
+                                      </div>
+
+                                      {/* BACK FACE */}
+                                      <div className="navbar-flip-face navbar-flip-back">
+                                        <div className="navbar-flip-back-top">
+                                          <span className="navbar-flip-instock-badge">
+                                            In Stock
+                                          </span>
+                                          {discountPercent > 0 && (
+                                            <span className="navbar-flip-save-label">
+                                              Save ₹{origPrice - currentPrice}
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        <h4 className="navbar-flip-back-prod-title">
+                                          {productName}
+                                        </h4>
+
+                                        <div className="navbar-flip-specs">
+                                          <div className="navbar-flip-spec-row">
+                                            <span>Price:</span>
+                                            <strong>₹{currentPrice}</strong>
+                                          </div>
+                                          {unitText && (
+                                            <div className="navbar-flip-spec-row">
+                                              <span>Pack:</span>
+                                              <span>{unitText}</span>
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        <div
+                                          className="navbar-flip-card-actions"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <button
+                                            type="button"
+                                            className="navbar-flip-quick-add-btn"
+                                            onClick={(e) =>
+                                              handleAddToCart(product, e)
+                                            }
+                                          >
+                                            <ShoppingCart size={13} />
+                                            <span>Add</span>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="navbar-flip-quick-view-btn"
+                                            onClick={() =>
+                                              handleProductClick(product)
+                                            }
+                                            title="View Details"
+                                          >
+                                            <Eye size={13} />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            )}
                           </div>
-                        </li>
-                      );
-                    })
-                  )}
-                </ul>
+
+                          {activeCategoryProducts.length > 0 && (
+                            <div className="navbar-showcase-footer">
+                              <div className="navbar-showcase-footer-left">
+                                <Sparkles size={12} className="navbar-footer-sparkle" />
+                                <span>
+                                  Showing {Math.min(activeCategoryProducts.length, 6)} of {activeCategoryProducts.length} items
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                className="navbar-showcase-footer-link"
+                                onClick={(e) => handleCategoryClick(selectedCategory, e)}
+                              >
+                                View all {activeCategoryProducts.length} products &rarr;
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
