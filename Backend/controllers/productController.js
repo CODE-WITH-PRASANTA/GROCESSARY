@@ -1,5 +1,10 @@
 const mongoose = require("mongoose");
+const fs = require("fs");
+const path = require("path");
 const Product = require("../models/Product");
+require("../models/Category");
+require("../models/Brand");
+require("../models/unit.model");
 
 // ======================================================
 // HELPERS
@@ -904,28 +909,96 @@ const updateProduct = async (req, res) => {
     }
 
     // ==================================================
-    // NEW IMAGES
+    // IMAGES (EXISTING & NEW)
     // ==================================================
 
-    if (Array.isArray(req.files) && req.files.length > 0) {
-      const newImages = req.files
-        .map((file) => {
-          if (file.url) {
-            return file.url;
-          }
+    const oldImages = Array.isArray(product.images) ? [...product.images] : [];
 
-          if (file.path) {
-            return `/${String(file.path).replace(/^\/+/, "")}`;
-          }
+    // Collect new uploaded images from req.files (if any)
+    const newUploadedImages = (Array.isArray(req.files) ? req.files : [])
+      .map((file) => {
+        if (file.url) {
+          return file.url;
+        }
 
-          return null;
+        if (file.path) {
+          return `/${String(file.path).replace(/^\/+/, "")}`;
+        }
+
+        return null;
+      })
+      .filter(Boolean);
+
+    // Check if client explicitly sent existingImages
+    if (body.existingImages !== undefined) {
+      let retainedExistingImages = [];
+
+      if (typeof body.existingImages === "string") {
+        const trimmed = body.existingImages.trim();
+        if (trimmed) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) {
+              retainedExistingImages = parsed;
+            } else if (typeof parsed === "string") {
+              retainedExistingImages = [parsed];
+            }
+          } catch (e) {
+            // If it's comma-separated or plain string
+            retainedExistingImages = trimmed.includes(",")
+              ? trimmed.split(",").map((s) => s.trim())
+              : [trimmed];
+          }
+        }
+      } else if (Array.isArray(body.existingImages)) {
+        retainedExistingImages = body.existingImages;
+      }
+
+      // Normalize each item to clean path/URL
+      const sanitizedExisting = retainedExistingImages
+        .map((img) => {
+          if (!img) return "";
+          if (typeof img === "object") img = img.url || img.path || "";
+          let str = String(img).trim();
+          const uploadIndex = str.indexOf("/uploads/");
+          if (uploadIndex !== -1) {
+            return str.substring(uploadIndex);
+          }
+          return str;
         })
         .filter(Boolean);
 
-      product.images = [
-        ...(Array.isArray(product.images) ? product.images : []),
-        ...newImages,
-      ].slice(0, 5);
+      // New product.images will be the retained existing images + newly uploaded images
+      product.images = [...sanitizedExisting, ...newUploadedImages].slice(0, 5);
+
+      // Clean up orphaned files that were removed from this product
+      const removedImages = oldImages.filter(
+        (img) => !sanitizedExisting.includes(img)
+      );
+
+      for (const removedPath of removedImages) {
+        try {
+          if (removedPath && String(removedPath).includes("/uploads/")) {
+            const relativePart = String(removedPath).split("/uploads/")[1];
+            if (relativePart) {
+              const fullFilePath = path.join(process.cwd(), "uploads", relativePart);
+              // Check if another product is still referencing this image path
+              const isUsedByOther = await Product.exists({
+                _id: { $ne: product._id },
+                images: removedPath,
+              });
+              if (!isUsedByOther && fs.existsSync(fullFilePath)) {
+                fs.unlinkSync(fullFilePath);
+              }
+            }
+          }
+        } catch (cleanupErr) {
+          console.warn("Could not delete removed product image file:", cleanupErr.message);
+        }
+      }
+    } else if (newUploadedImages.length > 0) {
+      // existingImages was omitted in request body, but new files were uploaded: append
+      product.images = [...oldImages, ...newUploadedImages].slice(0, 5);
     }
 
     // ==================================================
@@ -980,6 +1053,29 @@ const deleteProduct = async (req, res) => {
       });
     }
 
+    // Clean up local image files on disk if not used by another product
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      for (const imgPath of product.images) {
+        try {
+          if (imgPath && String(imgPath).includes("/uploads/")) {
+            const relativePart = String(imgPath).split("/uploads/")[1];
+            if (relativePart) {
+              const fullFilePath = path.join(process.cwd(), "uploads", relativePart);
+              const isUsedByOther = await Product.exists({
+                _id: { $ne: product._id },
+                images: imgPath,
+              });
+              if (!isUsedByOther && fs.existsSync(fullFilePath)) {
+                fs.unlinkSync(fullFilePath);
+              }
+            }
+          }
+        } catch (cleanupErr) {
+          console.warn("Could not delete product image file on product delete:", cleanupErr.message);
+        }
+      }
+    }
+
     return res.status(200).json({
       success: true,
 
@@ -995,6 +1091,82 @@ const deleteProduct = async (req, res) => {
 
       message: "Failed to delete product.",
 
+      error: error.message,
+    });
+  }
+};
+
+// ======================================================
+// DELETE SINGLE PRODUCT IMAGE DIRECTLY
+// ======================================================
+
+const deleteProductImage = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found.",
+      });
+    }
+
+    const { imageKey } = req.params;
+    const oldImages = Array.isArray(product.images) ? product.images : [];
+    let imageIndex = -1;
+
+    // Check if numeric index
+    const numIdx = Number(imageKey);
+    if (Number.isInteger(numIdx) && numIdx >= 0 && numIdx < oldImages.length) {
+      imageIndex = numIdx;
+    } else {
+      const decodedKey = decodeURIComponent(imageKey).trim();
+      imageIndex = oldImages.findIndex(
+        (img) => img === decodedKey || img.endsWith(decodedKey)
+      );
+    }
+
+    if (imageIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: "Image not found on this product.",
+      });
+    }
+
+    const removedPath = oldImages[imageIndex];
+    product.images = oldImages.filter((_, idx) => idx !== imageIndex);
+    await product.save();
+
+    // Clean up file if not used elsewhere
+    try {
+      if (removedPath && String(removedPath).includes("/uploads/")) {
+        const relativePart = String(removedPath).split("/uploads/")[1];
+        if (relativePart) {
+          const fullFilePath = path.join(process.cwd(), "uploads", relativePart);
+          const isUsedByOther = await Product.exists({
+            _id: { $ne: product._id },
+            images: removedPath,
+          });
+          if (!isUsedByOther && fs.existsSync(fullFilePath)) {
+            fs.unlinkSync(fullFilePath);
+          }
+        }
+      }
+    } catch (cleanupErr) {
+      console.warn("Could not delete product image file:", cleanupErr.message);
+    }
+
+    const updatedProduct = await getPopulatedProduct(product._id);
+    return res.status(200).json({
+      success: true,
+      message: "Image deleted successfully.",
+      product: updatedProduct,
+    });
+  } catch (error) {
+    console.error("DELETE PRODUCT IMAGE ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete product image.",
       error: error.message,
     });
   }
@@ -1190,6 +1362,46 @@ const bulkUnpublishProducts = async (req, res) => {
 };
 
 // ======================================================
+// BULK DELETE PRODUCTS
+// ======================================================
+
+const bulkDeleteProducts = async (req, res) => {
+  try {
+    const { ids } = req.body || {};
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide an array of product IDs to delete.",
+      });
+    }
+
+    const validIds = ids.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    if (validIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid product IDs provided.",
+      });
+    }
+
+    const result = await Product.deleteMany({ _id: { $in: validIds } });
+
+    return res.status(200).json({
+      success: true,
+      message: `${result.deletedCount} product(s) deleted successfully.`,
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    console.error("BULK DELETE PRODUCT ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete products in bulk.",
+      error: error.message,
+    });
+  }
+};
+
+// ======================================================
 // EXPORTS
 // ======================================================
 
@@ -1204,6 +1416,8 @@ module.exports = {
 
   deleteProduct,
 
+  deleteProductImage,
+
   updateProductStatus,
 
   bulkUpdateProductStatus,
@@ -1215,4 +1429,6 @@ module.exports = {
   bulkPublishProducts,
 
   bulkUnpublishProducts,
+
+  bulkDeleteProducts,
 };

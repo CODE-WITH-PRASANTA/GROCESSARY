@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
 import {
   Package,
   Plus,
@@ -15,9 +16,13 @@ import {
   ChevronRight,
   Filter,
   RefreshCw,
+  Upload,
+  Download,
+  FileSpreadsheet,
 } from "lucide-react";
 import "./AllProduct.css";
 import API, { BASE_URL } from "../../../api/axios";
+import BulkProductModal, { downloadSampleExcelTemplate } from "./BulkProductModal";
 
 const Allproduct = () => {
   const navigate = useNavigate();
@@ -28,6 +33,13 @@ const Allproduct = () => {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // ======================================================
+  // BULK PRODUCT MANAGEMENT
+  // ======================================================
+  const [selectedProductIds, setSelectedProductIds] = useState([]);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [isBulkActionLoading, setIsBulkActionLoading] = useState(false);
 
   // ======================================================
   // FILTERS & SEARCH
@@ -273,6 +285,7 @@ const Allproduct = () => {
     try {
       await API.delete(`/products/${id}`);
       setProducts((prev) => prev.filter((p) => p._id !== id));
+      setSelectedProductIds((prev) => prev.filter((pid) => pid !== id));
     } catch (error) {
       console.error("Delete Product Error:", error);
       alert(
@@ -281,6 +294,107 @@ const Allproduct = () => {
           "Failed to delete product."
       );
     }
+  };
+
+  // ======================================================
+  // BULK ACTIONS HANDLERS
+  // ======================================================
+  const handleSelectAllOnPage = (e) => {
+    if (e.target.checked) {
+      const pageIds = currentProducts.map((p) => p._id);
+      setSelectedProductIds((prev) => Array.from(new Set([...prev, ...pageIds])));
+    } else {
+      const pageIdSet = new Set(currentProducts.map((p) => p._id));
+      setSelectedProductIds((prev) => prev.filter((id) => !pageIdSet.has(id)));
+    }
+  };
+
+  const handleToggleSelectProduct = (id) => {
+    setSelectedProductIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleClearSelection = () => {
+    setSelectedProductIds([]);
+  };
+
+  const handleBulkPublish = async () => {
+    if (selectedProductIds.length === 0) return;
+    try {
+      setIsBulkActionLoading(true);
+      await API.put("/products/bulk-publish", { ids: selectedProductIds });
+      await fetchProducts();
+      setSelectedProductIds([]);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to publish selected products.");
+    } finally {
+      setIsBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkUnpublish = async () => {
+    if (selectedProductIds.length === 0) return;
+    try {
+      setIsBulkActionLoading(true);
+      await API.put("/products/bulk-unpublish", { ids: selectedProductIds });
+      await fetchProducts();
+      setSelectedProductIds([]);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to unpublish selected products.");
+    } finally {
+      setIsBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedProductIds.length === 0) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to permanently delete ${selectedProductIds.length} selected product(s)? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    try {
+      setIsBulkActionLoading(true);
+      await API.post("/products/bulk-delete", { ids: selectedProductIds });
+      await fetchProducts();
+      setSelectedProductIds([]);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete selected products.");
+    } finally {
+      setIsBulkActionLoading(false);
+    }
+  };
+
+  const handleExportCatalog = () => {
+    const dataToExport = (filteredProducts.length > 0 ? filteredProducts : products).map(
+      (p, i) => ({
+        "No": i + 1,
+        "Product Name": p.productName || p.name || "",
+        "SKU": p.sku || "",
+        "Category": getCategoryName(p),
+        "Brand": getBrandName(p),
+        "Unit": typeof p.unit === "object" ? p.unit?.name || "" : p.unit || "",
+        "Unit No": p.unitNo || 1,
+        "Selling Price": p.price || 0,
+        "MRP": p.writtenPrice || p.originalPrice || 0,
+        "Purchase Price": p.purchasePrice || 0,
+        "Stock": p.stockQuantity || 0,
+        "Barcode": p.barcode || "",
+        "Status": p.status || "active",
+        "Created At": p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "",
+      })
+    );
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Catalog");
+    XLSX.writeFile(
+      wb,
+      `GrocerySathi_Catalog_${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
   };
 
   return (
@@ -295,6 +409,26 @@ const Allproduct = () => {
         </div>
 
         <div className="ap-header-actions">
+          <button
+            type="button"
+            className="ap-btn-outline"
+            onClick={downloadSampleExcelTemplate}
+            title="Download Sample Excel Template"
+          >
+            <Download size={16} />
+            <span>Sample</span>
+          </button>
+
+          <button
+            type="button"
+            className="ap-btn-secondary"
+            onClick={() => setIsBulkModalOpen(true)}
+            title="Bulk import products from Excel or CSV"
+          >
+            <FileSpreadsheet size={16} />
+            <span>Bulk Product Import</span>
+          </button>
+
           <button className="ap-btn-primary" onClick={handleAddProduct}>
             <Plus size={18} />
             <span>Add New Product</span>
@@ -449,6 +583,57 @@ const Allproduct = () => {
         </div>
       </div>
 
+      {/* BULK ACTIONS TOOLBAR */}
+      {selectedProductIds.length > 0 && (
+        <div className="ap-bulk-bar">
+          <div className="ap-bulk-count">
+            <CheckCircle2 size={18} />
+            <span>{selectedProductIds.length} product(s) selected</span>
+          </div>
+
+          <div className="ap-bulk-actions">
+            <button
+              type="button"
+              className="ap-bulk-btn publish"
+              onClick={handleBulkPublish}
+              disabled={isBulkActionLoading}
+              title="Set selected products to Active storefront status"
+            >
+              Publish Selected
+            </button>
+
+            <button
+              type="button"
+              className="ap-bulk-btn unpublish"
+              onClick={handleBulkUnpublish}
+              disabled={isBulkActionLoading}
+              title="Set selected products to Inactive"
+            >
+              Unpublish Selected
+            </button>
+
+            <button
+              type="button"
+              className="ap-bulk-btn delete"
+              onClick={handleBulkDelete}
+              disabled={isBulkActionLoading}
+              title="Permanently remove selected products"
+            >
+              <Trash2 size={15} />
+              <span>Delete Selected</span>
+            </button>
+
+            <button
+              type="button"
+              className="ap-bulk-btn-clear"
+              onClick={handleClearSelection}
+            >
+              Deselect All
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* FULL-WIDTH TABLE CONTAINER */}
       <div className="ap-table-card">
         {isLoading ? (
@@ -491,12 +676,26 @@ const Allproduct = () => {
             <table className="ap-table">
               <thead>
                 <tr>
-                  <th style={{ width: "32%" }}>Product Information</th>
+                  <th style={{ width: "42px", textAlign: "center" }}>
+                    <input
+                      type="checkbox"
+                      className="ap-checkbox"
+                      checked={
+                        currentProducts.length > 0 &&
+                        currentProducts.every((p) =>
+                          selectedProductIds.includes(p._id)
+                        )
+                      }
+                      onChange={handleSelectAllOnPage}
+                      title="Select / deselect all products on this page"
+                    />
+                  </th>
+                  <th style={{ width: "30%" }}>Product Information</th>
                   <th style={{ width: "16%" }}>Category & Brand</th>
                   <th style={{ width: "14%" }}>Pricing</th>
                   <th style={{ width: "14%" }}>Stock Level</th>
                   <th style={{ width: "12%" }}>Status</th>
-                  <th style={{ width: "12%", textAlign: "right" }}>Actions</th>
+                  <th style={{ width: "10%", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -509,9 +708,22 @@ const Allproduct = () => {
                   const isOutOfStock = stock <= 0 || prod.isOutOfStock;
                   const isLowStock = !isOutOfStock && stock <= lowAlert;
                   const isActive = (prod.status || "").toLowerCase() === "active";
+                  const isSelected = selectedProductIds.includes(prod._id);
 
                   return (
-                    <tr key={prod._id} className="ap-table-row">
+                    <tr
+                      key={prod._id}
+                      className={`ap-table-row ${isSelected ? "ap-row-selected" : ""}`}
+                    >
+                      {/* Selection Checkbox */}
+                      <td style={{ textAlign: "center" }}>
+                        <input
+                          type="checkbox"
+                          className="ap-checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleSelectProduct(prod._id)}
+                        />
+                      </td>
                       {/* Product Thumbnail & Name */}
                       <td>
                         <div className="ap-product-flex">
@@ -895,6 +1107,15 @@ const Allproduct = () => {
           </div>
         </div>
       )}
+
+      {/* BULK PRODUCT IMPORT MODAL */}
+      <BulkProductModal
+        isOpen={isBulkModalOpen}
+        onClose={() => setIsBulkModalOpen(false)}
+        onSuccess={() => {
+          fetchProducts();
+        }}
+      />
     </div>
   );
 };

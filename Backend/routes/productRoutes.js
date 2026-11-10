@@ -6,6 +6,7 @@ const {
   createProduct,
   updateProduct,
   deleteProduct,
+  deleteProductImage,
 
   updateProductStatus,
   bulkUpdateProductStatus,
@@ -15,6 +16,7 @@ const {
 
   bulkPublishProducts,
   bulkUnpublishProducts,
+  bulkDeleteProducts,
 } = require("../controllers/productController");
 
 const {
@@ -165,6 +167,23 @@ router.put(
 );
 
 // =====================================================
+// BULK DELETE
+// =====================================================
+// DELETE /api/products/bulk or POST /api/products/bulk-delete
+// Body: { "ids": ["id1", "id2"] }
+// =====================================================
+
+router.delete(
+  "/bulk",
+  bulkDeleteProducts
+);
+
+router.post(
+  "/bulk-delete",
+  bulkDeleteProducts
+);
+
+// =====================================================
 // UPDATE PRODUCT STATUS
 // =====================================================
 //
@@ -240,6 +259,19 @@ router.put(
   ),
   convertToWebp,
   updateProduct
+);
+
+// =====================================================
+// DELETE PRODUCT IMAGE
+// =====================================================
+//
+// DELETE /api/products/:id/images/:imageKey
+//
+// =====================================================
+
+router.delete(
+  "/:id/images/:imageKey",
+  deleteProductImage
 );
 
 // =====================================================

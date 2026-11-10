@@ -434,7 +434,15 @@ const AddProducts = () => {
         data.append("images", imgObj.file);
       });
 
-      data.append("existingImages", JSON.stringify(existingImages));
+      const cleanedExistingImages = (existingImages || [])
+        .map((img) => {
+          if (!img) return "";
+          if (typeof img === "object") return img.url || img.path || "";
+          return String(img).trim();
+        })
+        .filter(Boolean);
+
+      data.append("existingImages", JSON.stringify(cleanedExistingImages));
 
       const isEditMode = Boolean(editingProduct?._id);
       if (isEditMode) {
