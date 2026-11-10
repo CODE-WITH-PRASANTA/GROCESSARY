@@ -51,48 +51,48 @@ dotenv.config();
 connectDB();
 
 const app = express();
-
 // ======================================================
 // CORS CONFIGURATION
 // ======================================================
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:3000",
   "http://grocerysathi.com",
   "https://grocerysathi.com",
   "https://user.grocerysathi.com",
   "http://admin.grocerysathi.com",
   "https://admin.grocerysathi.com",
   "http://backend.grocerysathi.com",
-  "https://backend.grocerysathi.com",
+  "https://backend.grocerysathi.com"
 ];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (Postman, mobile apps, curl)
+    // Allow requests with no origin (Postman, mobile apps, curl, server-to-server)
     if (!origin) return callback(null, true);
 
-    // Check if it's in the allowed production list OR any local port (localhost/127.0.0.1)
-    const isLocalhost = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
-    
-    if (allowedOrigins.includes(origin) || isLocalhost) {
+    // Normalize origin by removing trailing slashes if any
+    const normalizedOrigin = origin.replace(/\/$/, "");
+
+    // Check allowed list or dynamic localhost ports
+    const isLocalhost = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(normalizedOrigin);
+    const isAllowed = allowedOrigins.some(o => o.replace(/\/$/, "") === normalizedOrigin);
+
+    if (isAllowed || isLocalhost) {
       callback(null, true);
     } else {
+      console.warn(`[CORS Blocked] Origin: "${origin}"`);
       callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 };
 
 app.use(cors(corsOptions));
 
-// ======================================================
-// BODY PARSERS & COOKIE PARSER
-// ======================================================
-// IMPORTANT: Razorpay webhooks verify the signature against the RAW
-// request body. We stash the raw buffer on `req.rawBody`.
-// ======================================================
+
 app.use(
   express.json({
     verify: (req, res, buf) => {
@@ -160,9 +160,6 @@ app.use("/api/bills", billRoutes);
 // user notification
 
 app.use("/api/notifications",notifications)
-
-
-
 
 // ======================================================
 // HEALTH CHECK
