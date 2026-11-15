@@ -4,7 +4,7 @@ import axios from "axios";
 // BASE URL
 // ========================================
 
-export const BASE_URL = "http://localhost:5000"; // Update for production if needed
+export const BASE_URL = "https://backend.grocerysathi.com"; // Update for production if needed
 export const API_URL = `${BASE_URL}/api`;
 export const IMG_URL = BASE_URL;
 

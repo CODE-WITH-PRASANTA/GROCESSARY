@@ -1,4 +1,5 @@
 const Category = require("../models/Category");
+const Product = require("../models/Product");
 
 const {
   deleteUploadedFile,
@@ -37,6 +38,7 @@ exports.getCategories = async (req, res) => {
     const {
       search,
       status,
+      hasProducts,
     } = req.query;
 
 
@@ -102,15 +104,35 @@ exports.getCategories = async (req, res) => {
           createdAt: -1,
         });
 
+    // Aggregate active product count per category
+    const counts = await Product.aggregate([
+      { $match: { status: "active" } },
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+    ]);
+
+    const countMap = {};
+    counts.forEach((c) => {
+      if (c._id) {
+        countMap[String(c._id)] = c.count;
+      }
+    });
+
+    let enrichedCategories = categories.map((cat) => {
+      const catObj = cat.toObject ? cat.toObject() : { ...cat };
+      catObj.productCount = countMap[String(cat._id)] || 0;
+      return catObj;
+    });
+
+    if (hasProducts === "true" || hasProducts === "1") {
+      enrichedCategories = enrichedCategories.filter(
+        (cat) => (cat.productCount || 0) > 0
+      );
+    }
 
     return res.status(200).json({
-
       success: true,
-
-      count: categories.length,
-
-      data: categories,
-
+      count: enrichedCategories.length,
+      data: enrichedCategories,
     });
 
   } catch (error) {
