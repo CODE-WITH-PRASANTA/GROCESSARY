@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './ListUpload.css';
 
-import API from '../../api/Axios';
+import API from '../../api/axios';
 
 import {
   HiDocumentText,
