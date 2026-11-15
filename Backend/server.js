@@ -59,8 +59,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://grocerysathi.com",
   "https://grocerysathi.com",
-  "https://user.grocerysathi.com",
-  "http://admin.grocerysathi.com",
+  "https://admin.grocerysathi.com",
   "https://admin.grocerysathi.com",
   "http://backend.grocerysathi.com",
   "https://backend.grocerysathi.com"
