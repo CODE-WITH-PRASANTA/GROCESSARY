@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Star, X, CheckCircle2, ShieldCheck, AlertCircle } from "lucide-react";
 import Swal from "sweetalert2";
 import API from "../../api/axios";
+import formatUnit from "../../Utils/formatUnit";
 import "./ReviewProductModal.css";
 
 const RATING_LABELS = {
@@ -63,7 +64,7 @@ const ReviewProductModal = ({
   const prodId = product._id || product.id || product.productId;
   const prodName = product.productName || product.name || "Grocery Product";
   const prodImg = product.image || product.img || "/placeholder.png";
-  const prodUnit = product.unit || "";
+  const prodUnit = formatUnit(product.unit, product.unitNo);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

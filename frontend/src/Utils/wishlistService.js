@@ -1,4 +1,5 @@
 import API, { BASE_URL } from "../api/axios";
+import formatUnit from "./formatUnit";
 
 export const GUEST_WISHLIST_KEY = "guestWishlist";
 
@@ -32,8 +33,11 @@ export const isLoggedIn = () => {
 // =========================================================
 export const getGuestWishlist = () => {
   try {
-    const raw = localStorage.getItem(GUEST_WISHLIST_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const raw =
+      localStorage.getItem("guestWishlist") ||
+      localStorage.getItem("guest_wishlist");
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
     console.error("Error reading guest wishlist:", error);
     return [];
@@ -42,12 +46,15 @@ export const getGuestWishlist = () => {
 
 export const saveGuestWishlist = (list) => {
   try {
-    localStorage.setItem(GUEST_WISHLIST_KEY, JSON.stringify(list));
+    const jsonList = JSON.stringify(list);
+    localStorage.setItem("guestWishlist", jsonList);
+    localStorage.setItem("guest_wishlist", jsonList);
     window.dispatchEvent(
       new CustomEvent("wishlistUpdated", {
         detail: { count: list.length, items: list },
       })
     );
+    window.dispatchEvent(new Event("wishlistUpdated"));
   } catch (error) {
     console.error("Error saving guest wishlist:", error);
   }
@@ -75,10 +82,7 @@ export const normalizeWishlistProduct = (p) => {
       ? Math.round(((oldPrice - price) / oldPrice) * 100)
       : Number(p.discount || 0);
 
-  const unitLabel =
-    typeof p.unit === "object"
-      ? p.unit?.name || p.unit?.symbol || "1 unit"
-      : p.unit || "1 unit";
+  const unitLabel = formatUnit(p.unit, p.unitNo);
 
   return {
     _id: id,
@@ -303,6 +307,7 @@ export const clearWishlist = async () => {
     try {
       localStorage.removeItem(GUEST_WISHLIST_KEY);
       localStorage.removeItem("guestWishlist");
+      localStorage.removeItem("guest_wishlist");
     } catch {}
   }
 
@@ -311,6 +316,7 @@ export const clearWishlist = async () => {
       detail: { count: 0, items: [], cleared: true },
     })
   );
+  window.dispatchEvent(new Event("wishlistUpdated"));
 
   return { success: true, message: "Wishlist cleared" };
 };
@@ -322,6 +328,7 @@ export const clearLocalWishlistOnLogout = () => {
   try {
     localStorage.removeItem(GUEST_WISHLIST_KEY);
     localStorage.removeItem("guestWishlist");
+    localStorage.removeItem("guest_wishlist");
     localStorage.removeItem("wishlist");
   } catch {}
   window.dispatchEvent(
@@ -329,6 +336,7 @@ export const clearLocalWishlistOnLogout = () => {
       detail: { count: 0, items: [], cleared: true },
     })
   );
+  window.dispatchEvent(new Event("wishlistUpdated"));
 };
 
 // =========================================================
@@ -352,6 +360,7 @@ export const syncGuestWishlistOnLogin = async () => {
     try {
       localStorage.removeItem(GUEST_WISHLIST_KEY);
       localStorage.removeItem("guestWishlist");
+      localStorage.removeItem("guest_wishlist");
       localStorage.removeItem("wishlist");
     } catch {}
     try {

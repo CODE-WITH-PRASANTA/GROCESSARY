@@ -13,6 +13,7 @@ import {
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import API, { BASE_URL } from "../../api/axios";
+import formatUnit from "../../Utils/formatUnit";
 import "./PopularProducts.css";
 
 const PRODUCTS_PER_PAGE = 8;
@@ -387,10 +388,7 @@ const PopularProducts = () => {
           }
 
           const unitSymbol = getUnitSymbol(p.unit, rawUnits);
-
-          const unitLabel = p.unitNo
-            ? `${p.unitNo}${unitSymbol ? ` ${unitSymbol}` : ""}`
-            : unitSymbol || "1 unit";
+          const unitLabel = formatUnit(unitSymbol || p.unit, p.unitNo);
 
           return {
             id: productId,

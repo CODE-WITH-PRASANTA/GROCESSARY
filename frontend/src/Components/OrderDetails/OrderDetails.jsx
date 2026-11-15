@@ -28,6 +28,7 @@ import {
   Banknote,
 } from "lucide-react";
 import API, { BASE_URL } from "../../api/axios";
+import formatUnit from "../../Utils/formatUnit";
 import { downloadOrderInvoicePdf } from "../../Utils/directInvoiceDownloader";
 import { retryOrderPayment } from "../../Utils/razorpayPaymentHelper";
 import ReturnOrderModal from "./ReturnOrderModal";
@@ -883,7 +884,7 @@ const OrderDetails = () => {
                   const itemImg = resolveImage(
                     item.image || (Array.isArray(prod.images) && prod.images[0]) || prod.image
                   );
-                  const unitLabel = item.unit || prod.unit || "1 unit";
+                  const unitLabel = formatUnit(item.unit || prod.unit, item.unitNo || prod.unitNo);
                   const price = Number(item.price || 0);
                   const qty = Number(item.quantity || 1);
                   const itemTotal = Number(item.itemTotal || price * qty);

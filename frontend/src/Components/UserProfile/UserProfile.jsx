@@ -37,6 +37,10 @@ import {
   Sparkles,
   Ticket,
   CreditCard,
+  Wallet,
+  ArrowDownLeft,
+  ArrowUpRight,
+  RefreshCw,
 } from "lucide-react";
 import API from "../../api/axios";
 import { downloadOrderInvoicePdf } from "../../Utils/directInvoiceDownloader";
@@ -110,6 +114,25 @@ const UserProfile = ({ defaultTab = "profile" }) => {
 
   // Help Center FAQs
   const [expandedFaq, setExpandedFaq] = useState(0);
+
+  // Wallet
+  const [wallet, setWallet] = useState(null);
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [walletFilter, setWalletFilter] = useState("all");
+
+  const loadWallet = useCallback(async () => {
+    try {
+      setWalletLoading(true);
+      const { data } = await API.get("/wallet");
+      if (data?.success && data?.wallet) {
+        setWallet(data.wallet);
+      }
+    } catch (err) {
+      console.warn("Load wallet error:", err);
+    } finally {
+      setWalletLoading(false);
+    }
+  }, []);
 
   // =========================================================
   // AUTH CHECK & LOAD USER
@@ -253,15 +276,18 @@ const UserProfile = ({ defaultTab = "profile" }) => {
     window.scrollTo({ top: 0, behavior: "smooth" });
     loadUserData();
     loadReferral();
-  }, [loadUserData, loadReferral]);
+    loadWallet();
+  }, [loadUserData, loadReferral, loadWallet]);
 
   useEffect(() => {
     if (currentTab === "addresses") {
       loadAddresses();
     } else if (currentTab === "orders") {
       loadOrders();
+    } else if (currentTab === "wallet") {
+      loadWallet();
     }
-  }, [currentTab, loadAddresses, loadOrders]);
+  }, [currentTab, loadAddresses, loadOrders, loadWallet]);
 
   // =========================================================
   // CLIENT-SIDE WEBP IMAGE CONVERTER
@@ -755,6 +781,23 @@ const UserProfile = ({ defaultTab = "profile" }) => {
               >
                 <Package size={18} />
                 <span>My Order</span>
+                <ChevronRight size={16} className="tab-arrow" />
+              </button>
+
+              <button
+                type="button"
+                className={`profile-tab-btn ${
+                  currentTab === "wallet" ? "active" : ""
+                }`}
+                onClick={() => setTab("wallet")}
+              >
+                <Wallet size={18} />
+                <span>My Wallet</span>
+                {Number(wallet?.balance || 0) > 0 && (
+                  <span className="tab-count-badge wallet-badge">
+                    ₹{Number(wallet.balance).toFixed(0)}
+                  </span>
+                )}
                 <ChevronRight size={16} className="tab-arrow" />
               </button>
 
@@ -1274,6 +1317,273 @@ const UserProfile = ({ defaultTab = "profile" }) => {
                     })}
                   </div>
                 )}
+              </section>
+            )}
+
+            {/* -------------------------------------------------
+                TAB: MY WALLET (REFUNDS & CREDITS)
+            -------------------------------------------------- */}
+            {currentTab === "wallet" && (
+              <section className="profile-tab-content">
+                <div className="tab-header-row">
+                  <div>
+                    <h1 className="tab-title">My Wallet</h1>
+                    <p className="tab-subtitle">
+                      Your GrocerySathi balance. Cancelled orders and refunds approved by admin are credited here instantly.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-refresh-wallet"
+                    onClick={loadWallet}
+                    disabled={walletLoading}
+                  >
+                    <RefreshCw
+                      size={15}
+                      className={walletLoading ? "animate-spin" : ""}
+                    />
+                    <span>{walletLoading ? "Refreshing..." : "Refresh"}</span>
+                  </button>
+                </div>
+
+                {/* HERO WALLET BALANCE CARD */}
+                <div className="wallet-hero-card">
+                  <div className="wallet-hero-inner">
+                    <div className="wallet-balance-wrap">
+                      <span className="wallet-balance-label">
+                        Total Available Balance
+                      </span>
+                      <div className="wallet-balance-display">
+                        <span className="wallet-currency">₹</span>
+                        <span className="wallet-amount">
+                          {Number(wallet?.balance || 0).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="wallet-guarantee-pill">
+                        <CheckCircle2 size={13} />
+                        <span>100% usable on your next grocery order</span>
+                      </div>
+                    </div>
+
+                    <div className="wallet-quick-stats">
+                      <div className="wallet-stat-box">
+                        <span className="stat-label">Total Refunds Credited</span>
+                        <strong className="stat-value text-green">
+                          +₹{
+                            (wallet?.transactions || [])
+                              .filter(
+                                (t) =>
+                                  t.type === "refund" ||
+                                  t.direction === "credit"
+                              )
+                              .reduce(
+                                (acc, t) => acc + Number(t.amount || 0),
+                                0
+                              )
+                              .toFixed(2)
+                          }
+                        </strong>
+                      </div>
+                      <div className="wallet-stat-box">
+                        <span className="stat-label">Spent on Orders</span>
+                        <strong className="stat-value text-dark">
+                          -₹{
+                            (wallet?.transactions || [])
+                              .filter(
+                                (t) =>
+                                  t.type === "order_payment" ||
+                                  t.direction === "debit"
+                              )
+                              .reduce(
+                                (acc, t) => acc + Number(t.amount || 0),
+                                0
+                              )
+                              .toFixed(2)
+                          }
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* HOW WALLET REFUND WORKS INFO STRIP */}
+                  <div className="wallet-info-strip">
+                    <div className="info-step">
+                      <span className="step-num">1</span>
+                      <span className="step-text">Cancel paid order</span>
+                    </div>
+                    <span className="step-arrow">➔</span>
+                    <div className="info-step">
+                      <span className="step-num">2</span>
+                      <span className="step-text">Admin reviews return</span>
+                    </div>
+                    <span className="step-arrow">➔</span>
+                    <div className="info-step">
+                      <span className="step-num">3</span>
+                      <span className="step-text">Refund credited to Wallet</span>
+                    </div>
+                    <span className="step-arrow">➔</span>
+                    <div className="info-step">
+                      <span className="step-num">4</span>
+                      <span className="step-text">Use on any checkout</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* TRANSACTIONS SECTION */}
+                <div className="wallet-transactions-section">
+                  <div className="transactions-header-row">
+                    <h2 className="transactions-title">Transaction History</h2>
+                    <div className="wallet-filter-chips">
+                      <button
+                        type="button"
+                        className={`filter-chip ${
+                          walletFilter === "all" ? "active" : ""
+                        }`}
+                        onClick={() => setWalletFilter("all")}
+                      >
+                        All
+                      </button>
+                      <button
+                        type="button"
+                        className={`filter-chip ${
+                          walletFilter === "refund" ? "active" : ""
+                        }`}
+                        onClick={() => setWalletFilter("refund")}
+                      >
+                        Refunds
+                      </button>
+                      <button
+                        type="button"
+                        className={`filter-chip ${
+                          walletFilter === "debit" ? "active" : ""
+                        }`}
+                        onClick={() => setWalletFilter("debit")}
+                      >
+                        Spent
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* TRANSACTION LIST */}
+                  {walletLoading ? (
+                    <div className="wallet-loading-wrap">
+                      <Clock size={28} className="animate-spin text-green" />
+                      <span>Loading wallet history...</span>
+                    </div>
+                  ) : !wallet?.transactions || wallet.transactions.length === 0 ? (
+                    <div className="empty-tab-state wallet-empty">
+                      <div className="empty-icon-wrap">
+                        <Wallet size={42} />
+                      </div>
+                      <h3>No Wallet Transactions Yet</h3>
+                      <p>
+                        When you cancel an order or receive a refund from GrocerySathi Admin, your credited refund amount will appear here instantly!
+                      </p>
+                      <button
+                        type="button"
+                        className="btn-shop-grocery"
+                        onClick={() => navigate("/cart")}
+                      >
+                        <ShoppingBag size={16} />
+                        <span>Shop Groceries</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="wallet-transactions-list">
+                      {wallet.transactions
+                        .filter((tx) => {
+                          if (walletFilter === "refund")
+                            return (
+                              tx.type === "refund" || tx.direction === "credit"
+                            );
+                          if (walletFilter === "debit")
+                            return (
+                              tx.type === "order_payment" ||
+                              tx.direction === "debit"
+                            );
+                          return true;
+                        })
+                        .map((tx, idx) => {
+                          const isCredit = tx.direction === "credit";
+                          const txDate = tx.createdAt
+                            ? new Date(tx.createdAt).toLocaleDateString(
+                                "en-IN",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )
+                            : "Recent";
+
+                          return (
+                            <div
+                              key={tx._id || idx}
+                              className="wallet-tx-item"
+                            >
+                              <div className="tx-icon-col">
+                                <div
+                                  className={`tx-icon-wrap ${
+                                    isCredit ? "credit" : "debit"
+                                  }`}
+                                >
+                                  {isCredit ? (
+                                    <ArrowDownLeft size={18} />
+                                  ) : (
+                                    <ArrowUpRight size={18} />
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="tx-details-col">
+                                <div className="tx-title-row">
+                                  <h4 className="tx-title">
+                                    {tx.type === "refund"
+                                      ? `Refund for Order #${tx.reference || "Cancelled"}`
+                                      : tx.type === "order_payment"
+                                      ? `Paid for Order #${tx.reference || "Grocery"}`
+                                      : tx.reference || tx.type}
+                                  </h4>
+                                  <span className="tx-status-badge success">
+                                    {tx.status || "Success"}
+                                  </span>
+                                </div>
+                                <div className="tx-meta-row">
+                                  <span className="tx-date">{txDate}</span>
+                                  {tx.meta?.reason && (
+                                    <>
+                                      <span className="tx-divider">•</span>
+                                      <span className="tx-reason">
+                                        {tx.meta.reason}
+                                      </span>
+                                    </>
+                                  )}
+                                  <span className="tx-divider">•</span>
+                                  <span className="tx-balance-after">
+                                    Balance: ₹
+                                    {Number(tx.balanceAfter || 0).toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="tx-amount-col">
+                                <span
+                                  className={`tx-amount-val ${
+                                    isCredit ? "credit" : "debit"
+                                  }`}
+                                >
+                                  {isCredit ? "+" : "-"}₹
+                                  {Number(tx.amount || 0).toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
+                </div>
               </section>
             )}
 

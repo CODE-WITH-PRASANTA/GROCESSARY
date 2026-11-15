@@ -288,24 +288,32 @@ exports.updateReturnStatus = async (req, res) => {
       note: note || `Return ${status}`,
     });
 
-    // Refund side-effects
+    // Refund side-effects → Credit directly into Customer's GrocerySathi Wallet
     if (status === "refunded") {
-      const refundAmount = toNumber(order.returnAmount || order.totalAmount);
+      const refundAmount = toNumber(order.returnAmount || order.payableAmount || order.totalAmount);
 
-      if (order.walletUsed > 0) {
-        const wallet = await Wallet.findOne({ user: order.user });
-        if (wallet) {
-          wallet.balance += toNumber(order.walletUsed);
-          wallet.transactions.unshift({
-            type: "refund",
-            amount: toNumber(order.walletUsed),
-            direction: "credit",
-            balanceAfter: wallet.balance,
-            reference: order.orderNumber,
-            meta: { reason: "Return refunded" },
-          });
-          await wallet.save();
+      if (refundAmount > 0 && order.user) {
+        let wallet = await Wallet.findOne({ user: order.user });
+        if (!wallet) {
+          wallet = await Wallet.create({ user: order.user, balance: 0 });
         }
+
+        wallet.balance = Math.round((wallet.balance + refundAmount) * 100) / 100;
+        wallet.transactions.unshift({
+          type: "refund",
+          amount: refundAmount,
+          direction: "credit",
+          balanceAfter: wallet.balance,
+          reference: order.orderNumber,
+          meta: {
+            reason: note || `Manual refund for order ${order.orderNumber}`,
+            orderId: order._id,
+            refundMethod: "wallet",
+          },
+          status: "success",
+        });
+        await wallet.save();
+        order.paymentStatus = "refunded";
       }
 
       if (order.pointsUsed > 0) {
@@ -321,27 +329,6 @@ exports.updateReturnStatus = async (req, res) => {
             note: "Return refund",
           });
           await points.save();
-        }
-      }
-
-      if (
-        order.paymentMethod === "razorpay" &&
-        order.paymentStatus === "paid" &&
-        order.razorpayPaymentId &&
-        refundAmount > 0
-      ) {
-        try {
-          const razorpay = require("../config/razorpay");
-          await razorpay.payments.refund(order.razorpayPaymentId, {
-            amount: Math.round(refundAmount * 100),
-            notes: {
-              reason: "Return refunded",
-              orderNumber: order.orderNumber,
-            },
-          });
-          order.paymentStatus = "refunded";
-        } catch (refundErr) {
-          console.error("Razorpay return refund error:", refundErr);
         }
       }
     }

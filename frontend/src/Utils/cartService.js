@@ -1,4 +1,5 @@
 import API, { BASE_URL } from "../api/axios";
+import formatUnit from "./formatUnit";
 
 export const GUEST_CART_KEY = "guestCart";
 export const STANDARD_DELIVERY_FEE = 0;
@@ -33,7 +34,10 @@ export const isLoggedIn = () => {
 // =========================================================
 export const getGuestCart = () => {
   try {
-    const raw = localStorage.getItem(GUEST_CART_KEY);
+    const raw =
+      localStorage.getItem("guestCart") ||
+      localStorage.getItem("guest_cart") ||
+      localStorage.getItem("cart");
     const parsed = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
@@ -44,7 +48,9 @@ export const getGuestCart = () => {
 
 export const saveGuestCart = (cart) => {
   try {
-    localStorage.setItem(GUEST_CART_KEY, JSON.stringify(cart));
+    const json = JSON.stringify(cart);
+    localStorage.setItem("guestCart", json);
+    localStorage.setItem("guest_cart", json);
     const summary = calculateCartSummary(cart);
     window.dispatchEvent(
       new CustomEvent("cartUpdated", {
@@ -55,6 +61,7 @@ export const saveGuestCart = (cart) => {
         },
       })
     );
+    window.dispatchEvent(new Event("cartUpdated"));
   } catch (error) {
     console.error("Error saving guest cart:", error);
   }
@@ -83,16 +90,15 @@ export const normalizeCartItem = (rawItem) => {
   }
 
   const price = Number(prod.price || prod.discountPrice || 0);
-  const originalPrice = Number(prod.writtenPrice || prod.originalPrice || price);
+  const originalPrice = Number(
+    prod.writtenPrice || prod.originalPrice || prod.oldPrice || price
+  );
   const discount =
     originalPrice > price && originalPrice > 0
       ? Math.round(((originalPrice - price) / originalPrice) * 100)
       : Number(prod.discount || 0);
 
-  const unitLabel =
-    typeof prod.unit === "object"
-      ? prod.unit?.name || prod.unit?.symbol || "1 unit"
-      : prod.unit || "1 unit";
+  const unitLabel = formatUnit(prod.unit, prod.unitNo || prod.unitNob);
 
   return {
     id: productId,
@@ -240,7 +246,9 @@ export const addToCart = async (product, quantity = 1) => {
     localCart.push({ ...normalized, quantity: qty });
   }
 
-  localStorage.setItem(GUEST_CART_KEY, JSON.stringify(localCart));
+  const jsonCart = JSON.stringify(localCart);
+  localStorage.setItem(GUEST_CART_KEY, jsonCart);
+  localStorage.setItem("guest_cart", jsonCart);
 
   const summary = calculateCartSummary(localCart);
   window.dispatchEvent(
@@ -253,6 +261,7 @@ export const addToCart = async (product, quantity = 1) => {
       },
     })
   );
+  window.dispatchEvent(new Event("cartUpdated"));
 
   return { success: true, message: "Added to cart" };
 };
@@ -282,6 +291,7 @@ export const updateCartQuantity = async (productId, quantity) => {
         },
       })
     );
+    window.dispatchEvent(new Event("cartUpdated"));
     return { success: true };
   }
 
@@ -289,7 +299,9 @@ export const updateCartQuantity = async (productId, quantity) => {
   const item = localCart.find((i) => String(i.productId || i.id) === pid);
   if (item) {
     item.quantity = qty;
-    localStorage.setItem(GUEST_CART_KEY, JSON.stringify(localCart));
+    const jsonCart = JSON.stringify(localCart);
+    localStorage.setItem(GUEST_CART_KEY, jsonCart);
+    localStorage.setItem("guest_cart", jsonCart);
   }
 
   const summary = calculateCartSummary(localCart);
@@ -303,6 +315,7 @@ export const updateCartQuantity = async (productId, quantity) => {
       },
     })
   );
+  window.dispatchEvent(new Event("cartUpdated"));
 
   return { success: true };
 };
@@ -331,13 +344,16 @@ export const removeFromCart = async (productId) => {
         },
       })
     );
+    window.dispatchEvent(new Event("cartUpdated"));
     return { success: true };
   }
 
   let localCart = getGuestCart().filter(
     (i) => String(i.productId || i.id) !== pid
   );
-  localStorage.setItem(GUEST_CART_KEY, JSON.stringify(localCart));
+  const jsonCart = JSON.stringify(localCart);
+  localStorage.setItem(GUEST_CART_KEY, jsonCart);
+  localStorage.setItem("guest_cart", jsonCart);
 
   const summary = calculateCartSummary(localCart);
   window.dispatchEvent(
@@ -350,6 +366,7 @@ export const removeFromCart = async (productId) => {
       },
     })
   );
+  window.dispatchEvent(new Event("cartUpdated"));
 
   return { success: true };
 };
@@ -368,6 +385,8 @@ export const clearCart = async () => {
     try {
       localStorage.removeItem(GUEST_CART_KEY);
       localStorage.removeItem("guestCart");
+      localStorage.removeItem("guest_cart");
+      localStorage.removeItem("cart");
     } catch {}
   }
 
@@ -380,6 +399,7 @@ export const clearCart = async () => {
       },
     })
   );
+  window.dispatchEvent(new Event("cartUpdated"));
 
   return { success: true };
 };
@@ -391,6 +411,7 @@ export const clearLocalCartOnLogout = () => {
   try {
     localStorage.removeItem(GUEST_CART_KEY);
     localStorage.removeItem("guestCart");
+    localStorage.removeItem("guest_cart");
     localStorage.removeItem("cart");
   } catch {}
   window.dispatchEvent(
@@ -402,6 +423,7 @@ export const clearLocalCartOnLogout = () => {
       },
     })
   );
+  window.dispatchEvent(new Event("cartUpdated"));
 };
 
 // =========================================================

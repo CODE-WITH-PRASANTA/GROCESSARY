@@ -138,7 +138,7 @@ const placeOrder = async (req, res) => {
         .json({ success: false, message: "No items in order." });
     }
 
-    if (!["razorpay", "cod"].includes(paymentMethod)) {
+    if (!["razorpay", "cod", "wallet"].includes(paymentMethod)) {
       return res
         .status(400)
         .json({ success: false, message: "Unsupported payment method." });
@@ -309,10 +309,8 @@ const placeOrder = async (req, res) => {
       walletDoc = await Wallet.findOne({ user: req.user._id });
 
       if (walletDoc && walletDoc.balance > 0) {
-        const maxWallet = Math.min(
-          walletDoc.balance,
-          totalAmount * rewards.MAX_WALLET_USE_PERCENT,
-        );
+        // Allow up to 100% of order totalAmount to be paid using wallet
+        const maxWallet = Math.min(walletDoc.balance, totalAmount);
         walletUsed = Math.floor(maxWallet * 100) / 100;
       }
     }
@@ -455,44 +453,49 @@ const placeOrder = async (req, res) => {
     }
 
     // ------------------------------------------------
-    // 14. RAZORPAY
+    // 14. WALLET FULL PAYMENT OR ZERO PAYABLE
+    // ------------------------------------------------
+
+    if (paymentMethod === "wallet" || payableAmount <= 0) {
+      order.paymentStatus = "paid";
+      order.orderStatus = "confirmed";
+      order.paymentMethod = "wallet";
+      order.statusHistory.push({
+        status: "confirmed",
+        note: "Paid fully via GrocerySathi Wallet balance",
+      });
+      await order.save();
+
+      // Reserve stock — order is effectively paid
+      await decrementStock(order);
+
+      await Cart.findOneAndUpdate(
+        { user: req.user._id },
+        { $set: { items: [] } },
+      );
+
+      await createNotification({
+        userId: req.user._id,
+        title: "Order confirmed",
+        message: `Order ${order.orderNumber} is confirmed and paid via Wallet.`,
+        type: "order",
+        link: `/orders/${order._id}`,
+        meta: { orderId: order._id, orderNumber: order.orderNumber },
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Order placed using GrocerySathi Wallet.",
+        order,
+        requiresPayment: false,
+      });
+    }
+
+    // ------------------------------------------------
+    // 15. RAZORPAY (WHEN REMAINING AMOUNT > 0)
     // ------------------------------------------------
 
     if (paymentMethod === "razorpay") {
-      // Fully covered by wallet + points
-      if (payableAmount <= 0) {
-        order.paymentStatus = "paid";
-        order.orderStatus = "confirmed";
-        order.statusHistory.push({
-          status: "confirmed",
-          note: "Paid fully via wallet + points",
-        });
-        await order.save();
-
-        // Reserve stock — order is effectively paid
-        await decrementStock(order);
-
-        await Cart.findOneAndUpdate(
-          { user: req.user._id },
-          { $set: { items: [] } },
-        );
-
-        await createNotification({
-          userId: req.user._id,
-          title: "Order confirmed",
-          message: `Order ${order.orderNumber} is confirmed and paid.`,
-          type: "order",
-          link: `/orders/${order._id}`,
-          meta: { orderId: order._id, orderNumber: order.orderNumber },
-        });
-
-        return res.status(201).json({
-          success: true,
-          message: "Order placed using wallet and points.",
-          order,
-          requiresPayment: false,
-        });
-      }
 
       // Create Razorpay order
       const razorpayOrder = await razorpay.orders.create({
@@ -1146,36 +1149,27 @@ const cancelOrder = async (req, res) => {
     // Refund handling — depends on payment state
     // ------------------------------------------------
     if (order.paymentStatus === "paid") {
-      // Refund wallet + points first
-      await refundWalletAndPoints(order, "Order cancelled by user");
+      // Direct paid order cancellations to Admin Returns (http://localhost:5174/orders/returns)
+      // so Admin can review and manually refund the amount into the customer's wallet
+      order.returnStatus = "requested";
+      order.returnType = "refund";
+      order.returnReason = req.body?.reason || "Cancelled by customer after payment";
+      order.returnNote = req.body?.note || "Order cancelled after payment; pending manual admin refund to customer wallet";
+      order.returnRequestedAt = new Date();
+      order.returnAmount = Number(order.payableAmount || order.totalAmount || 0);
 
-      // Refund Razorpay (if this was an online payment)
-      if (order.paymentMethod === "razorpay" && order.razorpayPaymentId) {
-        try {
-          await razorpay.payments.refund(order.razorpayPaymentId, {
-            amount: Math.round(order.payableAmount * 100),
-            notes: {
-              reason: "User cancelled order",
-              orderNumber: order.orderNumber,
-            },
-          });
-
-          order.paymentStatus = "refunded";
-          order.statusHistory.push({
-            status: "cancelled",
-            note: "Razorpay refund issued",
-          });
-        } catch (refundErr) {
-          console.error("Razorpay refund error:", refundErr);
-          // Leave paymentStatus as "paid" so admin can retry the refund
-        }
-      } else {
-        // COD, wallet, or points fully paid → mark refunded
-        order.paymentStatus = "refunded";
-      }
+      order.statusHistory.push({
+        status: "cancelled",
+        note: "Cancelled by customer. Refund request forwarded to Admin Panel for manual Wallet credit.",
+      });
+      // paymentStatus remains "paid" until admin approves and processes refund to wallet
     } else if (order.paymentStatus === "pending") {
       // Not yet paid → just mark failed
       order.paymentStatus = "failed";
+      order.statusHistory.push({
+        status: "cancelled",
+        note: "Cancelled by customer (unpaid order)",
+      });
     }
     // If already "failed" or "refunded", leave as-is
 

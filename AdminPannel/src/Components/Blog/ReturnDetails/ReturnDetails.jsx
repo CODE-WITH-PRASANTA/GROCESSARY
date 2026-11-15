@@ -121,7 +121,7 @@ const ReturnDetails = () => {
     if (!details) return;
     const verbs = {
       approved: "Approve this return request",
-      refunded: "Process refund and mark refunded",
+      refunded: `Process refund of ₹${Number(details.amount || 0).toFixed(2)} directly to customer's GrocerySathi Wallet`,
       replaced: "Mark this return as replaced",
       rejected: "Reject this return request",
       picked: "Confirm that item has been picked up",
@@ -139,7 +139,11 @@ const ReturnDetails = () => {
       }
 
       await API.put(`/admin/returns/${details.id}/status`, payload);
-      alert(`Status updated to ${nextStatus.toUpperCase()}`);
+      if (nextStatus === "refunded") {
+        alert(`Success! ₹${Number(details.amount || 0).toFixed(2)} has been credited to the customer's GrocerySathi Wallet.`);
+      } else {
+        alert(`Status updated to ${nextStatus.toUpperCase()}`);
+      }
       await fetchDetails();
     } catch (err) {
       console.error("Update return status error:", err);
@@ -270,7 +274,7 @@ const ReturnDetails = () => {
   const canSchedule = ["requested", "approved", "pickup_scheduled"].includes(details.status);
   const canVerifyPick = details.status === "pickup_scheduled";
   const canInspect = ["picked", "inspection"].includes(details.status);
-  const canRefund = ["approved", "pickup_scheduled", "picked", "inspection"].includes(details.status);
+  const canRefund = ["requested", "approved", "pickup_scheduled", "picked", "inspection"].includes(details.status);
   const canReplace = ["approved", "pickup_scheduled", "picked", "inspection"].includes(details.status);
   const canReject = !isTerminal;
 
@@ -363,8 +367,15 @@ const ReturnDetails = () => {
               className="rtd-action-btn btn-refund"
               onClick={() => handleUpdateStatus("refunded")}
               disabled={busy}
+              style={{
+                backgroundColor: "#059669",
+                color: "#ffffff",
+                fontWeight: 700,
+                border: "none",
+                boxShadow: "0 4px 12px rgba(5, 150, 105, 0.25)",
+              }}
             >
-              Process Refund (₹{Number(details.amount || 0).toFixed(2)})
+              ⚡ Refund to Customer Wallet (₹{Number(details.amount || 0).toFixed(2)})
             </button>
           )}
 

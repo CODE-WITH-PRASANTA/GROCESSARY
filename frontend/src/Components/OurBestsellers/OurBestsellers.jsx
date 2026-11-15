@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API, { BASE_URL } from "../../api/axios";
+import formatUnit from "../../Utils/formatUnit";
 import Swal from "sweetalert2";
 
 import {
@@ -211,31 +212,10 @@ export const OurBestsellers = () => {
   // =======================================================
 
   const getUnitDisplay = (product) => {
-    const unitName = getSafeText(
-      product?.unitName ??
-        product?.unit?.name ??
-        product?.unit ??
-        "",
-      ""
+    return formatUnit(
+      product?.unitName ?? product?.unit?.name ?? product?.unit ?? "",
+      product?.unitNo ?? product?.unit_no ?? product?.quantity ?? product?.packageSize ?? ""
     );
-
-    const unitNo = Number(
-      product?.unitNo ??
-        product?.unit_no ??
-        product?.quantity ??
-        product?.packageSize ??
-        0
-    );
-
-    if (unitNo > 0 && unitName) {
-      return `${unitNo} ${unitName}`;
-    }
-
-    if (unitNo > 0) {
-      return String(unitNo);
-    }
-
-    return unitName;
   };
 
   // =======================================================

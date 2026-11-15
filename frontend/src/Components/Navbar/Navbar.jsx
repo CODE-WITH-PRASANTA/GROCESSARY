@@ -20,6 +20,16 @@ import {
   ShoppingCart,
   Eye,
   Package,
+  MapPin,
+  Crosshair,
+  Navigation,
+  Home as HomeIcon,
+  HelpCircle,
+  BookOpen,
+  Headphones,
+  Info,
+  Zap,
+  Phone,
 } from "lucide-react";
 
 import logo from "../../assets/Grocessary Sathi Png.png";
@@ -27,6 +37,7 @@ import "./Navbar.css";
 import { fetchWishlistItems } from "../../Utils/wishlistService";
 import UserAuth from "../UserAuth/UserAuth";
 import API, { BASE_URL } from "../../api/axios";
+import formatUnit from "../../Utils/formatUnit";
 
 // ======================================================
 // NAVIGATION PATHS
@@ -52,6 +63,7 @@ const NAV_PATHS = {
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const isHomePage = location.pathname === "/" || location.pathname === "";
 
   
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -611,7 +623,10 @@ const Navbar = () => {
     // GUEST CART
     // ==================================================
     if (!token) {
-      const storedCart = localStorage.getItem("guestCart");
+      const storedCart =
+        localStorage.getItem("guestCart") ||
+        localStorage.getItem("guest_cart") ||
+        localStorage.getItem("cart");
 
       if (!storedCart) {
         setCartItemCount(0);
@@ -825,12 +840,13 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleCartUpdated = (e) => {
-      if (e?.detail?.itemCount === 0 || e?.detail?.items?.length === 0) {
-        setCartItemCount(0);
-        setCartTotal(0);
-      } else {
-        fetchCart();
+      if (typeof e?.detail?.itemCount === "number" && !getToken()) {
+        setCartItemCount(e.detail.itemCount);
+        if (typeof e.detail.total === "number") {
+          setCartTotal(e.detail.total);
+        }
       }
+      fetchCart();
     };
 
     window.addEventListener("cartUpdated", handleCartUpdated);
@@ -1263,51 +1279,41 @@ const Navbar = () => {
         {/* TOP BAR */}
         <div className="navbar-top-bar">
           <div className="navbar-container navbar-top-container">
-            {/* LOGO */}
+            {/* LOGO WITH PROMINENT HIGHLIGHT & BRAND IDENTITY */}
             <div className="navbar-logo-container">
               <Link
                 to={NAV_PATHS.HOME}
                 aria-label="Grocery Sathi Homepage"
                 onClick={closeMobileMenu}
+                className="navbar-logo-link"
               >
                 <img
                   src={logo}
                   alt="Grocery Sathi - Fresh Organic Groceries Logo"
                   className="navbar-logo-img"
                 />
+                <div className="navbar-brand-text">
+                  <span className="navbar-brand-name">
+                    Grocery<span className="brand-highlight">Sathi</span>
+                  </span>
+                  <span className="navbar-brand-tag">Fresh Produce &bull; 10 Mins</span>
+                </div>
               </Link>
             </div>
 
-            {/* SEARCH */}
-            <form
-              className="navbar-search-box"
-              action={NAV_PATHS.SEARCH}
-              method="GET"
-              role="search"
-            >
-              <Search
-                className="navbar-search-icon"
-                size={18}
-                aria-hidden="true"
-              />
-
-              <input
-                type="text"
-                name="q"
-                placeholder="Search fresh vegetables, fruits, groceries..."
-                className="navbar-search-input"
-                aria-label="Search products"
-                required
-              />
-            </form>
+            {/* QUICK-COMMERCE HIGHLIGHT PILL (ELIMINATES TOP BAR BLANK SPACE) */}
+            <div className="navbar-top-highlight-pill" title="Instant Quick-Commerce Delivery Guarantee">
+              <div className="nav-highlight-badge">
+                <Zap size={13} className="nav-highlight-zap" />
+                <span>EXPRESS</span>
+              </div>
+              <span className="nav-highlight-text">
+                Farm-fresh groceries delivered in <strong>10 minutes</strong>
+              </span>
+            </div>
 
             {/* CONTACT */}
             <div className="navbar-info-wrapper">
-              <div className="navbar-info-item">
-                <span className="navbar-info-title">Monday - Friday:</span>
-                <span className="navbar-info-sub">8:00 AM - 9:00 PM</span>
-              </div>
-
               <div className="navbar-info-item">
                 <span className="navbar-info-title">Support 24/7:</span>
                 <a
@@ -1315,7 +1321,8 @@ const Navbar = () => {
                   className="navbar-info-phone"
                   aria-label="Call Grocery Sathi Support"
                 >
-                  +91 98878 68746
+                  <Phone size={13} className="navbar-phone-icon" />
+                  <span>+91 98878 68746</span>
                 </a>
               </div>
             </div>
@@ -1409,485 +1416,108 @@ const Navbar = () => {
           aria-label="Main Navigation"
         >
           <div className="navbar-container navbar-bottom-container">
-            {/* ALL CATEGORIES */}
-            <div
-              className="navbar-category-wrapper"
-              onMouseEnter={() => {
-                if (window.innerWidth > 768) {
-                  setIsCategoryOpen(true);
-                }
-              }}
-              onMouseLeave={() => {
-                if (window.innerWidth > 768) {
-                  setIsCategoryOpen(false);
-                  setActiveCategory(null);
-                }
-              }}
+            {/* SEARCH BAR (MOVED TO BELOW BAR) */}
+            <form
+              className="navbar-search-box navbar-search-box--bottom"
+              action={NAV_PATHS.SEARCH}
+              method="GET"
+              role="search"
             >
-              <button
-                type="button"
-                className={`navbar-category-btn ${
-                  isCategoryOpen ? "navbar-category-btn-active" : ""
-                }`}
-                onClick={toggleCategoryDropdown}
-                aria-expanded={isCategoryOpen}
-                aria-controls="category-dropdown-menu"
-              >
-                <div className="navbar-category-btn-left">
-                  <Grid size={18} aria-hidden="true" />
-                  <span>All Categories</span>
-                </div>
+              <Search
+                className="navbar-search-icon"
+                size={18}
+                aria-hidden="true"
+              />
 
-                <ChevronRight
-                  size={18}
-                  className={`navbar-category-arrow ${
-                    isCategoryOpen ? "rotate-90" : ""
-                  }`}
-                  aria-hidden="true"
-                />
-              </button>
+              <input
+                type="text"
+                name="q"
+                placeholder="Search fresh vegetables, fruits, groceries, dairy..."
+                className="navbar-search-input"
+                aria-label="Search products"
+                required
+              />
+            </form>
 
-              {/* CATEGORY DROPDOWN - MODERN FLIP STYLE SHOWCASE */}
-              <div
-                id="category-dropdown-menu"
-                className={`navbar-dropdown-menu navbar-flip-mega-dropdown ${
-                  isCategoryOpen ? "navbar-dropdown-show" : ""
+            {/* QUICK NAVIGATION - MODERN SEGMENTED PILL BAR */}
+            <div className="navbar-nav-links navbar-nav-segmented" role="navigation" aria-label="Page segments">
+              <Link
+                to={NAV_PATHS.HOME}
+                onClick={closeMobileMenu}
+                className={`nav-seg-item ${
+                  location.pathname === "/" || location.pathname === ""
+                    ? "nav-seg-item--active"
+                    : ""
                 }`}
               >
-                {loadingCategories ? (
-                  <div className="navbar-dropdown-loading">
-                    <div className="navbar-flip-spinner"></div>
-                    <span>Loading fresh categories...</span>
-                  </div>
-                ) : visibleCategories.length === 0 ? (
-                  <div className="navbar-dropdown-empty">
-                    <Package size={28} className="navbar-empty-icon" />
-                    <span>No active categories found with products.</span>
-                  </div>
-                ) : (
-                  <div className="navbar-mega-grid">
-                    {/* LEFT COLUMN: CATEGORIES LIST */}
-                    <div className="navbar-categories-sidebar">
-                      <div className="navbar-sidebar-header">
-                        <div className="navbar-sidebar-header-left">
-                          <span>Categories</span>
-                          <span className="navbar-sidebar-badge">
-                            {visibleCategories.length}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* QUICK CATEGORY SEARCH BAR */}
-                      <div className="navbar-cat-search-wrap">
-                        <Search size={13} className="navbar-cat-search-icon" />
-                        <input
-                          type="text"
-                          placeholder="Filter categories..."
-                          value={categorySearchText}
-                          onChange={(e) => setCategorySearchText(e.target.value)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="navbar-cat-search-input"
-                          aria-label="Filter categories"
-                        />
-                        {categorySearchText && (
-                          <button
-                            type="button"
-                            className="navbar-cat-search-clear"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCategorySearchText("");
-                            }}
-                            aria-label="Clear filter"
-                          >
-                            <X size={12} />
-                          </button>
-                        )}
-                      </div>
-
-                      <ul className="navbar-categories-menu-list">
-                        {filteredCategories.length === 0 ? (
-                          <li className="navbar-cat-no-match">
-                            <span>No categories matching "{categorySearchText}"</span>
-                          </li>
-                        ) : (
-                          filteredCategories.map((category) => {
-                            const categoryKey = getCategoryKey(category);
-                            const categoryName = getCategoryName(category);
-                            const isSelected = activeCategoryKey === categoryKey;
-                            const count =
-                              typeof category.productCount === "number"
-                                ? category.productCount
-                                : getProductsByCategory(category).length;
-                            const icon = category.icon || "🛒";
-
-                            return (
-                              <li
-                                key={categoryKey}
-                                className={`navbar-cat-menu-item ${
-                                  isSelected ? "navbar-cat-menu-item-active" : ""
-                                }`}
-                                onMouseEnter={() => {
-                                  if (window.innerWidth > 768) {
-                                    setActiveCategory(categoryKey);
-                                  }
-                                }}
-                                onClick={(e) => handleCategoryItemClick(category, e)}
-                                title={categoryName}
-                              >
-                                <div className="navbar-cat-item-content">
-                                  <span className="navbar-cat-emoji">{icon}</span>
-                                  <span className="navbar-cat-name">
-                                    {categoryName}
-                                  </span>
-                                </div>
-                                <div className="navbar-cat-item-right">
-                                  <span
-                                    className="navbar-cat-count-badge"
-                                    title={`${count} products`}
-                                  >
-                                    {count}
-                                  </span>
-                                  <ChevronRight
-                                    size={13}
-                                    className={`navbar-cat-chevron ${
-                                      isSelected ? "navbar-cat-chevron-active" : ""
-                                    }`}
-                                  />
-                                </div>
-                              </li>
-                            );
-                          })
-                        )}
-                      </ul>
-
-                      {/* SIDEBAR FOOTER */}
-                      <div className="navbar-sidebar-footer">
-                        <span>
-                          {filteredCategories.length} of {visibleCategories.length} active
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* RIGHT COLUMN: INTERACTIVE FLIP SHOWCASE */}
-                    <div className="navbar-showcase-panel">
-                      {selectedCategory && (
-                        <>
-                          <div className="navbar-showcase-header">
-                            <div className="navbar-showcase-title-wrap">
-                              <span className="navbar-showcase-icon">
-                                {selectedCategory.icon || "✨"}
-                              </span>
-                              <div>
-                                <h3 className="navbar-showcase-title">
-                                  {activeCategoryName}
-                                </h3>
-                                <p className="navbar-showcase-subtitle">
-                                  {activeCategoryProducts.length}{" "}
-                                  {activeCategoryProducts.length === 1 ? "item" : "items"}{" "}
-                                  available &bull; Hover card to flip &amp; quick-buy
-                                </p>
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              className="navbar-showcase-viewall-btn"
-                              onClick={(e) => handleCategoryClick(selectedCategory, e)}
-                            >
-                              <span>Browse All</span>
-                              <ArrowRight size={14} />
-                            </button>
-                          </div>
-
-                          {/* Subcategory Pills if any */}
-                          {getSubCategories(selectedCategory).length > 0 && (
-                            <div className="navbar-subcat-pills">
-                              {getSubCategories(selectedCategory).map((sub) => {
-                                const subName = getSubCategoryName(sub);
-                                const subSlug = getSubCategorySlug(sub);
-                                const catSlug = getCategorySlug(selectedCategory);
-                                return (
-                                  <Link
-                                    key={subSlug || subName}
-                                    to={`${NAV_PATHS.CATEGORIES}/${catSlug}/${subSlug}`}
-                                    className="navbar-subcat-pill"
-                                    onClick={(e) =>
-                                      handleSubCategoryClick(selectedCategory, sub, e)
-                                    }
-                                  >
-                                    {subName}
-                                  </Link>
-                                );
-                              })}
-                            </div>
-                          )}
-
-                          {/* 3D FLIP PRODUCTS GRID */}
-                          <div className="navbar-flip-cards-grid">
-                            {loadingProducts ? (
-                              <div className="navbar-showcase-loading">
-                                <div className="navbar-flip-spinner"></div>
-                                <span>Loading items...</span>
-                              </div>
-                            ) : activeCategoryProducts.length === 0 ? (
-                              <div className="navbar-showcase-empty">
-                                <span>No items currently in stock for this category</span>
-                              </div>
-                            ) : (
-                              activeCategoryProducts.slice(0, 6).map((product) => {
-                                const productId = getProductId(product);
-                                const productName = getProductName(product);
-                                const image = getProductImage(product);
-                                const currentPrice = getProductPrice(product);
-                                const origPrice = getOriginalPrice(product);
-                                const discountPercent =
-                                  origPrice > currentPrice && origPrice > 0
-                                    ? Math.round(((origPrice - currentPrice) / origPrice) * 100)
-                                    : 0;
-                                const isFlipped = Boolean(flippedCards[productId]);
-                                const unitText =
-                                  product.unit?.name ||
-                                  product.unit ||
-                                  (product.unitNo ? `${product.unitNo} pack` : "");
-
-                                return (
-                                  <div
-                                    key={productId}
-                                    className={`navbar-flip-card ${
-                                      isFlipped ? "flipped" : ""
-                                    }`}
-                                    onClick={(e) => {
-                                      // If mobile, toggle flip on tap
-                                      if (window.innerWidth <= 768) {
-                                        toggleCardFlip(productId, e);
-                                      } else {
-                                        handleProductClick(product);
-                                      }
-                                    }}
-                                  >
-                                    <div className="navbar-flip-card-inner">
-                                      {/* FRONT FACE */}
-                                      <div className="navbar-flip-face navbar-flip-front">
-                                        {discountPercent > 0 && (
-                                          <span className="navbar-flip-discount-tag">
-                                            {discountPercent}% OFF
-                                          </span>
-                                        )}
-                                        <div className="navbar-flip-thumb-wrap">
-                                          {image ? (
-                                            <img
-                                              src={image}
-                                              alt={productName}
-                                              className="navbar-flip-img"
-                                              onError={(e) => {
-                                                e.currentTarget.style.display = "none";
-                                              }}
-                                            />
-                                          ) : (
-                                            <div className="navbar-flip-noimg">🛒</div>
-                                          )}
-                                        </div>
-                                        <div className="navbar-flip-front-body">
-                                          <h4
-                                            className="navbar-flip-prod-title"
-                                            title={productName}
-                                          >
-                                            {productName}
-                                          </h4>
-                                          <div className="navbar-flip-price-row">
-                                            <span className="navbar-flip-price-curr">
-                                              ₹{currentPrice}
-                                            </span>
-                                            {origPrice > currentPrice && (
-                                              <span className="navbar-flip-price-orig">
-                                                ₹{origPrice}
-                                              </span>
-                                            )}
-                                          </div>
-                                        </div>
-                                        <div className="navbar-flip-peek-tab">
-                                          <span>Flip details</span>
-                                          <Sparkles size={11} />
-                                        </div>
-                                      </div>
-
-                                      {/* BACK FACE */}
-                                      <div className="navbar-flip-face navbar-flip-back">
-                                        <div className="navbar-flip-back-top">
-                                          <span className="navbar-flip-instock-badge">
-                                            In Stock
-                                          </span>
-                                          {discountPercent > 0 && (
-                                            <span className="navbar-flip-save-label">
-                                              Save ₹{origPrice - currentPrice}
-                                            </span>
-                                          )}
-                                        </div>
-
-                                        <h4 className="navbar-flip-back-prod-title">
-                                          {productName}
-                                        </h4>
-
-                                        <div className="navbar-flip-specs">
-                                          <div className="navbar-flip-spec-row">
-                                            <span>Price:</span>
-                                            <strong>₹{currentPrice}</strong>
-                                          </div>
-                                          {unitText && (
-                                            <div className="navbar-flip-spec-row">
-                                              <span>Pack:</span>
-                                              <span>{unitText}</span>
-                                            </div>
-                                          )}
-                                        </div>
-
-                                        <div
-                                          className="navbar-flip-card-actions"
-                                          onClick={(e) => e.stopPropagation()}
-                                        >
-                                          <button
-                                            type="button"
-                                            className="navbar-flip-quick-add-btn"
-                                            onClick={(e) =>
-                                              handleAddToCart(product, e)
-                                            }
-                                          >
-                                            <ShoppingCart size={13} />
-                                            <span>Add</span>
-                                          </button>
-                                          <button
-                                            type="button"
-                                            className="navbar-flip-quick-view-btn"
-                                            onClick={() =>
-                                              handleProductClick(product)
-                                            }
-                                            title="View Details"
-                                          >
-                                            <Eye size={13} />
-                                          </button>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })
-                            )}
-                          </div>
-
-                          {activeCategoryProducts.length > 0 && (
-                            <div className="navbar-showcase-footer">
-                              <div className="navbar-showcase-footer-left">
-                                <Sparkles size={12} className="navbar-footer-sparkle" />
-                                <span>
-                                  Showing {Math.min(activeCategoryProducts.length, 6)} of {activeCategoryProducts.length} items
-                                </span>
-                              </div>
-                              <button
-                                type="button"
-                                className="navbar-showcase-footer-link"
-                                onClick={(e) => handleCategoryClick(selectedCategory, e)}
-                              >
-                                View all {activeCategoryProducts.length} products &rarr;
-                              </button>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* SPECIAL OFFER / COUPON BANNER */}
-            <div className="navbar-offer-text">
-              {publicCoupon ? (
-                <div className="navbar-offer-content">
-                  <span className="navbar-offer-highlight">
-                    {publicCoupon.discountType === "percentage"
-                      ? `-${publicCoupon.discountValue}% off`
-                      : `Flat ₹${publicCoupon.discountValue} off`}
-                  </span>{" "}
-                  <span className="navbar-offer-subtext">
-                    {publicCoupon.minPurchase > 0
-                      ? `on your order over ₹${publicCoupon.minPurchase}.`
-                      : "on your grocery order."}
-                  </span>
-
-                  {/* ULTRA-PREMIUM COUPON CODE PILL */}
-                  <button
-                    type="button"
-                    className={`navbar-premium-coupon-pill ${copiedCouponCode ? "copied" : ""}`}
-                    onClick={() => handleCopyCouponCode(publicCoupon.code)}
-                    title="Click to copy coupon code"
-                    aria-label={`Coupon code ${publicCoupon.code}. Click to copy`}
-                  >
-                    <span className="navbar-coupon-pill-shine" aria-hidden="true" />
-                    <span className="navbar-coupon-pill-tag">
-                      <Ticket size={13} className="navbar-coupon-pill-icon" />
-                      <span>CODE:</span>
-                    </span>
-                    <span className="navbar-coupon-pill-code">{publicCoupon.code}</span>
-                    <span className="navbar-coupon-pill-action">
-                      {copiedCouponCode ? (
-                        <>
-                          <Check size={12} className="copy-icon check-icon" />
-                          <span>COPIED!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy size={12} className="copy-icon" />
-                          <span>COPY</span>
-                        </>
-                      )}
-                    </span>
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <strong>Fresh Grocery</strong> delivered daily to your doorstep.{" "}
-                  <Link to={NAV_PATHS.HOME} onClick={closeMobileMenu}>
-                    Shop Now
-                  </Link>
-                </>
-              )}
-            </div>
-
-            {/* QUICK NAVIGATION */}
-            <div className="navbar-nav-links">
-              <Link to={NAV_PATHS.HOME} onClick={closeMobileMenu}>
-                Home
+                <HomeIcon size={14} className="nav-seg-icon" aria-hidden="true" />
+                <span>Home</span>
               </Link>
 
-              <Link to={NAV_PATHS.FAQ} onClick={closeMobileMenu}>
-                Faq
+              <Link
+                to={NAV_PATHS.FAQ}
+                onClick={closeMobileMenu}
+                className={`nav-seg-item ${
+                  location.pathname === "/faq" ? "nav-seg-item--active" : ""
+                }`}
+              >
+                <HelpCircle size={14} className="nav-seg-icon" aria-hidden="true" />
+                <span>FAQ</span>
               </Link>
 
-              <Link to={NAV_PATHS.BLOG} onClick={closeMobileMenu}>
-                Blog
+              <Link
+                to={NAV_PATHS.BLOG}
+                onClick={closeMobileMenu}
+                className={`nav-seg-item ${
+                  location.pathname === "/blogs" || location.pathname.startsWith("/news")
+                    ? "nav-seg-item--active"
+                    : ""
+                }`}
+              >
+                <BookOpen size={14} className="nav-seg-icon" aria-hidden="true" />
+                <span>Blog</span>
               </Link>
 
-              <Link to={NAV_PATHS.CONTACT} onClick={closeMobileMenu}>
-                Contact
+              <Link
+                to={NAV_PATHS.CONTACT}
+                onClick={closeMobileMenu}
+                className={`nav-seg-item ${
+                  location.pathname === "/contact-us" ? "nav-seg-item--active" : ""
+                }`}
+              >
+                <Headphones size={14} className="nav-seg-icon" aria-hidden="true" />
+                <span>Contact</span>
               </Link>
 
-              <Link to={NAV_PATHS.ABOUT} onClick={closeMobileMenu}>
-                About Us
+              <Link
+                to={NAV_PATHS.ABOUT}
+                onClick={closeMobileMenu}
+                className={`nav-seg-item ${
+                  location.pathname === "/about-us" || location.pathname.startsWith("/about")
+                    ? "nav-seg-item--active"
+                    : ""
+                }`}
+              >
+                <Info size={14} className="nav-seg-icon" aria-hidden="true" />
+                <span>About Us</span>
               </Link>
 
               <Link
                 to={NAV_PATHS.WISHLIST}
                 onClick={closeMobileMenu}
-                className="navbar-nav-mobile-only"
+                className="nav-seg-item navbar-nav-mobile-only"
               >
-                Wishlist {wishlistCount > 0 ? `(${wishlistCount})` : ""}
+                <Heart size={14} className="nav-seg-icon" aria-hidden="true" />
+                <span>Wishlist {wishlistCount > 0 ? `(${wishlistCount})` : ""}</span>
               </Link>
 
               <Link
                 to={NAV_PATHS.CART}
                 onClick={closeMobileMenu}
-                className="navbar-nav-mobile-only"
+                className="nav-seg-item navbar-nav-mobile-only"
               >
-                Shopping Cart {cartItemCount > 0 ? `(${cartItemCount})` : ""}
+                <ShoppingCart size={14} className="nav-seg-icon" aria-hidden="true" />
+                <span>Shopping Cart {cartItemCount > 0 ? `(${cartItemCount})` : ""}</span>
               </Link>
             </div>
           </div>
@@ -2014,8 +1644,6 @@ const Navbar = () => {
           </div>
         </div>
       )}
-
-      
     </>
   );
 };

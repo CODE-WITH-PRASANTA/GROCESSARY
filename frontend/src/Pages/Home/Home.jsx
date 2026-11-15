@@ -1,6 +1,8 @@
 import React from 'react'
 import HeroSection from '../../Components/HeroSection/HeroSection'
+import GroceryHero from '../../Components/GroceryHero/GroceryHero'
 import HomeCategories from '../../Components/HomeCategories/HomeCategories'
+import CategoryWiseSections from '../../Components/CategoryWiseSections/CategoryWiseSections'
 import HomeDailyDiscounts from '../../Components/HomeDailyDiscounts/HomeDailyDiscounts'
 import HomeTodayDiscounts from '../../Components/HomeTodayDiscounts/HomeTodayDiscounts'
 import OurBestsellers from '../../Components/OurBestsellers/OurBestsellers'
@@ -15,8 +17,10 @@ import PopularProducts from '../../Components/PopularProducts/PopularProducts'
 const Home = () => {
   return (
     <div>
-      <MobileSection />
-      <PopularProducts />
+      <GroceryHero />
+      <HomeCategories />
+      <CategoryWiseSections />
+      {/* <PopularProducts /> */}
       {/* <HomeTodayDiscounts/> */}
       
       {/* <OurBestsellers /> */}

@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Phone,
   Check,
+  Wallet,
 } from "lucide-react";
 import API from "../../api/axios";
 import {
@@ -34,6 +35,8 @@ import {
     isLoggedIn,
 } from "../../Utils/cartService";
 import { addToWishlist } from "../../Utils/wishlistService";
+import CartRelatedProducts from "../CartRelatedProducts/CartRelatedProducts";
+import formatUnit from "../../Utils/formatUnit";
 import "./CartSection.css";
 
 const CartSection = () => {
@@ -76,6 +79,95 @@ const CartSection = () => {
     isDefault: false,
   });
   const [addressSaving, setAddressSaving] = useState(false);
+
+  // =======================================================
+  // GROCERY SATHI WALLET STATE
+  // =======================================================
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [useWallet, setUseWallet] = useState(false);
+
+  useEffect(() => {
+    const loadWalletBalance = async () => {
+      if (!isLoggedIn()) return;
+      try {
+        const { data } = await API.get("/wallet");
+        if (data?.success && data?.wallet) {
+          setWalletBalance(Number(data.wallet.balance || 0));
+        }
+      } catch (err) {
+        console.warn("Load wallet error:", err);
+      }
+    };
+    loadWalletBalance();
+  }, []);
+
+  // =======================================================
+  // DONATION & TIP STATES
+  // =======================================================
+  const [isDonationChecked, setIsDonationChecked] = useState(false);
+  const donationAmount = 1; // ₹1 default
+  const [tipAmount, setTipAmount] = useState(0);
+  const [isCustomTipOpen, setIsCustomTipOpen] = useState(false);
+  const [customTipInput, setCustomTipInput] = useState("");
+
+  const handleToggleDonation = () => {
+    setIsDonationChecked((prev) => !prev);
+  };
+
+  const handleSelectTip = (amount) => {
+    if (tipAmount === amount) {
+      setTipAmount(0);
+      setIsCustomTipOpen(false);
+    } else {
+      setTipAmount(amount);
+      setIsCustomTipOpen(false);
+    }
+  };
+
+  const handleOpenCustomTip = () => {
+    setIsCustomTipOpen(true);
+    setCustomTipInput(
+      tipAmount > 0 && tipAmount !== 20 && tipAmount !== 30 && tipAmount !== 50
+        ? String(tipAmount)
+        : ""
+    );
+  };
+
+  const handleApplyCustomTip = () => {
+    const parsed = parseInt(customTipInput, 10);
+    if (!isNaN(parsed) && parsed > 0 && parsed <= 500) {
+      setTipAmount(parsed);
+      setIsCustomTipOpen(false);
+    } else if (parsed === 0 || !customTipInput.trim()) {
+      setTipAmount(0);
+      setIsCustomTipOpen(false);
+    } else {
+      Swal.fire({
+        icon: "warning",
+        title: "Invalid Tip Amount",
+        text: "Please enter a tip between ₹1 and ₹500.",
+        confirmButtonColor: "#059669",
+      });
+    }
+  };
+
+  const handleReadMoreFeedingIndia = (e) => {
+    e?.stopPropagation();
+    Swal.fire({
+      icon: "info",
+      title: "Feeding India Initiative",
+      html: `
+        <div style="text-align: left; font-size: 14px; line-height: 1.6; color: #374151;">
+          <p><strong>Feeding India</strong> is a non-profit organization dedicated to eradicating hunger and malnutrition across India.</p>
+          <p style="margin-top: 10px;">• <strong>100% of your ₹1 donation</strong> is used directly towards providing hot, nutritious meals to underprivileged children and daily wage families.</p>
+          <p style="margin-top: 8px;">• Meals are prepared hygienically and distributed through verified grassroots kitchens.</p>
+          <p style="margin-top: 10px; color: #059669; font-weight: 600;">Thank you for making a tangible difference with every grocery order!</p>
+        </div>
+      `,
+      confirmButtonText: "Got it!",
+      confirmButtonColor: "#059669",
+    });
+  };
 
   // =======================================================
   // LOAD CART ITEMS
@@ -202,6 +294,11 @@ const CartSection = () => {
   // SUMMARY CALCULATIONS (NO FREE DELIVERY THRESHOLD)
   // =======================================================
   const summary = calculateCartSummary(items, appliedCoupon);
+  const currentDonation = isDonationChecked ? donationAmount : 0;
+  const currentTip = Number(tipAmount || 0);
+  const preWalletTotal = Math.max(0, summary.grandTotal + currentDonation + currentTip);
+  const walletDeduction = useWallet && walletBalance > 0 ? Math.min(walletBalance, preWalletTotal) : 0;
+  const finalPayable = Math.max(0, preWalletTotal - walletDeduction);
 
   // =======================================================
   // HANDLERS: QUANTITY
@@ -511,28 +608,33 @@ const CartSection = () => {
     try {
       setCheckoutLoading(true);
 
-      // 3. Ensure Razorpay SDK is ready
-      const isSdkReady = await loadRazorpayScript();
-      if (!isSdkReady || !window.Razorpay) {
-        setCheckoutLoading(false);
-        Swal.fire({
-          icon: "error",
-          title: "Payment SDK Error",
-          text: "Unable to load Razorpay payment gateway. Please check your network connection.",
-          confirmButtonColor: "#059669",
-        });
-        return;
+      // 3. Ensure Razorpay SDK is ready (only needed if gateway payment > 0)
+      if (finalPayable > 0) {
+        const isSdkReady = await loadRazorpayScript();
+        if (!isSdkReady || !window.Razorpay) {
+          setCheckoutLoading(false);
+          Swal.fire({
+            icon: "error",
+            title: "Payment SDK Error",
+            text: "Unable to load Razorpay payment gateway. Please check your network connection.",
+            confirmButtonColor: "#059669",
+          });
+          return;
+        }
       }
 
-      // 4. Place order on backend to create Razorpay Order
+      // 4. Place order on backend to create Razorpay Order or complete Wallet Order
       const orderPayload = {
         addressId: selectedAddress._id || selectedAddress.id,
         items: items.map((i) => ({
           productId: i.productId || i.id,
           quantity: Number(i.quantity),
         })),
-        paymentMethod: "razorpay",
-        useWallet: false,
+        paymentMethod: finalPayable === 0 ? "wallet" : "razorpay",
+        tipAmount: currentTip,
+        donationAmount: currentDonation,
+        couponCode: appliedCoupon?.code || "",
+        useWallet: Boolean(useWallet),
         usePoints: false,
       };
 
@@ -549,14 +651,14 @@ const CartSection = () => {
         return;
       }
 
-      // If fully covered by zero payable
+      // If fully covered by wallet (zero gateway payable)
       if (!data.requiresPayment) {
         setCheckoutLoading(false);
         await clearCartService();
         Swal.fire({
           icon: "success",
           title: "Order Placed Successfully!",
-          text: `Your order #${data.order?.orderNumber || ""} has been confirmed.`,
+          text: `Your order #${data.order?.orderNumber || ""} has been confirmed using your GrocerySathi Wallet balance.`,
           confirmButtonColor: "#059669",
           confirmButtonText: "View My Orders",
         }).then(() => {
@@ -728,6 +830,14 @@ const CartSection = () => {
               </Link>
             </div>
           </div>
+
+          {/* QUICK ADDITIONS EVEN WHEN CART IS EMPTY */}
+          <div style={{ maxWidth: "860px", margin: "24px auto 0 auto" }}>
+            <CartRelatedProducts
+              cartItems={[]}
+              onItemAdded={loadCartData}
+            />
+          </div>
         </div>
       </div>
     );
@@ -894,7 +1004,9 @@ const CartSection = () => {
 
                         <div className="cart-item-details">
                           <span className="cart-item-category">
-                            {item.category}
+                            {typeof item.category === "object"
+                              ? item.category?.name || "Grocery"
+                              : item.category || "Grocery"}
                           </span>
                           <Link
                             to={`/productdetails/${item.id}`}
@@ -903,7 +1015,7 @@ const CartSection = () => {
                             {item.name}
                           </Link>
                           <span className="cart-item-unit">
-                            Pack: {item.unit}
+                            Pack: {formatUnit(item.unit)}
                           </span>
 
                           <div className="cart-item-stock-tag">
@@ -1014,14 +1126,21 @@ const CartSection = () => {
                 })}
               </div>
             </div>
+
+            {/* RELATED PRODUCTS ON LEFT SIDE OF CART PAGE */}
+            <CartRelatedProducts
+              cartItems={items}
+              onItemAdded={loadCartData}
+            />
           </section>
 
           {/* ==============================================
               RIGHT COLUMN: ORDER SUMMARY (STICKY)
           =============================================== */}
           <aside className="cart-summary-column" aria-label="Order Summary">
+            {/* ORDER SUMMARY (BILL DETAILS) CARD */}
             <div className="cart-summary-card">
-              <h2 className="summary-title">Order Summary</h2>
+              <h2 className="summary-title">Bill Details</h2>
 
               {/* SUMMARY ROWS */}
               <div className="summary-rows-wrap">
@@ -1052,17 +1171,126 @@ const CartSection = () => {
                   </div>
                 )}
 
-                
+                <div className="summary-row">
+                  <span className="summary-label">Delivery Partner Fee</span>
+                  <span className="summary-val text-green">FREE</span>
+                </div>
+
+                {/* DELIVERY PARTNER TIP (IF SELECTED) */}
+                {tipAmount > 0 && (
+                  <div className="summary-row addon-bill-row">
+                    <span className="summary-label">
+                      Delivery Partner Tip
+                      <button
+                        type="button"
+                        className="addon-bill-remove"
+                        onClick={() => setTipAmount(0)}
+                        title="Remove tip"
+                      >
+                        (Remove)
+                      </button>
+                    </span>
+                    <span className="summary-val text-dark">
+                      + ₹{tipAmount.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+
+                {/* FEEDING INDIA DONATION (IF CHECKED) */}
+                {isDonationChecked && (
+                  <div className="summary-row addon-bill-row">
+                    <span className="summary-label">
+                      Feeding India Donation
+                      <button
+                        type="button"
+                        className="addon-bill-remove"
+                        onClick={() => setIsDonationChecked(false)}
+                        title="Remove donation"
+                      >
+                        (Remove)
+                      </button>
+                    </span>
+                    <span className="summary-val text-dark">
+                      + ₹{donationAmount.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+
+                {/* WALLET APPLIED BREAKDOWN ROW */}
+                {useWallet && walletDeduction > 0 && (
+                  <div className="summary-row addon-bill-row wallet-bill-row">
+                    <span className="summary-label">
+                      <Wallet size={13} style={{ marginRight: 5, verticalAlign: "middle" }} />
+                      Wallet Balance Applied
+                      <button
+                        type="button"
+                        className="addon-bill-remove"
+                        onClick={() => setUseWallet(false)}
+                        title="Remove wallet"
+                      >
+                        (Remove)
+                      </button>
+                    </span>
+                    <span className="summary-val text-green">
+                      - ₹{walletDeduction.toFixed(2)}
+                    </span>
+                  </div>
+                )}
 
                 <div className="summary-divider"></div>
 
                 <div className="summary-row grand-total-row">
-                  <span className="grand-total-label">Total Payable</span>
+                  <span className="grand-total-label">To Pay</span>
                   <span className="grand-total-val">
-                    ₹{summary.grandTotal.toFixed(2)}
+                    ₹{finalPayable.toFixed(2)}
                   </span>
                 </div>
               </div>
+
+              {/* GROCERY SATHI WALLET INTEGRATION BOX */}
+              {isLoggedIn() && walletBalance > 0 && (
+                <div
+                  className={`cart-wallet-box ${useWallet ? "active" : ""}`}
+                  onClick={() => setUseWallet((prev) => !prev)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setUseWallet((prev) => !prev);
+                    }
+                  }}
+                  title="Click to apply wallet balance"
+                >
+                  <div className="cart-wallet-left">
+                    <div className="cart-wallet-icon-circle">
+                      <Wallet size={16} />
+                    </div>
+                    <div className="cart-wallet-meta">
+                      <span className="cart-wallet-label">GrocerySathi Wallet</span>
+                      <span className="cart-wallet-sub">
+                        Available: <strong>₹{walletBalance.toFixed(2)}</strong>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="cart-wallet-right">
+                    <span className="cart-wallet-amount-tag">
+                      {useWallet
+                        ? `- ₹${walletDeduction.toFixed(2)}`
+                        : `Apply ₹${Math.min(walletBalance, preWalletTotal).toFixed(2)}`}
+                    </span>
+                    <div
+                      className={`addon-checkbox ${
+                        useWallet ? "addon-checkbox--checked" : ""
+                      }`}
+                      role="checkbox"
+                      aria-checked={useWallet}
+                    >
+                      {useWallet && <Check size={13} className="addon-check-icon" />}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* SAVINGS CALLOUT */}
               {summary.totalSavings > 0 && (
@@ -1184,7 +1412,12 @@ const CartSection = () => {
                 disabled={checkoutLoading || items.length === 0}
               >
                 {checkoutLoading ? (
-                  <span>Processing Payment...</span>
+                  <span>Processing Order...</span>
+                ) : finalPayable === 0 && useWallet ? (
+                  <>
+                    <span>Pay ₹0 &amp; Confirm (Wallet Full Payment)</span>
+                    <ArrowRight size={18} />
+                  </>
                 ) : (
                   <>
                     <span>Proceed to Checkout</span>
@@ -1208,6 +1441,174 @@ const CartSection = () => {
                   <span>Easy Return & Refund Guarantee</span>
                 </div>
               </div>
+            </div>
+
+            {/* 1. FEEDING INDIA DONATION CARD (BELOW BILL DETAILS) */}
+            <div
+              className={`cart-addon-card cart-feeding-india-card ${
+                isDonationChecked ? "cart-addon-card--active" : ""
+              }`}
+              onClick={handleToggleDonation}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleToggleDonation();
+                }
+              }}
+            >
+              <div className="addon-left-box">
+                <div className="feeding-india-icon-box" aria-hidden="true">
+                  <div className="feeding-box-visual">
+                    <span className="feeding-box-heart">❤️</span>
+                    <span className="feeding-box-body">
+                      <span className="feeding-box-label">feeding india</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="addon-text-wrap">
+                  <h3 className="addon-title">Feeding India donation</h3>
+                  <p className="addon-subtext">
+                    Working towards a malnutrition free India. Feeding India...
+                    <button
+                      type="button"
+                      className="addon-read-more"
+                      onClick={handleReadMoreFeedingIndia}
+                    >
+                      read more
+                    </button>
+                  </p>
+                </div>
+              </div>
+
+              <div className="addon-right-box">
+                <span className="addon-amount">₹1</span>
+                <div
+                  className={`addon-checkbox ${
+                    isDonationChecked ? "addon-checkbox--checked" : ""
+                  }`}
+                  aria-checked={isDonationChecked}
+                  role="checkbox"
+                >
+                  {isDonationChecked && (
+                    <Check size={13} className="addon-check-icon" />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 2. TIP YOUR DELIVERY PARTNER CARD (BELOW BILL DETAILS) */}
+            <div className="cart-addon-card cart-tip-card">
+              <div className="tip-header-wrap">
+                <h3 className="addon-title">Tip your delivery partner</h3>
+                <p className="addon-subtext">
+                  Your kindness means a lot! 100% of your tip will go directly to your delivery partner.
+                </p>
+              </div>
+
+              <div className="tip-chips-row">
+                <button
+                  type="button"
+                  className={`tip-chip ${tipAmount === 20 && !isCustomTipOpen ? "tip-chip--active" : ""}`}
+                  onClick={() => handleSelectTip(20)}
+                >
+                  <span className="tip-emoji">🫰</span>
+                  <span className="tip-val">₹20</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`tip-chip ${tipAmount === 30 && !isCustomTipOpen ? "tip-chip--active" : ""}`}
+                  onClick={() => handleSelectTip(30)}
+                >
+                  <span className="tip-emoji">💌</span>
+                  <span className="tip-val">₹30</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`tip-chip ${tipAmount === 50 && !isCustomTipOpen ? "tip-chip--active" : ""}`}
+                  onClick={() => handleSelectTip(50)}
+                >
+                  <span className="tip-emoji">❤️</span>
+                  <span className="tip-val">₹50</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`tip-chip ${
+                    isCustomTipOpen || (tipAmount > 0 && tipAmount !== 20 && tipAmount !== 30 && tipAmount !== 50)
+                      ? "tip-chip--active"
+                      : ""
+                  }`}
+                  onClick={handleOpenCustomTip}
+                >
+                  <span className="tip-emoji">👏</span>
+                  <span className="tip-val">
+                    {tipAmount > 0 && tipAmount !== 20 && tipAmount !== 30 && tipAmount !== 50
+                      ? `₹${tipAmount}`
+                      : "Custom"}
+                  </span>
+                </button>
+              </div>
+
+              {/* INLINE CUSTOM TIP INPUT */}
+              {isCustomTipOpen && (
+                <div className="tip-custom-input-wrap">
+                  <div className="tip-input-field">
+                    <span className="tip-currency-prefix">₹</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="500"
+                      className="tip-number-input"
+                      placeholder="Enter tip"
+                      value={customTipInput}
+                      onChange={(e) => setCustomTipInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleApplyCustomTip();
+                        }
+                      }}
+                      autoFocus
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="tip-apply-btn"
+                    onClick={handleApplyCustomTip}
+                  >
+                    Apply
+                  </button>
+                  <button
+                    type="button"
+                    className="tip-cancel-btn"
+                    onClick={() => setIsCustomTipOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+
+              {/* ACTIVE TIP NOTE */}
+              {tipAmount > 0 && (
+                <div className="tip-confirmed-banner">
+                  <span>💖 ₹{tipAmount} tip added for delivery partner</span>
+                  <button
+                    type="button"
+                    className="tip-remove-link"
+                    onClick={() => {
+                      setTipAmount(0);
+                      setIsCustomTipOpen(false);
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
             </div>
           </aside>
         </div>

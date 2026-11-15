@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import ProductDetailsVegetables from "../../Components/ProductDetailsVegetables/ProductDetailsVegetables";
 import ProductDetailsDiscounts from "../../Components/ProductDetailsDiscounts/ProductDetailsDiscounts";
 import ProductDetailsTestimonials from "../../Components/ProductDetailsTestimonials/ProductDetailsTestimonials";
+import RelatedProducts from "../../Components/RelatedProducts/RelatedProducts";
 
 const ProductDetails = () => {
   const { id, slug } = useParams();
@@ -23,6 +24,12 @@ const ProductDetails = () => {
           product={productData}
         />
       </div>
+
+      {/* RELATED PRODUCTS SECTION AT THE END OF THE PAGE */}
+      <RelatedProducts
+        currentProduct={productData}
+        productId={identifier}
+      />
     </div>
   );
 };

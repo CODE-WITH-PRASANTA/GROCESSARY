@@ -30,6 +30,8 @@ import {
   Barcode,
 } from "lucide-react";
 import API from "../../api/axios";
+import formatUnit from "../../Utils/formatUnit";
+import ProductShareModal from "../ProductShareModal/ProductShareModal";
 import "./ProductDetailsVegetables.css";
 
 // ======================================================
@@ -49,6 +51,7 @@ const ProductDetailsVegetables = ({ productId, onProductLoaded }) => {
 
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [justAddedToCart, setJustAddedToCart] = useState(false);
@@ -62,7 +65,12 @@ const ProductDetailsVegetables = ({ productId, onProductLoaded }) => {
     ratingBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
   });
 
-  const productName = product?.productName || product?.name || "Product";
+  const productName =
+    typeof product?.productName === "string" && product.productName.trim()
+      ? product.productName
+      : typeof product?.name === "string" && product.name.trim()
+      ? product.name
+      : "Product";
   const currentProductId = product?._id || product?.id || productId;
 
   // ====================================================
@@ -303,34 +311,11 @@ const ProductDetailsVegetables = ({ productId, onProductLoaded }) => {
   };
 
   // ====================================================
-  // SHARE
+  // SHARE (FLIPKART-STYLE SHARE MODAL)
   // ====================================================
 
-  const handleShare = async () => {
-    const shareUrl = window.location.href;
-    const shareText = `Check out ${productName} on Grocery Sathi!`;
-
-    if (navigator.share && typeof navigator.share === "function") {
-      try {
-        await navigator.share({
-          title: productName,
-          text: shareText,
-          url: shareUrl,
-        });
-        return;
-      } catch (err) {
-        if (err?.name === "AbortError") return;
-      }
-    }
-
-    navigator.clipboard.writeText(shareUrl);
-    Swal.fire({
-      icon: "success",
-      title: "Link Copied!",
-      text: "Product link copied to clipboard.",
-      timer: 1600,
-      showConfirmButton: false,
-    });
+  const handleShare = () => {
+    setIsShareModalOpen(true);
   };
 
   // ====================================================
@@ -347,15 +332,27 @@ const ProductDetailsVegetables = ({ productId, onProductLoaded }) => {
     discountPercent = Math.round(((writtenPrice - price) / writtenPrice) * 100);
   }
 
+  const totalBuyPrice = price * quantity;
+  const formattedBuyPrice =
+    Number.isFinite(totalBuyPrice) && totalBuyPrice > 0
+      ? totalBuyPrice % 1 === 0
+        ? totalBuyPrice
+        : totalBuyPrice.toFixed(2)
+      : price > 0
+      ? price % 1 === 0
+        ? price
+        : price.toFixed(2)
+      : "0";
+
   const categoryName =
     typeof product?.category === "object"
-      ? product?.category?.name || "Grocery"
-      : product?.category || "Grocery";
+      ? (typeof product?.category?.name === "string" ? product.category.name : "Grocery")
+      : (typeof product?.category === "string" ? product.category : "Grocery");
 
   const brandName =
     typeof product?.brand === "object"
-      ? product?.brand?.name || ""
-      : product?.brand || "";
+      ? (typeof product?.brand?.name === "string" ? product.brand.name : "")
+      : (typeof product?.brand === "string" ? product.brand : "");
 
   const unitName =
     typeof product?.unit === "object"
@@ -366,6 +363,8 @@ const ProductDetailsVegetables = ({ productId, onProductLoaded }) => {
     typeof product?.unitNo === "object"
       ? product?.unitNo?.name || product?.unitNo?.value || ""
       : product?.unitNo ?? "";
+
+  const formattedUnit = formatUnit(product?.unit, product?.unitNo);
 
   // ====================================================
   // ADD TO CART
@@ -408,7 +407,7 @@ const ProductDetailsVegetables = ({ productId, onProductLoaded }) => {
         image: productImages?.[0] || "",
         category: categoryName,
         brand: brandName,
-        unit: unitName,
+        unit: formattedUnit || unitName,
         unitNob: unitNo,
         stockQuantity: stockQuantity,
       };
@@ -784,10 +783,7 @@ const ProductDetailsVegetables = ({ productId, onProductLoaded }) => {
                   <span className="pdv-unit-label">Pack Size / Net Quantity:</span>
                   <span className="pdv-unit-badge">
                     <Package size={15} />
-                    <strong>
-                      {unitNo ? `${unitNo} ` : ""}
-                      {unitName}
-                    </strong>
+                    <strong>{formattedUnit}</strong>
                   </span>
                 </div>
               )}
@@ -878,9 +874,10 @@ const ProductDetailsVegetables = ({ productId, onProductLoaded }) => {
                     className="pdv-btn-buy-now"
                     onClick={handleBuyNow}
                     disabled={isAddingToCart || stockQuantity <= 0}
+                    title={stockQuantity > 0 ? `Buy now at ₹${formattedBuyPrice}` : "Out of stock"}
                   >
                     <Zap size={18} />
-                    <span>Buy Now</span>
+                    <span>Buy at ₹{formattedBuyPrice}</span>
                   </button>
                 </div>
               </div>
@@ -1004,10 +1001,7 @@ const ProductDetailsVegetables = ({ productId, onProductLoaded }) => {
                       {(unitName || unitNo) && (
                         <div className="pdv-spec-row">
                           <span className="pdv-spec-key">Net Quantity</span>
-                          <span className="pdv-spec-value">
-                            {unitNo ? `${unitNo} ` : ""}
-                            {unitName}
-                          </span>
+                          <span className="pdv-spec-value">{formattedUnit}</span>
                         </div>
                       )}
 
@@ -1051,6 +1045,19 @@ const ProductDetailsVegetables = ({ productId, onProductLoaded }) => {
           </div>
         </div>
       </section>
+
+      {/* FLIPKART-STYLE INTERACTIVE PRODUCT SHARE MODAL */}
+      <ProductShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        product={product}
+        activeImageUrl={productImages[activeImage]}
+        productName={productName}
+        effectivePrice={price}
+        originalPrice={writtenPrice > price ? writtenPrice : price}
+        discountPercent={discountPercent}
+        formattedUnit={formattedUnit}
+      />
     </>
   );
 };

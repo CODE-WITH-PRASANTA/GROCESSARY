@@ -510,18 +510,55 @@ const ReturnManagement = () => {
 
                         {/* Action View Case Button */}
                         <td style={{ textAlign: "center" }}>
-                          <button
-                            type="button"
-                            className="rm-action-view-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenReturnCase(row);
-                            }}
-                            title="Open return case and view inspection/pickup proof"
-                          >
-                            <span>View Case</span>
-                            <ChevronRight size={14} />
-                          </button>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                            {["requested", "approved", "picked", "inspection"].includes(row.status) && (
+                              <button
+                                type="button"
+                                className="rm-quick-refund-btn"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm(`Refund ₹${Number(row.amount || 0).toFixed(2)} directly to Customer's Wallet for Return #${row.orderNumber || row.id}?`)) {
+                                    try {
+                                      await API.put(`/admin/returns/${row.id}/status`, {
+                                        status: "refunded",
+                                        amount: Number(row.amount || 0),
+                                      });
+                                      alert(`Success! ₹${Number(row.amount || 0).toFixed(2)} credited to Customer's Wallet.`);
+                                      fetchReturns();
+                                    } catch (err) {
+                                      alert(err.response?.data?.message || "Failed to process refund.");
+                                    }
+                                  }
+                                }}
+                                title="Refund directly to Customer's Wallet"
+                                style={{
+                                  background: "#ecfdf5",
+                                  border: "1px solid #10b981",
+                                  color: "#047857",
+                                  padding: "5px 10px",
+                                  borderRadius: "6px",
+                                  fontSize: "12px",
+                                  fontWeight: "700",
+                                  cursor: "pointer",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                ⚡ Refund Wallet
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="rm-action-view-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenReturnCase(row);
+                              }}
+                              title="Open return case and view inspection/pickup proof"
+                            >
+                              <span>View</span>
+                              <ChevronRight size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

@@ -2,6 +2,7 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import Swal from "sweetalert2";
 import logoImg from "../assets/Grocessary Sathi Png.png";
+import formatUnit from "./formatUnit";
 
 /**
  * Pre-convert image asset to base64 DataURL so html2canvas renders it reliably with zero CORS or async delay
@@ -97,7 +98,8 @@ export const downloadOrderInvoicePdf = async (order) => {
   const items = rawItems.map((it, idx) => {
     const prod = it.product && typeof it.product === "object" ? it.product : {};
     const name = it.productName || prod.productName || prod.name || it.name || "Grocery Item";
-    const unit = it.unit || prod.unit || it.variant || "";
+    const rawUnit = it.unit || prod.unit || it.variant || "";
+    const unit = rawUnit ? formatUnit(rawUnit, it.unitNo || prod.unitNo) : "";
     const fullName = unit ? `${name} ${unit}`.trim() : name;
     const price = Number(it.price || 0);
     const qty = Number(it.quantity || it.qty || 1);

@@ -48,10 +48,7 @@ const previewCheckout = async (req, res) => {
     // ==================================================
     let walletUsed = 0;
     if (useWallet && wallet && wallet.balance > 0) {
-      const maxWallet = Math.min(
-        wallet.balance,
-        preDiscountTotal * rewards.MAX_WALLET_USE_PERCENT
-      );
+      const maxWallet = Math.min(wallet.balance, preDiscountTotal);
       walletUsed = Math.max(0, Math.floor(maxWallet * 100) / 100);
     }
 

@@ -562,6 +562,351 @@
 .cart-summary-column {
   position: sticky;
   top: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* =========================================================
+   BILLING ADD-ONS: FEEDING INDIA DONATION & DELIVERY TIP
+   ========================================================= */
+
+.cart-addon-card {
+  background: #ffffff;
+  border: 1px solid #eef2f6;
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cart-addon-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07);
+}
+
+/* 1. FEEDING INDIA DONATION CARD */
+.cart-feeding-india-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cart-feeding-india-card.cart-addon-card--active {
+  border-color: #a7f3d0;
+  background: #f0fdf4;
+}
+
+.addon-left-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* Cute donation box illustration */
+.feeding-india-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #fff1f2;
+  border: 1px solid #ffe4e6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(244, 63, 94, 0.08);
+}
+
+.feeding-box-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.feeding-box-heart {
+  font-size: 15px;
+  line-height: 1;
+  margin-bottom: -3px;
+  z-index: 2;
+  filter: drop-shadow(0 2px 3px rgba(225, 29, 72, 0.25));
+  animation: heartFloat 2.2s infinite ease-in-out;
+}
+
+@keyframes heartFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2.5px); }
+}
+
+.feeding-box-body {
+  width: 32px;
+  height: 18px;
+  border-radius: 4px;
+  background: #fbbf24;
+  border: 1.5px solid #d97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.feeding-box-label {
+  font-size: 5px;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #78350f;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+
+.addon-text-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.addon-title {
+  font-size: 15px;
+  font-weight: 750;
+  color: #0f172a;
+  margin: 0 0 3px 0;
+  letter-spacing: -0.2px;
+}
+
+.addon-subtext {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.addon-read-more {
+  background: none;
+  border: none;
+  padding: 0 0 0 4px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  display: inline;
+}
+
+.addon-read-more:hover {
+  color: #059669;
+}
+
+.addon-right-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.addon-amount {
+  font-size: 15px;
+  font-weight: 750;
+  color: #0f172a;
+}
+
+/* Custom Checkbox */
+.addon-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+}
+
+.addon-checkbox--checked {
+  background: #059669;
+  border-color: #059669;
+}
+
+.addon-check-icon {
+  color: #ffffff;
+  stroke-width: 3;
+}
+
+/* 2. TIP YOUR DELIVERY PARTNER CARD */
+.cart-tip-card {
+  cursor: default;
+}
+
+.tip-header-wrap {
+  margin-bottom: 14px;
+}
+
+.tip-chips-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.tip-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 6px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.tip-chip:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.tip-chip--active {
+  background: #ecfdf5 !important;
+  border-color: #059669 !important;
+  color: #059669 !important;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.16);
+  transform: translateY(-1px);
+}
+
+.tip-emoji {
+  font-size: 14.5px;
+  line-height: 1;
+}
+
+.tip-val {
+  font-size: 13px;
+  letter-spacing: -0.2px;
+}
+
+/* Inline Custom Tip Input */
+.tip-custom-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.tip-input-field {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0 10px;
+  flex: 1;
+}
+
+.tip-input-field:focus-within {
+  border-color: #059669;
+  background: #ffffff;
+}
+
+.tip-currency-prefix {
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+  margin-right: 4px;
+}
+
+.tip-number-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  padding: 8px 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.tip-apply-btn {
+  background: #059669;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.tip-apply-btn:hover {
+  background: #047857;
+}
+
+.tip-cancel-btn {
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tip-confirmed-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #065f46;
+}
+
+.tip-remove-link {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+/* Bill Details Integration */
+.addon-bill-row {
+  color: #0f172a !important;
+}
+
+.addon-bill-remove {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 6px;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.addon-bill-remove:hover {
+  color: #dc2626;
 }
 
 .cart-summary-card {
@@ -646,6 +991,93 @@
   font-size: 13px;
   color: #065f46;
   margin-bottom: 20px;
+}
+
+/* GrocerySathi Wallet Box inside Bill Details */
+.cart-wallet-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.cart-wallet-box:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.cart-wallet-box.active {
+  background: #f0fdf4;
+  border-color: #10b981;
+}
+
+.cart-wallet-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.cart-wallet-icon-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #e6f4ea;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cart-wallet-box.active .cart-wallet-icon-circle {
+  background: #059669;
+  color: #ffffff;
+}
+
+.cart-wallet-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cart-wallet-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.cart-wallet-sub {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.cart-wallet-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.cart-wallet-amount-tag {
+  font-size: 13px;
+  font-weight: 750;
+  color: #059669;
+}
+
+.summary-row.wallet-bill-row {
+  color: #059669;
+  font-weight: 600;
 }
 
 .sparkle-icon {

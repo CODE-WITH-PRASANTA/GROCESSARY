@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { User, MapPin, Package, Gift, Copy, Check, LogOut, HelpCircle } from "lucide-react";
+import { User, MapPin, Package, Wallet, Gift, Copy, Check, LogOut, HelpCircle } from "lucide-react";
 import API from "../../api/axios";
 import { clearLocalCartOnLogout } from "../../Utils/cartService";
 import { clearLocalWishlistOnLogout } from "../../Utils/wishlistService";
@@ -24,6 +24,8 @@ const UserAuth = ({ onNavigate }) => {
   const [referralLink, setReferralLink] = useState("");
   const [copiedReferral, setCopiedReferral] = useState(false);
   const [referralLoading, setReferralLoading] = useState(false);
+
+  const [walletBalance, setWalletBalance] = useState(null);
 
   // ======================================================
   // HELPERS
@@ -128,6 +130,22 @@ const UserAuth = ({ onNavigate }) => {
     }
   }, []);
 
+  const fetchWalletBalance = useCallback(async () => {
+    try {
+      const token = getToken();
+      if (!token) {
+        setWalletBalance(null);
+        return;
+      }
+      const { data } = await API.get("/wallet");
+      if (data?.success && data?.wallet) {
+        setWalletBalance(Number(data.wallet.balance || 0));
+      }
+    } catch {
+      // silent fail
+    }
+  }, []);
+
   // ======================================================
   // INITIAL LOAD
   // ======================================================
@@ -143,10 +161,12 @@ const UserAuth = ({ onNavigate }) => {
   useEffect(() => {
     if (currentUser) {
       fetchReferralLink();
+      fetchWalletBalance();
     } else {
       setReferralLink("");
+      setWalletBalance(null);
     }
-  }, [currentUser, fetchReferralLink]);
+  }, [currentUser, fetchReferralLink, fetchWalletBalance]);
 
   // ======================================================
   // AUTO-CLOSE DROPDOWN ON ROUTE CHANGE
@@ -180,24 +200,34 @@ const UserAuth = ({ onNavigate }) => {
   useEffect(() => {
     const handleAuthChanged = () => {
       fetchCurrentUser();
+      fetchWalletBalance();
+    };
+
+    const handleWalletUpdated = () => {
+      fetchWalletBalance();
     };
 
     window.addEventListener("authChanged", handleAuthChanged);
+    window.addEventListener("walletUpdated", handleWalletUpdated);
 
-    return () => window.removeEventListener("authChanged", handleAuthChanged);
-  }, [fetchCurrentUser]);
+    return () => {
+      window.removeEventListener("authChanged", handleAuthChanged);
+      window.removeEventListener("walletUpdated", handleWalletUpdated);
+    };
+  }, [fetchCurrentUser, fetchWalletBalance]);
 
   useEffect(() => {
     const handleStorage = (event) => {
       if (event.key === "token") {
         fetchCurrentUser();
+        fetchWalletBalance();
       }
     };
 
     window.addEventListener("storage", handleStorage);
 
     return () => window.removeEventListener("storage", handleStorage);
-  }, [fetchCurrentUser]);
+  }, [fetchCurrentUser, fetchWalletBalance]);
 
   // ======================================================
   // COPY REFERRAL LINK
@@ -354,6 +384,23 @@ const UserAuth = ({ onNavigate }) => {
               >
                 <Package size={16} />
                 <span>My Order</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAccountOpen(false);
+                  handleNavigate("/profile?tab=wallet");
+                }}
+                className="navbar-account-item"
+              >
+                <Wallet size={16} />
+                <span>My Wallet</span>
+                {walletBalance !== null && (
+                  <span className="navbar-account-wallet-pill">
+                    ₹{walletBalance.toFixed(0)}
+                  </span>
+                )}
               </button>
 
               <button

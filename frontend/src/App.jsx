@@ -29,6 +29,7 @@ import MyOrders from "./Components/MyOrders/MyOrders";
 import UserProfile from "./Components/UserProfile/UserProfile";
 import ListUpload from "./Components/ListUpload/ListUpload";
 import ProductDetails from "./Pages/ProductDetails/ProductDetails";
+import CategoryDetails from "./Pages/CategoryDetails/CategoryDetails";
 import OrderDetails from "./Components/OrderDetails/OrderDetails";
 import { useDispatch } from "react-redux";
 import { fetchCart } from "./Utils/cartSlice";
@@ -76,6 +77,10 @@ const App = () => {
         <Route path="/product/:slug" element={<ProductDetails />} />
         <Route path="/productdetails/:id" element={<ProductDetails />} />
         <Route path="/productdetails/:slug" element={<ProductDetails />} />
+        {/* Category Details Routes */}
+        <Route path="/category" element={<CategoryDetails />} />
+        <Route path="/category/:slug" element={<CategoryDetails />} />
+        <Route path="/categorydetails/:slug" element={<CategoryDetails />} />
         {/* Blog System Routes */}
         <Route path="/blogs" element={<BlogGrid />} />
         <Route path="/news/:id" element={<BlogReadmoreOne />} />

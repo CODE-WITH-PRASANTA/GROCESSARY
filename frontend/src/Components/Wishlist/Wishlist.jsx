@@ -20,6 +20,7 @@ import {
   isLoggedIn,
   getGuestWishlist,
 } from "../../Utils/wishlistService";
+import formatUnit from "../../Utils/formatUnit";
 import "./Wishlist.css";
 
 const GUEST_CART_KEY = "guestCart";
@@ -408,7 +409,9 @@ const Wishlist = () => {
                   <div className="wishlist-card-body">
                     <div className="wishlist-card-meta">
                       <span className="wishlist-category-tag">
-                        {item.category}
+                        {typeof item.category === "object"
+                          ? item.category?.name || "Grocery"
+                          : item.category || "Grocery"}
                       </span>
                       <span
                         className={`wishlist-stock-pill ${
@@ -430,7 +433,7 @@ const Wishlist = () => {
 
                     {item.unit && (
                       <div className="wishlist-unit">
-                        Pack: <strong>{item.unit}</strong>
+                        Pack: <strong>{formatUnit(item.unit)}</strong>
                       </div>
                     )}
 

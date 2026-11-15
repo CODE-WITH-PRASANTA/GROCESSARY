@@ -222,11 +222,32 @@ const getAllProducts = async (req, res) => {
     }
 
     // ==================================================
-    // CATEGORY
+    // CATEGORY (Supports ObjectId, slug, or name)
     // ==================================================
 
     if (category && category !== "all") {
-      query.category = category;
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        query.category = category;
+      } else {
+        try {
+          const Category = mongoose.model("Category");
+          const slugRegex = new RegExp(`^${category.trim()}$`, "i");
+          const nameRegex = new RegExp(
+            `^${category.trim().replace(/[-_]/g, "[\\s-_]")}$`,
+            "i"
+          );
+          const matchedCat = await Category.findOne({
+            $or: [{ slug: slugRegex }, { name: nameRegex }],
+          });
+          if (matchedCat) {
+            query.category = matchedCat._id;
+          } else {
+            query.category = new mongoose.Types.ObjectId();
+          }
+        } catch {
+          query.category = category;
+        }
+      }
     }
 
     // ==================================================

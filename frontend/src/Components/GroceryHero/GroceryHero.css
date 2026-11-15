@@ -1,0 +1,781 @@
+/* =========================================================
+   GROCERY HERO SECTION (FLAGSHIP QUICK-COMMERCE DESIGN)
+   Luxury Emerald Gradient, Ambient Glow, Interactive Floating Badges
+   ========================================================= */
+
+.grocery-hero-section {
+  width: 100%;
+  background: #ffffff;
+  padding: 1.4rem 0 1.2rem 0;
+}
+
+.grocery-hero-container {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* =========================================================
+   MAIN HERO BANNER (FIRST BIG PROMO GIG)
+   ========================================================= */
+.grocery-hero-main-banner {
+  position: relative;
+  border-radius: 28px;
+  background-color: #06231e;
+  background-image: url('../../assets/hero-banner-main-bg.png');
+  background-repeat: no-repeat;
+  background-position: center right;
+  background-size: cover;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  align-items: center;
+  min-height: 420px;
+  padding: 44px 52px;
+  box-shadow: 0 20px 48px -12px rgba(6, 35, 30, 0.45),
+    0 8px 24px -4px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Custom Emerald Gradient for Text Background */
+.grocery-hero-main-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(150deg, #06231e 0%, #0c3930 55%, #05211c 100%);
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    #000000 0%,
+    rgba(0, 0, 0, 0.98) 35%,
+    rgba(0, 0, 0, 0.92) 48%,
+    rgba(0, 0, 0, 0.7) 60%,
+    rgba(0, 0, 0, 0.25) 75%,
+    transparent 88%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    #000000 0%,
+    rgba(0, 0, 0, 0.98) 35%,
+    rgba(0, 0, 0, 0.92) 48%,
+    rgba(0, 0, 0, 0.7) 60%,
+    rgba(0, 0, 0, 0.25) 75%,
+    transparent 88%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Ambient Radial Glow Layers */
+.grocery-hero-glow-left {
+  position: absolute;
+  top: -35%;
+  left: -12%;
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(
+    circle,
+    rgba(16, 185, 129, 0.08) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.grocery-hero-glow-right {
+  position: absolute;
+  bottom: -25%;
+  right: -8%;
+  width: 580px;
+  height: 580px;
+  background: radial-gradient(
+    circle,
+    rgba(52, 211, 153, 0.28) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Left Content Area */
+.grocery-hero-content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Offer Badge with Pulse Dot */
+.grocery-hero-offer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  color: #fef08a;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 6px 14px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.hero-badge-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #facc15;
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.4);
+  animation: heroPulseDot 2s infinite;
+}
+
+@keyframes heroPulseDot {
+  0% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(250, 204, 21, 0);
+  }
+  100% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(250, 204, 21, 0);
+  }
+}
+
+.hero-sparkle-icon {
+  color: #facc15;
+}
+
+.hero-badge-tag {
+  color: #fde047;
+}
+
+.hero-badge-dot {
+  opacity: 0.5;
+  font-size: 12px;
+}
+
+.hero-badge-discount {
+  color: #ffffff;
+  font-weight: 850;
+}
+
+/* Headline - Crisp White Theme */
+.grocery-hero-heading {
+  margin: 0 0 14px 0;
+  font-size: 42px;
+  font-weight: 850;
+  color: #ffffff;
+  letter-spacing: -0.028em;
+  line-height: 1.15;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.grocery-hero-heading-highlight {
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  background: none;
+  display: inline;
+  filter: none;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Subtext - 100% Crisp White */
+.grocery-hero-subtext {
+  margin: 0 0 22px 0;
+  font-size: 16px;
+  color: #ffffff;
+  line-height: 1.55;
+  font-weight: 400;
+  max-width: 520px;
+  opacity: 0.96;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+}
+
+/* Trust Bar - White text on frosted dark pills */
+.grocery-hero-trust-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.grocery-trust-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(8px);
+}
+
+.grocery-trust-icon {
+  color: #facc15;
+}
+
+/* Action Row (CTA Button + Coupon Pill) */
+.grocery-hero-action-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Shop Now Button */
+.grocery-hero-shop-btn {
+  background: #ffffff;
+  color: #054820;
+  border: none;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 12px 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-shop-arrow-circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #054820;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.22s ease;
+}
+
+.grocery-hero-shop-btn:hover {
+  background: #f0fdf4;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.26);
+}
+
+.grocery-hero-shop-btn:hover .hero-shop-arrow-circle {
+  transform: translateX(3px);
+}
+
+/* Interactive Coupon Pill */
+.grocery-hero-coupon-pill {
+  background: rgba(0, 0, 0, 0.32);
+  border: 1.5px dashed #facc15;
+  border-radius: 999px;
+  padding: 5px 8px 5px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.grocery-hero-coupon-pill:hover {
+  background: rgba(0, 0, 0, 0.45);
+  border-color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.hero-coupon-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hero-coupon-ticket {
+  color: #facc15;
+}
+
+.hero-coupon-label {
+  font-size: 11px;
+  font-weight: 750;
+  color: #fde047;
+  letter-spacing: 0.04em;
+}
+
+.hero-coupon-code {
+  font-size: 14.5px;
+  font-weight: 850;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+  font-family: monospace;
+}
+
+.hero-coupon-copy-btn {
+  background: #facc15;
+  color: #0f2c28;
+  border: none;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 6px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.hero-coupon-copy-btn:hover {
+  background: #ffffff;
+  color: #054820;
+}
+
+.grocery-hero-coupon-pill.copied .hero-coupon-copy-btn {
+  background: #22c55e;
+  color: #ffffff;
+}
+
+.hero-coupon-min-hint {
+  font-size: 11px;
+  color: #ffffff;
+  opacity: 0.95;
+  padding-right: 4px;
+}
+
+/* =========================================================
+   RIGHT VISUAL: BACKGROUND PRODUCE (SEAMLESS DISPLAY)
+   ========================================================= */
+.grocery-hero-visual-spacer {
+  position: relative;
+  min-height: 340px;
+  width: 100%;
+  pointer-events: none;
+}
+
+/* =========================================================
+   BOTTOM 3 PROMO CARDS (DYNAMICALLY DERIVED FROM DATABASE)
+   ========================================================= */
+.grocery-hero-promo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.grocery-promo-card {
+  position: relative;
+  border-radius: 22px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  min-height: 154px;
+  outline: none;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.grocery-promo-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 14px 28px -6px rgba(15, 23, 42, 0.16);
+}
+
+.grocery-promo-card:focus-visible {
+  box-shadow: 0 0 0 3px #007250;
+}
+
+/* Theme: Dairy & Breakfast (Teal / Cyan) */
+.promo-card--dairy {
+  background: linear-gradient(135deg, #00b4b6 0%, #008f91 100%);
+  color: #ffffff;
+}
+.promo-card--dairy .grocery-promo-pill {
+  background: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+}
+.promo-card--dairy .grocery-promo-price-tag {
+  background: rgba(0, 0, 0, 0.18);
+  color: #e0f2fe;
+}
+.promo-card--dairy .grocery-promo-btn {
+  background: #ffffff;
+  color: #007779;
+}
+.promo-card--dairy .grocery-promo-btn:hover {
+  background: #f0fdfa;
+  transform: scale(1.04);
+}
+
+/* Theme: Snacks & Biscuits (Warm Golden Amber) */
+.promo-card--snacks {
+  background: linear-gradient(135deg, #fbb034 0%, #f39c12 100%);
+  color: #1e293b;
+}
+.promo-card--snacks .grocery-promo-pill {
+  background: rgba(0, 0, 0, 0.12);
+  color: #1e293b;
+}
+.promo-card--snacks .grocery-promo-price-tag {
+  background: rgba(255, 255, 255, 0.35);
+  color: #0f172a;
+}
+.promo-card--snacks .grocery-promo-btn {
+  background: #1e293b;
+  color: #ffffff;
+}
+.promo-card--snacks .grocery-promo-btn:hover {
+  background: #0f172a;
+  transform: scale(1.04);
+}
+
+/* Theme: Fresh Fruits (Soft Sky Blue / Ice Blue) */
+.promo-card--fruits {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e293b;
+}
+.promo-card--fruits .grocery-promo-pill {
+  background: rgba(30, 41, 59, 0.08);
+  color: #1e293b;
+}
+.promo-card--fruits .grocery-promo-price-tag {
+  background: rgba(255, 255, 255, 0.65);
+  color: #0369a1;
+}
+.promo-card--fruits .grocery-promo-btn {
+  background: #1e293b;
+  color: #ffffff;
+}
+.promo-card--fruits .grocery-promo-btn:hover {
+  background: #0f172a;
+  transform: scale(1.04);
+}
+
+/* Theme: Cooking Oils & Ghee (Warm Sunlight Gold) */
+.promo-card--oils {
+  background: linear-gradient(135deg, #fde047 0%, #eab308 100%);
+  color: #1e293b;
+}
+.promo-card--oils .grocery-promo-pill {
+  background: rgba(0, 0, 0, 0.12);
+  color: #1e293b;
+}
+.promo-card--oils .grocery-promo-btn {
+  background: #1e293b;
+  color: #ffffff;
+}
+
+/* Theme: Fresh Vegetables (Emerald Forest Green) */
+.promo-card--veggies {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+}
+.promo-card--veggies .grocery-promo-pill {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+.promo-card--veggies .grocery-promo-btn {
+  background: #ffffff;
+  color: #047857;
+}
+
+/* Theme: Beverages & Tea (Mocha Warmth) */
+.promo-card--beverages {
+  background: linear-gradient(135deg, #fdba74 0%, #ea580c 100%);
+  color: #ffffff;
+}
+.promo-card--beverages .grocery-promo-pill {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+.promo-card--beverages .grocery-promo-btn {
+  background: #ffffff;
+  color: #c2410c;
+}
+
+/* Theme: Staples & Grains (Wheat / Amber) */
+.promo-card--staples {
+  background: linear-gradient(135deg, #fef08a 0%, #facc15 100%);
+  color: #1e293b;
+}
+.promo-card--staples .grocery-promo-pill {
+  background: rgba(0, 0, 0, 0.12);
+  color: #1e293b;
+}
+.promo-card--staples .grocery-promo-btn {
+  background: #1e293b;
+  color: #ffffff;
+}
+
+/* Theme: Organic & Health (Rich Jade) */
+.promo-card--organic {
+  background: linear-gradient(135deg, #6ee7b7 0%, #059669 100%);
+  color: #ffffff;
+}
+.promo-card--organic .grocery-promo-pill {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+.promo-card--organic .grocery-promo-btn {
+  background: #ffffff;
+  color: #065f46;
+}
+
+/* Theme: Spices & Masalas (Crimson Spice) */
+.promo-card--spices {
+  background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+  color: #ffffff;
+}
+.promo-card--spices .grocery-promo-pill {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+.promo-card--spices .grocery-promo-btn {
+  background: #ffffff;
+  color: #991b1b;
+}
+
+/* Theme: Household & Cleaning (Cyan Disinfectant) */
+.promo-card--cleaning {
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  color: #ffffff;
+}
+.promo-card--cleaning .grocery-promo-pill {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+.promo-card--cleaning .grocery-promo-btn {
+  background: #ffffff;
+  color: #0369a1;
+}
+
+.grocery-promo-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  z-index: 2;
+  flex: 1;
+}
+
+.grocery-promo-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.grocery-promo-pill {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+}
+
+.grocery-promo-price-tag {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+
+.grocery-promo-title {
+  margin: 0 0 6px 0;
+  font-size: 18.5px;
+  font-weight: 800;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+}
+
+.grocery-promo-subtitle {
+  margin: 0 0 14px 0;
+  font-size: 12.5px;
+  line-height: 1.35;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.grocery-promo-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 12.5px;
+  font-weight: 750;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  letter-spacing: 0.01em;
+}
+
+.grocery-promo-img-wrap {
+  flex-shrink: 0;
+  width: 108px;
+  height: 108px;
+  border-radius: 18px;
+  background: #ffffff;
+  padding: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 2;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.grocery-promo-card:hover .grocery-promo-img-wrap {
+  transform: scale(1.06);
+}
+
+.grocery-promo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.grocery-promo-img-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+}
+
+/* =========================================================
+   RESPONSIVE BREAKPOINTS
+   ========================================================= */
+
+/* Laptop / Tablet (max-width: 1080px) */
+@media (max-width: 1080px) {
+  .grocery-hero-main-banner {
+    padding: 34px 38px;
+    min-height: 380px;
+  }
+
+  .grocery-hero-heading {
+    font-size: 34px;
+  }
+
+  .grocery-promo-title {
+    font-size: 16.5px;
+  }
+}
+
+/* Tablet (max-width: 880px) */
+@media (max-width: 880px) {
+  .grocery-hero-main-banner {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 32px 24px;
+    min-height: auto;
+    background-position: center right;
+  }
+
+  .grocery-hero-visual-spacer {
+    display: none;
+  }
+
+  .grocery-hero-promo-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .grocery-promo-card {
+    min-height: 130px;
+    padding: 18px 20px;
+  }
+}
+
+/* Mobile (max-width: 580px) */
+@media (max-width: 580px) {
+  .grocery-hero-section {
+    padding: 0.8rem 0 0.6rem 0;
+  }
+
+  .grocery-hero-container {
+    padding: 0 14px;
+  }
+
+  .grocery-hero-main-banner {
+    border-radius: 20px;
+    padding: 26px 18px;
+    min-height: auto;
+    background-image: linear-gradient(
+        150deg,
+        rgba(6, 35, 30, 0.96) 0%,
+        rgba(12, 57, 48, 0.95) 55%,
+        rgba(5, 33, 28, 0.96) 100%
+      ),
+      url('../../assets/hero-banner-main-bg.png');
+  }
+
+  .grocery-hero-heading {
+    font-size: 27px;
+    line-height: 1.2;
+  }
+
+  .grocery-hero-subtext {
+    font-size: 13.5px;
+    margin-bottom: 16px;
+  }
+
+  .grocery-hero-trust-bar {
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .grocery-trust-item {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .grocery-hero-action-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .grocery-hero-shop-btn {
+    justify-content: center;
+    width: 100%;
+    padding: 12px 20px;
+  }
+
+  .grocery-hero-coupon-pill {
+    width: 100%;
+    justify-content: space-between;
+    border-radius: 14px;
+    padding: 8px 12px;
+  }
+
+  .grocery-promo-title {
+    font-size: 16px;
+  }
+
+  .grocery-promo-subtitle {
+    font-size: 11.5px;
+    margin-bottom: 10px;
+  }
+
+  .grocery-promo-img-wrap {
+    width: 85px;
+    height: 85px;
+  }
+}

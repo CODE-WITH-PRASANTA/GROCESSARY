@@ -1,4 +1,5 @@
 import { jsPDF } from "jspdf";
+import formatUnit from "./formatUnit";
 
 /**
  * Generate and download professional Tax Invoice PDF using jsPDF
@@ -133,7 +134,7 @@ export const downloadInvoicePdf = (order) => {
   items.forEach((it, idx) => {
     const prod = it.product && typeof it.product === "object" ? it.product : {};
     const name = it.productName || prod.productName || prod.name || "Grocery Item";
-    const unit = it.unit || prod.unit || "1 unit";
+    const unit = formatUnit(it.unit || prod.unit, it.unitNo || prod.unitNo);
     const qty = Number(it.quantity || 1);
     const rate = Number(it.price || 0);
     const total = Number(it.itemTotal || rate * qty);

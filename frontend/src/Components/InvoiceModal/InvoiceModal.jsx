@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import logoImg from "../../assets/Grocessary Sathi Png.png";
 import { exportInvoiceToPdf } from "../../Utils/exportInvoiceToPdf";
+import formatUnit from "../../Utils/formatUnit";
 import "./InvoiceModal.css";
 
 const InvoiceModal = ({ order, isOpen, onClose }) => {
@@ -83,7 +84,8 @@ const InvoiceModal = ({ order, isOpen, onClose }) => {
   const items = rawItems.map((it, idx) => {
     const prod = it.product && typeof it.product === "object" ? it.product : {};
     const name = it.productName || prod.productName || prod.name || it.name || "Grocery Item";
-    const unit = it.unit || prod.unit || it.variant || "";
+    const rawUnit = it.unit || prod.unit || it.variant || "";
+    const unit = rawUnit ? formatUnit(rawUnit, it.unitNo || prod.unitNo) : "";
     const fullName = unit ? `${name} ${unit}`.trim() : name;
     const price = Number(it.price || 0);
     const qty = Number(it.quantity || it.qty || 1);
