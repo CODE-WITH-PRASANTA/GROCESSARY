@@ -43,7 +43,7 @@ import ProductDetails from "./Pages/ProductDetails/ProductDetails";
 import CategoryDetails from "./Pages/CategoryDetails/CategoryDetails";
 import OrderDetails from "./Components/OrderDetails/OrderDetails";
 
-const LOADER_DURATION = 2000;
+const LOADER_DURATION = 1000;
 
 const AppContent = () => {
   const dispatch = useDispatch();
