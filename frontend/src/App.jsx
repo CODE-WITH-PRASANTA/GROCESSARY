@@ -1,7 +1,18 @@
-import React, { useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-// Layout Components
+import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+
+import { useDispatch } from "react-redux";
+import { fetchCart } from "./Utils/cartSlice";
+
+// Layout & Loader Components
+import Pageloader from "./Components/Pageloader/Pageloader";
 import Navbar from "./Components/Navbar/Navbar";
 import Footer from "./Components/Footer/Footer";
 import FloatingForm from "./Components/FloatingForm/FloatingForm";
@@ -31,27 +42,54 @@ import ListUpload from "./Components/ListUpload/ListUpload";
 import ProductDetails from "./Pages/ProductDetails/ProductDetails";
 import CategoryDetails from "./Pages/CategoryDetails/CategoryDetails";
 import OrderDetails from "./Components/OrderDetails/OrderDetails";
-import { useDispatch } from "react-redux";
-import { fetchCart } from "./Utils/cartSlice";
 
-const App = () => {
+const LOADER_DURATION = 2000;
 
-
+const AppContent = () => {
   const dispatch = useDispatch();
+  const location = useLocation();
 
+  const [loading, setLoading] = useState(true);
+
+  // Loader on initial load and every route change
   useEffect(() => {
-    // Capture referral code from URL anywhere on the site
+    setLoading(true);
+
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, LOADER_DURATION);
+
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
+
+  // Capture referral code from URL
+  useEffect(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      const ref = urlParams.get("ref") || urlParams.get("referral");
+
+      const ref =
+        urlParams.get("ref") ||
+        urlParams.get("referral");
+
       if (ref && ref.trim()) {
         const cleanRef = ref.trim().toUpperCase();
-        sessionStorage.setItem("grocery_referral_code", cleanRef);
-        localStorage.setItem("grocery_referral_code", cleanRef);
+
+        sessionStorage.setItem(
+          "grocery_referral_code",
+          cleanRef
+        );
+
+        localStorage.setItem(
+          "grocery_referral_code",
+          cleanRef
+        );
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error("Referral code error:", e);
+    }
   }, []);
 
+  // Fetch cart if user is authenticated
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -60,58 +98,160 @@ const App = () => {
     }
   }, [dispatch]);
 
+  return (
+    <>
+      {/* Page Loader */}
+      {loading && (
+        <Pageloader
+          duration={LOADER_DURATION}
+          onComplete={() => setLoading(false)}
+        />
+      )}
 
+      {/* Website Content */}
+      {!loading && (
+        <>
+          <Navbar />
+
+          <Routes>
+            <Route path="/" element={<Home />} />
+
+            <Route path="/about-us" element={<AboutUs />} />
+
+            <Route
+              path="/about-us-our-service"
+              element={<AboutUsOurService />}
+            />
+
+            <Route path="/contact-us" element={<ContactUs />} />
+
+            <Route path="/faq" element={<FaqSection />} />
+
+            <Route
+              path="/terms-and-conditions"
+              element={<TermAndCondition />}
+            />
+
+            <Route
+              path="/privacy-policy"
+              element={<PrivacyPolicy />}
+            />
+
+            <Route
+              path="/shipping-delivery"
+              element={<ShippingAndDelivery />}
+            />
+
+            {/* Product Routes */}
+            <Route
+              path="/product/:slug"
+              element={<ProductDetails />}
+            />
+
+            <Route
+              path="/productdetails/:id"
+              element={<ProductDetails />}
+            />
+
+            <Route
+              path="/productdetails/:slug"
+              element={<ProductDetails />}
+            />
+
+            {/* Category Routes */}
+            <Route
+              path="/category"
+              element={<CategoryDetails />}
+            />
+
+            <Route
+              path="/category/:slug"
+              element={<CategoryDetails />}
+            />
+
+            <Route
+              path="/categorydetails/:slug"
+              element={<CategoryDetails />}
+            />
+
+            {/* Blog Routes */}
+            <Route path="/blogs" element={<BlogGrid />} />
+
+            <Route
+              path="/news/:id"
+              element={<BlogReadmoreOne />}
+            />
+
+            <Route
+              path="/BlogReadmoreOne"
+              element={<BlogReadmoreOne />}
+            />
+
+            {/* User & Store Routes */}
+            <Route path="/login" element={<LoginPage />} />
+
+            <Route
+              path="/signup"
+              element={<LoginPage initialView="register" />}
+            />
+
+            <Route
+              path="/register"
+              element={<LoginPage initialView="register" />}
+            />
+
+            <Route path="/wishlist" element={<Wishlist />} />
+
+            <Route path="/cart" element={<CartSection />} />
+
+            <Route
+              path="/deliverytime"
+              element={<Navigate to="/cart" replace />}
+            />
+
+            <Route path="/profile" element={<UserProfile />} />
+
+            <Route path="/account" element={<UserProfile />} />
+
+            <Route
+              path="/saved-address"
+              element={<UserProfile defaultTab="addresses" />}
+            />
+
+            <Route
+              path="/myorders"
+              element={<UserProfile defaultTab="orders" />}
+            />
+
+            <Route
+              path="/listupload"
+              element={<ListUpload />}
+            />
+
+            <Route
+              path="/orders/:id"
+              element={<OrderDetails />}
+            />
+
+            <Route
+              path="/order-details/:id"
+              element={<OrderDetails />}
+            />
+          </Routes>
+
+          <FloatingForm />
+          <FloatingButton />
+          <Footer />
+        </>
+      )}
+    </>
+  );
+};
+
+const App = () => {
   return (
     <BrowserRouter>
-      <Navbar />
-
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about-us" element={<AboutUs />} />
-        <Route path="/about-us-our-service" element={<AboutUsOurService />} />
-        <Route path="/contact-us" element={<ContactUs />} />
-        <Route path="/faq" element={<FaqSection />} />
-        <Route path="/terms-and-conditions" element={<TermAndCondition />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/shipping-delivery" element={<ShippingAndDelivery />} />
-        <Route path="/product/:slug" element={<ProductDetails />} />
-        <Route path="/productdetails/:id" element={<ProductDetails />} />
-        <Route path="/productdetails/:slug" element={<ProductDetails />} />
-        {/* Category Details Routes */}
-        <Route path="/category" element={<CategoryDetails />} />
-        <Route path="/category/:slug" element={<CategoryDetails />} />
-        <Route path="/categorydetails/:slug" element={<CategoryDetails />} />
-        {/* Blog System Routes */}
-        <Route path="/blogs" element={<BlogGrid />} />
-        <Route path="/news/:id" element={<BlogReadmoreOne />} />
-        
-        <Route path="/BlogReadmoreOne" element={<BlogReadmoreOne />} />
-        
-        <Route
-          path="/BlogReadmoreOne"
-          element={<BlogReadmoreOne />}
-        />
-       
-
-        {/* User & Store Routes */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<LoginPage initialView="register" />} />
-        <Route path="/register" element={<LoginPage initialView="register" />} />
-        <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/cart" element={<CartSection />} />
-        <Route path="/deliverytime" element={<Navigate to="/cart" replace />} />
-        <Route path="/profile" element={<UserProfile />} />
-        <Route path="/account" element={<UserProfile />} />
-        <Route path="/saved-address" element={<UserProfile defaultTab="addresses" />} />
-        <Route path="/myorders" element={<UserProfile defaultTab="orders" />} />
-        <Route path="/listupload" element={<ListUpload />} />
-        <Route path="/orders/:id" element={<OrderDetails />} />
-        <Route path="/order-details/:id" element={<OrderDetails />} />
-      </Routes>
-
-      <FloatingForm />
-      <FloatingButton />
-      <Footer />
+      <AppContent />
     </BrowserRouter>
   );
 };
