@@ -5,7 +5,6 @@ import {
   Routes,
   Route,
   Navigate,
-  useLocation,
 } from "react-router-dom";
 
 import { useDispatch } from "react-redux";
@@ -36,36 +35,55 @@ import BlogReadmoreOne from "./Components/BlogReadmoreOne/BlogReadmoreOne";
 import LoginPage from "./Components/LoginPage/LoginPage";
 import CartSection from "./Components/CartSection/CartSection";
 import Wishlist from "./Components/Wishlist/Wishlist";
-import MyOrders from "./Components/MyOrders/MyOrders";
 import UserProfile from "./Components/UserProfile/UserProfile";
 import ListUpload from "./Components/ListUpload/ListUpload";
 import ProductDetails from "./Pages/ProductDetails/ProductDetails";
 import CategoryDetails from "./Pages/CategoryDetails/CategoryDetails";
 import OrderDetails from "./Components/OrderDetails/OrderDetails";
 
-const LOADER_DURATION = 1000;
+const LOADER_DURATION = 1500;
 
 const AppContent = () => {
   const dispatch = useDispatch();
-  const location = useLocation();
 
+  // Initial loader state
   const [loading, setLoading] = useState(true);
 
-  // Loader on initial load and every route change
+  // Show loader only on first entry or browser refresh
   useEffect(() => {
-    setLoading(true);
+    const navigationEntry =
+      performance.getEntriesByType("navigation")[0];
 
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, LOADER_DURATION);
+    const isRefresh =
+      navigationEntry?.type === "reload";
 
-    return () => clearTimeout(timer);
-  }, [location.pathname]);
+    const hasLoaded =
+      sessionStorage.getItem("website_loader_shown") === "true";
+
+    if (isRefresh || !hasLoaded) {
+      setLoading(true);
+
+      const timer = setTimeout(() => {
+        setLoading(false);
+
+        sessionStorage.setItem(
+          "website_loader_shown",
+          "true"
+        );
+      }, LOADER_DURATION);
+
+      return () => clearTimeout(timer);
+    }
+
+    setLoading(false);
+  }, []);
 
   // Capture referral code from URL
   useEffect(() => {
     try {
-      const urlParams = new URLSearchParams(window.location.search);
+      const urlParams = new URLSearchParams(
+        window.location.search
+      );
 
       const ref =
         urlParams.get("ref") ||
@@ -104,7 +122,14 @@ const AppContent = () => {
       {loading && (
         <Pageloader
           duration={LOADER_DURATION}
-          onComplete={() => setLoading(false)}
+          onComplete={() => {
+            setLoading(false);
+
+            sessionStorage.setItem(
+              "website_loader_shown",
+              "true"
+            );
+          }}
         />
       )}
 
@@ -114,19 +139,32 @@ const AppContent = () => {
           <Navbar />
 
           <Routes>
+            {/* Home */}
             <Route path="/" element={<Home />} />
 
-            <Route path="/about-us" element={<AboutUs />} />
+            {/* About */}
+            <Route
+              path="/about-us"
+              element={<AboutUs />}
+            />
 
             <Route
               path="/about-us-our-service"
               element={<AboutUsOurService />}
             />
 
-            <Route path="/contact-us" element={<ContactUs />} />
+            {/* Contact */}
+            <Route
+              path="/contact-us"
+              element={<ContactUs />}
+            />
 
-            <Route path="/faq" element={<FaqSection />} />
+            <Route
+              path="/faq"
+              element={<FaqSection />}
+            />
 
+            {/* Policies */}
             <Route
               path="/terms-and-conditions"
               element={<TermAndCondition />}
@@ -175,7 +213,10 @@ const AppContent = () => {
             />
 
             {/* Blog Routes */}
-            <Route path="/blogs" element={<BlogGrid />} />
+            <Route
+              path="/blogs"
+              element={<BlogGrid />}
+            />
 
             <Route
               path="/news/:id"
@@ -188,7 +229,10 @@ const AppContent = () => {
             />
 
             {/* User & Store Routes */}
-            <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="/login"
+              element={<LoginPage />}
+            />
 
             <Route
               path="/signup"
@@ -200,27 +244,43 @@ const AppContent = () => {
               element={<LoginPage initialView="register" />}
             />
 
-            <Route path="/wishlist" element={<Wishlist />} />
+            <Route
+              path="/wishlist"
+              element={<Wishlist />}
+            />
 
-            <Route path="/cart" element={<CartSection />} />
+            <Route
+              path="/cart"
+              element={<CartSection />}
+            />
 
             <Route
               path="/deliverytime"
               element={<Navigate to="/cart" replace />}
             />
 
-            <Route path="/profile" element={<UserProfile />} />
+            <Route
+              path="/profile"
+              element={<UserProfile />}
+            />
 
-            <Route path="/account" element={<UserProfile />} />
+            <Route
+              path="/account"
+              element={<UserProfile />}
+            />
 
             <Route
               path="/saved-address"
-              element={<UserProfile defaultTab="addresses" />}
+              element={
+                <UserProfile defaultTab="addresses" />
+              }
             />
 
             <Route
               path="/myorders"
-              element={<UserProfile defaultTab="orders" />}
+              element={
+                <UserProfile defaultTab="orders" />
+              }
             />
 
             <Route
@@ -239,8 +299,11 @@ const AppContent = () => {
             />
           </Routes>
 
+          {/* Floating Components */}
           <FloatingForm />
           <FloatingButton />
+
+          {/* Footer */}
           <Footer />
         </>
       )}

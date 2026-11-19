@@ -9,7 +9,7 @@ const TICKS = Array.from({ length: 60 }, (_, i) => i);
 const FADE_OUT_MS = 800;
 
 const Pageloader = ({
-  duration = 1000,
+  duration = 1500,
   onComplete,
   logo = defaultLogo,
 }) => {
@@ -28,8 +28,8 @@ const Pageloader = ({
     document.body.style.overflow = "hidden";
 
     const displayDuration = Math.max(
-      Number(duration) || 1000,
-      1000
+      Number(duration) || 1500,
+      1500
     );
 
     const exitTimer = setTimeout(() => {
@@ -57,8 +57,8 @@ const Pageloader = ({
       className={`pl ${exiting ? "pl--exit" : ""}`}
       style={{
         "--pl-duration": `${Math.max(
-          Number(duration) || 1000,
-          1000
+          Number(duration) || 1500,
+          1500
         )}ms`,
       }}
       role="status"
