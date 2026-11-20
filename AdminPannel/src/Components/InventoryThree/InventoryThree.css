@@ -1,0 +1,1489 @@
+
+/* ==========================================
+   INVENTORY THREE - PREMIUM DESIGN
+========================================== */
+
+.InventoryThree {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 3.2fr) minmax(235px, 0.9fr);
+  gap: 13px;
+  padding: 8px 2px 18px;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  color: #101828;
+  box-sizing: border-box;
+}
+
+.InventoryThree *,
+.InventoryThree *::before,
+.InventoryThree *::after {
+  box-sizing: border-box;
+}
+
+/* ==========================================
+   MAIN CARDS
+========================================== */
+
+.InventoryThreeMainCard,
+.InventoryThreeAlertsCard {
+  min-width: 0;
+  background: linear-gradient(145deg, #ffffff, #fbfcff);
+  border: 1px solid #e3e9f2;
+  border-radius: 14px;
+  box-shadow: 0 3px 14px rgba(20, 35, 65, 0.035);
+  transition:
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+  animation: InventoryThreeEnter 0.65s ease both;
+}
+
+.InventoryThreeMainCard:hover,
+.InventoryThreeAlertsCard:hover {
+  border-color: #d2e6d8;
+  box-shadow: 0 10px 30px rgba(20, 35, 65, 0.075);
+}
+
+/* ==========================================
+   HEADER
+========================================== */
+
+.InventoryThreeHeader {
+  min-height: 65px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 13px;
+  border-bottom: 1px solid #edf0f5;
+  background: linear-gradient(110deg, #ffffff, #f9fbff);
+  border-radius: 14px 14px 0 0;
+}
+
+.InventoryThreeTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.InventoryThreeTitleIcon {
+  width: 31px;
+  height: 31px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  color: #078b3c;
+  background: linear-gradient(145deg, #e4f8e9, #f3fcf5);
+  box-shadow: inset 0 0 0 1px #d9efdf;
+}
+
+.InventoryThreeTitleIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.InventoryThreeTitle h2 {
+  margin: 0;
+  color: #101828;
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -0.6px;
+  white-space: nowrap;
+}
+
+/* ==========================================
+   HEADER CONTROLS
+========================================== */
+
+.InventoryThreeControls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.InventoryThreeSearch {
+  width: 165px;
+  min-width: 105px;
+  height: 38px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(145deg, #ffffff, #f9fbfd);
+  border: 1px solid #e0e6ef;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.025);
+  transition: all 0.28s ease;
+}
+
+.InventoryThreeSearch:focus-within {
+  background: #ffffff;
+  border-color: #0b9846;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.10);
+  transform: translateY(-1px);
+}
+
+.InventoryThreeSearch svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  stroke: #8290a6;
+  stroke-width: 2.3;
+  stroke-linecap: round;
+}
+
+.InventoryThreeSearch input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #182438;
+  font-family: inherit;
+  font-size: 11.5px;
+}
+
+.InventoryThreeSearch input::placeholder {
+  color: #8994a7;
+}
+
+.InventoryThreeClearSearch {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: #edf1f5;
+  color: #64748b;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* ==========================================
+   PREMIUM CUSTOM DROPDOWNS
+========================================== */
+
+.InventoryThreeDropdown {
+  position: relative;
+  min-width: 115px;
+  height: 38px;
+  z-index: 10;
+}
+
+.InventoryThreeDropdown.is-open {
+  z-index: 100;
+}
+
+.InventoryThreeDropdownTrigger {
+  width: 100%;
+  height: 100%;
+  padding: 0 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid #e1e7ef;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  color: #243247;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.28s ease;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.025);
+}
+
+.InventoryThreeDropdownTrigger:hover {
+  border-color: #9acbab;
+  background: #f6fcf7;
+  box-shadow: 0 4px 12px rgba(0, 120, 48, 0.07);
+  transform: translateY(-1px);
+}
+
+.InventoryThreeDropdown.is-open .InventoryThreeDropdownTrigger {
+  border-color: #0b9846;
+  background: #f4fbf6;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.09);
+}
+
+.InventoryThreeDropdownLeft {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow: hidden;
+}
+
+.InventoryThreeDropdownLeft > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.InventoryThreeDropdownIcon {
+  color: #078b3c;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.InventoryThreeDropdownChevron {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  stroke: #66758b;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.25s ease;
+}
+
+.InventoryThreeDropdown.is-open .InventoryThreeDropdownChevron {
+  transform: rotate(180deg);
+  stroke: #078b3c;
+}
+
+.InventoryThreeDropdownBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 101;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+.InventoryThreeDropdownMenu {
+  position: absolute;
+  top: calc(100% + 9px);
+  left: 0;
+  z-index: 102;
+  width: max(100%, 175px);
+  padding: 7px;
+  border: 1px solid #e6ecf2;
+  border-radius: 13px;
+  background: #ffffff;
+  box-shadow:
+    0 14px 35px rgba(15, 23, 42, 0.12),
+    0 3px 8px rgba(15, 23, 42, 0.04);
+  animation: InventoryThreeDropdownEnter 0.22s ease both;
+  transform-origin: top center;
+}
+
+.InventoryThreeDropdownMenuTitle {
+  padding: 8px 10px 9px;
+  color: #98a2b3;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 1px solid #edf1f5;
+  margin-bottom: 5px;
+}
+
+.InventoryThreeDropdownOption {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #475467;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 550;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.InventoryThreeDropdownOption:hover {
+  background: #f0f8f2;
+  color: #087b36;
+  padding-left: 14px;
+}
+
+.InventoryThreeDropdownOption.selected {
+  background: linear-gradient(100deg, #eaf8ed, #f5fbf6);
+  color: #078b3c;
+  font-weight: 750;
+}
+
+.InventoryThreeDropdownOption svg {
+  width: 15px;
+  height: 15px;
+  stroke: #078b3c;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+/* ==========================================
+   EXPORT AND ADD BUTTONS
+========================================== */
+
+.InventoryThreeExportButton,
+.InventoryThreeAddButton {
+  height: 38px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.InventoryThreeExportButton {
+  color: #172337;
+  background: linear-gradient(145deg, #ffffff, #f6f8fc);
+  border: 1px solid #e1e7ef;
+}
+
+.InventoryThreeExportButton:hover {
+  background: #eef8f1;
+  border-color: #9bd2ac;
+  color: #078b3c;
+  transform: translateY(-2px);
+}
+
+.InventoryThreeExportButton svg {
+  width: 17px;
+  height: 17px;
+  stroke: #078b3c;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.InventoryThreeAddButton {
+  color: #ffffff;
+  border: 1px solid #07863a;
+  background: linear-gradient(135deg, #119d4a, #00652e);
+  padding: 0 14px;
+  box-shadow: 0 4px 12px rgba(0, 112, 46, 0.17);
+}
+
+.InventoryThreeAddButton:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #20ad57, #087b39);
+  box-shadow: 0 8px 18px rgba(0, 112, 46, 0.23);
+}
+
+.InventoryThreeAddButton span {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* ==========================================
+   TABLE
+========================================== */
+
+.InventoryThreeTableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.InventoryThreeTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.InventoryThreeTable thead {
+  background: linear-gradient(180deg, #f4f7fb, #edf2f8);
+}
+
+.InventoryThreeTable th {
+  height: 43px;
+  padding: 9px 10px;
+  color: #182235;
+  font-size: 11.5px;
+  font-weight: 750;
+  border-bottom: 1px solid #e4eaf2;
+  text-align: center;
+}
+
+.InventoryThreeTable th:first-child {
+  text-align: left;
+  padding-left: 17px;
+  min-width: 195px;
+}
+
+.InventoryThreeTable td {
+  height: 45px;
+  padding: 6px 10px;
+  color: #202a3d;
+  font-size: 11.5px;
+  font-weight: 500;
+  border-bottom: 1px solid #e9edf4;
+  border-right: 1px solid #edf0f5;
+  background: #ffffff;
+  transition: background 0.25s ease;
+}
+
+.InventoryThreeTable td:first-child {
+  text-align: left;
+  padding-left: 17px;
+}
+
+.InventoryThreeTable td:last-child,
+.InventoryThreeTable th:last-child {
+  border-right: none;
+}
+
+.InventoryThreeTable tbody tr {
+  transition: all 0.25s ease;
+}
+
+.InventoryThreeTable tbody tr:hover {
+  box-shadow: inset 3px 0 0 #119b4a;
+}
+
+.InventoryThreeTable tbody tr:hover td {
+  background: linear-gradient(90deg, #f4fbf6, #ffffff);
+}
+
+.InventoryThreeTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ==========================================
+   PRODUCT IMAGES
+========================================== */
+
+.InventoryThreeProductInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.InventoryThreeProductImage,
+.InventoryThreeAlertImage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(145deg, #ffffff, #f3f6fa);
+  border: 1px solid #e8edf3;
+  transition: all 0.3s ease;
+}
+
+.InventoryThreeProductImage {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.035);
+}
+
+.InventoryThreeProductImage img {
+  width: 100%;
+  height: 100%;
+  padding: 2px;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.InventoryThreeProductInfo:hover .InventoryThreeProductImage {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(20, 35, 65, 0.12);
+}
+
+.InventoryThreeProductInfo:hover img {
+  transform: scale(1.1);
+}
+
+.InventoryThreeProductInfo > span {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #1c293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.InventoryThreeImageFallback::after {
+  content: attr(data-fallback);
+  font-size: 16px;
+  font-weight: 800;
+  color: #078b3c;
+}
+
+/* ==========================================
+   STOCK NUMBERS AND PRICE
+========================================== */
+
+.InventoryThreeNumber {
+  font-variant-numeric: tabular-nums;
+}
+
+.InventoryThreePrice {
+  font-weight: 700 !important;
+  color: #101828 !important;
+}
+
+/* ==========================================
+   STATUS BADGES
+========================================== */
+
+.InventoryThreeStatus {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: transform 0.2s ease;
+}
+
+.InventoryThreeStatus:hover {
+  transform: translateY(-1px);
+}
+
+.InventoryThreeStatusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.InventoryThreeStatus.in-stock {
+  color: #08652e;
+  border-color: #d3eed8;
+  background: linear-gradient(135deg, #e5f8e9, #f0fbf2);
+}
+
+.InventoryThreeStatus.in-stock .InventoryThreeStatusDot {
+  background: #16a34a;
+}
+
+.InventoryThreeStatus.low-stock {
+  color: #b66b00;
+  border-color: #f9e2bd;
+  background: linear-gradient(135deg, #fff1d9, #fff8ed);
+}
+
+.InventoryThreeStatus.low-stock .InventoryThreeStatusDot {
+  background: #f59e0b;
+}
+
+.InventoryThreeStatus.out-of-stock {
+  color: #c81e26;
+  border-color: #f7d4d4;
+  background: linear-gradient(135deg, #ffe5e5, #fff1f1);
+}
+
+.InventoryThreeStatus.out-of-stock .InventoryThreeStatusDot {
+  background: #dc2626;
+}
+
+/* ==========================================
+   ACTION BUTTON AND MENU
+========================================== */
+
+.InventoryThreeActionCell {
+  position: relative;
+  overflow: visible !important;
+  width: 52px;
+}
+
+.InventoryThreeActionButton {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  color: #19263a;
+  border-radius: 7px;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.InventoryThreeActionButton:hover {
+  background: #e8f5eb;
+  color: #078b3c;
+  transform: scale(1.08);
+}
+
+.InventoryThreeMenuBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+.InventoryThreeActionMenu {
+  position: absolute;
+  top: 32px;
+  right: 12px;
+  z-index: 31;
+  width: 140px;
+  padding: 7px;
+  background: #ffffff;
+  border: 1px solid #e6ebf2;
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.16);
+  animation: InventoryThreeMenuEnter 0.2s ease both;
+}
+
+.InventoryThreeActionMenu button {
+  width: 100%;
+  height: 37px;
+  padding: 0 9px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #253247;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 550;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.InventoryThreeActionMenu button:hover {
+  background: linear-gradient(100deg, #eaf8ed, #f7fcf8);
+  color: #078b3c;
+}
+
+.InventoryThreeActionMenu button span {
+  width: 16px;
+  font-size: 15px;
+  text-align: center;
+}
+
+.InventoryThreeActionMenu .InventoryThreeDeleteAction {
+  color: #dc2626;
+}
+
+.InventoryThreeActionMenu .InventoryThreeDeleteAction:hover {
+  background: #fff0f0;
+  color: #c71925;
+}
+
+/* ==========================================
+   EMPTY STATE
+========================================== */
+
+.InventoryThreeEmpty {
+  height: 180px !important;
+  text-align: center !important;
+}
+
+.InventoryThreeEmpty div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.InventoryThreeEmpty div > span {
+  font-size: 25px;
+  color: #8c99aa;
+}
+
+.InventoryThreeEmpty strong {
+  font-size: 13px;
+  color: #253247;
+}
+
+.InventoryThreeEmpty small {
+  color: #8490a2;
+  font-size: 11px;
+}
+
+/* ==========================================
+   FOOTER AND PAGINATION
+========================================== */
+
+.InventoryThreeTableFooter {
+  min-height: 59px;
+  padding: 9px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid #e8edf4;
+  background: linear-gradient(120deg, #ffffff, #f9fbfe);
+  border-radius: 0 0 14px 14px;
+}
+
+.InventoryThreeShowing {
+  color: #29364b;
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.InventoryThreePagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.InventoryThreePageArrow,
+.InventoryThreePageNumber {
+  min-width: 31px;
+  height: 31px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e1e7ef;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #1c293b;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+
+.InventoryThreePageArrow {
+  font-size: 21px;
+  line-height: 1;
+}
+
+.InventoryThreePageArrow:hover:not(:disabled),
+.InventoryThreePageNumber:hover:not(.active) {
+  color: #078b3c;
+  background: #eff8f1;
+  border-color: #acd5b8;
+  transform: translateY(-2px);
+}
+
+.InventoryThreePageNumber.active {
+  color: #ffffff;
+  border-color: #087b36;
+  background: linear-gradient(135deg, #119b4a, #00632e);
+  box-shadow: 0 4px 11px rgba(0, 115, 50, 0.2);
+}
+
+.InventoryThreePageArrow:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: #edf1f6;
+}
+
+.InventoryThreeDots {
+  color: #69758a;
+  font-size: 13px;
+  padding: 0 2px;
+}
+
+/* ==========================================
+   STOCK ALERTS
+========================================== */
+
+.InventoryThreeAlertsCard {
+  padding: 17px 15px;
+  background: linear-gradient(150deg, #ffffff, #fbfcff);
+  animation-delay: 0.12s;
+}
+
+.InventoryThreeAlertsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.InventoryThreeAlertsTitle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.InventoryThreeBell {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.InventoryThreeAlertsTitle h2 {
+  margin: 0;
+  color: #101828;
+  font-size: 15px;
+  font-weight: 750;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+
+.InventoryThreeViewAlerts {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 0;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: #078b3c;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: gap 0.2s ease;
+}
+
+.InventoryThreeViewAlerts:hover {
+  gap: 8px;
+  color: #005e2c;
+}
+
+.InventoryThreeViewAlerts span {
+  font-size: 15px;
+}
+
+.InventoryThreeAlertsList {
+  display: flex;
+  flex-direction: column;
+}
+
+.InventoryThreeAlertItem {
+  min-height: 94px;
+  padding: 11px 3px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #e9eef4;
+  transition: all 0.25s ease;
+}
+
+.InventoryThreeAlertItem:hover {
+  padding-left: 8px;
+  border-radius: 10px;
+  background: linear-gradient(100deg, #f1faf3, #ffffff);
+  transform: translateX(2px);
+}
+
+.InventoryThreeAlertImage {
+  width: 62px;
+  height: 62px;
+  min-width: 62px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #ffffff, #f4f6fa);
+  border: 1px solid #edf0f4;
+  box-shadow: 0 3px 9px rgba(15, 23, 42, 0.04);
+}
+
+.InventoryThreeAlertImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 3px;
+  transition: transform 0.3s ease;
+}
+
+.InventoryThreeAlertItem:hover .InventoryThreeAlertImage img {
+  transform: scale(1.1);
+}
+
+.InventoryThreeAlertContent {
+  min-width: 0;
+}
+
+.InventoryThreeAlertContent h3 {
+  margin: 0 0 5px;
+  color: #172337;
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.InventoryThreeAlertContent p {
+  margin: 0 0 4px;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.InventoryThreeAlertContent p.warning {
+  color: #ed8a00;
+}
+
+.InventoryThreeAlertContent p.danger {
+  color: #dc2626;
+}
+
+.InventoryThreeAlertContent > span {
+  color: #43516a;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.InventoryThreeNoAlerts {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 9px;
+  text-align: center;
+}
+
+.InventoryThreeNoAlerts > span {
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e7f7e9;
+  color: #078b3c;
+  font-size: 21px;
+}
+
+.InventoryThreeNoAlerts strong {
+  font-size: 12px;
+  color: #253247;
+}
+
+.InventoryThreeNoAlerts small {
+  font-size: 10px;
+  color: #8591a3;
+}
+
+/* ==========================================
+   MODAL
+========================================== */
+
+.InventoryThreeModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(13, 25, 43, 0.48);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  animation: InventoryThreeFade 0.2s ease both;
+}
+
+.InventoryThreeModal {
+  width: 100%;
+  max-width: 570px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 25px 90px rgba(10, 25, 45, 0.22);
+  animation: InventoryThreeModalEnter 0.3s ease both;
+}
+
+.InventoryThreeModalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  padding-bottom: 17px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.InventoryThreeModalHeader h2 {
+  margin: 0 0 5px;
+  color: #101828;
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.6px;
+}
+
+.InventoryThreeModalHeader p {
+  margin: 0;
+  color: #788498;
+  font-size: 12px;
+}
+
+.InventoryThreeModalClose {
+  width: 31px;
+  height: 31px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 8px;
+  background: #f1f4f8;
+  color: #344054;
+  font-size: 22px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.InventoryThreeModalClose:hover {
+  background: #ffe8e8;
+  color: #dc2626;
+  transform: rotate(90deg);
+}
+
+/* ==========================================
+   FORM
+========================================== */
+
+.InventoryThreeFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.InventoryThreeFormGrid label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #263449;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.InventoryThreeFormGrid input,
+.InventoryThreeFormGrid select {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #dce3ed;
+  border-radius: 10px;
+  background: #f9fbfd;
+  outline: none;
+  color: #172337;
+  font-family: inherit;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.InventoryThreeFormGrid input:hover,
+.InventoryThreeFormGrid select:hover {
+  border-color: #a6cbb2;
+}
+
+.InventoryThreeFormGrid input:focus,
+.InventoryThreeFormGrid select:focus {
+  border-color: #119b4a;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.09);
+}
+
+.InventoryThreeFormGrid input::placeholder {
+  color: #a0aaba;
+}
+
+.InventoryThreeModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 22px;
+  margin-top: 20px;
+  border-top: 1px solid #edf0f5;
+}
+
+.InventoryThreeCancelButton,
+.InventoryThreeModalPrimary {
+  min-height: 39px;
+  padding: 0 17px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.InventoryThreeCancelButton {
+  border: 1px solid #dce3ed;
+  background: #ffffff;
+  color: #475467;
+}
+
+.InventoryThreeCancelButton:hover {
+  background: #f1f4f8;
+}
+
+.InventoryThreeModalPrimary {
+  border: 1px solid #07863a;
+  background: linear-gradient(135deg, #119d4a, #00632e);
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 115, 50, 0.14);
+}
+
+.InventoryThreeModalPrimary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 16px rgba(0, 115, 50, 0.23);
+}
+
+/* ==========================================
+   VIEW PRODUCT DETAILS
+========================================== */
+
+.InventoryThreeViewDetails {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.InventoryThreeViewImage {
+  width: 100px;
+  height: 100px;
+  padding: 7px;
+  border-radius: 13px;
+  border: 1px solid #edf0f5;
+  background: #f7f9fc;
+}
+
+.InventoryThreeViewImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.InventoryThreeViewDetails > h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #172337;
+}
+
+.InventoryThreeDetailGrid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 8px 0;
+}
+
+.InventoryThreeDetailGrid > div {
+  padding: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  border: 1px solid #e9edf4;
+  background: #fafbfd;
+  border-radius: 9px;
+}
+
+.InventoryThreeDetailGrid span {
+  color: #8590a2;
+  font-size: 11px;
+}
+
+.InventoryThreeDetailGrid strong {
+  color: #1c293b;
+  font-size: 13px;
+}
+
+.InventoryThreeViewDetails > .InventoryThreeModalPrimary {
+  width: 100%;
+}
+
+/* ==========================================
+   ANIMATIONS
+========================================== */
+
+@keyframes InventoryThreeEnter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes InventoryThreeFade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes InventoryThreeModalEnter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes InventoryThreeMenuEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes InventoryThreeDropdownEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-7px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ==========================================
+   LAPTOP RESPONSIVE
+========================================== */
+
+@media (max-width: 1250px) {
+  .InventoryThree {
+    grid-template-columns: minmax(0, 1fr) 250px;
+    gap: 10px;
+  }
+
+  .InventoryThreeHeader {
+    flex-wrap: wrap;
+  }
+
+  .InventoryThreeControls {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .InventoryThreeSearch {
+    flex: 1;
+  }
+
+  .InventoryThreeDropdown {
+    flex: 1;
+    min-width: 105px;
+  }
+
+  .InventoryThreeTable {
+    min-width: 850px;
+  }
+}
+
+/* ==========================================
+   TABLET RESPONSIVE
+========================================== */
+
+@media (max-width: 900px) {
+  .InventoryThree {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .InventoryThreeAlertsCard {
+    padding: 18px;
+  }
+
+  .InventoryThreeAlertsList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 15px;
+  }
+
+  .InventoryThreeAlertItem {
+    padding: 12px 5px;
+  }
+
+  .InventoryThreeTable {
+    min-width: 880px;
+  }
+}
+
+/* ==========================================
+   MOBILE RESPONSIVE
+========================================== */
+
+@media (max-width: 600px) {
+  .InventoryThree {
+    padding: 4px 2px 15px;
+    gap: 12px;
+  }
+
+  .InventoryThreeHeader {
+    padding: 13px 12px;
+    align-items: flex-start;
+  }
+
+  .InventoryThreeTitle h2 {
+    font-size: 16px;
+  }
+
+  .InventoryThreeControls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .InventoryThreeSearch {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: 40px;
+  }
+
+  .InventoryThreeSearch input {
+    font-size: 12px;
+  }
+
+  .InventoryThreeDropdown {
+    width: 100%;
+    height: 40px;
+    min-width: 0;
+  }
+
+  .InventoryThreeDropdownTrigger {
+    font-size: 11px;
+    padding: 0 9px;
+  }
+
+  .InventoryThreeDropdownMenu {
+    min-width: 100%;
+  }
+
+  .InventoryThreeExportButton,
+  .InventoryThreeAddButton {
+    width: 100%;
+    height: 40px;
+    font-size: 11px;
+  }
+
+  .InventoryThreeTable {
+    min-width: 870px;
+  }
+
+  .InventoryThreeTable th {
+    height: 42px;
+    font-size: 11px;
+  }
+
+  .InventoryThreeTable td {
+    height: 46px;
+  }
+
+  .InventoryThreeTableFooter {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .InventoryThreePagination {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .InventoryThreeAlertsCard {
+    padding: 15px 12px;
+  }
+
+  .InventoryThreeAlertsList {
+    grid-template-columns: 1fr;
+  }
+
+  .InventoryThreeAlertItem {
+    min-height: 85px;
+  }
+
+  .InventoryThreeModal {
+    padding: 19px 15px;
+    max-height: 92vh;
+  }
+
+  .InventoryThreeFormGrid {
+    grid-template-columns: 1fr;
+    gap: 13px;
+  }
+
+  .InventoryThreeDetailGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ==========================================
+   EXTRA SMALL MOBILE
+========================================== */
+
+@media (max-width: 350px) {
+  .InventoryThreeTitle h2 {
+    font-size: 14px;
+  }
+
+  .InventoryThreeExportButton,
+  .InventoryThreeAddButton {
+    padding: 0 7px;
+    font-size: 10px;
+  }
+
+  .InventoryThreeShowing {
+    font-size: 10px;
+  }
+
+  .InventoryThreePageArrow,
+  .InventoryThreePageNumber {
+    min-width: 26px;
+    height: 27px;
+  }
+}
+
+/* ==========================================
+   ACCESSIBILITY
+========================================== */
+
+.InventoryThree button:focus-visible,
+.InventoryThree input:focus-visible,
+.InventoryThree select:focus-visible {
+  outline: 2px solid #16a34a;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .InventoryThree *,
+  .InventoryThree *::before,
+  .InventoryThree *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

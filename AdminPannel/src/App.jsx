@@ -46,6 +46,7 @@ import Billing from "./Components/Billing/Billing";
 import BillingHistory from "./Components/BillingHistory/BillingHistory";
 import Login from "./Components/Login/Login";
 import AdminRegister from "./Components/AdminRegister/AdminRegister";
+import InventoryManagement from "./Pages/InventoryManagement/InventoryManagement";
 
 const App = () => {
   return (
@@ -72,6 +73,7 @@ const App = () => {
             <Route path="blogmanagement" element={<BlogManagement />} />
             <Route path="blog/management" element={<BlogManagement />} />
             <Route path="testimonialmanagement" element={<TestimonialManagement />} />
+            <Route path="inventory-management" element={<InventoryManagement/>} />
 
             {/* Products */}
             <Route path="products/all-products" element={<Allproduct />} />

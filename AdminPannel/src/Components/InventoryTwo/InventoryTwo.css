@@ -1,0 +1,769 @@
+
+/* ==========================================
+   INVENTORY TWO - MAIN SECTION
+========================================== */
+
+.InventoryTwo {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  align-items: stretch;
+  gap: 16px;
+  padding: 22px 2px 18px;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  color: #111827;
+  box-sizing: border-box;
+}
+
+.InventoryTwo * {
+  box-sizing: border-box;
+}
+
+/* ==========================================
+   MAIN CARDS
+========================================== */
+
+.InventoryTwoOverview,
+.InventoryTwoMovement {
+  min-width: 0;
+  min-height: 330px;
+  height: 100%;
+  padding: 25px 23px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, #ffffff 0%, #fbfcff 100%);
+  border: 1px solid #e4eaf2;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(20, 35, 65, 0.045);
+
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+
+  animation: InventoryTwoCardEnter 0.8s
+    cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.InventoryTwoMovement {
+  animation-delay: 150ms;
+}
+
+.InventoryTwoOverview:hover,
+.InventoryTwoMovement:hover {
+  transform: translateY(-5px);
+  border-color: #c8e3d0;
+  box-shadow: 0 15px 38px rgba(15, 55, 35, 0.09);
+}
+
+/* ==========================================
+   CARD HEADER
+========================================== */
+
+.InventoryTwoCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.InventoryTwoCardHeader h2 {
+  margin: 0;
+  color: #101828;
+  font-size: 19px;
+  font-weight: 750;
+  letter-spacing: -0.55px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.InventoryTwoHeadingIcon {
+  width: 27px;
+  height: 27px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.InventoryTwoHeadingIcon svg {
+  width: 26px;
+  height: 26px;
+  stroke: #078b3c;
+  stroke-width: 2.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ==========================================
+   LEFT CARD - STOCK OVERVIEW
+========================================== */
+
+.InventoryTwoOverview {
+  display: flex;
+  flex-direction: column;
+}
+
+.InventoryTwoStockList {
+  display: flex;
+  flex-direction: column;
+  gap: 33px;
+  margin-top: 52px;
+}
+
+.InventoryTwoStockItem {
+  display: grid;
+  grid-template-columns: 92px minmax(50px, 1fr) 58px;
+  align-items: center;
+  gap: 13px;
+}
+
+.InventoryTwoStockName {
+  font-size: 14px;
+  font-weight: 550;
+  color: #202a3d;
+  white-space: nowrap;
+}
+
+/* Progress track */
+
+.InventoryTwoProgressTrack {
+  width: 100%;
+  height: 20px;
+  background: linear-gradient(90deg, #eef1f7, #e9edf4);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Progress fill animation */
+
+.InventoryTwoProgressFill {
+  height: 100%;
+  width: var(--progress-width);
+  border-radius: 6px;
+  transform: scaleX(0);
+  transform-origin: left center;
+
+  animation: InventoryTwoProgressEnter 1.6s
+    cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  transition:
+    filter 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.InventoryTwoStockItem:hover .InventoryTwoProgressFill {
+  filter: brightness(1.08);
+}
+
+.InventoryTwoProgressFill.green {
+  background: linear-gradient(90deg, #20b85a, #119c45);
+  box-shadow: 0 3px 10px rgba(22, 163, 74, 0.24);
+}
+
+.InventoryTwoProgressFill.orange {
+  background: linear-gradient(90deg, #ffb52d, #f28b00);
+  box-shadow: 0 3px 10px rgba(242, 139, 0, 0.18);
+}
+
+.InventoryTwoProgressFill.red {
+  background: linear-gradient(90deg, #fa4249, #dc171f);
+  box-shadow: 0 3px 10px rgba(220, 23, 31, 0.18);
+}
+
+.InventoryTwoPercentage {
+  text-align: right;
+  font-size: 15px;
+  font-weight: 750;
+  color: #101828;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================
+   LEFT CARD FOOTER
+========================================== */
+
+.InventoryTwoOverviewFooter {
+  margin-top: auto;
+  padding-top: 35px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #738096;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.InventoryTwoFooterDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #16a34a;
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.10);
+  animation: InventoryTwoDotPulse 2s infinite;
+}
+
+.InventoryTwoFooterStatus {
+  margin-left: auto;
+  color: #8993a3;
+  font-size: 11px;
+}
+
+/* ==========================================
+   RIGHT CARD - MOVEMENT HEADER
+========================================== */
+
+.InventoryTwoMovement {
+  display: flex;
+  flex-direction: column;
+}
+
+.InventoryTwoMovementHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.InventoryTwoFilter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.InventoryTwoFilterButton {
+  border: 1px solid transparent;
+  outline: none;
+  padding: 9px 14px;
+  min-width: 46px;
+  border-radius: 9px;
+  background: #f0f2f8;
+  color: #1c2435;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+
+  transition:
+    background 0.3s ease,
+    color 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
+}
+
+.InventoryTwoFilterButton:hover {
+  background: #e2f1e7;
+  color: #07863a;
+  transform: translateY(-2px);
+}
+
+.InventoryTwoFilterButton.active {
+  background: linear-gradient(135deg, #087d37, #005b2b);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 104, 47, 0.22);
+}
+
+.InventoryTwoFilterButton:focus-visible {
+  outline: 2px solid #16a34a;
+  outline-offset: 3px;
+}
+
+/* ==========================================
+   LARGE GRAPH AREA
+========================================== */
+
+.InventoryTwoChartContainer {
+  width: 100%;
+  min-width: 0;
+  height: 255px;
+  flex: 1;
+  min-height: 220px;
+  position: relative;
+  overflow: visible;
+}
+
+.InventoryTwoChart {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  touch-action: pan-y;
+}
+
+/* ==========================================
+   CHART GRID AND AXES
+========================================== */
+
+.InventoryTwoGridLine {
+  stroke: #e8edf4;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  transition: stroke 0.3s ease;
+}
+
+.InventoryTwoAxisLine {
+  stroke: #d7e0eb;
+  stroke-width: 1.3;
+  vector-effect: non-scaling-stroke;
+}
+
+.InventoryTwoAxisLabel {
+  fill: #344054;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+.InventoryTwoXAxisLabel {
+  fill: #263247;
+  font-size: 13px;
+  font-weight: 550;
+  font-family: inherit;
+}
+
+/* ==========================================
+   CHART AREA AND LINE
+========================================== */
+
+.InventoryTwoArea {
+  animation: InventoryTwoAreaEnter 1.2s ease both;
+}
+
+.InventoryTwoLine {
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+  animation: InventoryTwoLineEnter 1.5s
+    cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  filter: drop-shadow(0 3px 3px rgba(22, 163, 74, 0.12));
+}
+
+/* ==========================================
+   GRAPH POINTS
+========================================== */
+
+.InventoryTwoChartPoint {
+  cursor: pointer;
+  outline: none;
+}
+
+.InventoryTwoPoint {
+  fill: #159b45;
+  stroke: #ffffff;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+
+  transition:
+    r 0.25s ease,
+    fill 0.25s ease;
+}
+
+.InventoryTwoPointGlow {
+  fill: #16a34a;
+  opacity: 0.17;
+  animation: InventoryTwoPointPulse 1.4s ease infinite;
+}
+
+.InventoryTwoChartPoint:hover .InventoryTwoPoint {
+  fill: #006c2e;
+  stroke-width: 3;
+}
+
+.InventoryTwoChartPoint:focus-visible .InventoryTwoPoint {
+  stroke: #075d2b;
+  stroke-width: 4;
+}
+
+/* ==========================================
+   PREMIUM TOOLTIP
+========================================== */
+
+.InventoryTwoTooltip {
+  position: absolute;
+  z-index: 10;
+  min-width: 112px;
+  padding: 11px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  border: 1px solid #e0eadf;
+  border-radius: 11px;
+  box-shadow: 0 8px 25px rgba(15, 45, 25, 0.13);
+
+  transform: translate(-50%, calc(-100% - 15px));
+  pointer-events: none;
+
+  animation: InventoryTwoTooltipEnter 0.2s ease both;
+}
+
+.InventoryTwoTooltip span {
+  font-size: 11px;
+  color: #758195;
+  font-weight: 650;
+}
+
+.InventoryTwoTooltip strong {
+  font-size: 19px;
+  color: #078b3c;
+  font-weight: 800;
+}
+
+.InventoryTwoTooltip small {
+  font-size: 10px;
+  color: #929aaa;
+}
+
+/* ==========================================
+   CHART FOOTER
+========================================== */
+
+.InventoryTwoChartFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 12px;
+  margin-top: 5px;
+  border-top: 1px solid #edf0f5;
+}
+
+.InventoryTwoChartLegend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #647084;
+  font-weight: 550;
+}
+
+.InventoryTwoLegendDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #159b45;
+  box-shadow: 0 0 0 4px rgba(21, 155, 69, 0.10);
+}
+
+.InventoryTwoChartPeriod {
+  font-size: 11px;
+  color: #8993a3;
+  font-weight: 500;
+}
+
+/* ==========================================
+   ANIMATIONS
+========================================== */
+
+@keyframes InventoryTwoCardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes InventoryTwoProgressEnter {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes InventoryTwoLineEnter {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes InventoryTwoAreaEnter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes InventoryTwoTooltipEnter {
+  from {
+    opacity: 0;
+    margin-top: 5px;
+  }
+
+  to {
+    opacity: 1;
+    margin-top: 0;
+  }
+}
+
+@keyframes InventoryTwoDotPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.10);
+  }
+
+  50% {
+    box-shadow: 0 0 0 7px rgba(22, 163, 74, 0.04);
+  }
+}
+
+@keyframes InventoryTwoPointPulse {
+  0%, 100% {
+    opacity: 0.17;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ==========================================
+   LAPTOP RESPONSIVE
+========================================== */
+
+@media (max-width: 1200px) {
+  .InventoryTwo {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 13px;
+  }
+
+  .InventoryTwoOverview,
+  .InventoryTwoMovement {
+    min-height: 320px;
+    padding: 22px 16px;
+  }
+
+  .InventoryTwoStockItem {
+    grid-template-columns: 82px minmax(40px, 1fr) 52px;
+    gap: 8px;
+  }
+
+  .InventoryTwoStockList {
+    gap: 30px;
+    margin-top: 48px;
+  }
+
+  .InventoryTwoFilter {
+    gap: 4px;
+  }
+
+  .InventoryTwoFilterButton {
+    min-width: 39px;
+    padding: 8px 9px;
+    font-size: 11px;
+  }
+
+  .InventoryTwoCardHeader h2 {
+    font-size: 17px;
+  }
+}
+
+/* ==========================================
+   TABLET
+========================================== */
+
+@media (max-width: 768px) {
+  .InventoryTwo {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 5px;
+  }
+
+  .InventoryTwoOverview,
+  .InventoryTwoMovement {
+    min-height: 320px;
+    padding: 23px;
+  }
+
+  .InventoryTwoStockList {
+    gap: 32px;
+    margin-top: 42px;
+  }
+
+  .InventoryTwoStockItem {
+    grid-template-columns: 100px minmax(50px, 1fr) 60px;
+    gap: 12px;
+  }
+
+  .InventoryTwoChartContainer {
+    height: 250px;
+    min-height: 250px;
+  }
+
+  .InventoryTwoMovementHeader {
+    margin-bottom: 15px;
+  }
+}
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media (max-width: 480px) {
+  .InventoryTwo {
+    gap: 13px;
+    padding: 3px;
+  }
+
+  .InventoryTwoOverview,
+  .InventoryTwoMovement {
+    min-height: 285px;
+    padding: 19px 13px;
+    border-radius: 13px;
+  }
+
+  .InventoryTwoCardHeader {
+    gap: 9px;
+  }
+
+  .InventoryTwoCardHeader h2 {
+    font-size: 16px;
+  }
+
+  .InventoryTwoHeadingIcon,
+  .InventoryTwoHeadingIcon svg {
+    width: 23px;
+    height: 23px;
+  }
+
+  .InventoryTwoStockList {
+    gap: 30px;
+    margin-top: 40px;
+  }
+
+  .InventoryTwoStockItem {
+    grid-template-columns: 82px minmax(35px, 1fr) 46px;
+    gap: 7px;
+  }
+
+  .InventoryTwoStockName {
+    font-size: 12px;
+  }
+
+  .InventoryTwoProgressTrack {
+    height: 17px;
+  }
+
+  .InventoryTwoPercentage {
+    font-size: 12px;
+  }
+
+  .InventoryTwoOverviewFooter {
+    padding-top: 30px;
+    font-size: 10px;
+  }
+
+  .InventoryTwoFooterStatus {
+    font-size: 10px;
+  }
+
+  .InventoryTwoMovementHeader {
+    flex-wrap: wrap;
+    gap: 13px;
+    margin-bottom: 12px;
+  }
+
+  .InventoryTwoFilter {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .InventoryTwoFilterButton {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 5px;
+    font-size: 11px;
+  }
+
+  .InventoryTwoChartContainer {
+    height: 205px;
+    min-height: 205px;
+  }
+
+  .InventoryTwoAxisLabel {
+    font-size: 13px;
+  }
+
+  .InventoryTwoXAxisLabel {
+    font-size: 12px;
+  }
+
+  .InventoryTwoChartFooter {
+    padding-top: 10px;
+  }
+
+  .InventoryTwoChartLegend {
+    font-size: 10px;
+  }
+
+  .InventoryTwoChartPeriod {
+    font-size: 10px;
+  }
+
+  .InventoryTwoTooltip {
+    min-width: 90px;
+    padding: 8px 10px;
+  }
+}
+
+/* ==========================================
+   SMALL MOBILE
+========================================== */
+
+@media (max-width: 340px) {
+  .InventoryTwoOverview,
+  .InventoryTwoMovement {
+    padding: 16px 10px;
+  }
+
+  .InventoryTwoCardHeader h2 {
+    font-size: 14px;
+  }
+
+  .InventoryTwoStockItem {
+    grid-template-columns: 73px minmax(30px, 1fr) 42px;
+    gap: 5px;
+  }
+
+  .InventoryTwoStockName {
+    font-size: 11px;
+  }
+
+  .InventoryTwoChartContainer {
+    height: 180px;
+    min-height: 180px;
+  }
+
+  .InventoryTwoFilterButton {
+    font-size: 10px;
+  }
+}
+
+/* ==========================================
+   REDUCED MOTION
+========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .InventoryTwo *,
+  .InventoryTwo *::before,
+  .InventoryTwo *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
